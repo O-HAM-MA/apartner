@@ -1,6 +1,6 @@
 package com.ohammer.apartner.domain.apartment.entity;
 
-import com.ohammer.apartner.global.BaseEntity;
+import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,7 +1,7 @@
 package com.ohammer.apartner.domain.apartment.entity;
 
-import com.ohammer.apartner.domain.apartment.Apartment;
-import com.ohammer.apartner.global.BaseEntity;
+
+import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,4 +33,4 @@ public class Building extends BaseEntity {
 
     @OneToMany(mappedBy = "building", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Unit> units = new ArrayList<>();
-} 
+}

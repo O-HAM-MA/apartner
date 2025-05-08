@@ -1,6 +1,8 @@
 package com.ohammer.apartner.domain.user.entity;
 
 import com.ohammer.apartner.domain.apartment.entity.Apartment;
+import com.ohammer.apartner.domain.apartment.entity.Building;
+import com.ohammer.apartner.domain.apartment.entity.Unit;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -18,8 +20,16 @@ public class User extends BaseEntity {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "apartmant_id") // DB 스키마 그대로 사용
+    @JoinColumn(name = "apartment_id")
     private Apartment apartment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "building_id")   // 동을 나타내는 컬럼
+    private Building building;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id")       // 호수를 나타내는 컬럼
+    private Unit unit;
 
     @Column(name = "grade_id")
     private Long gradeId;
