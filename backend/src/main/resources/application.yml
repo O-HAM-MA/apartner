@@ -1,0 +1,103 @@
+server:
+  port: 8090
+  servlet:
+    session:
+      persistent: false
+      store-dir: /tmp
+      cookie:
+        secure: false
+        http-only: true
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  mvc:
+    static-path-pattern: /uploads/**
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+      enabled: true
+  session:
+    store-type: none
+    timeout: 1800
+  output:
+    ansi:
+      enabled: ALWAYS
+  profiles:
+    active: dev
+    include: secret
+  datasource:
+    url: jdbc:mysql://localhost:3309/apartnerdb
+    username: testuser
+    password: testpw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      data-source-properties:
+        maxAllowedPacket: 134217728
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+        format_sql: true
+        highlight_sql: true
+        use_sql_comments: true
+  config:
+    import:
+      - classpath:application-secret.yml
+
+  docker:
+    compose:
+      file: docker-compose.yml
+      lifecycle-management: start-and-stop
+      enabled: true
+      skip-in-tests: false
+      start-timeout: 120s
+  web:
+    resources:
+      static-locations:
+        - file:${app.upload.temp-dir}
+        - file:${app.upload.prod-dir}
+        - classpath:/static/
+
+logging:
+  level:
+    com.ll.blog: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.hibernate.type.descriptor.sql: trace
+    org.hibernate.orm.jdbc.extract: TRACE
+    org.springframework.transaction.interceptor: TRACE
+
+custom:
+  dev:
+    cookieDomain: localhost
+    frontUrl: "http://${custom.dev.cookieDomain}:3000"
+    backUrl: "http://${custom.dev.cookieDomain}:${server.port}"
+  prod:
+    cookieDomain: apartner.site
+    frontUrl: "https://www.${custom.prod.cookieDomain}"
+    backUrl: "https://api.${custom.prod.cookieDomain}"
+  site:
+    name: "APARTNER DEV"
+    cookieDomain: "${custom.dev.cookieDomain}"
+    frontUrl: "${custom.dev.frontUrl}"
+    backUrl: "${custom.dev.backUrl}"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+file:
+  upload-dir: ${user.home}/apartner-uploads
+
+app:
+  upload:
+    temp-dir: ${user.dir}/uploads/temp
+    prod-dir: ${user.dir}/uploads/prodImg
