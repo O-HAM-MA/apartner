@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>공지사항 상세</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+    />
+    <style>
+      body {
+        font-family: "Pretendard", sans-serif;
+      }
+      .sidebar {
+        background-color: #fff1f6;
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        padding: 20px;
+      }
+      .sidebar-profile {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      .profile-image {
+        width: 48px;
+        height: 48px;
+        background-color: #e5e7eb;
+        border-radius: 50%;
+        margin-right: 12px;
+      }
+      .main-content {
+        margin-left: 250px;
+        padding: 20px;
+      }
+      .menu-item {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        color: #4b5563;
+      }
+      .menu-item:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+      }
+      .menu-item.active {
+        background-color: #ffd5e5;
+        color: #000;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- 사이드바 -->
+    <div class="sidebar">
+      <div class="sidebar-profile">
+        <div class="profile-image"></div>
+        <div>
+          <div class="font-bold">홍길동</div>
+          <div class="text-sm text-gray-600">관리자 부서</div>
+        </div>
+      </div>
+
+      <nav>
+        <div class="mb-6">
+          <div class="menu-item">대시보드</div>
+          <div class="menu-item">아파트 정보</div>
+          <div class="menu-item">사용자 관리</div>
+          <div class="menu-item">시설 관리</div>
+          <div class="menu-item">입주민 관리</div>
+          <div class="menu-item">일정 관리</div>
+          <div class="menu-item">민원 관리</div>
+          <div class="menu-item active">공지사항</div>
+          <div class="menu-item">설정</div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="main-content">
+      <div class="max-w-7xl mx-auto">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <!-- 상단 네비게이션 -->
+          <div class="flex items-center mb-6">
+            <button
+              onclick="history.back()"
+              class="text-gray-600 hover:text-gray-900 mr-4"
+            >
+              ← 목록으로
+            </button>
+            <h1 class="text-2xl font-bold text-gray-900">공지사항 상세</h1>
+          </div>
+
+          <!-- 공지사항 헤더 -->
+          <div class="border-b border-gray-200 pb-6">
+            <h2 class="text-xl font-bold mb-4">엘리베이터 정기점검 안내</h2>
+            <div
+              class="flex justify-between items-center text-sm text-gray-600"
+            >
+              <div class="flex space-x-4">
+                <span>작성자: 관리사무소</span>
+                <span>작성일: 2025-05-08</span>
+                <span>조회수: 128</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 공지사항 내용 -->
+          <div class="py-6">
+            <div class="prose max-w-none">
+              <p class="mb-4">
+                안녕하세요, 입주민 여러분.<br />
+                아파트 엘리베이터 정기점검을 아래와 같이 실시할 예정입니다.
+              </p>
+              <p class="mb-4">
+                1. 점검일시: 2025년 5월 15일(수) 오전 10:00 ~ 오후 4:00<br />
+                2. 점검대상: 전체 엘리베이터<br />
+                3. 점검내용: 정기 안전점검 및 유지보수
+              </p>
+              <p class="mb-4">
+                점검 시간 동안 엘리베이터 이용이 제한될 수 있으니 양해
+                부탁드립니다.<br />
+                입주민 여러분의 안전한 생활을 위해 최선을 다하겠습니다.
+              </p>
+            </div>
+          </div>
+
+          <!-- 첨부파일 -->
+          <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-sm font-medium text-gray-900 mb-2">첨부파일</h3>
+            <div class="flex items-center text-sm text-blue-600">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
+                ></path>
+              </svg>
+              <a href="#" class="hover:underline">엘리베이터_점검_안내문.pdf</a>
+            </div>
+          </div>
+
+          <!-- 하단 버튼 -->
+          <div class="flex justify-between mt-6 pt-6 border-t border-gray-200">
+            <button
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              onclick="history.back()"
+            >
+              목록
+            </button>
+            <div class="space-x-2">
+              <button
+                class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                수정
+              </button>
+              <button
+                class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 메뉴 활성화 기능
+      document.querySelectorAll(".menu-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          document.querySelectorAll(".menu-item").forEach((i) => {
+            i.classList.remove("active");
+          });
+          item.classList.add("active");
+        });
+      });
+    </script>
+  </body>
+</html>
