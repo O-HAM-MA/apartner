@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Vehicle extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -37,4 +37,11 @@ public class Vehicle extends BaseEntity {
     public enum Status {
         ACTIVE, INACTIVE
     }
+
+
+    @Column(name = "reason", length = 255)
+    private String reason; // 외부 차량일 경우만 사용
+
+    @Column(name = "phone")
+    private String phone; // 외부 차량일 경우
 } 
