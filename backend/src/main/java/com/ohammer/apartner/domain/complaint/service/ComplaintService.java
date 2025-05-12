@@ -33,6 +33,23 @@ public class ComplaintService {
                 .collect(Collectors.toList());
     }
 
+    public List<AllComplaintResponseDto> getAllComplaints() {
+
+        // 로그인한 유저의 권한 확인 로직
+
+        List<Complaint> complaints = complaintRepository.findAll();
+
+        return complaints.stream()
+                .map(complaint -> AllComplaintResponseDto.builder()
+                        .id(complaint.getId())
+                        .title(complaint.getTitle())
+                        .category(complaint.getCategory())
+                        .status(complaint.getStatus().name())
+                        .createdAt(complaint.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     public Complaint createComplaint(Long userId, CreateComplaintRequestDto requestDto) {
 
         // 유저 찾는 로직
@@ -65,6 +82,22 @@ public class ComplaintService {
                 .category(requestDto.getCategory())
                 .status(Complaint.Status.PENDING)
                 .build();
+
+        return complaintRepository.save(complaint);
+    }
+
+    public Complaint updateStatus(Long comlaintId, Long status) {
+
+        Complaint complaint = complaintRepository.findById(comlaintId).orElse(null);
+
+        Complaint.Status state = null;
+
+        // 조건문에 따라 상태 변경
+//        if(status == 1){
+//          state = Complaint.Status.PENDING;
+//        }
+
+        complaint.setStatus(state);
 
         return complaintRepository.save(complaint);
     }

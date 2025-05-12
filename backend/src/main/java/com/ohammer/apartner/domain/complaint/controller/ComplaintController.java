@@ -34,6 +34,18 @@ public class ComplaintController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @GetMapping("/all/complaint/")
+    @Operation(
+            summary = "유저들의 민원을 가져오는 기능",
+            description = "매니저가 유저의 민원을 확인하기 위한 기능",
+            tags = "민원 관리 컨트롤러"
+    )
+    public ResponseEntity<?> getAllComplaint(){
+        List<AllComplaintResponseDto> response = complaintService.getAllComplaints();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     // 유저 ID는 임시
     @PostMapping("/create/{userId}")
     @Operation(
@@ -54,7 +66,21 @@ public class ComplaintController {
             tags = "민원 관리 컨트롤러"
     )
     public ResponseEntity<?> updateComplaint(@RequestBody CreateComplaintRequestDto requestDto, @PathVariable Long userId){
-        Complaint response = complaintService.createComplaint(userId, requestDto);
+        Complaint response = complaintService.updateComplaint(userId, requestDto);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    // status를 뭐로 받을지는 생각해봐야할듯 숫자 or 문자열
+    @PatchMapping("/update/status/{complainId}/{status}")
+    @Operation(
+            summary = "유저의 민원 상태를 수정하는 기능",
+            description = "매니저가 민원 처리 여부에 따른 상태 변경을 위한 기능",
+            tags = "민원 관리 컨트롤러"
+    )
+    public ResponseEntity<?> updateComplaintStatus(@PathVariable Long complainId, @PathVariable Long status){
+
+        Complaint response = complaintService.updateStatus(complainId, status);
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
