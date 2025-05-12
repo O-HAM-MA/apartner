@@ -1,6 +1,6 @@
 package com.ohammer.apartner.domain.facility.service;
 
-import com.ohammer.apartner.domain.facility.dto.FacilityResponseDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityResponseDto;
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import java.util.List;
 import java.util.stream.Collectors;
