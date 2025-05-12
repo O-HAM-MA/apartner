@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.facility.controller;
 
 import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationRequestDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSummaryDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityResponseDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import com.ohammer.apartner.domain.facility.service.FacilityUserService;
@@ -40,6 +41,14 @@ public class FacilityUserController {
                 request
         );
         return ResponseEntity.ok("예약 요청이 접수되었습니다.");
+    }
+
+    @GetMapping("/reservations")
+    public ResponseEntity<List<FacilityReservationSummaryDto>> getUserReservations(
+            @RequestParam(name = "userId") Long userId // 추후 수정
+    ) {
+        List<FacilityReservationSummaryDto> reservations = facilityUserService.getUserReservations(userId);
+        return ResponseEntity.ok(reservations);
     }
 
 
