@@ -35,10 +35,10 @@ dependencies {
     runtimeOnly("com.h2database:h2")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
-//	implementation("org.springframework.boot:spring-boot-starter-security") //security
+    implementation("org.springframework.boot:spring-boot-starter-security") //security
     testImplementation("org.testcontainers:mysql:1.19.3")
     testImplementation("org.testcontainers:junit-jupiter:1.19.3")
-//    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.springframework.security:spring-security-test")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
@@ -59,7 +59,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     // Oauth2
-//    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
     // AWS S3
     implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")

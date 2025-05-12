@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,4 +53,12 @@ public class FacilityUserController {
     }
 
 
+    @PatchMapping("/{facilityReservationId}/cancel")
+    public ResponseEntity<?> cancelReservation(
+            @RequestParam(name = "userId") Long userId, // 추후 수정
+            @PathVariable(name = "facilityReservationId") Long facilityReservationId
+    ) {
+        facilityUserService.cancelReservation(userId, facilityReservationId);
+        return ResponseEntity.ok("예약이 취소되었습니다");
+    }
 }

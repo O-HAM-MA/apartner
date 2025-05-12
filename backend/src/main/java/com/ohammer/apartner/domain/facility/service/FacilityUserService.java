@@ -10,6 +10,7 @@ import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -26,8 +27,6 @@ public class FacilityUserService {
     private final FacilityRepository facilityRepository;
     private final UserRepository userRepository;
     private final FacilityReservationRepository facilityReservationRepository;
-    private final FacilityReservationRepository reservationRepository;
-
 
     public List<FacilityResponseDto> getAllFacilities() {
         return facilityRepository.findAll().stream()
@@ -76,7 +75,7 @@ public class FacilityUserService {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-        return reservationRepository.findByUserIdOrderByCreatedAtDesc(userId)
+        return facilityReservationRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(facilityReservation -> FacilityReservationSummaryDto.builder()
                         .facilityName(facilityReservation.getFacility().getName())
@@ -94,4 +93,14 @@ public class FacilityUserService {
                 facilityReservation.getEndTime().toLocalTime());
     }
 
+    @Transactional
+    public void cancelReservation(Long userId, Long facilityReservationId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        FacilityReservation facilityReservation = facilityReservationRepository.findById(facilityReservationId)
+                .orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다."));
+
+        facilityReservation.setStatus(FacilityReservationStatus.CANCEL);
+    }
 }

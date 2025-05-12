@@ -28,5 +28,5 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
     );
 
     List<FacilityReservation> findByUserIdOrderByCreatedAtDesc(Long userId);
-    
+
 }
