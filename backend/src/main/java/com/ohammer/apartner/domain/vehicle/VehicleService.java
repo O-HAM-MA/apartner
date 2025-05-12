@@ -34,6 +34,7 @@ public class VehicleService {
                 .vehicleNum(dto.getVehicleNum())
                 .type(dto.getType())
                 .isForeign(false)
+                .phone(user.getPhone())
                 .status(Vehicle.Status.ACTIVE)
                 .build();
 
@@ -50,6 +51,7 @@ public class VehicleService {
                 .type(dto.getType())
                 .isForeign(true)
                 .status(Vehicle.Status.ACTIVE)
+                .phone(dto.getPhone())
                 .reason(dto.getReason())
                 .build();
 
