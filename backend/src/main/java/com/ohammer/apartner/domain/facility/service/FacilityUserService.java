@@ -11,6 +11,7 @@ import com.ohammer.apartner.domain.facility.repository.FacilityReservationReposi
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,16 +25,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class FacilityUserService {
 
-    private final FacilityRepository facilityRepository;
     private final UserRepository userRepository;
+    private final FacilityRepository facilityRepository;
     private final FacilityReservationRepository facilityReservationRepository;
 
+    // 시설 목록 보기
     public List<FacilityResponseDto> getAllFacilities() {
         return facilityRepository.findAll().stream()
                 .map(FacilityResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
+    // 예약하기
     @Transactional
     public FacilityReservation reserveFacility(Long userId, Long facilityId, FacilityReservationRequestDto request) {
         User user = userRepository.findById(userId)
@@ -69,23 +72,30 @@ public class FacilityUserService {
         return facilityReservationRepository.save(reservation);
     }
 
-    public List<FacilityReservationSummaryDto> getUserReservations(Long userId) {
+    // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)
+    public List<FacilityReservationSummaryDto> getUserReservationsWithFilter(
+            Long userId,
+            LocalDate date,
+            Long facilityId,
+            FacilityReservationStatus status) {
+
         userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-        return facilityReservationRepository.findByUserIdOrderByCreatedAtDesc(userId)
+        return facilityReservationRepository.findByUserWithFilter(userId, date, facilityId, status)
                 .stream()
-                .map(facilityReservation -> FacilityReservationSummaryDto.builder()
-                        .facilityName(facilityReservation.getFacility().getName())
-                        .reservationTime(formatReservationTime(facilityReservation))
-                        .createdAt(facilityReservation.getCreatedAt().format(formatter))
-                        .status(facilityReservation.getStatus().getDescription())
+                .map(reservation -> FacilityReservationSummaryDto.builder()
+                        .facilityName(reservation.getFacility().getName())
+                        .reservationTime(formatReservationTime(reservation))
+                        .createdAt(reservation.getCreatedAt().format(formatter))
+                        .status(reservation.getStatus().getDescription())
                         .build())
                 .collect(Collectors.toList());
     }
 
+    // 예약한 시설 이용 날짜 형식 (ex. "2025-05-15 10:00-11:00")
     private String formatReservationTime(FacilityReservation facilityReservation) {
         return String.format("%s %s-%s",
                 facilityReservation.getDate(),
@@ -93,6 +103,7 @@ public class FacilityUserService {
                 facilityReservation.getEndTime().toLocalTime());
     }
 
+    // 내 예약 취소
     @Transactional
     public void cancelReservation(Long userId, Long facilityReservationId) {
         userRepository.findById(userId)
@@ -103,4 +114,5 @@ public class FacilityUserService {
 
         facilityReservation.setStatus(FacilityReservationStatus.CANCEL);
     }
+
 }

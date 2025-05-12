@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.facility.repository;
 
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
+import com.ohammer.apartner.domain.facility.entity.FacilityReservationStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,16 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
             @Param("endTime") LocalDateTime endTime
     );
 
-    List<FacilityReservation> findByUserIdOrderByCreatedAtDesc(Long userId);
-
+    @Query("SELECT r FROM FacilityReservation r " +
+            "WHERE r.user.id = :userId " +
+            "AND (:date IS NULL OR r.date = :date) " +
+            "AND (:facilityId IS NULL OR r.facility.id = :facilityId) " +
+            "AND (:status IS NULL OR r.status = :status) " +
+            "ORDER BY r.createdAt DESC")
+    List<FacilityReservation> findByUserWithFilter(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date,
+            @Param("facilityId") Long facilityId,
+            @Param("status") FacilityReservationStatus status
+    );
 }
