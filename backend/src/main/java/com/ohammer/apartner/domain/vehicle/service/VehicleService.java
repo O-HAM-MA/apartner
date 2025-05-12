@@ -1,12 +1,15 @@
-package com.ohammer.apartner.domain.vehicle;
+package com.ohammer.apartner.domain.vehicle.service;
 
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleResponseDto;
+import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 //import jakarta.transaction.Transactional;
+import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
+import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
+    private final EntryRecordRepository entryRecordRepository;
 
     // 입주민 차량 등록
     @Transactional
@@ -40,6 +44,18 @@ public class VehicleService {
 
         vehicleRepository.save(vehicle);
 
+        // EntryRecord 생성
+        EntryRecord entryRecord = EntryRecord.builder()
+                .vehicle(vehicle)
+                .status(EntryRecord.Status.PENDING)
+                .build();
+
+
+
+        entryRecordRepository.save(entryRecord);
+
+
+
         return VehicleResponseDto.from(vehicle);
     }
 
@@ -56,6 +72,17 @@ public class VehicleService {
                 .build();
 
         vehicleRepository.save(vehicle);
+
+        // EntryRecord 생성
+        EntryRecord entryRecord = EntryRecord.builder()
+                .vehicle(vehicle)
+                .status(EntryRecord.Status.PENDING)
+                .build();
+
+
+
+        entryRecordRepository.save(entryRecord);
+
 
         return VehicleResponseDto.fromForeign(vehicle, dto.getPhone());
     }

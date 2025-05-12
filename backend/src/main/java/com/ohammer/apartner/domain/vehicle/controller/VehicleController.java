@@ -1,6 +1,7 @@
-package com.ohammer.apartner.domain.vehicle;
+package com.ohammer.apartner.domain.vehicle.controller;
 
 
+import com.ohammer.apartner.domain.vehicle.service.VehicleService;
 import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;

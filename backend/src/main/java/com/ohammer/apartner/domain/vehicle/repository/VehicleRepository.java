@@ -1,4 +1,4 @@
-package com.ohammer.apartner.domain.vehicle;
+package com.ohammer.apartner.domain.vehicle.repository;
 
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
