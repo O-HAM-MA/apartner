@@ -44,11 +44,5 @@ public class FacilityReservation extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private Status status;
-
-    // Enum for status
-    // 승인, 대기 중, 거절, 사용자 취소
-    public enum Status {
-        AGREE, PENDING, REJECT, CANCEL
-    }
+    private FacilityReservationStatus status;
 } 
