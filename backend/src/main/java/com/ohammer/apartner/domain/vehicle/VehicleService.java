@@ -83,10 +83,28 @@ public class VehicleService {
     public List<VehicleRegistrationInfoDto> getVehicleRegistrationInfo(Boolean isForeign) {
 
 
-        List<Vehicle> vehicles = vehicleRepository.findByIsForeign(isForeign);
+//        List<Vehicle> vehicles = vehicleRepository.findByIsForeign(isForeign);
+//        return vehicles.stream()
+//                .map(vehicle -> convertToDto(vehicle))
+//                .collect(Collectors.toList());
+
+        List<Vehicle> vehicles;
+
+        if (isForeign == null) {
+            vehicles = vehicleRepository.findAll(); // 전체 조회
+        } else {
+            vehicles = vehicleRepository.findByIsForeign(isForeign); // 필터 조회
+        }
+
         return vehicles.stream()
-                .map(vehicle -> convertToDto(vehicle))
+                .map(VehicleRegistrationInfoDto::from)
                 .collect(Collectors.toList());
+
+
+
+
+
+
 
 //        List<Vehicle> vehicles;
 //

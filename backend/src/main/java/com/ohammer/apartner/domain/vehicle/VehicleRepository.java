@@ -13,4 +13,10 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     public List<Vehicle> findByIsForeign(Boolean isForeign);
 
+    // 전체 조회 (isForeign == null일 때)
+    List<Vehicle> findAll();
+
+    // isForeign 값에 따라 필터링된 조회
+
+
 }
