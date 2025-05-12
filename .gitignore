@@ -84,7 +84,6 @@ coverage/
 .idea/dictionaries/
 .idea/vcs.xml
 
-
 application-secret.yml
 
 .vscode
@@ -111,3 +110,6 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+
+/infra

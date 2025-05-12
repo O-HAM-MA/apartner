@@ -54,4 +54,6 @@ ehthumbs.db
 /dist
 
 
+/infra
 
+application-secret.yml
