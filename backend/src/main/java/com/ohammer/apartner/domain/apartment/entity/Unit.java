@@ -30,6 +30,4 @@ public class Unit extends BaseEntity {
     @Column(name = "unit_number", length = 10, nullable = false)
     private String unitNumber;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 } 
