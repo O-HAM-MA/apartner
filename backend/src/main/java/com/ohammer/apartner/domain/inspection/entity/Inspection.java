@@ -1,25 +1,22 @@
 package com.ohammer.apartner.domain.inspection.entity;
 
+import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "inspections")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Inspection extends BaseEntity {
-
-
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -30,24 +27,15 @@ public class Inspection extends BaseEntity {
     @Column(name = "finish_at")
     private LocalDateTime finishAt;
 
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn (name = "type")
+    private InspectionType type;
+
+    @Column(name = "detail", columnDefinition = "TEXT")
+    private String detail;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "field")
-    private Field field;
+    @Column(name = "result")
+    private Result result;
 
-    @Column(name = "field2", columnDefinition = "TEXT")
-    private String field2;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "field3")
-    private Field3 field3;
-
-    // Enum for field
-    public enum Field {
-        수도, 청소, 소방, 가스
-    }
-
-    // Enum for field3
-    public enum Field3 {
-        CHECKED, PENDING, NOTYET
-    }
 } 
