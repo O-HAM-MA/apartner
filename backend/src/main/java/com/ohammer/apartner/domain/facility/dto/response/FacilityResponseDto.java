@@ -1,4 +1,4 @@
-package com.ohammer.apartner.domain.facility.dto;
+package com.ohammer.apartner.domain.facility.dto.response;
 
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import lombok.Builder;
