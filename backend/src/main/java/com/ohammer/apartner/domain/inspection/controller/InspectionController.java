@@ -17,21 +17,26 @@ public class InspectionController {
     private final InspectionService inspectionService;
 
     //얼추 여기서 CRUD 넣기
-    @GetMapping("/")
+    @GetMapping("")
     public ResponseEntity<List<Inspection>> showAllInspections() {
         return ResponseEntity.ok(inspectionService.showAllInspections());
     }
 
     //추가
-    @PostMapping("/")
-    public ResponseEntity<Inspection> createInspectionSchedule(InspectionRequestDto dto) {
+    @PostMapping("")
+    public ResponseEntity<Inspection> createInspectionSchedule(@RequestBody InspectionRequestDto dto) {
         return ResponseEntity.ok(inspectionService.newInspectionSchedule(dto));
     }
 
     //수정
     @PostMapping("/{id}")
-    public ResponseEntity<?> updateInspectionSchedule(@PathVariable("id") Long id, InspectionUpdateDto dto) {
-        inspectionService.updateInspection(id, dto);
+    public ResponseEntity<?> updateInspectionSchedule(@PathVariable("id") Long id, @RequestBody InspectionUpdateDto dto) {
+        try {
+            inspectionService.updateInspection(id, dto);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+
         return ResponseEntity.ok().build();
     }
 
@@ -42,8 +47,4 @@ public class InspectionController {
         inspectionService.deleteInspection(id);
         return ResponseEntity.ok().build();
     }
-
-
-
-
 }

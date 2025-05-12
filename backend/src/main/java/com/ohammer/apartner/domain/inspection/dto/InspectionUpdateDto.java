@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.inspection.dto;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;

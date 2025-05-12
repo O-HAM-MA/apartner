@@ -71,8 +71,9 @@ public class InspectionService {
     }
 
     //수정, 결과입력?
+    //여기에 리턴이 필요할지도
     @Transactional
-    public String updateInspection(Long id, InspectionUpdateDto dto) {
+    public void updateInspection(Long id, InspectionUpdateDto dto) {
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
         inspection.setDetail(dto.getDetail());
         inspection.setStartAt(dto.getStartAt());
@@ -81,8 +82,9 @@ public class InspectionService {
 
         inspection.setType(inspectionTypeRepository.findByTypeName(dto.getType()));
 
+        inspection.setResult(findResult(dto.getResult()));
+
         inspectionRepository.save(inspection);
-        return "ok";
     }
 
     //삭제
