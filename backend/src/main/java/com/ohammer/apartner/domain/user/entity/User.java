@@ -4,7 +4,14 @@ import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.entity.Building;
 import com.ohammer.apartner.domain.apartment.entity.Unit;
 import com.ohammer.apartner.global.entity.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,6 +50,9 @@ public class User extends BaseEntity {
 
     @Column(name = "email", length = 255)
     private String email;
+
+    @Column(name = "user_name", length = 255)
+    private String userName;
 
     @Column(name = "phone", length = 255)
     private String phone;

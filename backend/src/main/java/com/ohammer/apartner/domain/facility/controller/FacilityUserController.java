@@ -4,7 +4,6 @@ import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationReque
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSummaryDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityResponseDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
-import com.ohammer.apartner.domain.facility.entity.FacilityReservationStatus;
 import com.ohammer.apartner.domain.facility.service.FacilityUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -63,14 +62,14 @@ public class FacilityUserController {
     // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)
     @GetMapping("/reservations")
     @Operation(
-            summary = "유저 예약 목록 조회",
+            summary = "유저 예약 조회",
             description = "유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)"
     )
     public ResponseEntity<List<FacilityReservationSummaryDto>> getUserReservations(
-            @RequestParam(name = "userId", defaultValue = "1") Long userId, // 추후 수정
-            @RequestParam(name = "date", required = false, defaultValue = "2025-05-15") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(name = "facilityId", required = false, defaultValue = "1") Long facilityId,
-            @RequestParam(name = "status", required = false, defaultValue = "승인 대기") FacilityReservationStatus status
+            @RequestParam(name = "userId") Long userId, // 추후 수정
+            @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(name = "facilityId", required = false) Long facilityId,
+            @RequestParam(name = "status", required = false) FacilityReservation.Status status
     ) {
         List<FacilityReservationSummaryDto> reservations =
                 facilityUserService.getUserReservationsWithFilter(userId, date, facilityId, status);

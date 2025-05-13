@@ -5,7 +5,6 @@ import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSumm
 import com.ohammer.apartner.domain.facility.dto.response.FacilityResponseDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
-import com.ohammer.apartner.domain.facility.entity.FacilityReservationStatus;
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
 import com.ohammer.apartner.domain.user.entity.User;
@@ -66,7 +65,7 @@ public class FacilityUserService {
                 .date(request.getDate())
                 .startTime(startDateTime)
                 .endTime(endDateTime)
-                .status(FacilityReservationStatus.PENDING)
+                .status(FacilityReservation.Status.PENDING)
                 .build();
 
         return facilityReservationRepository.save(reservation);
@@ -77,20 +76,18 @@ public class FacilityUserService {
             Long userId,
             LocalDate date,
             Long facilityId,
-            FacilityReservationStatus status) {
+            FacilityReservation.Status status) {
 
         userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
         return facilityReservationRepository.findByUserWithFilter(userId, date, facilityId, status)
                 .stream()
                 .map(reservation -> FacilityReservationSummaryDto.builder()
                         .facilityName(reservation.getFacility().getName())
                         .reservationTime(formatReservationTime(reservation))
-                        .createdAt(reservation.getCreatedAt().format(formatter))
-                        .status(reservation.getStatus().getDescription())
+                        .createdAt(reservation.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
+                        .status(reservation.getStatus().name())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -112,7 +109,15 @@ public class FacilityUserService {
         FacilityReservation facilityReservation = facilityReservationRepository.findById(facilityReservationId)
                 .orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다."));
 
-        facilityReservation.setStatus(FacilityReservationStatus.CANCEL);
+        if (!facilityReservation.getUser().getId().equals(userId)) {
+            throw new SecurityException("본인의 예약만 취소할 수 있습니다.");
+        }
+        
+        if (facilityReservation.getStatus() == FacilityReservation.Status.CANCEL) {
+            throw new IllegalStateException("이미 취소된 예약입니다.");
+        }
+
+        facilityReservation.setStatus(FacilityReservation.Status.CANCEL);
     }
 
 }
