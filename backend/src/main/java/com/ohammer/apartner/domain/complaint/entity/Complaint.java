@@ -3,14 +3,12 @@ package com.ohammer.apartner.domain.complaint.entity;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "complaints")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
