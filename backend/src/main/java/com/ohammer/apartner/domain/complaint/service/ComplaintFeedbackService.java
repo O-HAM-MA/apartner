@@ -29,7 +29,7 @@ public class ComplaintFeedbackService {
                         .feedbackId(feedback.getId())
                         .content(feedback.getContent())
 //                        .userName() 맞게 처리 필요
-                        .created_at(feedback.getCreatedAt())
+                        .createAt(feedback.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
     }

@@ -16,5 +16,5 @@ public class AllComplaintFeedbackResponseDto {
 
     private String content;
 
-    private LocalDateTime created_at;
+    private LocalDateTime createAt;
 }
