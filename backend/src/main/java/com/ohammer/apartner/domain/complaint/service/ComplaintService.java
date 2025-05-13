@@ -18,6 +18,8 @@ public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
 
+
+    // Read
     public List<AllComplaintResponseDto> getAllMyComplaints(Long userId) {
 
         List<Complaint> complaints = complaintRepository.findByUserId(userId);
@@ -33,6 +35,8 @@ public class ComplaintService {
                 .collect(Collectors.toList());
     }
 
+
+    // Read
     public List<AllComplaintResponseDto> getAllComplaints() {
 
         // 로그인한 유저의 권한 확인 로직
@@ -50,6 +54,12 @@ public class ComplaintService {
                 .collect(Collectors.toList());
     }
 
+    // Read
+    public Complaint findById(Long complaintId){
+        return complaintRepository.findById(complaintId).orElse(null);
+    }
+
+    // Create
     public Complaint createComplaint(Long userId, CreateComplaintRequestDto requestDto) {
 
         // 유저 찾는 로직
@@ -66,6 +76,8 @@ public class ComplaintService {
         return complaintRepository.save(complaint);
     }
 
+
+    // Update
     public Complaint updateComplaint(Long userId, CreateComplaintRequestDto requestDto) {
         // 유저 찾는 로직
 //        User user = userRepository.findById(userId);
@@ -86,6 +98,7 @@ public class ComplaintService {
         return complaintRepository.save(complaint);
     }
 
+    // Update
     public Complaint updateStatus(Long comlaintId, Long status) {
 
         Complaint complaint = complaintRepository.findById(comlaintId).orElse(null);
@@ -102,6 +115,7 @@ public class ComplaintService {
         return complaintRepository.save(complaint);
     }
 
+    // delete
     public void deleteComplaint(Long complaintId, Long userId) {
 
         Optional<Complaint> complaint = complaintRepository.findById(complaintId);
@@ -118,4 +132,5 @@ public class ComplaintService {
 
         complaintRepository.deleteById(complaintId);
     }
+
 }
