@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.facility.controller;
 
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.service.FacilityStatisticsService;
@@ -45,6 +46,12 @@ public class FacilityStatisticsController {
     )
     public List<BuildingUsageCountDto> getBuildingUsageCount() {
         return facilityStatisticsService.getBuildingUsageCounts();
+    }
+
+    @GetMapping("/day-of-week")
+    @Operation(summary = "요일별 이용 통계", description = "요일 기준으로 이용 건수를 분석합니다.")
+    public List<DayOfWeekUsageDto> getDayOfWeekCount() {
+        return facilityStatisticsService.getDayOfWeekUsageCounts();
     }
 
 }

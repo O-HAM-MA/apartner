@@ -87,4 +87,11 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
             "ORDER BY COUNT(fr) DESC")
     List<BuildingUsageCountDto> findBuildingUsageCounts();
 
+    // 요일별 이용 횟수 (1:일요일, 7:토요일)
+    @Query("SELECT FUNCTION('DAYOFWEEK', fr.date) AS dow, COUNT(fr) " +
+            "FROM FacilityReservation fr " +
+            "WHERE fr.status = 'AGREE' " +
+            "GROUP BY FUNCTION('DAYOFWEEK', fr.date)")
+    List<Object[]> findUsageCountGroupedByDayOfWeek();
+
 }

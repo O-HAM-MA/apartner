@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.facility.service;
 
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
@@ -30,5 +31,33 @@ public class FacilityStatisticsService {
     public List<BuildingUsageCountDto> getBuildingUsageCounts() {
         return facilityReservationRepository.findBuildingUsageCounts();
     }
+
+    // 요일별 이용 횟수
+    public List<DayOfWeekUsageDto> getDayOfWeekUsageCounts() {
+        List<Object[]> rawData = facilityReservationRepository.findUsageCountGroupedByDayOfWeek();
+
+        return rawData.stream()
+                .map(obj -> {
+                    Integer dow = ((Number) obj[0]).intValue(); // 1(일) ~ 7(토)
+                    Long count = (Long) obj[1];
+                    String dayName = convertDayNumberToKorean(dow);
+                    return new DayOfWeekUsageDto(dayName, count);
+                })
+                .toList();
+    }
+
+    private String convertDayNumberToKorean(int dow) {
+        return switch (dow) {
+            case 1 -> "일요일";
+            case 2 -> "월요일";
+            case 3 -> "화요일";
+            case 4 -> "수요일";
+            case 5 -> "목요일";
+            case 6 -> "금요일";
+            case 7 -> "토요일";
+            default -> "알 수 없음";
+        };
+    }
+
 
 }
