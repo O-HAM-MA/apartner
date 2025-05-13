@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.facility.service;
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.ReservationStatusRatioDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.TimePeriodUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
@@ -72,4 +73,8 @@ public class FacilityStatisticsService {
                 .toList();
     }
 
+    // 예약 상태 비율
+    public List<ReservationStatusRatioDto> getReservationStatusRatios() {
+        return facilityReservationRepository.findReservationStatusCounts();
+    }
 }

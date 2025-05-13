@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.facility.controller;
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.ReservationStatusRatioDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.TimePeriodUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.service.FacilityStatisticsService;
@@ -61,5 +62,11 @@ public class FacilityStatisticsController {
                     + "시간대 기준::: 오전: 05~12시, 오후: 12~17시, 저녁: 17~23시, 야간: 23~05시")
     public List<TimePeriodUsageDto> getTimePeriodCount() {
         return facilityStatisticsService.getTimePeriodUsageCounts();
+    }
+
+    @GetMapping("/reservation-status")
+    @Operation(summary = "예약 상태별 비율", description = "AGREE, REJECT, CANCEL, PENDING 상태별 예약 건수를 조회합니다.")
+    public List<ReservationStatusRatioDto> getReservationStatusStats() {
+        return facilityStatisticsService.getReservationStatusRatios();
     }
 }

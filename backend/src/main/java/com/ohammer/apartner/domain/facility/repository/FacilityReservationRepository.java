@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.facility.repository;
 
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.ReservationStatusRatioDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import java.time.LocalDate;
@@ -110,6 +111,12 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
             ORDER BY cnt DESC
             """, nativeQuery = true)
     List<Object[]> findUsageCountGroupedByTimePeriod();
+
+    // 예약 상태 비율
+    @Query("SELECT new com.ohammer.apartner.domain.facility.dto.statistics.ReservationStatusRatioDto(fr.status, COUNT(fr)) "
+            +
+            "FROM FacilityReservation fr GROUP BY fr.status")
+    List<ReservationStatusRatioDto> findReservationStatusCounts();
 
 
 }
