@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
@@ -14,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ohammer.apartner.domain.user.repository.UserRepository;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ public class VehicleService {
                 .vehicleNum(dto.getVehicleNum())
                 .type(dto.getType())
                 .isForeign(false)
-                .phone(user.getPhone())
+                .phone(user.getPhoneNum())
                 .status(Vehicle.Status.ACTIVE)
                 .build();
 
@@ -162,7 +163,7 @@ public class VehicleService {
             return VehicleRegistrationInfoDto.builder()
                     .vehicleNum(vehicle.getVehicleNum())
                     .type(vehicle.getType())
-                    .userPhone(user.getPhone()) // 거주자일 경우 phone은 user에서 가져옴
+                    .userPhone(user.getPhoneNum()) // 거주자일 경우 phone은 user에서 가져옴
                     .buildingName(user.getBuilding().getBuildingNumber())
                     .unitName(user.getUnit().getUnitNumber())
                     .build();

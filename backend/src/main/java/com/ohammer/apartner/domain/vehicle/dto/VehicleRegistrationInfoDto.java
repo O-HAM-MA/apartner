@@ -46,7 +46,7 @@ public class VehicleRegistrationInfoDto {
             applicantName = String.valueOf(user.getId()); // 혹은 .toString()
             building = user.getBuilding().getBuildingNumber();
             unit = user.getUnit().getUnitNumber();
-            phone = user.getPhone();
+            phone = user.getPhoneNum();
         }
 
         return VehicleRegistrationInfoDto.builder()

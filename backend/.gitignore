@@ -40,4 +40,6 @@ src/test/generated_tests
 ### VS Code ###
 .vscode/
 
+**/application-secret.yml
 application-secret.yml
+**/.cursor/rules
