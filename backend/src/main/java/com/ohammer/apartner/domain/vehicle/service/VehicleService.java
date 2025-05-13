@@ -102,52 +102,26 @@ public class VehicleService {
         List<Vehicle> vehicles = vehicleRepository.findByIsForeignTrue();
 
         return vehicles.stream()
-                .map(v -> VehicleResponseDto.fromForeign(v, v.getUser() != null ? v.getUser().getPhone() : v.getPhone()))
+                .map(v -> VehicleResponseDto.fromForeign(v, v.getUser() != null ? v.getUser().getPhoneNum() : v.getPhone()))
                 .collect(Collectors.toList());
     }
 
 
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getVehicleRegistrationInfo(Boolean isForeign) {
-
-
-//        List<Vehicle> vehicles = vehicleRepository.findByIsForeign(isForeign);
-//        return vehicles.stream()
-//                .map(vehicle -> convertToDto(vehicle))
-//                .collect(Collectors.toList());
-
-        List<Vehicle> vehicles;
+        List<EntryRecord> entryRecords;
 
         if (isForeign == null) {
-            vehicles = vehicleRepository.findAll(); // 전체 조회
+            entryRecords = entryRecordRepository.findAllWithVehicleAndUser();
         } else {
-            vehicles = vehicleRepository.findByIsForeign(isForeign); // 필터 조회
+            entryRecords = entryRecordRepository.findByVehicleIsForeignWithVehicleAndUser(isForeign);
         }
 
-        return vehicles.stream()
-                .map(VehicleRegistrationInfoDto::from)
+        return entryRecords.stream()
+                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
                 .collect(Collectors.toList());
-
-
-
-
-
-
-
-//        List<Vehicle> vehicles;
-//
-//        if (isForeign == null) {
-//            vehicles = vehicleRepository.findAll();  // 전체 조회
-//        } else {
-//            vehicles = vehicleRepository.findByIsForeign(isForeign);  // 조건 조회
-//        }
-//
-//        return vehicles.stream()
-//                .map(this::toDto)
-//                .collect(Collectors.toList());
-
-
     }
+
 
     private VehicleRegistrationInfoDto convertToDto(Vehicle vehicle) {
         // 외부인과 거주자의 구분에 따라 DTO를 매핑
@@ -169,6 +143,13 @@ public class VehicleService {
                     .build();
         }
     }
+
+    public List<VehicleRegistrationInfoDto> getAll() {
+        return entryRecordRepository.findAllWithVehicleAndUser().stream()
+                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
+                .collect(Collectors.toList());
+    }
+
 
 
 

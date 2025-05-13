@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.vehicle.dto;
 
 
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,9 +28,9 @@ public class VehicleRegistrationInfoDto {
     private String reason;     // 외부 차량 방문 사유
     private String userPhone;  // 연락처 (거주자는 user에서, 외부인은 직접 입력)
 
-    //private String status;
+    private String status; // EntryRecord의 상태
 
-    public static VehicleRegistrationInfoDto from(Vehicle vehicle) {
+    public static VehicleRegistrationInfoDto from(Vehicle vehicle, EntryRecord entryRecord) {
         boolean isForeign = Boolean.TRUE.equals(vehicle.getIsForeign());
 
         String registerType = isForeign ? "방문자" : "거주자";
@@ -60,7 +61,7 @@ public class VehicleRegistrationInfoDto {
                 .phone(phone)
                 .createdAt(vehicle.getCreatedAt())
                 //.visitPeriod(vehicle.getVisitPeriod()) // visitPeriod 필드 Vehicle 엔티티에 있어야 함
-                //.status(status)
+                .status(entryRecord.getStatus().name()) // 🔥 status 여기 추가
                 .build();
     }
 }

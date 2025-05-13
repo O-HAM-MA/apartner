@@ -51,6 +51,14 @@ public class VehicleController {
         return ResponseEntity.ok(registrations);
     }
 
+    @GetMapping("/registrationsPatch")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getRegistrations(
+            @RequestParam(value = "isForeign", required = false) Boolean isForeign
+    ) {
+        List<VehicleRegistrationInfoDto> registrations = vehicleService.getVehicleRegistrationInfo(isForeign);
+        return ResponseEntity.ok(registrations);
+    }
+
 
 
 

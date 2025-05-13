@@ -54,9 +54,9 @@ public class ApiV1RegistController {
         }
 
         // 이메일 인증 여부 확인
-        if (!authService.isEmailVerified(userRegistRequestDTO.getEmail())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이메일 인증이 완료되지 않았습니다.");
-        }
+//        if (!authService.isEmailVerified(userRegistRequestDTO.getEmail())) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이메일 인증이 완료되지 않았습니다.");
+//        }
 
         // 회원가입 실행
         try {
