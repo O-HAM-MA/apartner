@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.facility.controller;
 
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.CancellationRatioDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.ReservationStatusCountDto;
@@ -66,7 +67,13 @@ public class FacilityStatisticsController {
 
     @GetMapping("/reservation-status")
     @Operation(summary = "예약 상태별 현황", description = "AGREE, REJECT, CANCEL, PENDING 상태별 예약 건수를 조회합니다.")
-    public List<ReservationStatusCountDto> getReservationStatusStats() {
-        return facilityStatisticsService.getReservationStatusRatios();
+    public List<ReservationStatusCountDto> getReservationStatusCounts() {
+        return facilityStatisticsService.getReservationStatusCounts();
+    }
+
+    @GetMapping("/cancellation-ratio")
+    @Operation(summary = "예약 취소율", description = "status=CANCEL / 전체 예약 (%)")
+    public CancellationRatioDto getCancellationRatio() {
+        return facilityStatisticsService.getCancellationRatio();
     }
 }

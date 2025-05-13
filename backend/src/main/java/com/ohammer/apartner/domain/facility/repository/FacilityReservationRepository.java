@@ -118,5 +118,11 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
             "FROM FacilityReservation fr GROUP BY fr.status")
     List<ReservationStatusCountDto> findReservationStatusCounts();
 
+    // 취소율
+    @Query("SELECT COUNT(fr) FROM FacilityReservation fr")
+    Long countTotalReservations();
+
+    @Query("SELECT COUNT(fr) FROM FacilityReservation fr WHERE fr.status = 'CANCEL'")
+    Long countCancelledReservations();
 
 }

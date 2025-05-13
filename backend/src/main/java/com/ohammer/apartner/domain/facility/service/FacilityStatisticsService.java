@@ -1,12 +1,15 @@
 package com.ohammer.apartner.domain.facility.service;
 
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.CancellationRatioDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.ReservationStatusCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.TimePeriodUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -74,7 +77,21 @@ public class FacilityStatisticsService {
     }
 
     // 예약 상태 비율
-    public List<ReservationStatusCountDto> getReservationStatusRatios() {
+    public List<ReservationStatusCountDto> getReservationStatusCounts() {
         return facilityReservationRepository.findReservationStatusCounts();
     }
+
+    // 취소율
+    public CancellationRatioDto getCancellationRatio() {
+        Long total = facilityReservationRepository.countTotalReservations();
+        Long cancelled = facilityReservationRepository.countCancelledReservations();
+
+        double rate = (total == 0) ? 0.0 :
+                BigDecimal.valueOf((double) cancelled / total)
+                        .setScale(4, RoundingMode.HALF_UP)
+                        .doubleValue();
+
+        return new CancellationRatioDto(total, cancelled, rate);
+    }
+
 }
