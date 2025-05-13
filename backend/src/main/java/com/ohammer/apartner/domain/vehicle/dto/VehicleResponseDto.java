@@ -29,7 +29,7 @@ public class VehicleResponseDto {
         return VehicleResponseDto.builder()
                 .vehicleNum(vehicle.getVehicleNum())
                 .type(vehicle.getType())
-                .userPhone(user.getPhone())
+                .userPhone(user.getPhoneNum())
                 .buildingName(user.getBuilding().getBuildingNumber())
                 .unitName(user.getUnit().getUnitNumber())
                 .build();

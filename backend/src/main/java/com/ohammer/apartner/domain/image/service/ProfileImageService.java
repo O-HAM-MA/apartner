@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.image.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.ohammer.apartner.domain.image.entity.Image;
@@ -56,7 +57,8 @@ public class ProfileImageService {
             objectMetadata.setContentType(contentType);
 
             //S3에 파일 업로드
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, permanentS3Key, multipartFile.getInputStream(), objectMetadata);
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, permanentS3Key, multipartFile.getInputStream(), objectMetadata)
+                    .withCannedAcl(CannedAccessControlList.PublicRead);
             amazonS3.putObject(putObjectRequest);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.");

@@ -10,8 +10,7 @@ const Header: React.FC = () => {
    return (
       <header className="sticky top-0 z-50 bg-white shadow-md">
          <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div className="flex items-center">
-               {/* 로고 이미지 대신 텍스트로 임시 처리합니다. 실제 로고 SVG나 이미지를 사용하세요. */}
+            <Link href="/" className="flex items-center">
                <div className="flex items-center">
                   <svg className="h-8 w-8 mr-2 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                      {' '}
@@ -25,7 +24,7 @@ const Header: React.FC = () => {
                   </svg>
                   <span className="font-bold text-2xl text-pink-500">APTner</span>
                </div>
-            </div>
+            </Link>
             <nav className="flex space-x-4 items-center">
                {' '}
                {/* items-center 추가 */}
