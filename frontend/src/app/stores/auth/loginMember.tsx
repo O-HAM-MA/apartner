@@ -1,6 +1,6 @@
 import { createContext, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { del } from '@/utils/api';
+import { fetchApi } from '@/utils/api';
 
 type Member = {
    id: number;
@@ -65,8 +65,11 @@ export function useLoginMember() {
    const isLogin = loginMember.id !== 0;
 
    const logout = (callback: () => void) => {
-      del('/api/v1/auth/logout')
-         .then(() => {
+      fetchApi('/api/v1/auth/logout', { method: 'DELETE' })
+         .then(response => {
+            if (!response.ok) {
+               console.error('Logout request failed with status:', response.status);
+            }
             removeLoginMember();
             callback();
          })
