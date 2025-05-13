@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.facility.repository;
 
+import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -55,4 +56,12 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
             Pageable pageable
     );
 
+    // 시설별 이용 횟수
+    @Query("SELECT new com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto(fr.facility.name, COUNT(fr)) "
+            +
+            "FROM FacilityReservation fr " +
+            "WHERE fr.status = 'AGREE' " +
+            "GROUP BY fr.facility.name " +
+            "ORDER BY COUNT(fr) DESC")
+    List<FacilityUsageCountDto> findFacilityUsageCountTop();
 }
