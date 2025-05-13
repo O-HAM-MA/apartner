@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
@@ -14,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ohammer.apartner.domain.user.entity.UserRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
