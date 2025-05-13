@@ -1,7 +1,8 @@
 package com.ohammer.apartner.domain.facility.repository;
 
+import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
-import com.ohammer.apartner.domain.facility.dto.statistics.UserReservationCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -67,12 +68,23 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
     List<FacilityUsageCountDto> findFacilityUsageCountTop();
 
     // 사용자별 이용 횟수
-    @Query("SELECT new com.ohammer.apartner.domain.facility.dto.statistics.UserReservationCountDto(" +
+    @Query("SELECT new com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto(" +
             "u.userName, u.building.buildingNumber, u.unit.unitNumber, COUNT(fr)) " +
             "FROM FacilityReservation fr " +
             "JOIN fr.user u " +
             "WHERE fr.status = 'AGREE' " +
             "GROUP BY u.userName, u.building.buildingNumber, u.unit.unitNumber " +
             "ORDER BY COUNT(fr) DESC")
-    List<UserReservationCountDto> findUserReservationCounts();
+    List<UserUsageCountDto> findUserUsageCounts();
+
+    // 동별 이용 횟수
+    @Query("SELECT new com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto(" +
+            "u.building.buildingNumber, COUNT(fr)) " +
+            "FROM FacilityReservation fr " +
+            "JOIN fr.user u " +
+            "WHERE fr.status = 'AGREE' " +
+            "GROUP BY u.building.buildingNumber " +
+            "ORDER BY COUNT(fr) DESC")
+    List<BuildingUsageCountDto> findBuildingUsageCounts();
+
 }

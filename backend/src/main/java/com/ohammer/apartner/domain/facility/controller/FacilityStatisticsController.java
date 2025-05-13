@@ -1,7 +1,8 @@
 package com.ohammer.apartner.domain.facility.controller;
 
+import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
-import com.ohammer.apartner.domain.facility.dto.statistics.UserReservationCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.service.FacilityStatisticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,13 +29,22 @@ public class FacilityStatisticsController {
         return facilityStatisticsService.getTopFacilityUsage();
     }
 
-    @GetMapping("/user-reservations")
+    @GetMapping("/user-usage")
     @Operation(
             summary = "사용자별 이용 횟수 통계",
             description = "사용자 기준으로 이용 횟수를 집계하여 순위별로 제공합니다."
     )
-    public List<UserReservationCountDto> getUserReservationStats() {
-        return facilityStatisticsService.getUserReservationCounts();
+    public List<UserUsageCountDto> getUserUsageCount() {
+        return facilityStatisticsService.getUserUsageCounts();
+    }
+
+    @GetMapping("/building-usage")
+    @Operation(
+            summary = "동별 이용 횟수 통계",
+            description = "동(건물번호) 기준으로 이용 횟수를 집계하여 제공합니다."
+    )
+    public List<BuildingUsageCountDto> getBuildingUsageCount() {
+        return facilityStatisticsService.getBuildingUsageCounts();
     }
 
 }
