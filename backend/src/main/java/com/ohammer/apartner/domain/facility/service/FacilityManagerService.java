@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.facility.service;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -58,5 +59,29 @@ public class FacilityManagerService {
         );
     }
 
-    
+    // 예약 상태 변경
+    @Transactional
+    public void updateReservationStatus(Long facilityReservationId, String newStatusStr) {
+        FacilityReservation facilityReservation = facilityReservationRepository.findById(facilityReservationId)
+                .orElseThrow(() -> new EntityNotFoundException("예약 정보를 찾을 수 없습니다."));
+
+        if (facilityReservation.getStatus() != FacilityReservation.Status.PENDING) {
+            throw new IllegalStateException("예약 상태가 'PENDING'일 때만 상태를 변경할 수 있습니다.");
+        }
+
+        FacilityReservation.Status newStatus;
+        try {
+            newStatus = FacilityReservation.Status.valueOf(newStatusStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("잘못된 상태 값 입니다: " + newStatusStr);
+        }
+
+        if (newStatus != FacilityReservation.Status.AGREE && newStatus != FacilityReservation.Status.REJECT) {
+            throw new IllegalArgumentException("상태는 AGREE 또는 REJECT만 가능합니다.");
+        }
+
+        facilityReservation.setStatus(newStatus);
+        facilityReservationRepository.save(facilityReservation);
+    }
+
 }

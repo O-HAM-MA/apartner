@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +42,20 @@ public class FacilityManagerController {
         );
 
         return ResponseEntity.ok(result);
+    }
+
+    // 예약 상태 변경
+    @PatchMapping("/reservations/{facilityReservationId}/status")
+    @Operation(
+            summary = "유저들의 예약 상태 변경",
+            description = "유저들의 예약 상태 pending/agree/reject로 변경하기 "
+    )
+    public ResponseEntity<String> changeReservationStatus(
+            @PathVariable(name = "facilityReservationId") Long facilityReservationId,
+            @RequestParam(name = "status") String status
+    ) {
+        facilityManagerService.updateReservationStatus(facilityReservationId, status);
+        return ResponseEntity.ok("예약 상태가 성공적으로 변경되었습니다:" + status);
     }
 
 
