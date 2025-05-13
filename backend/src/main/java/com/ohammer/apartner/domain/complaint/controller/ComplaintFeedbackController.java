@@ -56,4 +56,10 @@ public class ComplaintFeedbackController {
         ComplaintFeedback response = complaintFeedbackService.updateComplaintFeedback(feedbackId,complaintFeedbackRequestDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @DeleteMapping("/delete/{feedbackId}")
+    public ResponseEntity<?> deleteComplaintFeedback(@PathVariable Long feedbackId) {
+        complaintFeedbackService.deleteComplainFeedback(feedbackId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

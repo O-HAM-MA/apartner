@@ -63,4 +63,16 @@ public class ComplaintFeedbackService {
     public ComplaintFeedback findByFeedbackId(Long feedbackId) {
         return complaintFeedbackRepository.findById(feedbackId).orElse(null);
     }
+
+    public void deleteComplainFeedback(Long feedbackId) {
+
+        Long findId = complaintFeedbackRepository.findUserIdById(feedbackId);
+
+        // 작성자와 지우는 시람비교 혹은 관리자인지
+//        userId =
+//        if(findId.equals(userid)){
+//
+//        }
+        complaintFeedbackRepository.deleteById(feedbackId);
+    }
 }
