@@ -1,23 +1,20 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleResponseDto;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
-//import jakarta.transaction.Transactional;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
-import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import com.ohammer.apartner.domain.user.entity.UserRepository;
-
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -50,11 +47,7 @@ public class VehicleService {
                 .status(EntryRecord.Status.PENDING)
                 .build();
 
-
-
         entryRecordRepository.save(entryRecord);
-
-
 
         return VehicleResponseDto.from(vehicle);
     }
@@ -79,14 +72,10 @@ public class VehicleService {
                 .status(EntryRecord.Status.PENDING)
                 .build();
 
-
-
         entryRecordRepository.save(entryRecord);
-
 
         return VehicleResponseDto.fromForeign(vehicle, dto.getPhone());
     }
-
 
 
     public List<VehicleResponseDto> getResidentVehicles() {
@@ -101,14 +90,14 @@ public class VehicleService {
         List<Vehicle> vehicles = vehicleRepository.findByIsForeignTrue();
 
         return vehicles.stream()
-                .map(v -> VehicleResponseDto.fromForeign(v, v.getUser() != null ? v.getUser().getPhone() : v.getPhone()))
+                .map(v -> VehicleResponseDto.fromForeign(v,
+                        v.getUser() != null ? v.getUser().getPhone() : v.getPhone()))
                 .collect(Collectors.toList());
     }
 
 
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getVehicleRegistrationInfo(Boolean isForeign) {
-
 
 //        List<Vehicle> vehicles = vehicleRepository.findByIsForeign(isForeign);
 //        return vehicles.stream()
@@ -127,12 +116,6 @@ public class VehicleService {
                 .map(VehicleRegistrationInfoDto::from)
                 .collect(Collectors.toList());
 
-
-
-
-
-
-
 //        List<Vehicle> vehicles;
 //
 //        if (isForeign == null) {
@@ -144,7 +127,6 @@ public class VehicleService {
 //        return vehicles.stream()
 //                .map(this::toDto)
 //                .collect(Collectors.toList());
-
 
     }
 
@@ -168,12 +150,6 @@ public class VehicleService {
                     .build();
         }
     }
-
-
-
-
-
-
 
 
 }
