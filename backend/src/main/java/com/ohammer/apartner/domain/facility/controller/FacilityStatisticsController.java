@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.facility.controller;
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.TimePeriodUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.service.FacilityStatisticsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,4 +55,11 @@ public class FacilityStatisticsController {
         return facilityStatisticsService.getDayOfWeekUsageCounts();
     }
 
+    @GetMapping("/time-period")
+    @Operation(summary = "시간대별 이용 통계",
+            description = "시간대(오전/오후/저녁/야간) 기준으로 이용 건수를 분석합니다. "
+                    + "시간대 기준::: 오전: 05~12시, 오후: 12~17시, 저녁: 17~23시, 야간: 23~05시")
+    public List<TimePeriodUsageDto> getTimePeriodCount() {
+        return facilityStatisticsService.getTimePeriodUsageCounts();
+    }
 }

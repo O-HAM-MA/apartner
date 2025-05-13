@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.facility.service;
 import com.ohammer.apartner.domain.facility.dto.statistics.BuildingUsageCountDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.DayOfWeekUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto;
+import com.ohammer.apartner.domain.facility.dto.statistics.TimePeriodUsageDto;
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
 import java.util.List;
@@ -59,5 +60,16 @@ public class FacilityStatisticsService {
         };
     }
 
+    // 시간대별 이용 횟수
+    public List<TimePeriodUsageDto> getTimePeriodUsageCounts() {
+        List<Object[]> rawData = facilityReservationRepository.findUsageCountGroupedByTimePeriod();
+
+        return rawData.stream()
+                .map(obj -> new TimePeriodUsageDto(
+                        (String) obj[0],
+                        ((Number) obj[1]).longValue()
+                ))
+                .toList();
+    }
 
 }

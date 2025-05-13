@@ -94,4 +94,22 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
             "GROUP BY FUNCTION('DAYOFWEEK', fr.date)")
     List<Object[]> findUsageCountGroupedByDayOfWeek();
 
+    // 시간대별 이용 횟수
+    @Query(value = """
+            SELECT 
+                CASE 
+                    WHEN HOUR(start_time) BETWEEN 05 AND 11 THEN '오전'
+                    WHEN HOUR(start_time) BETWEEN 12 AND 16 THEN '오후'
+                    WHEN HOUR(start_time) BETWEEN 17 AND 22 THEN '저녁'
+                    ELSE '야간'
+                END AS time_period,
+                COUNT(*) AS cnt
+            FROM facility_reservations
+            WHERE status = 'AGREE'
+            GROUP BY time_period
+            ORDER BY cnt DESC
+            """, nativeQuery = true)
+    List<Object[]> findUsageCountGroupedByTimePeriod();
+
+
 }
