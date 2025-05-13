@@ -53,7 +53,7 @@ spring:
     oauth2:
       client:
         registration:
-          kakao:
+          kakao: # ← 이게 registrationId
             clientId: ON_SECRET
             scope: profile_nickname, profile_image
             client-name: Kakao
@@ -83,6 +83,17 @@ spring:
         - file:${app.upload.temp-dir}
         - file:${app.upload.prod-dir}
         - classpath:/static/
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${spring.mail.username}
+    password: ${spring.mail.password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 logging:
   level:

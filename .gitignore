@@ -84,8 +84,6 @@ coverage/
 .idea/dictionaries/
 .idea/vcs.xml
 
-application-secret.yml
-
 .vscode
 
 # macOS
@@ -113,3 +111,7 @@ __pycache__/
 
 
 /infra
+**/application-secret.yml
+application-secret.yml
+
+**/.cursor/rules

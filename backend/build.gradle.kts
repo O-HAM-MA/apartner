@@ -73,6 +73,11 @@ dependencies {
 
 	// Jsoup 추가
 	implementation("org.jsoup:jsoup:1.17.2")
+
+	// Additional dependencies
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("org.springframework.boot:spring-boot-starter-mail")
 }
 
 // Docker Compose 설정 (정상 작동되는 버전)
