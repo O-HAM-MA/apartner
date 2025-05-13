@@ -2,10 +2,7 @@ package com.ohammer.apartner.domain.vehicle.entity;
 
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
@@ -16,9 +13,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Setter
 public class EntryRecord extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 

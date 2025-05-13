@@ -27,6 +27,8 @@ public class VehicleRegistrationInfoDto {
     private String reason;     // 외부 차량 방문 사유
     private String userPhone;  // 연락처 (거주자는 user에서, 외부인은 직접 입력)
 
+    //private String status;
+
     public static VehicleRegistrationInfoDto from(Vehicle vehicle) {
         boolean isForeign = Boolean.TRUE.equals(vehicle.getIsForeign());
 
@@ -58,6 +60,7 @@ public class VehicleRegistrationInfoDto {
                 .phone(phone)
                 .createdAt(vehicle.getCreatedAt())
                 //.visitPeriod(vehicle.getVisitPeriod()) // visitPeriod 필드 Vehicle 엔티티에 있어야 함
+                //.status(status)
                 .build();
     }
 }
