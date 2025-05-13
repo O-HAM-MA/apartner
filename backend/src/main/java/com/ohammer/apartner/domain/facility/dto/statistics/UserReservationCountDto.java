@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-@Schema(description = "공용시설 사용자별 예약 횟수 DTO")
+@Schema(description = "공용시설 사용자별 이용 횟수 DTO")
 public class UserReservationCountDto {
 
     @Schema(description = "사용자 이름", example = "짱구")

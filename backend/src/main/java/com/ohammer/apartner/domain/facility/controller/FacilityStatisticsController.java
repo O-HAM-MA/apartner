@@ -30,11 +30,11 @@ public class FacilityStatisticsController {
 
     @GetMapping("/user-reservations")
     @Operation(
-            summary = "사용자별 예약 횟수 통계",
-            description = "사용자 기준으로 예약 횟수를 집계하여 순위별로 제공합니다."
+            summary = "사용자별 이용 횟수 통계",
+            description = "사용자 기준으로 이용 횟수를 집계하여 순위별로 제공합니다."
     )
     public List<UserReservationCountDto> getUserReservationStats() {
         return facilityStatisticsService.getUserReservationCounts();
     }
-    
+
 }
