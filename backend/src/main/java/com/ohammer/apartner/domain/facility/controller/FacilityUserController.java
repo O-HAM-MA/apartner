@@ -48,7 +48,7 @@ public class FacilityUserController {
             description = "유저가 등록된 공용시설을 예약하기"
     )
     public ResponseEntity<?> reserveFacility(
-            @RequestParam(name = "userId") Long userId, // 추후 수정
+            @RequestParam(name = "userId", defaultValue = "1") Long userId, // 추후 수정
             @PathVariable(name = "facilityId") Long facilityId,
             @RequestBody FacilityReservationRequestDto request
     ) {
@@ -67,10 +67,10 @@ public class FacilityUserController {
             description = "유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)"
     )
     public ResponseEntity<List<FacilityReservationSummaryDto>> getUserReservations(
-            @RequestParam(name = "userId") Long userId, // 추후 수정
-            @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(name = "facilityId", required = false) Long facilityId,
-            @RequestParam(name = "status", required = false) FacilityReservationStatus status
+            @RequestParam(name = "userId", defaultValue = "1") Long userId, // 추후 수정
+            @RequestParam(name = "date", required = false, defaultValue = "2025-05-15") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(name = "facilityId", required = false, defaultValue = "1") Long facilityId,
+            @RequestParam(name = "status", required = false, defaultValue = "승인 대기") FacilityReservationStatus status
     ) {
         List<FacilityReservationSummaryDto> reservations =
                 facilityUserService.getUserReservationsWithFilter(userId, date, facilityId, status);
@@ -84,7 +84,7 @@ public class FacilityUserController {
     )
     @PatchMapping("/{facilityReservationId}/cancel")
     public ResponseEntity<?> cancelReservation(
-            @RequestParam(name = "userId") Long userId, // 추후 수정
+            @RequestParam(name = "userId", defaultValue = "1") Long userId, // 추후 수정
             @PathVariable(name = "facilityReservationId") Long facilityReservationId
     ) {
         facilityUserService.cancelReservation(userId, facilityReservationId);
