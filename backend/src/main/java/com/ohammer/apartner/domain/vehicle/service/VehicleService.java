@@ -157,6 +157,18 @@ public class VehicleService {
         vehicle.setType(dto.getType());
     }
 
+    @Transactional
+    public void deleteVehicle(Long vehicleId) {
+        // 차량을 찾을 수 없으면 예외 발생
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new RuntimeException("차량을 찾을 수 없습니다."));
+
+        // 차량 삭제
+        entryRecordRepository.deleteAllByVehicle(vehicle);
+        vehicleRepository.delete(vehicle);
+    }
+
+
 
 
 

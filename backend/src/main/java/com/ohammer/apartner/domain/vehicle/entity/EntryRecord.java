@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 public class EntryRecord extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 

@@ -37,6 +37,8 @@ public interface EntryRecordRepository extends JpaRepository<EntryRecord, Long> 
             "WHERE v.isForeign = :isForeign")
     List<EntryRecord> findByVehicleIsForeignWithVehicleAndUser(@Param("isForeign") Boolean isForeign);
 
+    void deleteAllByVehicle(Vehicle vehicle);
+
 
 
 

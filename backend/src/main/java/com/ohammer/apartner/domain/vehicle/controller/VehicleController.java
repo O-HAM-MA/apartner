@@ -4,6 +4,7 @@ package com.ohammer.apartner.domain.vehicle.controller;
 import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.service.VehicleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,10 +59,20 @@ public class VehicleController {
 
 
 
-    @PatchMapping("/{vehicleId}")
+    @PatchMapping("/update/{vehicleId}")
     public void updateVehicle(@PathVariable(value = "vehicleId") Long vehicleId,
                               @RequestBody VehicleUpdateRequestDto dto) {
         vehicleService.updateVehicle(vehicleId, dto);
+    }
+
+    @DeleteMapping("/delete/{vehicleId}")
+    public ResponseEntity<String> deleteVehicle(@PathVariable(value = "vehicleId") Long vehicleId) {
+        try {
+            vehicleService.deleteVehicle(vehicleId);
+            return new ResponseEntity<>("차량이 삭제되었습니다.", HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
     }
 
 
