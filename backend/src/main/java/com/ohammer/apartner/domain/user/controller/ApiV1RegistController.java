@@ -100,6 +100,7 @@ public class ApiV1RegistController {
             String profileImageUrlFromSession = null;
             String sessionSocialId = null;
 
+
             if ("kakao".equals(registerDto.getSocialProvider())) {
                 log.info("카카오 소셜 가입 처리 중: {}", registerDto.getEmail());
                 HttpSession session = request.getSession(false);
