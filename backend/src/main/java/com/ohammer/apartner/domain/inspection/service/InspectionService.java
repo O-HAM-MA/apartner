@@ -9,6 +9,7 @@ import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionTypeRepository;
 import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -92,5 +93,54 @@ public class InspectionService {
     public void deleteInspection(Long id) {
         inspectionRepository.deleteById(id);
     }
+
+
+    //자료 자세히 보기
+    @Transactional(readOnly = true)
+    public Inspection showInspection(Long id) {
+        return inspectionRepository.findById(id).orElseThrow();
+    }
+
+
+    //검사 완료
+    @Transactional
+    public void completeInspection(Long id) {
+        if (!inspectionRepository.existsById(id))
+            throw new RuntimeException("그거 없는댑쇼");
+        Inspection inspection = inspectionRepository.findById(id).get();
+        inspection.setResult(Result.CHECKED);
+
+        inspectionRepository.save(inspection);
+    }
+
+
+    // =========== 여기서 부턴 타입쪽 ===========
+
+    //죄다 조회
+    public List<InspectionType> showAllTypes() {
+        return inspectionTypeRepository.findAll();
+    }
+
+    //추가
+    @Transactional
+    public InspectionType addType(String name) {
+        if (inspectionTypeRepository.findByTypeName(name) != null)
+            throw new RuntimeException("찾으려는 타입이 중복인뎁쇼");
+        InspectionType inspectionType = InspectionType.builder()
+                .typeName(name)
+                .build();
+
+        return inspectionTypeRepository.save(inspectionType);
+    }
+
+    //삭제
+    @Transactional
+    public void removeType(Long id) {
+        InspectionType type = inspectionTypeRepository.findById(id).orElseThrow();
+        inspectionTypeRepository.delete(type);
+    }
+    //굳이 수정까진 필요한가
+
+
 
 }

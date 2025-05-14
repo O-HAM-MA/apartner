@@ -5,15 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class InspectionUpdateDto {
-    private LocalDateTime startAt;
-    private LocalDateTime finishAt;
-    private String detail;
-    private String type;
-    private String result;
+public class InspectionTypeDto {
+    private String name;
 }
