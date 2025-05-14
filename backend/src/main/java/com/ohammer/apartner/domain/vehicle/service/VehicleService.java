@@ -2,10 +2,7 @@ package com.ohammer.apartner.domain.vehicle.service;
 
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
-import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleResponseDto;
+import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 //import jakarta.transaction.Transactional;
@@ -149,6 +146,17 @@ public class VehicleService {
                 .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
                 .collect(Collectors.toList());
     }
+
+
+    @Transactional
+    public void updateVehicle(Long vehicleId, VehicleUpdateRequestDto dto) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new RuntimeException("차량을 찾을 수 없습니다."));
+
+        vehicle.setVehicleNum(dto.getVehicleNum());
+        vehicle.setType(dto.getType());
+    }
+
 
 
 

@@ -1,11 +1,8 @@
 package com.ohammer.apartner.domain.vehicle.controller;
 
 
+import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.service.VehicleService;
-import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -59,6 +56,13 @@ public class VehicleController {
         return ResponseEntity.ok(registrations);
     }
 
+
+
+    @PatchMapping("/{vehicleId}")
+    public void updateVehicle(@PathVariable(value = "vehicleId") Long vehicleId,
+                              @RequestBody VehicleUpdateRequestDto dto) {
+        vehicleService.updateVehicle(vehicleId, dto);
+    }
 
 
 
