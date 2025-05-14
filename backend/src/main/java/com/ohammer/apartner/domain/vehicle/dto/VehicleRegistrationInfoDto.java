@@ -44,7 +44,7 @@ public class VehicleRegistrationInfoDto {
             phone = vehicle.getPhone();
         } else {
             User user = vehicle.getUser();
-            applicantName = user != null ? user.getUserName() : "미등록 사용자";
+            applicantName = user != null ? user.getUserName() : "미등록/탈퇴한 사용자";
             building = user != null && user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : null;
             unit = user != null && user.getUnit() != null ? user.getUnit().getUnitNumber() : null;
             phone = user != null ? user.getPhoneNum() : null;

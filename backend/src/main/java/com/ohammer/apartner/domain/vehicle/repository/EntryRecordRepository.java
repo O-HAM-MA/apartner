@@ -41,6 +41,15 @@ public interface EntryRecordRepository extends JpaRepository<EntryRecord, Long> 
 
 
 
+    @Query("SELECT er.vehicle FROM EntryRecord er WHERE er.status = :status")
+    List<Vehicle> findVehiclesByEntryStatus(@Param("status") EntryRecord.Status status);
+
+    List<EntryRecord> findByStatus(EntryRecord.Status status);
+
+
+
+
+
 
 
 

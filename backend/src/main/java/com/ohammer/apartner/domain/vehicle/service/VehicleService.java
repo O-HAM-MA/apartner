@@ -169,6 +169,17 @@ public class VehicleService {
     }
 
 
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getApprovedVehicles() {
+        List<EntryRecord> approvedRecords = entryRecordRepository.findByStatus(EntryRecord.Status.AGREE);
+
+        return approvedRecords.stream()
+                .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
+                .collect(Collectors.toList());
+    }
+
+
+
 
 
 

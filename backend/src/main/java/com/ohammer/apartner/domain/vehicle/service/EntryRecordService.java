@@ -2,11 +2,17 @@ package com.ohammer.apartner.domain.vehicle.service;
 
 
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordStatusDto;
+import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
+import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
-import jakarta.transaction.Transactional;
+//import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,4 +44,14 @@ public class EntryRecordService {
         record.setStatus(newStatus);
         return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
     }
+
+
+
+
+
+
+
+
+
+
 }

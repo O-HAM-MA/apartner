@@ -76,5 +76,12 @@ public class VehicleController {
     }
 
 
+    @GetMapping("/approved")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getApprovedVehicles() {
+        List<VehicleRegistrationInfoDto> approvedVehicles = vehicleService.getApprovedVehicles();
+        return ResponseEntity.ok(approvedVehicles);
+    }
+
+
 
 }
