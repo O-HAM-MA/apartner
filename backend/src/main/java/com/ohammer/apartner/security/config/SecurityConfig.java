@@ -1,14 +1,13 @@
 package com.ohammer.apartner.security.config;
 
 
+import com.ohammer.apartner.security.OAuth.CustomOAuth2RequestResolver;
+import com.ohammer.apartner.security.OAuth.CustomOAuth2SuccessHandler;
+import com.ohammer.apartner.security.jwt.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.ohammer.apartner.security.jwt.JwtAuthFilter;
-import com.ohammer.apartner.security.OAuth.CustomOAuth2SuccessHandler;
-import com.ohammer.apartner.security.OAuth.CustomOAuth2RequestResolver;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
