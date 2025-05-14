@@ -17,14 +17,27 @@ public interface EntryRecordRepository extends JpaRepository<EntryRecord, Long> 
 
     Optional<EntryRecord> findById(Long id);
 
-    @Query("SELECT er FROM EntryRecord er JOIN FETCH er.vehicle v JOIN FETCH v.user u")
+//    @Query("SELECT er FROM EntryRecord er JOIN FETCH er.vehicle v JOIN FETCH v.user u")
+//    List<EntryRecord> findAllWithVehicleAndUser();
+//
+//    @Query("SELECT er FROM EntryRecord er " +
+//            "JOIN FETCH er.vehicle v " +
+//            "LEFT JOIN FETCH v.user u " +
+//            "WHERE v.isForeign = :isForeign")
+//    List<EntryRecord> findByVehicleIsForeignWithVehicleAndUser(@Param("isForeign") Boolean isForeign);
+
+    @Query("SELECT er FROM EntryRecord er " +
+            "JOIN FETCH er.vehicle v " +
+            "LEFT JOIN FETCH v.user")
     List<EntryRecord> findAllWithVehicleAndUser();
 
     @Query("SELECT er FROM EntryRecord er " +
             "JOIN FETCH er.vehicle v " +
-            "JOIN FETCH v.user u " +
-            "WHERE v.isForeign = :isForeign AND er.status = 'AGREE'")
+            "LEFT JOIN FETCH v.user " +
+            "WHERE v.isForeign = :isForeign")
     List<EntryRecord> findByVehicleIsForeignWithVehicleAndUser(@Param("isForeign") Boolean isForeign);
+
+
 
 
 

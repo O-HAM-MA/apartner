@@ -44,10 +44,14 @@ public class VehicleRegistrationInfoDto {
             phone = vehicle.getPhone();
         } else {
             User user = vehicle.getUser();
-            applicantName = String.valueOf(user.getId()); // 혹은 .toString()
-            building = user.getBuilding().getBuildingNumber();
-            unit = user.getUnit().getUnitNumber();
-            phone = user.getPhoneNum();
+            applicantName = user != null ? user.getUserName() : "미등록 사용자";
+            building = user != null && user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : null;
+            unit = user != null && user.getUnit() != null ? user.getUnit().getUnitNumber() : null;
+            phone = user != null ? user.getPhoneNum() : null;
+//            applicantName = String.valueOf(user.getId()); // 혹은 .toString()
+//            building = user.getBuilding().getBuildingNumber();
+//            unit = user.getUnit().getUnitNumber();
+//            phone = user.getPhoneNum();
         }
 
         return VehicleRegistrationInfoDto.builder()
