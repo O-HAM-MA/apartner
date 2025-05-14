@@ -46,25 +46,27 @@ spring:
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
-    config:
-      import:
-        - classpath:application-secret.yml
-      security:
-        oauth2:
-          client:
-            registration:
-              kakao:
-                clientId: ON_SECRET
-                scope: profile_nickname, profile_image
-                client-name: Kakao
-                authorization-grant-type: authorization_code
-                redirect-uri: "${custom.site.backUrl}/{action}/oauth2/code/{registrationId}"
-            provider:
-              kakao:
-                authorization-uri: https://kauth.kakao.com/oauth/authorize
-                token-uri: https://kauth.kakao.com/oauth/token
-                user-info-uri: https://kapi.kakao.com/v2/user/me
-                user-name-attribute: id
+
+  config:
+    import:
+      - classpath:application-secret.yml
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao: # ← 이게 registrationId
+            clientId: ON_SECRET
+            scope: profile_nickname, profile_image
+            client-name: Kakao
+            authorization-grant-type: authorization_code
+            redirect-uri: "${custom.site.backUrl}/{action}/oauth2/code/{registrationId}"
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
   docker:
     compose:
       file: docker-compose.yml  # 파일 경로 명시
@@ -83,6 +85,17 @@ spring:
         - file:${app.upload.temp-dir}
         - file:${app.upload.prod-dir}
         - classpath:/static/
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${spring.mail.username}
+    password: ${spring.mail.password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 logging:
   level:
