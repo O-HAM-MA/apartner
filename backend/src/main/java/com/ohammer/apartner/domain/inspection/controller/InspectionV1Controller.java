@@ -20,6 +20,7 @@ public class InspectionV1Controller {
     //전체 불러오기
 
     //그냥 여기서 제목만 불러와도 되는게 아닌가
+    //TODO 매니저랑 유저에 대한 컨트롤러 각각 나누기
     @GetMapping("")
     public ResponseEntity<List<Inspection>> showAllInspections() {
         return ResponseEntity.ok(inspectionService.showAllInspections());
