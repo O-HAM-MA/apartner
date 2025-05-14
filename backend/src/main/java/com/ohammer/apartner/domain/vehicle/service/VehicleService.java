@@ -38,7 +38,7 @@ public class VehicleService {
                 .vehicleNum(dto.getVehicleNum())
                 .type(dto.getType())
                 .isForeign(false)
-                .phone(user.getPhone())
+                .phone(user.getPhoneNum())
                 .status(Vehicle.Status.ACTIVE)
                 .build();
 
@@ -101,7 +101,7 @@ public class VehicleService {
         List<Vehicle> vehicles = vehicleRepository.findByIsForeignTrue();
 
         return vehicles.stream()
-                .map(v -> VehicleResponseDto.fromForeign(v, v.getUser() != null ? v.getUser().getPhone() : v.getPhone()))
+                .map(v -> VehicleResponseDto.fromForeign(v, v.getUser() != null ? v.getUser().getPhoneNum() : v.getPhone()))
                 .collect(Collectors.toList());
     }
 
@@ -162,7 +162,7 @@ public class VehicleService {
             return VehicleRegistrationInfoDto.builder()
                     .vehicleNum(vehicle.getVehicleNum())
                     .type(vehicle.getType())
-                    .userPhone(user.getPhone()) // 거주자일 경우 phone은 user에서 가져옴
+                    .userPhone(user.getPhoneNum()) // 거주자일 경우 phone은 user에서 가져옴
                     .buildingName(user.getBuilding().getBuildingNumber())
                     .unitName(user.getUnit().getUnitNumber())
                     .build();

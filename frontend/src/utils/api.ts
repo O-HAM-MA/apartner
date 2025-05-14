@@ -28,11 +28,22 @@ export async function fetchApi(
   // 전체 URL 생성 (상대 경로인 경우에만 BASE_URL 추가)
   const fullUrl = url.startsWith("http") ? url : `${BASE_URL}${url}`;
 
+  // localStorage에서 토큰 가져오기 -> 제거
+  // const token =
+  //   typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   // 기본 옵션
   const defaultOptions: RequestInit = {
-    credentials: "include",
+    credentials: "include", // 쿠키 전송을 위해 유지
     headers: {}, // 초기 헤더는 비워둡니다.
   };
+
+  // 토큰이 있으면 Authorization 헤더 추가 -> 제거
+  // if (token) {
+  //   (defaultOptions.headers as Record<string, string>)[
+  //     "Authorization"
+  //   ] = `Bearer ${token}`;
+  // }
 
   // 요청 본문이 FormData인지 확인
   const isFormData = options.body instanceof FormData;
@@ -51,7 +62,7 @@ export async function fetchApi(
     ...options,
     // 사용자 지정 헤더와 기본 헤더(필요한 경우) 병합
     headers: {
-      ...defaultOptions.headers, // FormData가 아닐 때만 Content-Type 등이 포함됨
+      ...defaultOptions.headers, // 인증 헤더 및 기본 Content-Type 등이 포함됨
       ...options.headers,
     },
   };
@@ -69,15 +80,21 @@ export async function fetchApi(
     clearTimeout(timeoutId);
 
     // 401 에러 처리 (리다이렉트 방지 옵션 확인)
-    if (response.status === 401 && !url.includes("/api/v1/auth/login")) {
-      // 401 발생 시 로그 강화
+    if (response.status === 401) {
+      // 401 발생 시 항상 토큰 삭제 -> 제거
+      // if (typeof window !== "undefined") {
+      //   localStorage.removeItem("token");
+      //   console.warn(
+      //     `[fetchApi DEBUG] Token removed due to 401 Unauthorized on URL: ${url}.`
+      //   );
+      // }
+      // 로그 강화 부분은 유지하거나 필요에 따라 조정 가능
       console.warn(
         `[fetchApi DEBUG] 401 Unauthorized detected for URL: ${url}. PreventRedirect flag is: ${preventRedirectOn401}`
       );
 
-      if (!preventRedirectOn401) {
-        // 옵션이 true가 아닐 때만 리다이렉트
-        // 리다이렉트 직전 로그 추가
+      if (!url.includes("/api/v1/auth/login") && !preventRedirectOn401) {
+        // 옵션이 true가 아닐 때만 리다이렉트 (토큰 삭제는 이미 위에서 처리됨)
         console.warn(
           `[fetchApi DEBUG] !!! Redirecting to /login now !!! due to 401 on ${url}`
         );
@@ -85,10 +102,17 @@ export async function fetchApi(
           window.location.href = "/login";
         }
       } else {
-        // 리다이렉트 방지 시 로그 추가
-        console.info(
-          `[fetchApi DEBUG] Redirect to /login prevented for ${url} because preventRedirectOn401 is true.`
-        );
+        // 로그인 페이지 자체이거나 리다이렉트 방지 시 로그 추가
+        if (url.includes("/api/v1/auth/login")) {
+          console.info(
+            `[fetchApi DEBUG] 401 on login page ${url}. Redirect to /login prevented as it is the login page or redirect is explicitly prevented.`
+          );
+        } else {
+          // preventRedirectOn401 is true and not login page
+          console.info(
+            `[fetchApi DEBUG] Redirect to /login prevented for ${url} because preventRedirectOn401 is true.`
+          );
+        }
       }
     }
 
@@ -110,14 +134,6 @@ export async function fetchApi(
 
         if (userInfoResponse.ok) {
           const userInfo = await userInfoResponse.json();
-          // localStorage에 최신 학원 정보 저장
-          if (typeof window !== "undefined" && userInfo.academyCode) {
-            localStorage.setItem("academyCode", userInfo.academyCode);
-            localStorage.setItem(
-              "academyName",
-              userInfo.academyName || "등록된 학원"
-            );
-          }
         } else {
         }
       } catch (error) {
@@ -153,9 +169,24 @@ export async function fetchJson<T>(
 
   // 응답이 ok가 아니면 에러 발생
   if (!response.ok) {
+    let errorBody = null;
+    try {
+      // 에러 응답 본문을 읽으려고 시도
+      errorBody = await response.text(); // text()로 읽어서 JSON이 아니더라도 확인 가능
+    } catch (e) {
+      console.warn(
+        `[fetchJson] Failed to read error response body for ${url}:`,
+        e
+      );
+    }
+
     // 에러 상태에 따른 처리
     if (response.status === 400 || response.status === 403) {
-      // 클라이언트 에러는 일반 로그로 처리
+      // 클라이언트 에러는 일반 로그로 처리 (상세 내용 포함)
+      console.log(
+        `[fetchJson] Client error ${response.status} for ${url}: ${response.statusText}. Body:`,
+        errorBody
+      );
     } else if (response.status >= 500) {
       // 서버 에러는 경고 로그로 처리
       console.warn(`서버 에러 발생 (${response.status}):`, response.statusText);
@@ -163,7 +194,12 @@ export async function fetchJson<T>(
       // 기타 에러는 info 레벨로 처리
       console.info(`API 요청 실패 (${response.status}):`, response.statusText);
     }
-    throw new Error(`API 요청 실패: ${response.statusText}`);
+    // 에러 메시지에 응답 본문 포함
+    throw new Error(
+      `API 요청 실패: ${response.status} ${response.statusText}${
+        errorBody ? ` - ${errorBody}` : ""
+      }`
+    );
   }
 
   // 응답 텍스트 체크
@@ -188,26 +224,24 @@ export async function fetchJson<T>(
 /**
  * GET 요청용 래퍼 함수
  */
-export function get<T>(
+export const get = async <T>(
   url: string,
   options?: RequestInit,
   preventRedirectOn401: boolean = false
-): Promise<T> {
-  // preventRedirect 추가
+): Promise<T> => {
   // fetchJson 호출 시 preventRedirect 전달
   return fetchJson<T>(url, { ...options, method: "GET" }, preventRedirectOn401);
-}
+};
 
 /**
  * POST 요청용 래퍼 함수
  */
-export function post<T>(
+export const post = async <T>(
   url: string,
-  data: unknown,
+  data?: unknown,
   options?: RequestInit,
   preventRedirectOn401: boolean = false
-): Promise<T> {
-  // data: any -> unknown, preventRedirect 추가
+): Promise<T> => {
   // fetchJson 호출 시 preventRedirect 전달
   return fetchJson<T>(
     url,
@@ -216,24 +250,23 @@ export function post<T>(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...options?.headers,
+        ...(options?.headers || {}),
       },
       body: JSON.stringify(data),
     },
     preventRedirectOn401
   );
-}
+};
 
 /**
  * PUT 요청용 래퍼 함수
  */
-export function put<T>(
+export const put = async <T>(
   url: string,
-  data: unknown,
+  data?: unknown,
   options?: RequestInit,
   preventRedirectOn401: boolean = false
-): Promise<T> {
-  // data: any -> unknown, preventRedirect 추가
+): Promise<T> => {
   // fetchJson 호출 시 preventRedirect 전달
   return fetchJson<T>(
     url,
@@ -242,25 +275,23 @@ export function put<T>(
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...options?.headers,
+        ...(options?.headers || {}),
       },
       body: JSON.stringify(data),
     },
     preventRedirectOn401
   );
-}
+};
 
 /**
  * PATCH 요청용 래퍼 함수
  */
-export function patch<T>(
+export async function patch<T>(
   url: string,
   data: unknown,
   options?: RequestInit,
   preventRedirectOn401: boolean = false
 ): Promise<T> {
-  // data: any -> unknown, preventRedirect 추가
-  // fetchJson 호출 시 preventRedirect 전달
   return fetchJson<T>(
     url,
     {
@@ -268,7 +299,7 @@ export function patch<T>(
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...options?.headers,
+        ...(options?.headers || {}),
       },
       body: JSON.stringify(data),
     },
@@ -279,19 +310,18 @@ export function patch<T>(
 /**
  * DELETE 요청용 래퍼 함수
  */
-export function del<T>(
+export const del = async <T>(
   url: string,
   options?: RequestInit,
   preventRedirectOn401: boolean = false
-): Promise<T> {
-  // preventRedirect 추가
+): Promise<T> => {
   // fetchJson 호출 시 preventRedirect 전달
   return fetchJson<T>(
     url,
     { ...options, method: "DELETE" },
     preventRedirectOn401
   );
-}
+};
 
 //import { ImageUploadResponse } from '../types/image'
 

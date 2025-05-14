@@ -3,21 +3,23 @@ package com.ohammer.apartner.domain.user.entity;
 import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.entity.Building;
 import com.ohammer.apartner.domain.apartment.entity.Unit;
+import com.ohammer.apartner.domain.image.entity.Image;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class User extends BaseEntity {
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id")
@@ -34,9 +36,14 @@ public class User extends BaseEntity {
     @Column(name = "grade_id")
     private Long gradeId;
 
+    @Column(length = 50)
+    private String socialProvider;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
-    private Role role;
+    @Column(name = "role", nullable = false)
+    private Set<Role> roles = new HashSet<>();
 
     @Column(name = "password", length = 255)
     private String password;
@@ -44,14 +51,31 @@ public class User extends BaseEntity {
     @Column(name = "email", length = 255)
     private String email;
 
-    @Column(name = "phone", length = 255)
-    private String phone;
+    @Column(name = "phone_num", length = 255)
+    private String phoneNum;
 
-    @Column(name = "status", length = 255)
-    private String status;
+    @Column(name = "user_name", length = 255)
+    private String userName;
 
-    // Enum for role
-    public enum Role {
-        USER, MANAGER, ADMIN
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status status; // ENUM('active', 'inactive', 'pending')
+
+    @Column(length = 512)
+    private String refreshToken; // JWT 리프레시 토큰
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "profile_image_id", referencedColumnName = "id")
+    private Image profileImage; // 프로필 이미지 (Image 엔티티와 연결)
+
+
+    
+    public User(Long id, String username, String password, Status status, Set<Role> roles) {
+        this.setId(id); // BaseEntity의 public setter setId()를 통해 id 값 설정
+        this.userName = username; // 파라미터 변수명 오타 수정 (userName -> username)
+        this.password = password;
+        this.status = status;
+        this.roles = roles;
     }
+
 } 

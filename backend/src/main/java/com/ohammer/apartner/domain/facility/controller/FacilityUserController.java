@@ -4,8 +4,9 @@ import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationReque
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSummaryDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityResponseDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
-import com.ohammer.apartner.domain.facility.entity.FacilityReservationStatus;
 import com.ohammer.apartner.domain.facility.service.FacilityUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +24,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/facilities")
+@Tag(name = "공용시설 예약")
 public class FacilityUserController {
 
     private final FacilityUserService facilityUserService;
 
     // 시설 목록 보기
     @GetMapping
+    @Operation(
+            summary = "공용시설 목록 조회",
+            description = "등록된 공용시설 목록 조희"
+    )
     public ResponseEntity<List<FacilityResponseDto>> getAllFacilities() {
         List<FacilityResponseDto> facilities = facilityUserService.getAllFacilities();
         return ResponseEntity.ok(facilities);
@@ -36,8 +42,12 @@ public class FacilityUserController {
 
     // 예약하기
     @PostMapping("/{facilityId}/reserve")
+    @Operation(
+            summary = "유저 공용시설 예약하기",
+            description = "유저가 등록된 공용시설을 예약하기"
+    )
     public ResponseEntity<?> reserveFacility(
-            @RequestParam(name = "userId") Long userId, // 추후 수정
+            @RequestParam(name = "userId", defaultValue = "1") Long userId, // 추후 수정
             @PathVariable(name = "facilityId") Long facilityId,
             @RequestBody FacilityReservationRequestDto request
     ) {
@@ -51,11 +61,15 @@ public class FacilityUserController {
 
     // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)
     @GetMapping("/reservations")
+    @Operation(
+            summary = "유저 예약 조회",
+            description = "유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)"
+    )
     public ResponseEntity<List<FacilityReservationSummaryDto>> getUserReservations(
             @RequestParam(name = "userId") Long userId, // 추후 수정
             @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(name = "facilityId", required = false) Long facilityId,
-            @RequestParam(name = "status", required = false) FacilityReservationStatus status
+            @RequestParam(name = "status", required = false) FacilityReservation.Status status
     ) {
         List<FacilityReservationSummaryDto> reservations =
                 facilityUserService.getUserReservationsWithFilter(userId, date, facilityId, status);
@@ -63,9 +77,13 @@ public class FacilityUserController {
     }
 
     // 내 예약 취소
+    @Operation(
+            summary = "유저 예약 취소",
+            description = "유저가 예약한 공용시설을 예약 취소하기"
+    )
     @PatchMapping("/{facilityReservationId}/cancel")
     public ResponseEntity<?> cancelReservation(
-            @RequestParam(name = "userId") Long userId, // 추후 수정
+            @RequestParam(name = "userId", defaultValue = "1") Long userId, // 추후 수정
             @PathVariable(name = "facilityReservationId") Long facilityReservationId
     ) {
         facilityUserService.cancelReservation(userId, facilityReservationId);
