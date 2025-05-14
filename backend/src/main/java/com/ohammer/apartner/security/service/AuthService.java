@@ -57,11 +57,15 @@ public class AuthService {
         return userRepository.findById(userId);
     }
 
+    // 소셜 로그인 정보로 사용자 찾기
+    public Optional<User> findBySocialProviderAndSocialId(String socialProvider, String socialId) {
+        return userRepository.findBySocialProviderAndSocialId(socialProvider, socialId);
+    }
+
     public String genAccessToken(User user) {
         return jwtTokenizer.createAccessToken(
                 user.getId(),
-                user.getUserName(),
-                user.getPhoneNum(),
+                user.getEmail(),
                 user.getStatus(),
                 user.getRoles()
         );
@@ -70,8 +74,7 @@ public class AuthService {
     public String genRefreshToken(User user) {
         return jwtTokenizer.createRefreshToken(
                 user.getId(),
-                user.getUserName(),
-                user.getPhoneNum(),
+                user.getEmail(),
                 user.getStatus(),
                 user.getRoles()
         );
@@ -85,10 +88,10 @@ public class AuthService {
 
     //소셜로그인에 가입한 유저를 새로 만들기
     @Transactional
-    public User join(String username, String password, String profileImgUrl, String providerType) {
+    public User join(String username, String password, String profileImgUrl, String providerType,String socialId) {
 
-        if (userRepository.existsByUserName(username)) {
-            throw new RuntimeException("해당 username은 이미 사용중입니다.");
+        if (userRepository.existsBySocialId(socialId)) {
+            throw new RuntimeException("해당 socialId은 이미 사용중입니다.");
         }
 
         Date currentDate = new Date();
@@ -97,7 +100,7 @@ public class AuthService {
         String formattedDateTime = dateFormat.format(currentDate);
         //나중에 프사 추가 하십셔
         User user = User.builder()
-                .userName(username)
+        .userName(username)
                 .password(password)
                 .socialProvider(providerType)
                 .roles(new HashSet<>(Set.of(Role.USER)))
@@ -234,8 +237,8 @@ public class AuthService {
     }
 
     @Transactional
-    public User modifyOrJoin(String username, String profileImgUrl, String providerType) {
-        User user = userRepository.findByUserName(username).orElse(null);
+    public User modifyOrJoin(String username, String profileImgUrl, String providerType, String socialId) {
+        User user = userRepository.findBySocialProviderAndSocialId(providerType, socialId).orElse(null);
 
         //만약에 있다면 수정
         if (user != null) {
@@ -246,6 +249,6 @@ public class AuthService {
         //핸드폰 번호는 없다
         //소셜로그인계정으로 로그인시 아이디,비밀번호를 까먹었다면 해당 소셜 서비스에서 바꾸는게 나을듯
         //없으면 참가
-        return join(username, "", profileImgUrl, providerType);
+        return join(username, "", profileImgUrl, providerType, socialId);
     }
 }
