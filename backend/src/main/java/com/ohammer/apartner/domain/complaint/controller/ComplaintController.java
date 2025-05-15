@@ -86,8 +86,8 @@ public class ComplaintController {
 
     @DeleteMapping("/delete/{complainId}/{userId}")
     @Operation(
-            summary = "유저의 민원을 수정하는 기능",
-            description = "유저가 입력한 정보를 기반으로 민원을 수정하는 기능",
+            summary = "유저의 민원을 삭제하는 기능",
+            description = "선택한 민원을 삭제하는 기능",
             tags = "민원 관리 컨트롤러"
     )
     public ResponseEntity<?> deleteComplaint(@PathVariable Long complainId, @PathVariable Long userId){
