@@ -1,0 +1,36 @@
+package com.ohammer.apartner.domain.opinion.controller;
+
+import com.ohammer.apartner.domain.opinion.dto.request.CreateManagerOpinionRequestDto;
+import com.ohammer.apartner.domain.opinion.dto.response.AllManagerOpinionResponseDto;
+import com.ohammer.apartner.domain.opinion.entity.Opinion;
+import com.ohammer.apartner.domain.opinion.service.OpinionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/v1/opinion")
+public class OpinionController {
+
+    private final OpinionService opinionService;
+
+    @PostMapping("/{userId}/manager")
+    public ResponseEntity<?> addManagerOpinion(@PathVariable Long userId, @RequestBody CreateManagerOpinionRequestDto requestDto) {
+
+        Opinion response = opinionService.createManagerOpinion(userId, requestDto);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/manager")
+    public ResponseEntity<?> getManagerOpinion() {
+
+        List<AllManagerOpinionResponseDto> response = opinionService.getAllManagerOpinion();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+}
