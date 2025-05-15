@@ -37,7 +37,7 @@ public class VehicleService {
                 .type(dto.getType())
                 .isForeign(false)
                 .phone(user.getPhoneNum())
-                .status(Vehicle.Status.ACTIVE)
+                .status(Vehicle.Status.INACTIVE)
                 .build();
 
         vehicleRepository.save(vehicle);
@@ -64,7 +64,7 @@ public class VehicleService {
                 .vehicleNum(dto.getVehicleNum())
                 .type(dto.getType())
                 .isForeign(true)
-                .status(Vehicle.Status.ACTIVE)
+                .status(Vehicle.Status.INACTIVE)
                 .phone(dto.getPhone())
                 .reason(dto.getReason())
                 .build();
@@ -177,6 +177,20 @@ public class VehicleService {
                 .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
                 .collect(Collectors.toList());
     }
+
+    public Vehicle findById(Long vehicleId) {
+        return vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 차량이 존재하지 않습니다."));
+    }
+
+
+    public Vehicle save(Vehicle vehicle) {
+        return vehicleRepository.save(vehicle);
+    }
+
+
+
+
 
 
 

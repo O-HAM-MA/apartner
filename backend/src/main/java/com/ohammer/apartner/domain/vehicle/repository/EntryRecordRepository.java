@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.vehicle.repository;
 
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -45,6 +46,24 @@ public interface EntryRecordRepository extends JpaRepository<EntryRecord, Long> 
     List<Vehicle> findVehiclesByEntryStatus(@Param("status") EntryRecord.Status status);
 
     List<EntryRecord> findByStatus(EntryRecord.Status status);
+
+//.findTopByVehicleIdAndExitTimeIsNullOrderByEntryTimeDesc
+    @EntityGraph(attributePaths = {"vehicle"})
+    Optional<EntryRecord> findTopByVehicleIdAndExitTimeIsNullOrderByEntryTimeDesc(Long vehicleId);
+    List<EntryRecord> findByVehicleIdOrderByEntryTimeDesc(Long vehicleId);
+
+    // exitTime조건 없이 최신 하나 가져오기
+    Optional<EntryRecord> findTopByVehicleIdOrderByEntryTimeDesc(Long vehicleId);
+
+    Optional<EntryRecord> findTopByVehicleIdAndStatusOrderByCreatedAtDesc(Long vehicleId, EntryRecord.Status status);
+
+    Optional<EntryRecord> findTopByVehicleIdOrderByCreatedAtDesc(Long vehicleId);
+
+
+    Optional<EntryRecord> findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(Long vehicleId, EntryRecord.Status status);
+
+    Optional<EntryRecord> findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByEntryTimeDesc(Long vehicleId, EntryRecord.Status status);
+
 
 
 

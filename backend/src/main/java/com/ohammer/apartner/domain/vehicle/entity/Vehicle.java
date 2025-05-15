@@ -5,6 +5,9 @@ import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "vehicles")
 @Getter
@@ -42,4 +45,9 @@ public class Vehicle extends BaseEntity {
 
     @Column(name = "phone")
     private String phone; // 외부 차량일 경우
+
+    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL)
+    private List<EntryRecord> entryRecords = new ArrayList<>();
+
+
 } 
