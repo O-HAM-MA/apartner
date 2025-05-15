@@ -51,14 +51,19 @@ public class ComplaintFeedbackController {
             description = "민원에 대한 피드백을 수정하는 기능",
             tags = "민원 피드백 관리 컨트롤러"
     )
-    public ResponseEntity<?> updateComplaintFeedback(@PathVariable Long feedbackId, @RequestBody CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) {
+    public ResponseEntity<?> updateComplaintFeedback(@PathVariable Long feedbackId, @RequestBody CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws Exception {
 
         ComplaintFeedback response = complaintFeedbackService.updateComplaintFeedback(feedbackId,complaintFeedbackRequestDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{feedbackId}")
-    public ResponseEntity<?> deleteComplaintFeedback(@PathVariable Long feedbackId) {
+    @Operation(
+            summary = "민원 피드백을 삭제하는 기능",
+            description = "민원에 대한 피드백을 삭제하는 기능",
+            tags = "민원 피드백 관리 컨트롤러"
+    )
+    public ResponseEntity<?> deleteComplaintFeedback(@PathVariable Long feedbackId) throws Exception {
         complaintFeedbackService.deleteComplainFeedback(feedbackId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
