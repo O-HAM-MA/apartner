@@ -4,16 +4,8 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import {
-  MessageCircle,
-  ThumbsUp,
-  ArrowRight,
-  Menu,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { MessageCircle, ThumbsUp, ArrowRight, Menu } from "lucide-react";
 import PhotoGallery from "@/components/photo-gallery";
 import MobileMenu from "@/components/mobile-menu";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMember 훅 import
@@ -27,7 +19,6 @@ import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMemb
 export default function Home() {
   const { isLogin, loginMember } = useGlobalLoginMember(); // 로그인 정보 가져오기
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // 알림 기능 관련 코드 주석 처리
   // const { addNotification } = useNotifications()
@@ -60,10 +51,6 @@ export default function Home() {
     }
   }, [mounted, addNotification])
   */
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -129,23 +116,6 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {mounted && (
-                  <>
-                    {/* 알림 벨 컴포넌트 주석 처리 */}
-                    {/* <NotificationBell /> */}
-                    <button
-                      onClick={toggleTheme}
-                      className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-pink-200 dark:hover:bg-pink-800/50 transition-colors"
-                      aria-label="Toggle theme"
-                    >
-                      {theme === "dark" ? (
-                        <Sun className="w-5 h-5" />
-                      ) : (
-                        <Moon className="w-5 h-5" />
-                      )}
-                    </button>
-                  </>
-                )}
                 <Link href="/udash">
                   <Button className="bg-black hover:bg-black/80 text-white dark:bg-white dark:text-black dark:hover:bg-white/80">
                     대시보드 가기
