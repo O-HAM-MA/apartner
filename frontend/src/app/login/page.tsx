@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGlobalLoginMember } from '@/app/stores/auth/loginMember';
+import { useGlobalLoginMember } from '@/auth/loginMember';
 import { post } from '@/utils/api';
 
 type LoginResponse = {
