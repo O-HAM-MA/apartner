@@ -36,7 +36,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       };
 
       checkLoginStatus();
-   }, [setLoginMember, setNoLoginMember]);
+   }, []);
 
    if (isLoginMemberPending) {
       return (

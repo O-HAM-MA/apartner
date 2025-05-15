@@ -33,13 +33,15 @@ public class JwtTokenizer {
     }
 
     // 내부 토큰 생성 로직
-    private String createToken(Long id, String userName, String phoneNum, Status status // Status import 필요
+    private String createToken(Long id, String email, Status status // Status import 필요
     , Long expire, byte[] secretKey, Set<Role> roles) { // Role import 필요
 
-        Claims claims = Jwts.claims().setSubject(userName); // Subject: userName
+        Claims claims = Jwts.claims().setSubject(email); // Subject: email
         claims.put("status", status);
         claims.put("userId", id);
         claims.put("roles", roles); // 사용자 권한
+        // email을 넣었으니 phoneNum도 claims에 추가해줄 수 있음 (선택 사항)
+        // claims.put("phoneNum", phoneNum);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -50,13 +52,13 @@ public class JwtTokenizer {
     }
 
     // AccessToken 생성
-    public String createAccessToken(Long id, String userName, String phoneNum, Status status, Set<Role> roles) {
-        return createToken(id, userName, phoneNum, status, ACCESS_TOKEN_EXPIRE_COUNT, accessSecret, roles);
+    public String createAccessToken(Long id, String email, Status status, Set<Role> roles) {
+        return createToken(id, email, status, ACCESS_TOKEN_EXPIRE_COUNT, accessSecret, roles);
     }
 
     // RefreshToken 생성
-    public String createRefreshToken(Long id, String userName, String phoneNum, Status status, Set<Role> roles) {
-        return createToken(id, userName, phoneNum, status, REFRESH_TOKEN_EXPIRE_COUNT, refreshSecret, roles);
+    public String createRefreshToken(Long id, String email, Status status, Set<Role> roles) {
+        return createToken(id, email, status, REFRESH_TOKEN_EXPIRE_COUNT, refreshSecret, roles);
     }
 
     // JWT 서명 키 생성

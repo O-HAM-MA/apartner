@@ -12,6 +12,7 @@ import com.ohammer.apartner.security.jwt.JwtTokenizer;
 import com.ohammer.apartner.security.service.AuthService;
 import com.ohammer.apartner.domain.user.service.UserRegistService;
 import com.ohammer.apartner.domain.image.entity.Image;
+import com.ohammer.apartner.domain.apartment.service.ApartmentService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
@@ -19,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.Optional;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,7 @@ public class ApiV1AuthController {
     private final CustomRequest customRequest;
     private final JwtTokenizer jwtTokenizer;
     private final UserRegistService userRegistService; // UserRegistService 주입
+    private final ApartmentService apartmentService;
 
     //테스트용이라서 배포 전에 삭제할꺼임
     @GetMapping("/home")
@@ -236,4 +239,5 @@ public class ApiV1AuthController {
         return ResponseEntity.ok("로그아웃 완료");
     }
 
+ 
 }

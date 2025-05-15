@@ -5,6 +5,7 @@ import com.ohammer.apartner.security.jwt.JwtTokenizer;
 import com.ohammer.apartner.security.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.Cookie;
 
 
 //응답, 요청, 쿠키, 세션등을 다룬다
@@ -30,6 +34,7 @@ public class CustomRequest {
     private final HttpServletRequest req;
     private final HttpServletResponse resp;
     private final AuthService authService;
+    private static final Logger log = LoggerFactory.getLogger(CustomRequest.class);
 
     //로그인 처리를 위하여 SecurityContextHolder에 유저를 넣음
     public void setLogin(User member) {
@@ -37,6 +42,7 @@ public class CustomRequest {
         UserDetails user = new SecurityUser(
                 member.getId(),
                 member.getUserName(),
+                member.getEmail(),
                 "",
                 member.getStatus(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + member.getStatus().getValue().toUpperCase()))
@@ -76,6 +82,7 @@ public class CustomRequest {
                    return new User(
                            securityUser.getId(),
                            securityUser.getUsername(),
+                           securityUser.getEmail(),
                            securityUser.getPassword(), // SecurityUser 생성 시 "" 로 설정됨
                            securityUser.getStatus(),
                            roles);
@@ -126,7 +133,7 @@ public class CustomRequest {
         resp.setHeader(name, value);
     }
 
-    //헤서 조회
+    //헤더 조회
     public String getHeader(String name) {
         return req.getHeader(name);
     }
@@ -141,16 +148,71 @@ public class CustomRequest {
 //    }
 
     //인증 쿠키 만들기
-    public String makeAuthCookies(User user) {
-        //대충 서비스에서 토큰을 생성하는 메서드를 생성
+    public void makeAuthCookies(User user) {
+        log.info("[makeAuthCookies] Creating JWT cookies for user: {}, ID: {}", user.getEmail(), user.getId());
+        
+        // 기존 인증 쿠키가 있으면 제거
+        Cookie[] cookies = req.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("accessToken".equals(cookie.getName()) || "refreshToken".equals(cookie.getName())) {
+                    cookie.setValue("");
+                    cookie.setPath("/");
+                    cookie.setMaxAge(0);
+                    resp.addCookie(cookie);
+                    log.info("[makeAuthCookies] Removed existing cookie: {}", cookie.getName());
+                }
+            }
+        }
+        
+        // JWT 토큰 발급 및 쿠키에 저장
         String accessToken = authService.genAccessToken(user);
         String refreshToken = authService.genRefreshToken(user);
-        authService.addRefreshToken(user, refreshToken);
-
-        //api키는 없이 토큰만 있다고 칩시다
-        setCookie("refreshToken", refreshToken, JwtTokenizer.REFRESH_TOKEN_EXPIRE_COUNT);
+        authService.addRefreshToken(user, refreshToken); // 리프레시 토큰 DB에 저장
+        
+        // accessToken 쿠키 설정
         setCookie("accessToken", accessToken, JwtTokenizer.ACCESS_TOKEN_EXPIRE_COUNT);
+        setCookie("refreshToken", refreshToken, JwtTokenizer.REFRESH_TOKEN_EXPIRE_COUNT);
+        
+        log.info("[makeAuthCookies] JWT cookies created successfully for user: {}", user.getEmail());
+    }
 
-        return accessToken;
+    //세션에 데이터 저장
+    public void setSessionAttribute(String name, Object value) {
+        HttpSession session = req.getSession(true);
+        session.setAttribute(name, value);
+        log.info("[Session] Attribute set: {}", name);
+    }
+    
+    //세션에서 데이터 조회
+    @SuppressWarnings("unchecked")
+    public <T> T getSessionAttribute(String name) {
+        HttpSession session = req.getSession(false);
+        if (session == null) {
+            log.info("[Session] No session exists when trying to get attribute: {}", name);
+            return null;
+        }
+        
+        Object value = session.getAttribute(name);
+        log.info("[Session] Retrieved attribute: {}, exists: {}", name, value != null);
+        return (T) value;
+    }
+    
+    //세션에서 데이터 삭제
+    public void removeSessionAttribute(String name) {
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            session.removeAttribute(name);
+            log.info("[Session] Removed attribute: {}", name);
+        }
+    }
+    
+    //세션 무효화
+    public void invalidateSession() {
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            session.invalidate();
+            log.info("[Session] Session invalidated");
+        }
     }
 }

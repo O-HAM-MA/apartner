@@ -2,11 +2,11 @@ server:
   port: 8090
   servlet:
     session:
-      persistent: false    # 세션 지속성 비활성화
-      store-dir: /tmp      # 임시 디렉토리 지정 (필요시)
+      persistent: false # 세션 지속성 비활성화
+      store-dir: /tmp # 임시 디렉토리 지정 (필요시)
       cookie:
-        secure: false      # HTTPS 사용 여부에 따라 설정
-        http-only: true    # 자바스크립트에서 쿠키 접근 방지
+        secure: false # HTTPS 사용 여부에 따라 설정
+        http-only: true # 자바스크립트에서 쿠키 접근 방지
 
 spring:
   main:
@@ -19,8 +19,8 @@ spring:
       max-request-size: 5MB
       enabled: true
   session:
-    store-type: none       # 기본 세션 저장소 사용 (in-memory)
-    timeout: 1800          # 세션 타임아웃 30분
+    store-type: none # 기본 세션 저장소 사용 (in-memory)
+    timeout: 1800 # 세션 타임아웃 30분
   output:
     ansi:
       enabled: ALWAYS
@@ -54,9 +54,9 @@ spring:
     oauth2:
       client:
         registration:
-          kakao: # ← 이게 registrationId
+          kakao:
             clientId: ON_SECRET
-            scope: profile_nickname, profile_image
+            scope: profile_nickname,profile_image
             client-name: Kakao
             authorization-grant-type: authorization_code
             redirect-uri: "${custom.site.backUrl}/{action}/oauth2/code/{registrationId}"
@@ -69,7 +69,7 @@ spring:
 
   docker:
     compose:
-      file: docker-compose.yml  # 파일 경로 명시
+      file: docker-compose.yml # 파일 경로 명시
       lifecycle-management: start-and-stop # Docker Compose 라이프사이클 관리 활성화
       enabled: true
       skip-in-tests: false # 테스트에서도 Docker Compose 실행
@@ -105,6 +105,8 @@ logging:
     org.hibernate.type.descriptor.sql: trace
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
+    com.ohammer.apartner.security.OAuth.CustomOAuth2SuccessHandler: DEBUG
+    org.springframework.security.oauth2: DEBUG
 
 custom:
   dev:
@@ -139,8 +141,3 @@ app:
   upload:
     temp-dir: ${user.dir}/uploads/temp
     prod-dir: ${user.dir}/uploads/prodImg
-
-
-
-
- 

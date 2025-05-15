@@ -53,8 +53,16 @@ public enum UserErrorCode {
     @Schema(description = "ADMIN 접근 권한이 없습니다")
     FORBIDDEN("접근 권한이 없습니다.", HttpStatus.UNAUTHORIZED),
 
+    @Schema(description = "비밀번호가 제공되지 않았습니다.")
+    PASSWORD_NOT_PROVIDED("비밀번호가 제공되지 않았습니다.", HttpStatus.BAD_REQUEST),
+
+
     @Schema(description = "인증되지 않은 사용자")
     UNAUTHORIZED("로그인이 필요합니다.", HttpStatus.UNAUTHORIZED);
+
+
+
+
 
 
     private final String message;
