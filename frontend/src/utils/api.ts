@@ -13,6 +13,9 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
  */
 const API_TIMEOUT = Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000;
 
+let myInfosFetchCount = 0; // myInfos 호출 시도 횟수
+const MAX_MYINFOS_FETCH_ATTEMPTS = 3; // 최대 시도 횟수
+
 /**
  * 기본 fetch 함수 래퍼
  * @param url API 엔드포인트 URL
@@ -120,24 +123,41 @@ export async function fetchApi(
     if (
       response.ok &&
       !url.includes("/api/v1/myInfos") &&
-      !url.includes("/api/v1/auth/logout") // 로그아웃 URL 제외 조건 추가
+      !url.includes("/api/v1/auth/logout") && // 로그아웃 URL 제외 조건 추가
+      !url.includes("/api/v1/auth/me") // me API도 제외 조건 추가
     ) {
-      try {
-        // 사용자 정보 갱신
-        const userInfoResponse = await fetchApi(
-          `/api/v1/myInfos`,
-          {
-            credentials: "include",
-          },
-          true
-        );
+      if (myInfosFetchCount < MAX_MYINFOS_FETCH_ATTEMPTS) {
+        // 최대 시도 횟수 체크
+        try {
+          // 사용자 정보 갱신
+          const userInfoResponse = await fetchApi(
+            `/api/v1/myInfos`,
+            {
+              credentials: "include",
+            },
+            true
+          );
 
-        if (userInfoResponse.ok) {
-          const userInfo = await userInfoResponse.json();
-        } else {
+          if (userInfoResponse.ok) {
+            const userInfo = await userInfoResponse.json();
+            myInfosFetchCount = 0; // 성공 시 카운터 초기화
+          } else {
+            myInfosFetchCount++; // 실패 시 카운터 증가
+            console.warn(
+              `[fetchApi] Internal myInfos update failed (attempt ${myInfosFetchCount}/${MAX_MYINFOS_FETCH_ATTEMPTS}). Status: ${userInfoResponse.status}`
+            );
+          }
+        } catch (error) {
+          myInfosFetchCount++; // 예외 발생 시 카운터 증가
+          console.error(
+            `[fetchApi] Internal myInfos update failed (attempt ${myInfosFetchCount}/${MAX_MYINFOS_FETCH_ATTEMPTS}):`,
+            error
+          );
         }
-      } catch (error) {
-        console.error("[fetchApi] Internal myInfos update failed:", error);
+      } else {
+        console.warn(
+          `[fetchApi] Internal myInfos update skipped as it has failed ${MAX_MYINFOS_FETCH_ATTEMPTS} times.`
+        );
       }
     }
 

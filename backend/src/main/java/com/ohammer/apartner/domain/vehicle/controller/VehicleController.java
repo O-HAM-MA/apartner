@@ -1,12 +1,10 @@
 package com.ohammer.apartner.domain.vehicle.controller;
 
 
+import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.service.VehicleService;
-import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +49,38 @@ public class VehicleController {
         return ResponseEntity.ok(registrations);
     }
 
+    @GetMapping("/registrationsWithStatus")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getRegistrations(
+            @RequestParam(value = "isForeign", required = false) Boolean isForeign
+    ) {
+        List<VehicleRegistrationInfoDto> registrations = vehicleService.getVehicleRegistrationInfo(isForeign);
+        return ResponseEntity.ok(registrations);
+    }
+
+
+
+    @PatchMapping("/update/{vehicleId}")
+    public void updateVehicle(@PathVariable(value = "vehicleId") Long vehicleId,
+                              @RequestBody VehicleUpdateRequestDto dto) {
+        vehicleService.updateVehicle(vehicleId, dto);
+    }
+
+    @DeleteMapping("/delete/{vehicleId}")
+    public ResponseEntity<String> deleteVehicle(@PathVariable(value = "vehicleId") Long vehicleId) {
+        try {
+            vehicleService.deleteVehicle(vehicleId);
+            return new ResponseEntity<>("차량이 삭제되었습니다.", HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+    @GetMapping("/approved")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getApprovedVehicles() {
+        List<VehicleRegistrationInfoDto> approvedVehicles = vehicleService.getApprovedVehicles();
+        return ResponseEntity.ok(approvedVehicles);
+    }
 
 
 

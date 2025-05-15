@@ -25,14 +25,14 @@ public class SecurityUtil {
     }
 
     /**
-     * 현재 로그인한 사용자의 username 반환
+     * 현재 로그인한 사용자의 email 반환
      */
-    public static String getCurrentUsername() {
+    public static String getCurrentEmail() {
         if (!isLoggedIn()) return null;
         Object principal = getAuthentication().getPrincipal();
-        // CustomUserDetailsService.CustomUserDetails 또는 기타 principal에서 username 추출
+        // CustomUserDetailsService.CustomUserDetails 또는 기타 principal에서 email 추출
         if (principal instanceof CustomUserDetailsService.CustomUserDetails) {
-            return ((CustomUserDetailsService.CustomUserDetails) principal).getUsername();
+            return ((CustomUserDetailsService.CustomUserDetails) principal).getEmail();
         }
         return principal.toString();
     }
