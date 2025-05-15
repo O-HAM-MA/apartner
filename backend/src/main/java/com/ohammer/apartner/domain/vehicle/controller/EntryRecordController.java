@@ -31,7 +31,8 @@ public class EntryRecordController {
     // 🚗 입차
     @PostMapping("/enter")
     public ResponseEntity<EntryRecordResponseDto> enter(@RequestBody EntryRecordRequestDto dto) {
-        return ResponseEntity.ok(entryRecordService.enterVehicle(dto.getVehicleId()));
+
+        return ResponseEntity.ok(entryRecordService.enterVehicle(dto));
     }
 
     // 🚙 출차

@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
 
+import com.ohammer.apartner.domain.vehicle.dto.EntryRecordRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordResponseDto;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordStatusDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
@@ -51,12 +52,20 @@ public class EntryRecordService {
 
 
     // 🚗 입차
-    public EntryRecordResponseDto enterVehicle(Long vehicleId) {
-        Vehicle vehicle = vehicleService.findById(vehicleId);
+    public EntryRecordResponseDto enterVehicle(EntryRecordRequestDto dto) {
+        Vehicle vehicle = vehicleService.findById(dto.getVehicleId());
+
+        // 1) 외부인이라면 제출된 전화번호 검증
+        if (Boolean.TRUE.equals(vehicle.getIsForeign())) {
+            String registeredPhone = vehicle.getPhone();
+            if (dto.getPhone() == null || !registeredPhone.equals(dto.getPhone())) {
+                throw new IllegalArgumentException("등록된 전화번호와 일치하지 않습니다.");
+            }
+        }
 
         // 가장 최근 승인된(AGREE) 출입기록 찾기, exitTime이 null인 상태
         EntryRecord latestApprovedRecord = entryRecordRepository
-                .findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(vehicleId, EntryRecord.Status.AGREE)
+                .findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(dto.getVehicleId(), EntryRecord.Status.AGREE)
                 .orElseThrow(() -> new IllegalStateException("승인된 출입 기록이 없거나 이미 입차된 상태입니다."));
 
         // 이미 입차 기록이 있다면 중복 입차 방지
