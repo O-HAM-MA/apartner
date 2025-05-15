@@ -27,8 +27,8 @@ public class Inspection extends BaseEntity {
     @Column(name = "finish_at")
     private LocalDateTime finishAt;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn (name = "type")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn (name = "type_id")
     private InspectionType type;
 
     @Column(name = "detail", columnDefinition = "TEXT")

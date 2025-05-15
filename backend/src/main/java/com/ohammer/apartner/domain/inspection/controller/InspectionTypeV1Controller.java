@@ -4,6 +4,8 @@ package com.ohammer.apartner.domain.inspection.controller;
 import com.ohammer.apartner.domain.inspection.dto.InspectionTypeDto;
 import com.ohammer.apartner.domain.inspection.entity.InspectionType;
 import com.ohammer.apartner.domain.inspection.service.InspectionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +14,8 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/inspectiontype")
+@RequestMapping("/api/v1/inspection/type")
+@Tag(name = "점검 항목 api", description = "점검 항목 관리 API")
 public class InspectionTypeV1Controller {
     private final InspectionService inspectionService;
 
@@ -23,11 +26,19 @@ public class InspectionTypeV1Controller {
     //어차피 me api 생각하면 그냥 여러개 불러도 될 것 같은데
 
     @GetMapping("")
-    public List<InspectionType> showAllTypes() {
-        return inspectionService.showAllTypes();
+    @Operation(
+            summary = "점검 항목 내용들을 싹다 보여주기",
+            description = "점검 항목들을 보여줍니다, 그리고 주호야 페이징 언제 만들꺼니"
+    )
+    public ResponseEntity<List<InspectionType>> showAllTypes() {
+        return ResponseEntity.ok().body(inspectionService.showAllTypes());
     }
 
     @DeleteMapping("/{id}")
+    @Operation(
+            summary = "점검 항목을 삭제하기",
+            description = "삭제할 점검항목을 선택하여 삭제합니다"
+    )
     public ResponseEntity<?> deleteType(@PathVariable(name = "id") Long id) {
         try {
             inspectionService.removeType(id);
@@ -39,6 +50,10 @@ public class InspectionTypeV1Controller {
     }
 
     @PostMapping("")
+    @Operation(
+            summary = "점검 항목을 추가합니다",
+            description = "점검 항목을 추가합니다"
+    )
     public ResponseEntity<InspectionType> addNewType(@RequestBody InspectionTypeDto dto) {
         try {
             inspectionService.addType(dto.getName());

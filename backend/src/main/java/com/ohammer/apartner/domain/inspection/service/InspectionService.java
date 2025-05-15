@@ -34,7 +34,9 @@ public class InspectionService {
                 return Result.CHECKED;
             case "PENDING":
                 return Result.PENDING;
-            case "NOTYET":
+            case "ISSUE":
+                return Result.ISSUE;
+            case"NOTYET":
                 return Result.NOTYET;
         }
         return null;
@@ -109,6 +111,17 @@ public class InspectionService {
             throw new RuntimeException("그거 없는댑쇼");
         Inspection inspection = inspectionRepository.findById(id).get();
         inspection.setResult(Result.CHECKED);
+
+        inspectionRepository.save(inspection);
+    }
+
+    //이슈 변경
+    @Transactional
+    public void IssueInspection(Long id) {
+        if (!inspectionRepository.existsById(id))
+            throw new RuntimeException("그거 없는댑쇼");
+        Inspection inspection = inspectionRepository.findById(id).get();
+        inspection.setResult(Result.ISSUE);
 
         inspectionRepository.save(inspection);
     }
