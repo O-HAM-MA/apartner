@@ -23,7 +23,7 @@ public class ComplaintController {
 
     private final ComplaintService complaintService;
 
-    @GetMapping("/all/complaint}")
+    @GetMapping("/all/complaint")
     @Operation(
             summary = "유저의 민원들을 가져오는 기능",
             description = "유저의 Id를 통해 유저의 민원들을 가져오는 기능",
@@ -36,7 +36,7 @@ public class ComplaintController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/all/complaint/")
+    @GetMapping("/all/complaint/manager")
     @Operation(
             summary = "매니저 혹은 최고 관리자가 유저들의 민원을 가져오는 기능",
             description = "매니저 혹은 최고 관리자가 유저들의 민원을 가져오는 기능",
@@ -49,7 +49,7 @@ public class ComplaintController {
     }
 
     // 유저 ID는 임시
-    @PostMapping("/create}")
+    @PostMapping("/create")
     @Operation(
             summary = "유저의 민원을 생성하는 기능",
             description = "유저가 입력한 정보를 기반으로 민원을 생성하는 기능",
