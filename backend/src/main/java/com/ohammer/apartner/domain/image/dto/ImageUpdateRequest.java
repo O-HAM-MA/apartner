@@ -1,4 +1,4 @@
-package com.golden_dobakhe.HakPle.domain.resource.image.dto;
+package com.ohammer.apartner.domain.image.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
