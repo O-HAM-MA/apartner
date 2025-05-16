@@ -9,6 +9,8 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+package-lock.json
+yarn.lock
 
 # testing
 /coverage
@@ -23,6 +25,8 @@
 # misc
 .DS_Store
 *.pem
+.AppleDouble
+.LSOverride
 
 # debug
 npm-debug.log*
@@ -53,9 +57,16 @@ ehthumbs.db
 
 /dist
 
-
 /infra
 
 **/application-secret.yml
 application-secret.yml
 **/.cursor/rules
+
+.terraform/
+*.tfstate
+*.tfstate.backup
+.tfstate..backup
+.terragrunt-cache/
+.terraform.lock.hcl
+terraform-provider-*

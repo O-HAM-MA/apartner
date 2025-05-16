@@ -43,10 +43,33 @@ public class FileUtils {
                 return "text/plain";
             case "csv":
                 return "text/csv";
+            case "pdf":
+                return "application/pdf";
+            case "doc":
+            case "docx":
+                return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "ppt":
+            case "pptx":
+                return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            case "xls":
+            case "xlsx":
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case "zip":
+                return "application/zip";
+            case "rar":
+                return "application/x-rar-compressed";
+            case "json":
+                return "application/json";
+            case "html":
+                return "text/html";
+            case "xml":
+                return "application/xml";
             // 필요한 다른 타입 추가 가능
             default:
                 // 기본값 또는 알 수 없는 타입 처리
-                return "application/octet-stream"; // S3 기본값과 동일하게 설정하거나, 예외 발생 가능
+//                return "application/octet-stream"; // S3 기본값과 동일하게 설정하거나, 예외 발생 가능
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다: " + extension);
+
         }
     }
 }
