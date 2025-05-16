@@ -10,5 +10,5 @@ public class AllManagerOpinionResponseDto {
     private String title;
 
     // 필요시에
-//    private String userName;
+    private String userName;
 }
