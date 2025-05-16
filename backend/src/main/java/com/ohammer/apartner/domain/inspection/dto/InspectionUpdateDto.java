@@ -22,6 +22,11 @@ public class InspectionUpdateDto {
     @Schema(description = "종료 시간", example = "2025-05-26T00:00")
     private LocalDateTime finishAt;
 
+    //아무래도 공지사항에 등록할려면 이걸 추가해야 할 것 같음
+    @NotBlank(message = "점검 제목을 적어주세요")
+    @Schema(description = "점검 제목", example = "아이스크림 스타스크림")
+    private String title;
+
     @NotBlank(message = "점검 내용을 적어주세요")
     @Schema(description = "점검 상세 내용", example = "ルビィちゃん！[「はーい！」] 何が好き？\n" +
             "루비쨩 나니가 스키\n" +

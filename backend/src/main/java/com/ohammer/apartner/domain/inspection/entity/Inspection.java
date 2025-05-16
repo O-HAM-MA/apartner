@@ -31,6 +31,9 @@ public class Inspection extends BaseEntity {
     @JoinColumn (name = "type_id")
     private InspectionType type;
 
+    @Column(name = "title")
+    private String title;
+
     @Column(name = "detail", columnDefinition = "TEXT")
     private String detail;
 

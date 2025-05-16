@@ -5,5 +5,6 @@ public enum Result {
     CHECKED,
     PENDING,
     NOTYET,
+    //이거 하나 추가됨
     ISSUE
 }

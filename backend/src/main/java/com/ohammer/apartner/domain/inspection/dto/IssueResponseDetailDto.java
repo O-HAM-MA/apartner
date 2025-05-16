@@ -14,9 +14,9 @@ import java.time.LocalDateTime;
 public class IssueResponseDetailDto {
     private Long id;
     private Long inspectionId;
-    private String
     private Long userId;
     private String userName;
+    private String title;
     private String description;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;

@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class InspectionIssue extends BaseEntity {
 
+    //일대 일에서 일대 다로 됨
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "check_id")
     private Inspection inspection;
