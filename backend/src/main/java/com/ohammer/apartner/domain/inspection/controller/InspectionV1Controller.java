@@ -1,13 +1,19 @@
 package com.ohammer.apartner.domain.inspection.controller;
 
 import com.ohammer.apartner.domain.inspection.dto.InspectionRequestDto;
+import com.ohammer.apartner.domain.inspection.dto.InspectionResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.dto.InspectionUpdateDto;
 import com.ohammer.apartner.domain.inspection.entity.Inspection;
 import com.ohammer.apartner.domain.inspection.service.InspectionService;
+import com.ohammer.apartner.security.CustomUserDetailsService;
+import com.ohammer.apartner.security.OAuth.CustomRequest;
+import com.ohammer.apartner.security.jwt.JwtTokenizer;
+import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,7 +24,6 @@ import java.util.List;
 @Tag(name = "점검 api", description = "점검 API(일단은 메니저 전용)")
 public class InspectionV1Controller {
     private final InspectionService inspectionService;
-
     //얼추 여기서 CRUD 넣기
     //전체 불러오기
 
@@ -29,7 +34,7 @@ public class InspectionV1Controller {
             summary = "점검 일정을 가져옵니다",
             description = "점검 일정 목록을 가져옵니다, 주호야 페이징 처리해라"
     )
-    public ResponseEntity<List<Inspection>> showAllInspections() {
+    public ResponseEntity<List<InspectionResponseDetailDto>> showAllInspections() {
         return ResponseEntity.ok(inspectionService.showAllInspections());
     }
 
@@ -39,9 +44,9 @@ public class InspectionV1Controller {
             summary = "점검 일정에 대한 상세 내용을 봅니다, 그래봤자 detail 추가된거 뿐이지만요",
             description = "해당 점검 일정에 대한 상세 내용을 볼 수 있음"
     )
-    public ResponseEntity<Inspection> showInspection(@PathVariable(name = "id") Long id) {
+    public ResponseEntity<InspectionResponseDetailDto> showInspection(@PathVariable(name = "id") Long id) {
         try {
-                Inspection inspection = inspectionService.showInspection(id);
+                InspectionResponseDetailDto inspection = inspectionService.showInspection(id);
                 return ResponseEntity.ok(inspection);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();

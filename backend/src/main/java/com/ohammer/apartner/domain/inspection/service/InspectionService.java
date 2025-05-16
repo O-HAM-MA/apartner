@@ -1,15 +1,17 @@
 package com.ohammer.apartner.domain.inspection.service;
 
 import com.ohammer.apartner.domain.inspection.dto.InspectionRequestDto;
+import com.ohammer.apartner.domain.inspection.dto.InspectionResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.dto.InspectionUpdateDto;
 import com.ohammer.apartner.domain.inspection.entity.Inspection;
 import com.ohammer.apartner.domain.inspection.entity.InspectionType;
 import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionTypeRepository;
-import com.ohammer.apartner.domain.opinion.entity.Opinion;
+import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
-import jakarta.persistence.criteria.CriteriaBuilder;
+import com.ohammer.apartner.security.CustomUserDetailsService;
+import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,17 +45,22 @@ public class InspectionService {
         return null;
     }
 
-    //입력(TODO : 이따가 리턴 타입과 값을 dto로 바꾸셈)
     @Transactional
     public Inspection newInspectionSchedule (InspectionRequestDto dto) {
         //대충 유저 찾기
+        //원래 통으로 객체를 찾을까 싶었는데, 도용?의 문제가 있을 것 같아서 효율성 깎고 id뽑아서 찾아오는걸루
+        Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
+
+        User user = userRepository.findById(userId).orElseThrow();
+
         InspectionType type = inspectionTypeRepository.findByTypeName(dto.getType());
 
         Inspection inspection = Inspection.builder()
-                //TODO : 유저추가
+                .user(user)
                 .startAt(dto.getStartAt())
                 .finishAt(dto.getFinishAt())
                 .detail(dto.getDetail())
+                .title(dto.getTitle())
                 .type(type)
                 .result(Result.PENDING)
                 .modifiedAt(null)
@@ -62,15 +70,21 @@ public class InspectionService {
     }
 
     //전부 조회
-    public List<Inspection> showAllInspections() {
-        //일단 페이징까지는 패스
-
-        return inspectionRepository.findAll();
-    }
-
-    //상세조회
-    public Inspection findInspection(Long id) {
-        return inspectionRepository.findById(id).orElseThrow();
+    public List<InspectionResponseDetailDto> showAllInspections() {
+        //TODO 일단 페이징까지는 패스
+        return inspectionRepository.findAll().stream()
+                 .map( r-> new InspectionResponseDetailDto(
+                         r.getId(),
+                         r.getUser().getId(),
+                         r.getUser().getUserName(),
+                         r.getStartAt(),
+                         r.getFinishAt(),
+                         r.getTitle(),
+                         r.getDetail(),
+                         r.getResult(),
+                         r.getType().getTypeName()
+                 ))
+                 .toList();
     }
 
     //수정, 결과입력?
@@ -82,6 +96,7 @@ public class InspectionService {
         inspection.setStartAt(dto.getStartAt());
         inspection.setFinishAt(dto.getFinishAt());
         inspection.setModifiedAt(LocalDateTime.now());
+        inspection.setTitle(dto.getTitle());
 
         inspection.setType(inspectionTypeRepository.findByTypeName(dto.getType()));
 
@@ -99,8 +114,20 @@ public class InspectionService {
 
     //자료 자세히 보기
     @Transactional(readOnly = true)
-    public Inspection showInspection(Long id) {
-        return inspectionRepository.findById(id).orElseThrow();
+    public InspectionResponseDetailDto showInspection(Long id) {
+
+        Inspection inspection = inspectionRepository.findById(id).orElseThrow();
+        User user = inspection.getUser();
+
+        return new InspectionResponseDetailDto(inspection.getId(),
+                user.getId(),
+                user.getUserName(),
+                inspection.getStartAt(),
+                inspection.getFinishAt(),
+                inspection.getTitle(),
+                inspection.getDetail(),
+                inspection.getResult(),
+                inspection.getType().getTypeName());
     }
 
 

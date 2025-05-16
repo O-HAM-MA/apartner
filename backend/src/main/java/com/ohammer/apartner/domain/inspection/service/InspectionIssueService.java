@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.inspection.service;
 
+import com.ohammer.apartner.domain.inspection.dto.IssueResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.entity.Inspection;
 import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
 import com.ohammer.apartner.domain.inspection.repository.InspectionIssueRepository;
@@ -36,8 +37,20 @@ public class InspectionIssueService {
     }
 
     //조회(전체조회는 굳이 없어도 될듯)
-    public InspectionIssue showInspectionIssue(Long id) {
-        return issueRepository.findById(id).orElseThrow();
+    public IssueResponseDetailDto showInspectionIssue(Long id) {
+        InspectionIssue issue = issueRepository.findById(id).orElseThrow();
+        Inspection inspection = issue.getInspection();
+
+        return new IssueResponseDetailDto(issue.getId(),
+                inspection.getId(),
+                issue.getUser().getId(),
+                issue.getUser().getUserName(),
+                inspection.getTitle(),
+                inspection.getType().getTypeName(),
+                issue.getDescription(),
+                issue.getCreatedAt(),
+                issue.getModifiedAt()
+                );
     }
 
     //수정
