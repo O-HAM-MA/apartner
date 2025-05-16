@@ -24,6 +24,9 @@ public class Opinion extends BaseEntity {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "title")
+    private String title;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private Type type;

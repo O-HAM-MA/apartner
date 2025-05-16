@@ -2,10 +2,7 @@ package com.ohammer.apartner.domain.vehicle.service;
 
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
-import com.ohammer.apartner.domain.vehicle.dto.ForeignVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.ResidentVehicleRequestDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
-import com.ohammer.apartner.domain.vehicle.dto.VehicleResponseDto;
+import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 //import jakarta.transaction.Transactional;
@@ -15,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -108,45 +106,19 @@ public class VehicleService {
 
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getVehicleRegistrationInfo(Boolean isForeign) {
-
-
-//        List<Vehicle> vehicles = vehicleRepository.findByIsForeign(isForeign);
-//        return vehicles.stream()
-//                .map(vehicle -> convertToDto(vehicle))
-//                .collect(Collectors.toList());
-
-        List<Vehicle> vehicles;
+        List<EntryRecord> entryRecords;
 
         if (isForeign == null) {
-            vehicles = vehicleRepository.findAll(); // 전체 조회
+            entryRecords = entryRecordRepository.findAllWithVehicleAndUser();
         } else {
-            vehicles = vehicleRepository.findByIsForeign(isForeign); // 필터 조회
+            entryRecords = entryRecordRepository.findByVehicleIsForeignWithVehicleAndUser(isForeign);
         }
 
-        return vehicles.stream()
-                .map(VehicleRegistrationInfoDto::from)
+        return entryRecords.stream()
+                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
                 .collect(Collectors.toList());
-
-
-
-
-
-
-
-//        List<Vehicle> vehicles;
-//
-//        if (isForeign == null) {
-//            vehicles = vehicleRepository.findAll();  // 전체 조회
-//        } else {
-//            vehicles = vehicleRepository.findByIsForeign(isForeign);  // 조건 조회
-//        }
-//
-//        return vehicles.stream()
-//                .map(this::toDto)
-//                .collect(Collectors.toList());
-
-
     }
+
 
     private VehicleRegistrationInfoDto convertToDto(Vehicle vehicle) {
         // 외부인과 거주자의 구분에 따라 DTO를 매핑
@@ -168,6 +140,47 @@ public class VehicleService {
                     .build();
         }
     }
+
+    public List<VehicleRegistrationInfoDto> getAll() {
+        return entryRecordRepository.findAllWithVehicleAndUser().stream()
+                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
+                .collect(Collectors.toList());
+    }
+
+
+    @Transactional
+    public void updateVehicle(Long vehicleId, VehicleUpdateRequestDto dto) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new RuntimeException("차량을 찾을 수 없습니다."));
+
+        vehicle.setVehicleNum(dto.getVehicleNum());
+        vehicle.setType(dto.getType());
+    }
+
+    @Transactional
+    public void deleteVehicle(Long vehicleId) {
+        // 차량을 찾을 수 없으면 예외 발생
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new RuntimeException("차량을 찾을 수 없습니다."));
+
+        // 차량 삭제
+        entryRecordRepository.deleteAllByVehicle(vehicle);
+        vehicleRepository.delete(vehicle);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getApprovedVehicles() {
+        List<EntryRecord> approvedRecords = entryRecordRepository.findByStatus(EntryRecord.Status.AGREE);
+
+        return approvedRecords.stream()
+                .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
+                .collect(Collectors.toList());
+    }
+
+
+
+
 
 
 

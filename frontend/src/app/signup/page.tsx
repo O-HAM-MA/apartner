@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
    const router = useRouter();
+   const [kakaoInfo, setKakaoInfo] = useState<{
+      socialProvider?: string;
+      nickname?: string;
+      profileImage?: string;
+      email?: string;
+   }>({});
+   const [signupType, setSignupType] = useState<'NORMAL' | 'KAKAO'>('NORMAL');
    const [emailId, setEmailId] = useState('');
    const [emailDomain, setEmailDomain] = useState('naver.com');
    const [customEmailDomain, setCustomEmailDomain] = useState('');
@@ -124,6 +131,108 @@ export default function SignUpPage() {
       fetchUnits();
    }, [dong, buildings]);
 
+   // 카카오 소셜 로그인 정보 조회
+   useEffect(() => {
+      const fetchKakaoInfo = async () => {
+         try {
+            // URL에서 kakaoInfo 쿼리 파라미터 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            const kakaoInfoParam = urlParams.get('kakaoInfo');
+            const authSource = urlParams.get('authSource');
+
+            if (kakaoInfoParam) {
+               // URL 파라미터에서 카카오 정보 파싱
+               try {
+                  const decodedInfo = JSON.parse(decodeURIComponent(kakaoInfoParam));
+                  console.log('Decoded Kakao info from URL:', decodedInfo);
+
+                  if (decodedInfo.socialProvider === 'kakao') {
+                     // socialId를 제외한 정보만 저장
+                     setKakaoInfo({
+                        socialProvider: decodedInfo.socialProvider,
+                        nickname: decodedInfo.nickname,
+                        profileImage: decodedInfo.profileImage,
+                        email: decodedInfo.email,
+                     });
+                     setSignupType('KAKAO');
+
+                     if (decodedInfo.nickname) {
+                        setName(decodedInfo.nickname);
+                     }
+
+                     if (decodedInfo.email) {
+                        const [id, domain] = decodedInfo.email.split('@');
+                        setEmailId(id || '');
+
+                        if (domain) {
+                           if (emailDomains.includes(domain)) {
+                              setEmailDomain(domain);
+                           } else {
+                              setEmailDomain('직접 입력');
+                              setCustomEmailDomain(domain);
+                           }
+                        }
+                     }
+                  }
+               } catch (error) {
+                  console.error('Failed to parse kakaoInfo from URL:', error);
+               }
+
+               // 처리 후 URL에서 파라미터 제거 (필요시)
+               const url = new URL(window.location.href);
+               url.searchParams.delete('kakaoInfo');
+               window.history.replaceState({}, document.title, url.toString());
+
+               return; // URL에서 정보를 가져왔으므로 API 호출 불필요
+            }
+
+            // 카카오 로그인으로부터 온 경우 또는 기존 로직
+            if (authSource === 'kakao' || window.location.pathname.includes('/signup')) {
+               // API 호출 시도
+               const response = await get<{
+                  socialProvider?: string;
+                  nickname?: string;
+                  profileImage?: string;
+                  email?: string;
+               }>('/api/v1/auth/check-social-session'); // 기존 API 경로 유지
+
+               if (response && response.socialProvider === 'kakao') {
+                  setKakaoInfo(response);
+                  setSignupType('KAKAO');
+
+                  if (Object.prototype.hasOwnProperty.call(response, 'nickname')) {
+                     setName(response.nickname || '');
+                  }
+
+                  if (response.email) {
+                     const [id, domain] = response.email.split('@');
+                     setEmailId(id || '');
+                     if (domain) {
+                        if (emailDomains.includes(domain)) {
+                           setEmailDomain(domain);
+                        } else {
+                           setEmailDomain('직접 입력');
+                           setCustomEmailDomain(domain);
+                        }
+                     }
+                  }
+               }
+
+               // URL 파라미터 정리
+               if (authSource) {
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete('authSource');
+                  window.history.replaceState({}, document.title, url.toString());
+               }
+            }
+         } catch (error) {
+            console.error('카카오 정보 조회 실패:', error);
+         }
+      };
+
+      fetchKakaoInfo();
+   }, []);
+
    const handleEmailCheck = async () => {
       const fullEmail = emailDomain === '직접 입력' ? `${emailId}@${customEmailDomain}` : `${emailId}@${emailDomain}`;
       if (!emailId || (emailDomain === '직접 입력' && !customEmailDomain)) {
@@ -208,7 +317,8 @@ export default function SignUpPage() {
    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      if (emailVerificationStep !== 'VERIFIED') {
+      // 이메일을 입력했다면, 타입(일반/카카오)에 관계없이 이메일 인증 완료 여부 확인
+      if (emailId && emailVerificationStep !== 'VERIFIED') {
          alert('이메일 인증을 완료해주세요.');
          return;
       }
@@ -218,12 +328,12 @@ export default function SignUpPage() {
          return;
       }
 
-      if (!phoneCheckMessage.text || phoneCheckMessage.color !== 'text-green-500') {
+      if (signupType !== 'KAKAO' && (!phoneCheckMessage.text || phoneCheckMessage.color !== 'text-green-500')) {
          alert('휴대폰 번호 중복 확인이 필요합니다.');
          return;
       }
 
-      if (password !== passwordConfirm) {
+      if (signupType !== 'KAKAO' && password !== passwordConfirm) {
          alert('비밀번호가 일치하지 않습니다.');
          return;
       }
@@ -239,7 +349,6 @@ export default function SignUpPage() {
          const fullEmail =
             emailDomain === '직접 입력' ? `${emailId}@${customEmailDomain}` : `${emailId}@${emailDomain}`;
 
-         // 선택된 아파트, 동, 호의 ID 값을 찾습니다
          const selectedApartment = apartments.find(apt => apt.name === apartment);
          const selectedBuilding = buildings.find(b => b.buildingNumber === dong);
          const selectedUnit = units.find(u => u.unitNumber === ho);
@@ -249,15 +358,22 @@ export default function SignUpPage() {
             return;
          }
 
-         const response = await post('/api/v1/users/userreg', {
+         const registrationData: any = {
             email: fullEmail,
-            password: password,
-            name: name,
+            userName: name,
             apartmentId: selectedApartment.id,
             buildingId: selectedBuilding.id,
             unitId: selectedUnit.id,
-            phoneNum: phoneNumber,
-         });
+         };
+
+         if (signupType === 'KAKAO') {
+            registrationData.socialProvider = 'kakao';
+         } else {
+            registrationData.password = password;
+            registrationData.phoneNum = phoneNumber;
+         }
+
+         const response = await post('/api/v1/users/userreg', registrationData);
 
          console.log('회원가입 성공:', response);
          alert('회원가입이 완료되었습니다.');
@@ -345,7 +461,9 @@ export default function SignUpPage() {
          <div className="flex flex-col items-center justify-center bg-white-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-2xl p-8 space-y-8 bg-white shadow-xl rounded-xl">
                <div>
-                  <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">회원가입</h2>
+                  <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                     {signupType === 'KAKAO' ? '카카오 계정으로 회원가입' : '회원가입'}
+                  </h2>
                </div>
                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                   <div className="rounded-md shadow-sm -space-y-px">
@@ -426,12 +544,12 @@ export default function SignUpPage() {
                         {emailCheckMessage.text && (
                            <p className={`mt-2 text-xs ${emailCheckMessage.color}`}>{emailCheckMessage.text}</p>
                         )}
-                        {/* 인증번호 입력/버튼/메시지 조건부 렌더링 - 상태에 따라 UI 변경 */}
-                        {/* 인증이 완료되지 않았고, 중복 체크가 완료된 상태 이후에만 노출 */}
-                        {emailVerificationStep !== 'VERIFIED' &&
-                           ('CHECKED' === emailVerificationStep ||
-                              'CODE_SENT' === emailVerificationStep ||
-                              'FAILED' === emailVerificationStep) && (
+                        {/* 이메일 인증 UI 조건 수정: emailId가 있고, 아직 인증 전이며, 중복 체크 후 상태일 때 표시 */}
+                        {emailId &&
+                           emailVerificationStep !== 'VERIFIED' &&
+                           (emailVerificationStep === 'CHECKED' ||
+                              emailVerificationStep === 'CODE_SENT' ||
+                              emailVerificationStep === 'FAILED') && (
                               <div className="flex items-center space-x-2 mt-2">
                                  <input
                                     type="text"
@@ -439,10 +557,8 @@ export default function SignUpPage() {
                                     className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                     value={verificationCode}
                                     onChange={e => setVerificationCode(e.target.value)}
-                                    disabled={isLoading} // 인증 완료 시에는 이 블록 자체가 렌더링되지 않음
+                                    disabled={isLoading}
                                  />
-                                 {/* 상태에 따라 버튼 텍스트 및 동작 변경 */}
-                                 {/* 코드가 아직 전송되지 않았거나 실패한 경우: 보내기/재전송 버튼 */}
                                  {(emailVerificationStep === 'CHECKED' || emailVerificationStep === 'FAILED') && (
                                     <button
                                        type="button"
@@ -462,7 +578,6 @@ export default function SignUpPage() {
                                           : '인증번호 보내기'}
                                     </button>
                                  )}
-                                 {/* 코드가 전송된 상태: 확인 버튼 */}
                                  {emailVerificationStep === 'CODE_SENT' && (
                                     <button
                                        type="button"
@@ -485,57 +600,76 @@ export default function SignUpPage() {
                         <p className="mt-2 text-xs text-gray-500">이메일은 로그인 ID로 사용됩니다.</p>
                      </div>
 
-                     <div className="mb-6">
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                           비밀번호
-                        </label>
-                        <input
-                           id="password"
-                           name="password"
-                           type="password"
-                           autoComplete="new-password"
-                           required
-                           className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                           placeholder="비밀번호를 입력하세요"
-                           value={password}
-                           onChange={e => setPassword(e.target.value)}
-                        />
-                     </div>
+                     {signupType !== 'KAKAO' && (
+                        <>
+                           <div className="mb-6">
+                              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                                 비밀번호
+                              </label>
+                              <input
+                                 id="password"
+                                 name="password"
+                                 type="password"
+                                 autoComplete="new-password"
+                                 required
+                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                 placeholder="비밀번호를 입력하세요"
+                                 value={password}
+                                 onChange={e => setPassword(e.target.value)}
+                              />
+                           </div>
 
-                     <div className="mb-6">
-                        <label htmlFor="password-confirm" className="block text-sm font-medium text-gray-700 mb-1">
-                           비밀번호 확인
-                        </label>
-                        <input
-                           id="password-confirm"
-                           name="password-confirm"
-                           type="password"
-                           autoComplete="new-password"
-                           required
-                           className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                           placeholder="비밀번호를 다시 입력하세요"
-                           value={passwordConfirm}
-                           onChange={e => setPasswordConfirm(e.target.value)}
-                        />
-                        {passwordMatchMessage.text && (
-                           <p className={`mt-2 text-xs ${passwordMatchMessage.color}`}>{passwordMatchMessage.text}</p>
-                        )}
-                        <ul className="mt-2 list-disc list-inside space-y-1">
-                           <li className={`${정책문구스타일} ${passwordPolicy.length ? 충족스타일 : 미충족스타일}`}>
-                              총 8글자 이상
-                           </li>
-                           <li
-                              className={`${정책문구스타일} ${passwordPolicy.specialChar ? 충족스타일 : 미충족스타일}`}>
-                              특수문자 1개 이상
-                           </li>
-                           <li className={`${정책문구스타일} ${passwordPolicy.uppercase ? 충족스타일 : 미충족스타일}`}>
-                              영문자 1개 이상
-                           </li>
-                           <li className={`${정책문구스타일} ${passwordPolicy.number ? 충족스타일 : 미충족스타일}`}>
-                              숫자 1개 이상
-                           </li>
-                        </ul>
-                     </div>
+                           <div className="mb-6">
+                              <label
+                                 htmlFor="password-confirm"
+                                 className="block text-sm font-medium text-gray-700 mb-1">
+                                 비밀번호 확인
+                              </label>
+                              <input
+                                 id="password-confirm"
+                                 name="password-confirm"
+                                 type="password"
+                                 autoComplete="new-password"
+                                 required
+                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                 placeholder="비밀번호를 다시 입력하세요"
+                                 value={passwordConfirm}
+                                 onChange={e => setPasswordConfirm(e.target.value)}
+                              />
+                              {passwordMatchMessage.text && (
+                                 <p className={`mt-2 text-xs ${passwordMatchMessage.color}`}>
+                                    {passwordMatchMessage.text}
+                                 </p>
+                              )}
+                              <ul className="mt-2 list-disc list-inside space-y-1">
+                                 <li
+                                    className={`${정책문구스타일} ${
+                                       passwordPolicy.length ? 충족스타일 : 미충족스타일
+                                    }`}>
+                                    총 8글자 이상
+                                 </li>
+                                 <li
+                                    className={`${정책문구스타일} ${
+                                       passwordPolicy.specialChar ? 충족스타일 : 미충족스타일
+                                    }`}>
+                                    특수문자 1개 이상
+                                 </li>
+                                 <li
+                                    className={`${정책문구스타일} ${
+                                       passwordPolicy.uppercase ? 충족스타일 : 미충족스타일
+                                    }`}>
+                                    영문자 1개 이상
+                                 </li>
+                                 <li
+                                    className={`${정책문구스타일} ${
+                                       passwordPolicy.number ? 충족스타일 : 미충족스타일
+                                    }`}>
+                                    숫자 1개 이상
+                                 </li>
+                              </ul>
+                           </div>
+                        </>
+                     )}
 
                      <div className="mb-6">
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -551,7 +685,11 @@ export default function SignUpPage() {
                            placeholder="이름을 입력하세요"
                            value={name}
                            onChange={e => setName(e.target.value)}
+                           disabled={signupType === 'KAKAO' && kakaoInfo.nickname !== undefined}
                         />
+                        {signupType === 'KAKAO' && kakaoInfo.nickname && (
+                           <p className="mt-2 text-xs text-green-500">카카오에서 가져온 이름입니다.</p>
+                        )}
                      </div>
 
                      <div className="mb-6">
@@ -611,72 +749,92 @@ export default function SignUpPage() {
                         <p className="mt-2 text-xs text-gray-500">Enter your address</p>
                      </div>
 
-                     <div className="mb-8">
-                        <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 mb-1">
-                           휴대폰 번호
-                        </label>
-                        <div className="flex items-center space-x-2">
-                           <input
-                              id="phone-number"
-                              name="phone-number"
-                              type="tel"
-                              autoComplete="tel"
-                              required
-                              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                              placeholder="휴대폰 번호를 입력하세요 (예: 01012345678)"
-                              value={phoneNumber}
-                              onChange={e => {
-                                 setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''));
-                                 setPhoneCheckMessage({ text: '', color: '' });
-                              }}
-                              disabled={isLoading}
-                           />
-                           <button
-                              type="button"
-                              onClick={handlePhoneCheck}
-                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                                 isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
-                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
-                              disabled={isLoading}>
-                              {isLoading ? '확인중...' : '중복체크'}
-                           </button>
+                     {signupType !== 'KAKAO' && (
+                        <div className="mb-8">
+                           <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 mb-1">
+                              휴대폰 번호
+                           </label>
+                           <div className="flex items-center space-x-2">
+                              <input
+                                 id="phone-number"
+                                 name="phone-number"
+                                 type="tel"
+                                 autoComplete="tel"
+                                 required
+                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                 placeholder="휴대폰 번호를 입력하세요 (예: 01012345678)"
+                                 value={phoneNumber}
+                                 onChange={e => {
+                                    setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''));
+                                    setPhoneCheckMessage({ text: '', color: '' });
+                                 }}
+                                 disabled={isLoading}
+                              />
+                              <button
+                                 type="button"
+                                 onClick={handlePhoneCheck}
+                                 className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                    isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+                                 } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                                 disabled={isLoading}>
+                                 {isLoading ? '확인중...' : '중복체크'}
+                              </button>
+                           </div>
+                           {phoneCheckMessage.text && (
+                              <p className={`mt-2 text-xs ${phoneCheckMessage.color}`}>{phoneCheckMessage.text}</p>
+                           )}
                         </div>
-                        {phoneCheckMessage.text && (
-                           <p className={`mt-2 text-xs ${phoneCheckMessage.color}`}>{phoneCheckMessage.text}</p>
-                        )}
-                     </div>
+                     )}
                   </div>
 
                   <div>
                      <button
                         type="submit"
                         className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
-                           emailVerificationStep === 'VERIFIED' && !isLoading
+                           // 버튼 활성화 조건: 로딩중이 아니고,
+                           // (카카오 가입이거나 일반 가입에서 이메일 인증이 완료되었거나)
+                           // 그리고 이메일이 입력되었다면 반드시 인증 완료 상태여야 함.
+                           !isLoading &&
+                           (signupType === 'KAKAO'
+                              ? emailId
+                                 ? emailVerificationStep === 'VERIFIED'
+                                 : true
+                              : emailVerificationStep === 'VERIFIED')
                               ? 'bg-pink-500 hover:bg-pink-600'
                               : 'bg-gray-400 cursor-not-allowed'
                         } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400`}
-                        disabled={emailVerificationStep !== 'VERIFIED' || isLoading}>
+                        disabled={
+                           isLoading ||
+                           (signupType === 'NORMAL' && emailVerificationStep !== 'VERIFIED') ||
+                           (emailId !== '' && emailVerificationStep !== 'VERIFIED')
+                        }>
                         {isLoading ? '가입 처리중...' : '회원가입'}
                      </button>
                   </div>
 
-                  <div className="relative my-6">
-                     <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full border-t border-gray-300" />
-                     </div>
-                     <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">간편 회원가입</span>
-                     </div>
-                  </div>
+                  {signupType !== 'KAKAO' && (
+                     <>
+                        <div className="relative my-6">
+                           <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                              <div className="w-full border-t border-gray-300" />
+                           </div>
+                           <div className="relative flex justify-center text-sm">
+                              <span className="px-2 bg-white text-gray-500">간편 회원가입</span>
+                           </div>
+                        </div>
 
-                  <div>
-                     <button
-                        type="button"
-                        className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300"
-                        disabled={isLoading}>
-                        카카오톡으로 회원가입
-                     </button>
-                  </div>
+                        <div>
+                           <a href="/api/v1/oauth2/authorization/kakao?state=/">
+                              <button
+                                 type="button"
+                                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300"
+                                 disabled={isLoading}>
+                                 카카오톡으로 회원가입
+                              </button>
+                           </a>
+                        </div>
+                     </>
+                  )}
                </form>
             </div>
          </div>

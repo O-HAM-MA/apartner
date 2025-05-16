@@ -23,29 +23,31 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository; // User 엔티티 DB 접근
 
     @Override
-    public UserDetails loadUserByUsername(String username) {
+    public UserDetails loadUserByUsername(String email) {
         // username으로 User + Role 조회, CustomUserDetails로 래핑
-        log.debug("Attempting to load user by username: {}", username);
-        User user = userRepository.findByUserNameWithRoles(username)
+        log.debug("Attempting to load user by email: {}", email);
+        User user = userRepository.findByEmailWithRoles(email)
                 .orElseThrow(() -> {
-                    log.warn("User not found with username: {}", username);
-                    return new UsernameNotFoundException("User not found with username: " + username);
+                    log.warn("User not found with email: {}", email);
+                    return new UsernameNotFoundException("User not found with email: " + email);
                 });
-        log.info("User found: {}", user.getUserName());
+        log.info("User found: {}", user.getEmail());
         return new com.ohammer.apartner.security.CustomUserDetails(user);
     }
 
     
     @Getter
     public static class CustomUserDetails implements UserDetails {
+        private final Long id;
         private final String username;
-        private final String nickname;
+        private final String email;
         private final Status status;
         private final List<GrantedAuthority> authorities;
 
-        public CustomUserDetails(String username, String nickname, Status status, List<GrantedAuthority> roles) {
+        public CustomUserDetails(Long id, String username, String email, Status status, List<GrantedAuthority> roles) {
+            this.id = id;
             this.username = username;
-            this.nickname = nickname;
+            this.email = email;
             this.status = status;
             this.authorities = roles;
         }
@@ -62,7 +64,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         @Override
         public String getUsername() {
-            return this.username;
+            return this.email;
         }
 
         @Override

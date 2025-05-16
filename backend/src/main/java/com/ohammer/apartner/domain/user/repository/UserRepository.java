@@ -2,13 +2,16 @@ package com.ohammer.apartner.domain.user.repository;
 
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
-import java.util.Optional;
+
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = "roles")
@@ -21,6 +24,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email); // 이메일 중복 확인 메서드 추가
 
+    boolean existsBySocialId(String socialId);
+
     boolean existsByPhoneNum(String phoneNum);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.userName = :username")
@@ -30,14 +35,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<User> findByIdWithRoles(@Param("id") Long id);
 
+
+
+    @EntityGraph(attributePaths = "roles") // 🎯 roles 컬렉션을 함께 로딩
+    @Query("SELECT u FROM User u WHERE u.email = :email")
+    Optional<User> findByEmailWithRoles(@Param("email") String email);
+
+
     Optional<User> findByPhoneNum(String testPhone);
 
     Page<User> findAllByRoles(Role role, Pageable pageable);
 
     Page<User> findAllUserByRoles(Role role, Pageable pageable);
 
-    // EntityGraph 추가: /me 에서 필요
     @Override
     @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
     Optional<User> findById(Long id);
+    
+    @EntityGraph(attributePaths = "roles")
+    Optional<User> findByRefreshToken(String refreshToken);
+
+    @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
+    Optional<User> findBySocialProviderAndSocialId(String socialProvider, String socialId);
 }
