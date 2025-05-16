@@ -8,6 +8,7 @@ import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 //import jakarta.transaction.Transactional;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
+import com.ohammer.apartner.security.utils.SecurityUtil;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -28,16 +29,25 @@ public class VehicleService {
     // 입주민 차량 등록
     @Transactional
     public VehicleResponseDto registerResidentVehicle(ResidentVehicleRequestDto dto) {
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+//        User user = userRepository.findById(dto.getUserId())
+//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
+        // 1) SecurityUtil로 현재 로그인한 User 엔티티를 바로 꺼낸다.
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalStateException("로그인된 사용자가 아닙니다.");
+        }
+
+        // 여기서 UserRepository에서 연관관계까지 같이 조회
+        User user = userRepository.findByIdWithBuildingAndUnit(currentUser.getId())
+                .orElseThrow(() -> new IllegalStateException("존재하지 않는 사용자입니다."));
         Vehicle vehicle = Vehicle.builder()
                 .user(user)
                 .vehicleNum(dto.getVehicleNum())
                 .type(dto.getType())
                 .isForeign(false)
                 .phone(user.getPhoneNum())
-                .status(Vehicle.Status.ACTIVE)
+                .status(Vehicle.Status.INACTIVE)
                 .build();
 
         vehicleRepository.save(vehicle);
@@ -64,7 +74,7 @@ public class VehicleService {
                 .vehicleNum(dto.getVehicleNum())
                 .type(dto.getType())
                 .isForeign(true)
-                .status(Vehicle.Status.ACTIVE)
+                .status(Vehicle.Status.INACTIVE)
                 .phone(dto.getPhone())
                 .reason(dto.getReason())
                 .build();
@@ -177,6 +187,27 @@ public class VehicleService {
                 .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
                 .collect(Collectors.toList());
     }
+
+    public Vehicle findById(Long vehicleId) {
+        return vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 차량이 존재하지 않습니다."));
+    }
+
+
+    public Vehicle save(Vehicle vehicle) {
+        return vehicleRepository.save(vehicle);
+    }
+
+    public Vehicle findByCurrentUser() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        if (userId == null) throw new IllegalStateException("로그인 정보가 없습니다.");
+        return vehicleRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("등록된 차량이 없습니다."));
+    }
+
+
+
+
 
 
 

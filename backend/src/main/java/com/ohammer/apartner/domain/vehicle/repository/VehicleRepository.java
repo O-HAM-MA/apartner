@@ -4,6 +4,7 @@ import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
@@ -17,6 +18,10 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     List<Vehicle> findAll();
 
     // isForeign 값에 따라 필터링된 조회
+
+    Optional<Vehicle> findByUser_Id(Long userId);
+
+
 
 
 

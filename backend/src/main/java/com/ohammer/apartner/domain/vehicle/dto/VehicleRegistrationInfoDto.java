@@ -65,7 +65,7 @@ public class VehicleRegistrationInfoDto {
                 .phone(phone)
                 .createdAt(vehicle.getCreatedAt())
                 //.visitPeriod(vehicle.getVisitPeriod()) // visitPeriod 필드 Vehicle 엔티티에 있어야 함
-                .status(entryRecord.getStatus().name()) // 🔥 status 여기 추가
+                .status(entryRecord.getStatus() != null ? entryRecord.getStatus().name() : null) // ✅ 이 부분
                 .build();
     }
 }

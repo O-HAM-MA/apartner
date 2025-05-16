@@ -5,6 +5,9 @@ import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "vehicles")
 @Getter
@@ -14,8 +17,8 @@ import lombok.*;
 @Setter
 public class Vehicle extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @Column(name = "vehicle_num", length = 10, nullable = false)
@@ -42,4 +45,9 @@ public class Vehicle extends BaseEntity {
 
     @Column(name = "phone")
     private String phone; // 외부 차량일 경우
+
+    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL)
+    private List<EntryRecord> entryRecords = new ArrayList<>();
+
+
 } 
