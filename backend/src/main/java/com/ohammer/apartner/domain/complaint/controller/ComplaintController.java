@@ -29,7 +29,7 @@ public class ComplaintController {
             description = "유저의 Id를 통해 유저의 민원들을 가져오는 기능",
             tags = "민원 관리 컨트롤러"
     )
-    public ResponseEntity<?> getAllComplaint() {
+    public ResponseEntity<?> getAllComplaint() throws AccessDeniedException {
 
         List<AllComplaintResponseDto> response = complaintService.getAllMyComplaints();
 

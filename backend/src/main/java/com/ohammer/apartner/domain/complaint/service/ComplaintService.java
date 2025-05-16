@@ -9,6 +9,7 @@ import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
@@ -27,10 +29,17 @@ public class ComplaintService {
 
     // Read
     // 로그인한 유저의 민원들을 가져오는 기능
-    public List<AllComplaintResponseDto> getAllMyComplaints() {
+    public List<AllComplaintResponseDto> getAllMyComplaints() throws AccessDeniedException {
 
         User user = SecurityUtil.getCurrentUser();
+
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
         Long userId = user.getId();
+
+        log.info("userId : " + user.getId());
 
         List<Complaint> complaints = complaintRepository.findByUserId(userId);
 
