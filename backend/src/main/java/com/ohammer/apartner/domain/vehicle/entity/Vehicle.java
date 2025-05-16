@@ -17,8 +17,8 @@ import java.util.List;
 @Setter
 public class Vehicle extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @Column(name = "vehicle_num", length = 10, nullable = false)

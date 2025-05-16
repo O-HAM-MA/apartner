@@ -56,4 +56,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
     Optional<User> findBySocialProviderAndSocialId(String socialProvider, String socialId);
+
+
+    @Query("SELECT u FROM User u JOIN FETCH u.building JOIN FETCH u.unit WHERE u.id = :id")
+    Optional<User> findByIdWithBuildingAndUnit(@Param("id") Long id);
 }

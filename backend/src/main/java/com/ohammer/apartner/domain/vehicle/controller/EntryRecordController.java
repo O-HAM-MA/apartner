@@ -37,8 +37,8 @@ public class EntryRecordController {
 
     // 🚙 출차
     @PostMapping("/exit")
-    public ResponseEntity<EntryRecordResponseDto> exit(@RequestBody EntryRecordRequestDto dto) {
-        return ResponseEntity.ok(entryRecordService.exitVehicle(dto.getVehicleId()));
+    public ResponseEntity<EntryRecordResponseDto> exit() { // @RequestBody EntryRecordRequestDto dto
+        return ResponseEntity.ok(entryRecordService.exitVehicle());
     }
 
     // 📜 출입 기록 전체 조회
@@ -49,8 +49,8 @@ public class EntryRecordController {
 
     // 🚗 차량이 다시 주차 허가를 요청할 때 (출입 신청)
     @PostMapping("/request/{vehicleId}")
-    public ResponseEntity<EntryRecordResponseDto> requestEntryRecord(@PathVariable(value = "vehicleId") Long vehicleId) {
-        EntryRecordResponseDto response = entryRecordService.requestEntryRecord(vehicleId);
+    public ResponseEntity<EntryRecordResponseDto> requestEntryRecord() { // @PathVariable(value = "vehicleId") Long vehicleId
+        EntryRecordResponseDto response = entryRecordService.requestEntryRecord();
         return ResponseEntity.ok(response);
     }
 

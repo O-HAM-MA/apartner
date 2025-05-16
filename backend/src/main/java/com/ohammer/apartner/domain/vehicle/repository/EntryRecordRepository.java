@@ -60,10 +60,21 @@ public interface EntryRecordRepository extends JpaRepository<EntryRecord, Long> 
     Optional<EntryRecord> findTopByVehicleIdOrderByCreatedAtDesc(Long vehicleId);
 
 
-    Optional<EntryRecord> findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(Long vehicleId, EntryRecord.Status status);
+    //Optional<EntryRecord> findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(Long vehicleId, EntryRecord.Status status);
 
     Optional<EntryRecord> findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByEntryTimeDesc(Long vehicleId, EntryRecord.Status status);
 
+    // EntryRecordRepository.java
+
+
+
+    // 🚗 입차용: 가장 최근에 승인(AGREE)되고, exitTime이 NULL인 레코드 한 건만
+    Optional<EntryRecord> findFirstByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(
+            Long vehicleId, EntryRecord.Status status);
+
+    // 🚙 출차용: 가장 최근에 승인(AGREE)되고, exitTime이 NULL인 레코드 한 건만
+    Optional<EntryRecord> findFirstByVehicleIdAndStatusAndExitTimeIsNullOrderByEntryTimeDesc(
+            Long vehicleId, EntryRecord.Status status);
 
 
 

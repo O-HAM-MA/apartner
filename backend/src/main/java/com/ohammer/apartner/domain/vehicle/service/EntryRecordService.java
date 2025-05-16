@@ -53,7 +53,8 @@ public class EntryRecordService {
 
     // 🚗 입차
     public EntryRecordResponseDto enterVehicle(EntryRecordRequestDto dto) {
-        Vehicle vehicle = vehicleService.findById(dto.getVehicleId());
+        //Vehicle vehicle = vehicleService.findById(dto.getVehicleId());
+        Vehicle vehicle = vehicleService.findByCurrentUser();
 
         // 1) 외부인이라면 제출된 전화번호 검증
         if (Boolean.TRUE.equals(vehicle.getIsForeign())) {
@@ -65,8 +66,10 @@ public class EntryRecordService {
 
         // 가장 최근 승인된(AGREE) 출입기록 찾기, exitTime이 null인 상태
         EntryRecord latestApprovedRecord = entryRecordRepository
-                .findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(dto.getVehicleId(), EntryRecord.Status.AGREE)
+                .findFirstByVehicleIdAndStatusAndExitTimeIsNullOrderByCreatedAtDesc(
+                        vehicle.getId(), EntryRecord.Status.AGREE)
                 .orElseThrow(() -> new IllegalStateException("승인된 출입 기록이 없거나 이미 입차된 상태입니다."));
+
 
         // 이미 입차 기록이 있다면 중복 입차 방지
         if (latestApprovedRecord.getEntryTime() != null) {
@@ -88,16 +91,19 @@ public class EntryRecordService {
 
     // 🚙 출차
     @Transactional
-    public EntryRecordResponseDto exitVehicle(Long vehicleId) {
+    public EntryRecordResponseDto exitVehicle() {
+
+        Vehicle vehicle = vehicleService.findByCurrentUser();
         // 승인된 출입기록 중 출차 안 한 기록 조회
         EntryRecord activeRecord = entryRecordRepository
-                .findTopByVehicleIdAndStatusAndExitTimeIsNullOrderByEntryTimeDesc(vehicleId, EntryRecord.Status.AGREE)
+                .findFirstByVehicleIdAndStatusAndExitTimeIsNullOrderByEntryTimeDesc(
+                        vehicle.getId(), EntryRecord.Status.AGREE)
                 .orElseThrow(() -> new IllegalStateException("현재 주차 중인 기록이 없습니다."));
 
         activeRecord.setExitTime(LocalDateTime.now());
 
         // 차량 상태 갱신
-        Vehicle vehicle = activeRecord.getVehicle();
+        //Vehicle vehicle = activeRecord.getVehicle();
         vehicle.setStatus(Vehicle.Status.INACTIVE);
 
         entryRecordRepository.save(activeRecord);
@@ -118,8 +124,8 @@ public class EntryRecordService {
 
     // 차량이 다시 주차 허가를 받고 싶을 때
     @Transactional
-    public EntryRecordResponseDto requestEntryRecord(Long vehicleId) {
-        Vehicle vehicle = vehicleService.findById(vehicleId);
+    public EntryRecordResponseDto requestEntryRecord() {
+        Vehicle vehicle = vehicleService.findByCurrentUser();
 
         // 차량 상태가 ACTIVE면 주차 중인 상태로 간주
         if (vehicle.getStatus() == Vehicle.Status.ACTIVE) {
