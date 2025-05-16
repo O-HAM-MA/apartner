@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -21,52 +23,52 @@ public class ComplaintController {
 
     private final ComplaintService complaintService;
 
-    @GetMapping("/all/complaint/{userId}")
+    @GetMapping("/all/complaint")
     @Operation(
             summary = "유저의 민원들을 가져오는 기능",
             description = "유저의 Id를 통해 유저의 민원들을 가져오는 기능",
             tags = "민원 관리 컨트롤러"
     )
-    public ResponseEntity<?> getAllComplaint(@PathVariable Long userId) {
+    public ResponseEntity<?> getAllComplaint() throws AccessDeniedException {
 
-        List<AllComplaintResponseDto> response = complaintService.getAllMyComplaints(userId);
+        List<AllComplaintResponseDto> response = complaintService.getAllMyComplaints();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/all/complaint/")
+    @GetMapping("/all/complaint/manager")
     @Operation(
-            summary = "유저들의 민원을 가져오는 기능",
-            description = "매니저가 유저의 민원을 확인하기 위한 기능",
+            summary = "매니저 혹은 최고 관리자가 유저들의 민원을 가져오는 기능",
+            description = "매니저 혹은 최고 관리자가 유저들의 민원을 가져오는 기능",
             tags = "민원 관리 컨트롤러"
     )
-    public ResponseEntity<?> getAllComplaint(){
+    public ResponseEntity<?> getAllComplaintByManager() throws AccessDeniedException {
         List<AllComplaintResponseDto> response = complaintService.getAllComplaints();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     // 유저 ID는 임시
-    @PostMapping("/create/{userId}")
+    @PostMapping("/create")
     @Operation(
             summary = "유저의 민원을 생성하는 기능",
             description = "유저가 입력한 정보를 기반으로 민원을 생성하는 기능",
             tags = "민원 관리 컨트롤러"
     )
-    public ResponseEntity<?> createComplaint(@RequestBody CreateComplaintRequestDto requestDto, @PathVariable Long userId) {
+    public ResponseEntity<?> createComplaint(@RequestBody CreateComplaintRequestDto requestDto) {
 
-        Complaint response = complaintService.createComplaint(userId, requestDto);
+        Complaint response = complaintService.createComplaint(requestDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PatchMapping("/update/{userId}")
+    @PatchMapping("/update/{complaintId}")
     @Operation(
             summary = "유저의 민원을 수정하는 기능",
             description = "유저가 입력한 정보를 기반으로 민원을 수정하는 기능",
             tags = "민원 관리 컨트롤러"
     )
-    public ResponseEntity<?> updateComplaint(@RequestBody CreateComplaintRequestDto requestDto, @PathVariable Long userId){
-        Complaint response = complaintService.updateComplaint(userId, requestDto);
+    public ResponseEntity<?> updateComplaint(@RequestBody CreateComplaintRequestDto requestDto, @PathVariable Long complaintId) throws AccessDeniedException {
+        Complaint response = complaintService.updateComplaint(requestDto,complaintId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -77,21 +79,21 @@ public class ComplaintController {
             description = "매니저가 민원 처리 여부에 따른 상태 변경을 위한 기능",
             tags = "민원 관리 컨트롤러"
     )
-    public ResponseEntity<?> updateComplaintStatus(@PathVariable Long complainId, @PathVariable Long status){
+    public ResponseEntity<?> updateComplaintStatus(@PathVariable Long complainId, @PathVariable Long status) throws Exception {
 
         Complaint response = complaintService.updateStatus(complainId, status);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete/{complainId}/{userId}")
+    @DeleteMapping("/delete/{complainId}")
     @Operation(
-            summary = "유저의 민원을 수정하는 기능",
-            description = "유저가 입력한 정보를 기반으로 민원을 수정하는 기능",
+            summary = "유저의 민원을 삭제하는 기능",
+            description = "선택한 민원을 삭제하는 기능",
             tags = "민원 관리 컨트롤러"
     )
-    public ResponseEntity<?> deleteComplaint(@PathVariable Long complainId, @PathVariable Long userId){
-        complaintService.deleteComplaint(complainId, userId);
+    public ResponseEntity<?> deleteComplaint(@PathVariable Long complainId){
+        complaintService.deleteComplaint(complainId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

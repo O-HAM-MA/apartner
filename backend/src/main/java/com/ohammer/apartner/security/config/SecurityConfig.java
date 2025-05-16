@@ -57,9 +57,15 @@ public class SecurityConfig {
                                 // ✅ 관리자 로그인/회원가입은 열어두기
                                 "/api/v1/admin/login",
                                 "/api/v1/admin/register", "/api/v1/admin/check", "/api/v1/sms/**",
-                                "api/v1/vehicles/foreigns/**"
-                                //"/api/v1/vehicles/**",
-                                //"/api/v1/entry-records/**"
+
+
+
+                                //암시로 넣어야징
+                                "/api/v1/inspection/**",
+                                "/api/v1/admin/register", "/api/v1/admin/check", "/api/v1/sms/**",
+                                "/api/v1/vehicles/**",
+                                "/api/v1/entry-records/**"
+
                         ).permitAll()
                         // 관리자 전용 API
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
