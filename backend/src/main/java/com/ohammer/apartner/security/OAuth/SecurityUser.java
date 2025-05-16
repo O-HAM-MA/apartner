@@ -16,10 +16,11 @@ import java.util.Map;
 public class SecurityUser extends User implements OAuth2User {
     private Long id;
     private Status status;
-
+    private String email;
     public SecurityUser(
     Long id,
     String username,
+    String email,
     String password,
     Status status,
     Collection<? extends GrantedAuthority> authorities
@@ -27,6 +28,7 @@ public class SecurityUser extends User implements OAuth2User {
         super(username, password, authorities);
         this.id = id;
         this.status = status;
+        this.email = email;
     }
 
 

@@ -38,10 +38,14 @@ public class User extends BaseEntity {
 
     @Column(length = 50)
     private String socialProvider;
+    
+    @Column(length = 255)
+    private String socialId;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @Builder.Default
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", nullable = false)
     private Set<Role> roles = new HashSet<>();
 
@@ -68,14 +72,29 @@ public class User extends BaseEntity {
     @JoinColumn(name = "profile_image_id", referencedColumnName = "id")
     private Image profileImage; // 프로필 이미지 (Image 엔티티와 연결)
 
-
     
-    public User(Long id, String username, String password, Status status, Set<Role> roles) {
+    public User(Long id, String username,String email, String password, Status status, Set<Role> roles) {
         this.setId(id); // BaseEntity의 public setter setId()를 통해 id 값 설정
         this.userName = username; // 파라미터 변수명 오타 수정 (userName -> username)
+        this.email = email;
         this.password = password;
         this.status = status;
         this.roles = roles;
     }
 
+
+
+    public User(Long id, String username, String password, String email, String phoneNum, String userName, Apartment apartment, Building building, Unit unit, Status status, Set<Role> roles) {
+        this.setId(id); // BaseEntity의 public setter setId()를 통해 id 값 설정
+        this.userName = username; // 파라미터 변수명 오타 수정 (userName -> username)
+        this.password = password;
+        this.email = email;
+        this.phoneNum = phoneNum;
+        this.userName = userName;
+        this.apartment = apartment;
+        this.building = building;
+        this.unit = unit;
+        this.status = status;
+        this.roles = roles;
+    }
 } 

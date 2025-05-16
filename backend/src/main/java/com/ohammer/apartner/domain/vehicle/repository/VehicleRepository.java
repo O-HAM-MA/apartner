@@ -19,4 +19,6 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     // isForeign 값에 따라 필터링된 조회
 
 
+
+
 }

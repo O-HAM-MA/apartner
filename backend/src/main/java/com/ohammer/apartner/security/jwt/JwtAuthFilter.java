@@ -37,7 +37,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         // API 요청이 아니거나 인증이 필요 없는 API 경로인 경우 필터 스킵
         if (!requestURI.startsWith("/api/") || 
-            requestURI.startsWith("/api/v1/auth/") ||  // /api/v1/auth/** 경로 제외
+            (requestURI.startsWith("/api/v1/auth/") && !requestURI.equals("/api/v1/auth/me")) ||  // /api/v1/auth/** 경로 제외 (단, /api/v1/auth/me는 인증 필요)
             requestURI.startsWith("/api/v1/apartments/") ||  // /api/v1/apartments/** 경로 제외
             requestURI.startsWith("/api/v1/auth/login") ||  // 로그인 API 제외
             requestURI.startsWith("/api/v1/auth/logout") ||  // 로그아웃 API 제외
@@ -46,7 +46,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             requestURI.startsWith("/api/v1/admin/login") ||  // 관리자 로그인 API 제외
             requestURI.startsWith("/api/v1/admin/register") ||  // 관리자 등록 API 제외
             requestURI.startsWith("/api/v1/admin/check") ||  // 관리자 체크 API 제외
-            requestURI.startsWith("/api/v1/sms/")) {  // SMS API 제외
+            requestURI.startsWith("/api/v1/sms/") ||  // SMS API 제외
+            requestURI.contains("/signup") ||  // 회원가입 페이지 제외
+            requestURI.contains("/login") ||  // 로그인 페이지 제외
+            requestURI.startsWith("/oauth2/") ||  // OAuth2 인증 시작점 제외
+            requestURI.startsWith("/login/oauth2/")) {  // OAuth2 콜백 제외
             log.info("[JwtAuthFilter] Skipping authentication for public endpoint: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
