@@ -14,7 +14,4 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
 
     List<Image> findByIsTemporaryTrueAndExpiresAtBefore(LocalDateTime dateTime);
 
-    // 여러 이미지 ID로 이미지들 조회
-    List<Image> findAllByIdIn(List<Long> ids);
-
 }
