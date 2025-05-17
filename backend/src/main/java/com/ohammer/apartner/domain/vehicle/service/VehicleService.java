@@ -55,7 +55,7 @@ public class VehicleService {
         // EntryRecord 생성
         EntryRecord entryRecord = EntryRecord.builder()
                 .vehicle(vehicle)
-                .status(EntryRecord.Status.PENDING)
+                .status(EntryRecord.Status.AGREE)
                 .build();
 
 
