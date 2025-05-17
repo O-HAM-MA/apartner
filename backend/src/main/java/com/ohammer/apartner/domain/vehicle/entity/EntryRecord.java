@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.vehicle.entity;
 
+import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,4 +35,9 @@ public class EntryRecord extends BaseEntity {
     public enum Status {
         AGREE, INAGREE, PENDING
     }
+
+//    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+//    @JoinColumn(name = "inviter_id")
+//    private User inviter;
+
 } 

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,6 +71,12 @@ public class VehicleService {
     // 외부 차량 등록
     @Transactional
     public VehicleResponseDto registerForeignVehicle(ForeignVehicleRequestDto dto) {
+
+        // ✅ 1. 동/호수로 입주민(User) 조회
+        User inviter = userRepository.findByBuilding_BuildingNumberAndUnit_UnitNumber(
+                dto.getBuildingNum(), dto.getUnitNum()
+        ).orElseThrow(() -> new NoSuchElementException("해당 동/호수의 입주민이 존재하지 않습니다."));
+
         Vehicle vehicle = Vehicle.builder()
                 .vehicleNum(dto.getVehicleNum())
                 .type(dto.getType())
@@ -145,6 +152,7 @@ public class VehicleService {
                     .vehicleNum(vehicle.getVehicleNum())
                     .type(vehicle.getType())
                     .userPhone(user.getPhoneNum()) // 거주자일 경우 phone은 user에서 가져옴
+                    .apartmentName(user.getApartment().getName())
                     .buildingName(user.getBuilding().getBuildingNumber())
                     .unitName(user.getUnit().getUnitNumber())
                     .build();

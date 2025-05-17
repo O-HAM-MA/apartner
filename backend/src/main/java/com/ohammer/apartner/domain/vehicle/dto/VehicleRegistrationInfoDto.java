@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.vehicle.dto;
 
 
 
+import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
@@ -17,6 +18,7 @@ public class VehicleRegistrationInfoDto {
     private Long id; // 신청번호
     private String registerType; // 등록 구분 (거주자/방문자)
     private String applicantName; // 신청자 이름 또는 택배, 손님 등
+    private String apartmentName;
     private String buildingName; // 동
     private String unitName; // 호수
     private String vehicleNum; // 차량번호
@@ -35,6 +37,7 @@ public class VehicleRegistrationInfoDto {
 
         String registerType = isForeign ? "방문자" : "거주자";
         String applicantName;
+        String apartment = null;
         String building = null;
         String unit = null;
         String phone;
@@ -44,10 +47,13 @@ public class VehicleRegistrationInfoDto {
             phone = vehicle.getPhone();
         } else {
             User user = vehicle.getUser();
-            applicantName = user != null ? user.getUserName() : "미등록/탈퇴한 사용자";
+            applicantName = user != null ? user.getUserName() : "탈퇴한 사용자";
             building = user != null && user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : null;
             unit = user != null && user.getUnit() != null ? user.getUnit().getUnitNumber() : null;
             phone = user != null ? user.getPhoneNum() : null;
+            // 여기에 apartmentName 세팅
+            Apartment apt = user != null ? user.getApartment() : null;  // 혹은 vehicle.getApartment()
+            apartment = apt != null ? apt.getName() : null;
 //            applicantName = String.valueOf(user.getId()); // 혹은 .toString()
 //            building = user.getBuilding().getBuildingNumber();
 //            unit = user.getUnit().getUnitNumber();
@@ -58,6 +64,7 @@ public class VehicleRegistrationInfoDto {
                 .id(vehicle.getId())
                 .registerType(registerType)
                 .applicantName(applicantName)
+                .apartmentName(apartment)
                 .buildingName(building)
                 .unitName(unit)
                 .vehicleNum(vehicle.getVehicleNum())
