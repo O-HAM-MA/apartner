@@ -65,4 +65,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u JOIN FETCH u.building JOIN FETCH u.unit WHERE u.id = :id")
     Optional<User> findByIdWithBuildingAndUnit(@Param("id") Long id);
+
+
+    //Optional<User> findByBuilding_BuildingNumberAndUnit_UnitNumber(String buildingNum, String unitNum);
+
+
+    @Query("""
+        SELECT u FROM User u
+         JOIN u.apartment a
+         JOIN u.building b
+         JOIN u.unit   t
+        WHERE a.name       = :aptName
+          AND b.buildingNumber = :bldgNum
+          AND t.unitNumber     = :unitNum
+      """)
+    Optional<User> findByAptAndBuildingAndUnit(
+            @Param("aptName") String aptName,
+            @Param("bldgNum") String bldgNum,
+            @Param("unitNum") String unitNum
+    );
+
+
+
 }

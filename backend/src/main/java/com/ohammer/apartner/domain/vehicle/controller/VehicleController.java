@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.vehicle.controller;
 
 import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.service.VehicleService;
+import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,6 +82,20 @@ public class VehicleController {
         List<VehicleRegistrationInfoDto> approvedVehicles = vehicleService.getApprovedVehicles();
         return ResponseEntity.ok(approvedVehicles);
     }
+
+    @GetMapping("/visitors/pending")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getMyRequests() {
+        Long inviterId = SecurityUtil.getCurrentUserId();
+        if (inviterId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(
+                vehicleService.getMyVisitorRequests(inviterId)
+        );
+    }
+
+
 
 
 

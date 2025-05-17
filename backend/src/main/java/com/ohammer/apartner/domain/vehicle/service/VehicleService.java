@@ -73,8 +73,8 @@ public class VehicleService {
     public VehicleResponseDto registerForeignVehicle(ForeignVehicleRequestDto dto) {
 
         // ✅ 1. 동/호수로 입주민(User) 조회
-        User inviter = userRepository.findByBuilding_BuildingNumberAndUnit_UnitNumber(
-                dto.getBuildingNum(), dto.getUnitNum()
+        User inviter = userRepository.findByAptAndBuildingAndUnit(
+                dto.getApartmentName(), dto.getBuildingNum(), dto.getUnitNum()
         ).orElseThrow(() -> new NoSuchElementException("해당 동/호수의 입주민이 존재하지 않습니다."));
 
         Vehicle vehicle = Vehicle.builder()
@@ -84,6 +84,7 @@ public class VehicleService {
                 .status(Vehicle.Status.INACTIVE)
                 .phone(dto.getPhone())
                 .reason(dto.getReason())
+                .user(inviter)
                 .build();
 
         vehicleRepository.save(vehicle);
@@ -211,6 +212,23 @@ public class VehicleService {
         if (userId == null) throw new IllegalStateException("로그인 정보가 없습니다.");
         return vehicleRepository.findByUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("등록된 차량이 없습니다."));
+    }
+
+    /** 입주민용: 본인에게 온 외부인 요청 조회 */
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getMyVisitorRequests(Long inviterId) {
+        // 엔티티: Vehicle.user.id = inviterId && isForeign=true && status=PENDING
+        List<Vehicle> list = vehicleRepository.findForeignVehiclesWithPendingEntryRecordByInviterId(
+                inviterId, EntryRecord.Status.PENDING
+        );
+
+
+        // DTO 변환
+        return list.stream()
+                .map(v -> VehicleRegistrationInfoDto.from(v, /*dummy EntryRecord*/ EntryRecord.builder()
+                        .status(EntryRecord.Status.PENDING).build()
+                ))
+                .collect(Collectors.toList());
     }
 
 

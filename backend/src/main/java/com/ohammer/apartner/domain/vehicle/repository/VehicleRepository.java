@@ -1,7 +1,10 @@
 package com.ohammer.apartner.domain.vehicle.repository;
 
+import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +23,17 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     // isForeign 값에 따라 필터링된 조회
 
     Optional<Vehicle> findByUser_Id(Long userId);
+
+    // 수정된 메소드
+    List<Vehicle> findByIsForeignTrueAndStatusAndUser_Id(Vehicle.Status status, Long userId);
+
+    @Query("SELECT v FROM Vehicle v JOIN EntryRecord e ON e.vehicle = v " +
+            "WHERE v.isForeign = true AND v.user.id = :inviterId AND e.status = :status")
+    List<Vehicle> findForeignVehiclesWithPendingEntryRecordByInviterId(
+            @Param("inviterId") Long inviterId,
+            @Param("status") EntryRecord.Status status
+    );
+
 
 
 
