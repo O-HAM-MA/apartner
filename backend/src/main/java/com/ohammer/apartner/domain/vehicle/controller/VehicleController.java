@@ -107,6 +107,11 @@ public class VehicleController {
         return ResponseEntity.ok(list);
     }
 
+    @GetMapping("/status")
+    public ResponseEntity<ParkingStatusDto> getParkingStatus() {
+        return ResponseEntity.ok(vehicleService.getParkingStatus());
+    }
+
 
 
 

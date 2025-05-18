@@ -28,14 +28,19 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final EntryRecordRepository entryRecordRepository;
+    private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
 
     // 입주민 차량 등록
     @Transactional
     public VehicleResponseDto registerResidentVehicle(ResidentVehicleRequestDto dto) {
+
+
 //        User user = userRepository.findById(dto.getUserId())
 //                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 1) SecurityUtil로 현재 로그인한 User 엔티티를 바로 꺼낸다.
+
+
         User currentUser = SecurityUtil.getCurrentUser();
         if (currentUser == null) {
             throw new IllegalStateException("로그인된 사용자가 아닙니다.");
@@ -73,6 +78,13 @@ public class VehicleService {
     // 외부 차량 등록
     @Transactional
     public VehicleResponseDto registerForeignVehicle(ForeignVehicleRequestDto dto) {
+
+//        long activeCount = vehicleRepository.countByStatus(Vehicle.Status.ACTIVE);
+//
+//        if (activeCount >= 17) {
+//            throw new IllegalStateException("주차장이 꽉 찼습니다.");
+//        }
+
 
         // ✅ 1. 동/호수로 입주민(User) 조회
         User inviter = userRepository.findByAptAndBuildingAndUnit(
@@ -294,6 +306,29 @@ public class VehicleService {
                         EntryRecord.builder().status(null).build()))
                 .collect(Collectors.toList());
     }
+
+    // 현재 주차 중인 차량 수
+    public long countActiveVehicles() {
+        return vehicleRepository.countByStatus(Vehicle.Status.ACTIVE);
+    }
+
+    // 남은 주차 공간 수
+    public int getRemainingSpace() {
+        long activeCount = countActiveVehicles();
+        return MAX_CAPACITY - (int) activeCount;
+    }
+
+    // 전체 주차장 현황 반환 DTO
+    public ParkingStatusDto getParkingStatus() {
+        long activeCount = countActiveVehicles();
+        return ParkingStatusDto.builder()
+                .totalCapacity(MAX_CAPACITY)
+                .activeCount(activeCount)
+                .remainingSpace(MAX_CAPACITY - (int) activeCount)
+                .build();
+    }
+
+
 
 
 

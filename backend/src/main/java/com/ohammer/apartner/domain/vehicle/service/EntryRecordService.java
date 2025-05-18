@@ -24,6 +24,7 @@ public class EntryRecordService {
 
     private final EntryRecordRepository entryRecordRepository;
     private final VehicleService vehicleService;
+    private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
 
 //    @Transactional
 //    public EntryRecord updateStatus(Long entryRecordId, EntryRecord.Status newStatus) {
@@ -65,6 +66,17 @@ public class EntryRecordService {
 //                throw new IllegalArgumentException("등록된 전화번호와 일치하지 않습니다.");
 //            }
 //        }
+
+        long activeCount = vehicleService.countActiveVehicles();
+
+        if (activeCount >= MAX_CAPACITY) {
+            throw new IllegalStateException("주차장이 꽉 찼습니다.");
+        }
+
+
+
+
+
 
         Vehicle vehicle;
 
