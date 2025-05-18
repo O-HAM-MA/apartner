@@ -50,7 +50,10 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
 
 
-
+    /**
+     * status가 ACTIVE인 Vehicle만 조회
+     */
+    List<Vehicle> findAllByStatus(Vehicle.Status status);
 
 
 

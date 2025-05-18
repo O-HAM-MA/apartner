@@ -282,6 +282,19 @@ public class VehicleService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getActiveVehicles() {
+        // 1) ACTIVE 차량 엔티티 조회
+        List<Vehicle> activeVehicles = vehicleRepository.findAllByStatus(Vehicle.Status.ACTIVE);
+
+        // 2) 필요한 DTO로 변환
+        return activeVehicles.stream()
+                .map(v -> VehicleRegistrationInfoDto.from(v,
+                        /* 여기 EntryRecord는 필요 없으면 더미나 null 처리 */
+                        EntryRecord.builder().status(null).build()))
+                .collect(Collectors.toList());
+    }
+
 
 
 

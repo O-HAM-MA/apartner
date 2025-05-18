@@ -101,6 +101,12 @@ public class VehicleController {
         return ResponseEntity.ok(approvedVehicles);
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getActiveVehicles() {
+        List<VehicleRegistrationInfoDto> list = vehicleService.getActiveVehicles();
+        return ResponseEntity.ok(list);
+    }
+
 
 
 
