@@ -64,7 +64,8 @@ public class SecurityConfig {
                                 "/api/v1/inspection/**",
                                 "/api/v1/admin/register", "/api/v1/admin/check", "/api/v1/sms/**",
                                 "/api/v1/vehicles/foreigns",
-                                "/api/v1/entry-records/**"
+                                "/api/v1/entry-records/enter",
+                                "/api/v1/entry-records/exit"
 
 
 

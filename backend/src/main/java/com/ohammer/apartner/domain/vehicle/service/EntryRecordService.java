@@ -51,17 +51,38 @@ public class EntryRecordService {
     }
 
 
+
+
     // 🚗 입차
     public EntryRecordResponseDto enterVehicle(EntryRecordRequestDto dto) {
-        //Vehicle vehicle = vehicleService.findById(dto.getVehicleId());
-        Vehicle vehicle = vehicleService.findByCurrentUser();
+//        //Vehicle vehicle = vehicleService.findById(dto.getVehicleId());
+//        Vehicle vehicle = vehicleService.findByCurrentUser();
+//
+//        // 1) 외부인이라면 제출된 전화번호 검증
+//        if (Boolean.TRUE.equals(vehicle.getIsForeign())) {
+//            String registeredPhone = vehicle.getPhone();
+//            if (dto.getPhone() == null || !registeredPhone.equals(dto.getPhone())) {
+//                throw new IllegalArgumentException("등록된 전화번호와 일치하지 않습니다.");
+//            }
+//        }
 
-        // 1) 외부인이라면 제출된 전화번호 검증
-        if (Boolean.TRUE.equals(vehicle.getIsForeign())) {
-            String registeredPhone = vehicle.getPhone();
-            if (dto.getPhone() == null || !registeredPhone.equals(dto.getPhone())) {
-                throw new IllegalArgumentException("등록된 전화번호와 일치하지 않습니다.");
-            }
+        Vehicle vehicle;
+
+        // ── 1) 외부인 분기 ───────────────────────────────────
+        // dto.getPhone()에 값이 있으면 외부인 입차
+        if (dto.getPhone() != null) {
+            // 차량 테이블에 isForeign = true, phone 칼럼으로 검색
+            vehicle = vehicleService
+                    //.findByPhoneAndIsForeign(dto.getPhone(), true)
+                    .findLatestByPhoneAndIsForeign(dto.getPhone())  // ← 이 부분을 변경
+                    .orElseThrow(() -> new IllegalArgumentException("등록된 외부 차량이 없습니다."));
+
+            // (전화번호 일치 검사는 findBy… 호출만으로 끝났으므로 추가 검사는 불필요)
+        }
+        // ── 2) 입주민 분기 ───────────────────────────────────
+        else {
+            // 기존처럼 로그인한 유저의 차량 한 대 가져오기
+            vehicle = vehicleService.findByCurrentUser();
         }
 
         // 가장 최근 승인된(AGREE) 출입기록 찾기, exitTime이 null인 상태
@@ -91,9 +112,22 @@ public class EntryRecordService {
 
     // 🚙 출차
     @Transactional
-    public EntryRecordResponseDto exitVehicle() {
+    public EntryRecordResponseDto exitVehicle(EntryRecordRequestDto dto) {
 
-        Vehicle vehicle = vehicleService.findByCurrentUser();
+        Vehicle vehicle;
+
+        // ── 1) 외부인 분기 ───────────────────────────────────
+        if (dto != null && dto.getPhone() != null) {
+            vehicle = vehicleService
+                    .findMostRecentActiveVehicleByPhoneAndIsForeign(dto.getPhone(), true)
+                    .orElseThrow(() -> new IllegalArgumentException("등록된 외부 차량이 없습니다."));
+        }
+        // ── 2) 입주민 분기 ───────────────────────────────────
+        else {
+            vehicle = vehicleService.findByCurrentUser();
+        }
+
+        //Vehicle vehicle = vehicleService.findByCurrentUser();
         // 승인된 출입기록 중 출차 안 한 기록 조회
         EntryRecord activeRecord = entryRecordRepository
                 .findFirstByVehicleIdAndStatusAndExitTimeIsNullOrderByEntryTimeDesc(
@@ -134,7 +168,7 @@ public class EntryRecordService {
 
         EntryRecord entryRecord = EntryRecord.builder()
                 .vehicle(vehicle)
-                .status(EntryRecord.Status.PENDING)
+                .status(EntryRecord.Status.AGREE)
                 .build();
 
         entryRecordRepository.save(entryRecord);
@@ -152,6 +186,8 @@ public class EntryRecordService {
         record.setStatus(newStatus);
         return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
     }
+
+
 
 
 

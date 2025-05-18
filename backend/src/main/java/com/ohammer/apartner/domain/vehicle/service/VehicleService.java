@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -257,6 +258,24 @@ public class VehicleService {
         return vehicleRepository.findByIdAndUser_Id(vehicleId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("당신의 차량이 아니거나 존재하지 않습니다."));
     }
+
+
+    public Optional<Vehicle> findByPhoneAndIsForeign(String phone, Boolean isForeign) {
+        return vehicleRepository.findByPhoneAndIsForeign(phone, isForeign);
+    }
+
+    public Optional<Vehicle> findLatestByPhoneAndIsForeign(String phone) {
+        return vehicleRepository.findTopByPhoneAndIsForeignOrderByCreatedAtDesc(phone, true);
+    }
+
+    public Optional<Vehicle> findMostRecentActiveVehicleByPhoneAndIsForeign(String phone, boolean isForeign) {
+        return vehicleRepository
+                .findTopByPhoneAndIsForeignOrderByCreatedAtDesc(phone, isForeign);
+    }
+
+
+
+
 
 
 
