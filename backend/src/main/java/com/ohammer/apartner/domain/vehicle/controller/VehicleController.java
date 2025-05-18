@@ -112,6 +112,15 @@ public class VehicleController {
         return ResponseEntity.ok(vehicleService.getParkingStatus());
     }
 
+    @GetMapping("/mine")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getMyVehicles() {
+        List<VehicleRegistrationInfoDto> list = vehicleService.getMyVehicleRegistrations();
+        return ResponseEntity.ok(list);
+    }
+
+
+
+
 
 
 

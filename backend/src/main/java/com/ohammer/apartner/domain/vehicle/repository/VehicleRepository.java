@@ -57,6 +57,9 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     long countByStatus(Vehicle.Status status);
 
+    List<Vehicle> findByUserId(Long userId);
+
+
 
 
 

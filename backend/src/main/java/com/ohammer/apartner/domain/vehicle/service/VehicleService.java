@@ -328,6 +328,37 @@ public class VehicleService {
                 .build();
     }
 
+    public List<Vehicle> getVehiclesByUserId(Long userId) {
+        return vehicleRepository.findByUserId(userId);
+    }
+
+    /** 현재 로그인 유저의 차량 목록을 VehicleRegistrationInfoDto로 반환 */
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getMyVehicleRegistrations() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        if (userId == null) {
+            throw new IllegalStateException("로그인 정보가 없습니다.");
+        }
+
+        // 1) 소유 차량 전체를 불러온다
+        List<Vehicle> vehicles = vehicleRepository.findAllByUser_Id(userId);
+
+        // 2) 각 차량마다 최신 EntryRecord 하나(or status별로 원하는 것) 가져오기
+        return vehicles.stream()
+                .map(vehicle -> {
+                    // 예시: 최신 상태 레코드를 하나 꺼낸다
+                    EntryRecord er = entryRecordRepository
+                            .findTopByVehicleIdOrderByCreatedAtDesc(vehicle.getId())
+                            .orElseGet(() -> EntryRecord.builder().status(null).build());
+                    // 3) DTO로 변환
+                    return VehicleRegistrationInfoDto.from(vehicle, er);
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+
 
 
 
