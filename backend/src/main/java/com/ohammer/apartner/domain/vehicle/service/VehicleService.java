@@ -273,6 +273,17 @@ public class VehicleService {
                 .findTopByPhoneAndIsForeignOrderByCreatedAtDesc(phone, isForeign);
     }
 
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getInvitedApprovedVehicles() {
+        List<EntryRecord> approvedRecords = entryRecordRepository.findByStatus(EntryRecord.Status.INVITER_AGREE);
+
+        return approvedRecords.stream()
+                .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
+                .collect(Collectors.toList());
+    }
+
+
+
 
 
 

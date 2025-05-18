@@ -33,7 +33,7 @@ public class EntryRecord extends BaseEntity {
 
     // Enum for status
     public enum Status {
-        AGREE, INAGREE, PENDING
+        AGREE, INAGREE, PENDING, INVITER_AGREE
     }
 
 //    @ManyToOne(fetch = FetchType.LAZY, optional = true)

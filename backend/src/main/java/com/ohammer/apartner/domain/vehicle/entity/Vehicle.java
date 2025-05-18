@@ -4,6 +4,8 @@ import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 public class Vehicle extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @NotFound(action = NotFoundAction.IGNORE)
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
