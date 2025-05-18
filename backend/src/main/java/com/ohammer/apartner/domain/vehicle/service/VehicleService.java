@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -210,8 +211,26 @@ public class VehicleService {
     public Vehicle findByCurrentUser() {
         Long userId = SecurityUtil.getCurrentUserId();
         if (userId == null) throw new IllegalStateException("로그인 정보가 없습니다.");
-        return vehicleRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new IllegalArgumentException("등록된 차량이 없습니다."));
+//        return vehicleRepository.findByUser_Id(userId)
+//                .orElseThrow(() -> new IllegalArgumentException("등록된 차량이 없습니다."));
+
+        List<Vehicle> vehicles = vehicleRepository.findAllByUser_Id(userId);
+        if (vehicles.isEmpty()) {
+            throw new IllegalArgumentException("등록된 차량이 없습니다.");
+        }
+
+        if (vehicles.size() == 1) {
+            // 여전히 1대뿐이면 기존 로직과 동일
+            return vehicles.get(0);
+        }
+
+        // 2대 이상 등록된 경우: “기본” 차량을 골라주는 전략
+        // (예: 가장 최근에 등록된 차량을 기본으로)
+        return vehicles.stream()
+                .max(Comparator.comparing(Vehicle::getCreatedAt))
+                .get();
+
+
     }
 
     /** 입주민용: 본인에게 온 외부인 요청 조회 */
@@ -230,6 +249,15 @@ public class VehicleService {
                 ))
                 .collect(Collectors.toList());
     }
+
+
+    public Vehicle findByIdAndCurrentUser(Long vehicleId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        if (userId == null) throw new IllegalStateException("로그인 정보가 없습니다.");
+        return vehicleRepository.findByIdAndUser_Id(vehicleId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("당신의 차량이 아니거나 존재하지 않습니다."));
+    }
+
 
 
 

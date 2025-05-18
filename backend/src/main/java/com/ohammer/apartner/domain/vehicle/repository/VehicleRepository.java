@@ -36,6 +36,13 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
 
 
+    Optional<Vehicle> findByIdAndUser_Id(Long vehicleId, Long userId);
+
+    // 한 유저의 모든 차량을 가져오는 메서드
+    List<Vehicle> findAllByUser_Id(Long userId);
+
+
+
 
 
 
