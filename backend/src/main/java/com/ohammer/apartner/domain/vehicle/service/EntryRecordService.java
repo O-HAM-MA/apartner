@@ -9,6 +9,7 @@ import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 //import jakarta.transaction.Transactional;
+import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,14 @@ public class EntryRecordService {
     public EntryRecordStatusDto updateStatus(Long entryRecordId, EntryRecord.Status newStatus) {
         EntryRecord record = entryRecordRepository.findById(entryRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 출입기록이 없습니다."));
+
+        // 소유자 확인 (출입기록 → 차량 → 소유자)
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (!record.getVehicle().getUser().getId().equals(currentUserId)) {
+            throw new IllegalArgumentException("본인의 차량에 대한 요청만 처리할 수 있습니다.");
+        }
+
+
 
         record.setStatus(newStatus);
         return new EntryRecordStatusDto(record.getId(), record.getStatus().name());

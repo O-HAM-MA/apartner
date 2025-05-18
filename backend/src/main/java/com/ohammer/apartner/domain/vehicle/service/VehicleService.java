@@ -186,6 +186,12 @@ public class VehicleService {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new RuntimeException("차량을 찾을 수 없습니다."));
 
+        // 2) 소유자 확인
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (!vehicle.getUser().getId().equals(currentUserId)) {
+            throw new IllegalArgumentException("본인의 차량만 수정할 수 있습니다.");
+        }
+
         vehicle.setVehicleNum(dto.getVehicleNum());
         vehicle.setType(dto.getType());
     }
@@ -195,6 +201,12 @@ public class VehicleService {
         // 차량을 찾을 수 없으면 예외 발생
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new RuntimeException("차량을 찾을 수 없습니다."));
+
+        // 소유자 확인
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (!vehicle.getUser().getId().equals(currentUserId)) {
+            throw new IllegalArgumentException("본인의 차량만 삭제할 수 있습니다.");
+        }
 
         // 차량 삭제
         entryRecordRepository.deleteAllByVehicle(vehicle);
