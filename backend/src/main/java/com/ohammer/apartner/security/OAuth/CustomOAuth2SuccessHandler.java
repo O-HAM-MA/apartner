@@ -108,19 +108,40 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
         }
 
         if (existingUser != null) {
-            customRequest.makeAuthCookies(existingUser);
-            log.info("[KakaoLogin] 기존 사용자 존재. JWT 쿠키 생성: {}. 이메일 (있으면): {}", 
-                     existingUser.getSocialId(), existingUser.getEmail() != null ? existingUser.getEmail() : "N/A");
+            switch (existingUser.getStatus()) {
+                case ACTIVE:
+                    customRequest.makeAuthCookies(existingUser);
+                    log.info("[KakaoLogin] 기존 ACTIVE 사용자 로그인. JWT 쿠키 생성: {}. 이메일: {}",
+                            existingUser.getSocialId(), existingUser.getEmail() != null ? existingUser.getEmail() : "N/A");
+                    
+                    String targetUrl = requestUrl != null ? requestUrl : "/";
+                    clearAuthenticationAttributes(request); 
+                    getRedirectStrategy().sendRedirect(request, response, targetUrl);
+                    return;
 
-            log.info("[KakaoLogin] 기존 사용자 로그인 - 세션 사용 없음");
-            
-            String targetUrl = requestUrl != null ? requestUrl : "/";
-            clearAuthenticationAttributes(request); 
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
-            return;
+                case PENDING:
+                    log.warn("[KakaoLogin] PENDING 상태의 기존 사용자 로그인 시도: {}. 로그인 페이지로 리다이렉트.", existingUser.getSocialId());
+                    response.sendRedirect(getRedirectUrlWithErrorMessage(requestUrl, "/login", "account_pending"));
+                    return;
+
+                case WITHDRAWN:
+                    log.warn("[KakaoLogin] WITHDRAWN 상태의 기존 사용자 로그인 시도: {}. 로그인 페이지로 리다이렉트.", existingUser.getSocialId());
+                    response.sendRedirect(getRedirectUrlWithErrorMessage(requestUrl, "/login", "account_withdrawn"));
+                    return;
+                    
+                case INACTIVE:
+                    log.warn("[KakaoLogin] INACTIVE 상태의 기존 사용자 로그인 시도: {}. 로그인 페이지로 리다이렉트.", existingUser.getSocialId());
+                    response.sendRedirect(getRedirectUrlWithErrorMessage(requestUrl, "/login", "account_inactive"));
+                    return;
+
+                default:
+                    log.warn("[KakaoLogin] 알 수 없는 상태의 기존 사용자 로그인 시도: {}. 로그인 페이지로 리다이렉트.", existingUser.getSocialId());
+                    response.sendRedirect(getRedirectUrlWithErrorMessage(requestUrl, "/login", "account_unknown_status"));
+                    return;
+            }
         }
 
-        log.info("[KakaoLogin] 신규 사용자 존재. 회원가입 페이지로 리다이렉트 - 세션에 정보 저장: {}", kakaoId);
+        log.info("[KakaoLogin] 신규 사용자. 회원가입을 위해 세션에 카카오 정보 저장: {}", kakaoId);
         
         Map<String, String> kakaoUserInfo = new HashMap<>();
         kakaoUserInfo.put("socialProvider", "kakao");
@@ -133,19 +154,37 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
         
         customRequest.setSessionAttribute("kakaoUserInfo", kakaoUserInfo);
         
-        StringBuilder redirectBuilder = new StringBuilder(requestUrl);
-        if (!redirectBuilder.toString().endsWith("/signup")) {
-            if (!redirectBuilder.toString().endsWith("/")) {
+        String signupRedirectUrl = buildSignupRedirectUrl(requestUrl);
+        log.info("[KakaoLogin] 신규 사용자. 회원가입 페이지로 리다이렉트: {}", signupRedirectUrl);
+        response.sendRedirect(signupRedirectUrl);
+    }
+
+    private String getRedirectUrlWithErrorMessage(String baseRedirectUrl, String fallbackPath, String errorCode) {
+        String targetPath = fallbackPath != null ? fallbackPath : "/";
+        return targetPath + (targetPath.contains("?") ? "&" : "?") + "error=" + errorCode; 
+    }
+
+    private String buildSignupRedirectUrl(String requestUrlFromState) {
+        StringBuilder redirectBuilder = new StringBuilder();
+        if (requestUrlFromState != null && !requestUrlFromState.isEmpty() && !"/login".equals(requestUrlFromState) && !"/".equals(requestUrlFromState)) {
+            redirectBuilder.append(requestUrlFromState);
+        } else {
+            redirectBuilder.append("/"); 
+        }
+
+        String currentRedirect = redirectBuilder.toString();
+        if (!currentRedirect.endsWith("/signup")) {
+            if (!currentRedirect.endsWith("/")) {
                 redirectBuilder.append("/");
             }
             redirectBuilder.append("signup");
         }
         
-        // URL에 authSource=kakao 파라미터 추가하여 프론트엔드가 세션에서 사용자 정보를 가져오도록 함
-        redirectBuilder.append("?authSource=kakao");
-        
-        log.info("[KakaoLogin] 신규 사용자. 회원가입 정보를 세션에 저장했습니다.");
-        log.info("[KakaoLogin] ===== 카카오 OAuth2 사용자 처리 종료 =====");
-        response.sendRedirect(redirectBuilder.toString());
+        if (redirectBuilder.indexOf("?") > -1) {
+            redirectBuilder.append("&authSource=kakao");
+        } else {
+            redirectBuilder.append("?authSource=kakao");
+        }
+        return redirectBuilder.toString();
     }
 }

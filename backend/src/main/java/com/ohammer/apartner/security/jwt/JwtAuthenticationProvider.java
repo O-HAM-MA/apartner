@@ -34,10 +34,26 @@ public class JwtAuthenticationProvider {
         User user = authService.findByIdWithRoles(userId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다"));
 
-        // 사용자 계정 상태 확인 (활성 상태가 아니면 예외)
-        if (user.getStatus() != Status.ACTIVE) { // Status import 필요
-            throw new RuntimeException("비활성화된 계정입니다");
+        // 사용자 계정 상태 확인 및 상태별 메시지 처리
+        switch (user.getStatus()) {
+            case ACTIVE:
+                // 활성 상태이면 정상 진행
+                break;
+            case INACTIVE:
+                log.warn("INACTIVE 계정으로 인증 시도: userId={}, status={}", userId, user.getStatus());
+                throw new RuntimeException("비활성화된 계정입니다. 관리자에게 문의하세요.");
+            case PENDING:
+                log.warn("PENDING 계정으로 인증 시도: userId={}, status={}", userId, user.getStatus());
+                throw new RuntimeException("계정이 정지되었습니다. 관리자에게 문의하세요.");
+            case WITHDRAWN:
+                log.warn("WITHDRAWN 계정으로 인증 시도: userId={}, status={}", userId, user.getStatus());
+                throw new RuntimeException("이미 탈퇴한 계정입니다.");
+            default:
+                // 혹시 모를 다른 상태값에 대한 처리
+                log.warn("알 수 없는 계정 상태로 인증 시도: userId={}, status={}", userId, user.getStatus());
+                throw new RuntimeException("계정 상태를 확인할 수 없습니다. 관리자에게 문의하세요.");
         }
+
         return user;
     }
 

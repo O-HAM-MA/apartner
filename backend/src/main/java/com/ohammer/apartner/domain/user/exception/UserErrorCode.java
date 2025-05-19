@@ -56,14 +56,26 @@ public enum UserErrorCode {
     @Schema(description = "비밀번호가 제공되지 않았습니다.")
     PASSWORD_NOT_PROVIDED("비밀번호가 제공되지 않았습니다.", HttpStatus.BAD_REQUEST),
 
+    @Schema(description = "소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.")
+    SOCIAL_USER_CANNOT_CHANGE_PASSWORD("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
+
+    @Schema(description = "현재 비밀번호가 일치하지 않습니다.")
+    CURRENT_PASSWORD_NOT_MATCH("현재 비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+
+    @Schema(description = "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.")
+    NEW_PASSWORDS_NOT_MATCH("새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+
+    @Schema(description = "이전에 사용한 비밀번호와 다르게 설정해 주세요.")
+    CANNOT_USE_SAME_PASSWORD_AS_CURRENT("이전에 사용한 비밀번호와 다르게 설정해 주세요.", HttpStatus.BAD_REQUEST),
 
     @Schema(description = "인증되지 않은 사용자")
-    UNAUTHORIZED("로그인이 필요합니다.", HttpStatus.UNAUTHORIZED);
+    UNAUTHORIZED("로그인이 필요합니다.", HttpStatus.UNAUTHORIZED),
 
+    @Schema(description = "이미 탈퇴한 회원입니다.")
+    ALREADY_WITHDRAWN_USER("이미 탈퇴한 회원입니다.", HttpStatus.BAD_REQUEST),
 
-
-
-
+    @Schema(description = "비밀번호가 일치하지 않습니다.")
+    PASSWORD_NOT_MATCH("비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus status;

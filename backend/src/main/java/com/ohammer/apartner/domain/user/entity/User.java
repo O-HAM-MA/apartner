@@ -63,19 +63,21 @@ public class User extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status; // ENUM('active', 'inactive', 'pending')
+    private Status status; 
 
     @Column(length = 512)
-    private String refreshToken; // JWT 리프레시 토큰
+    private String refreshToken;
+
+    @Column(length = 255) 
+    private String leaveReason;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "profile_image_id", referencedColumnName = "id")
-    private Image profileImage; // 프로필 이미지 (Image 엔티티와 연결)
-
+    private Image profileImage;
     
     public User(Long id, String username,String email, String password, Status status, Set<Role> roles) {
-        this.setId(id); // BaseEntity의 public setter setId()를 통해 id 값 설정
-        this.userName = username; // 파라미터 변수명 오타 수정 (userName -> username)
+        this.setId(id); 
+        this.userName = username; 
         this.email = email;
         this.password = password;
         this.status = status;
@@ -85,8 +87,8 @@ public class User extends BaseEntity {
 
 
     public User(Long id, String username, String password, String email, String phoneNum, String userName, Apartment apartment, Building building, Unit unit, Status status, Set<Role> roles) {
-        this.setId(id); // BaseEntity의 public setter setId()를 통해 id 값 설정
-        this.userName = username; // 파라미터 변수명 오타 수정 (userName -> username)
+        this.setId(id); 
+        this.userName = username; 
         this.password = password;
         this.email = email;
         this.phoneNum = phoneNum;
