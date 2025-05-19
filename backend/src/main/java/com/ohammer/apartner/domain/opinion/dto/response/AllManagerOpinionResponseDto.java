@@ -1,9 +1,9 @@
 package com.ohammer.apartner.domain.opinion.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter@Setter@Builder
 public class AllManagerOpinionResponseDto {
     private Long id;
