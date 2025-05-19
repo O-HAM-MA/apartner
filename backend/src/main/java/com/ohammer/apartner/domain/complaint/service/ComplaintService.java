@@ -156,7 +156,7 @@ public class ComplaintService {
                 .anyMatch(role -> role == Role.ADMIN);
 
         if (!hasRequiredRole) {
-            throw new AccessDeniedException("전체 민원 목록을 조회할 권한이 없습니다.");
+            throw new AccessDeniedException("민원 상태를 변경할 권한이 없습니다.");
         }
 
         // 조건문에 따라 상태 변경
