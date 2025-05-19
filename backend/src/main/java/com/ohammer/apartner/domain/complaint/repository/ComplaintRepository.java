@@ -29,4 +29,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     @Query("SELECT c.status, COUNT(c) FROM Complaint c GROUP BY c.status")
     List<Object[]> countComplaintsGroupByStatus();
 
+    @Query("SELECT COUNT(c) FROM Complaint c")
+    Long countAllComplaints();
+
+    @Query("SELECT COUNT(c) FROM Complaint c WHERE c.status = 'COMPLETED' OR c.status = 'REJECTED'")
+    Long countHandledComplaints();
 }

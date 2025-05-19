@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.complaint.service;
 
 import com.ohammer.apartner.domain.complaint.dto.response.ComplaintCountByStatusResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.ComplaintHandlingRateResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.TodayComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
@@ -78,6 +79,35 @@ public class ComplaintStatisticsService {
                         .count((Long) result[1])
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public ComplaintHandlingRateResponseDto getComplaintHandlingRate() throws AccessDeniedException {
+        User user = SecurityUtil.getCurrentUser();
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
+        Set<Role> userRoles = user.getRoles();
+        boolean hasRequiredRole = userRoles.stream()
+                .anyMatch(role -> role == Role.ADMIN);
+
+        if (!hasRequiredRole) {
+            throw new AccessDeniedException("통계를 확인할 권한이 없습니다.");
+        }
+
+        Long totalCount = complaintRepository.countAllComplaints();
+        Long handledCount = complaintRepository.countHandledComplaints();
+
+        double handlingRate = 0.0;
+        if (totalCount != 0) {
+            handlingRate = (double) handledCount / totalCount * 100;
+        }
+
+        return ComplaintHandlingRateResponseDto.builder()
+                .totalCount(totalCount)
+                .handledCount(handledCount)
+                .handlingRate(Math.round(handlingRate * 10.0) / 10.0) // 소수점 1자리
+                .build();
     }
 
 }
