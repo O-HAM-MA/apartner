@@ -10,6 +10,7 @@ import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionTypeRepository;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.CustomUserDetailsService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class InspectionService {
         //원래 통으로 객체를 찾을까 싶었는데, 도용?의 문제가 있을 것 같아서 효율성 깎고 id뽑아서 찾아오는걸루
         Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
 
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId).get();
 
         InspectionType type = inspectionTypeRepository.findByTypeName(dto.getType());
 
@@ -65,7 +66,9 @@ public class InspectionService {
                 .result(Result.PENDING)
                 .modifiedAt(null)
                 .createdAt(LocalDateTime.now())
+                .status(Status.ACTIVE)
                 .build();
+        //TODO 나중에 공지 추가되면 공지에 넣는것도 추가하기
         return inspectionRepository.save(inspection);
     }
 
@@ -108,7 +111,10 @@ public class InspectionService {
     //삭제
     @Transactional
     public void deleteInspection(Long id) {
-        inspectionRepository.deleteById(id);
+        Inspection inspection = inspectionRepository.findById(id).orElseThrow();
+        inspection.setStatus(Status.WITHDRAWN);
+        inspectionRepository.save(inspection);
+        //inspectionRepository.deleteById(id);
     }
 
 
@@ -173,13 +179,13 @@ public class InspectionService {
         return inspectionTypeRepository.save(inspectionType);
     }
 
-    //삭제
+    //수정
     @Transactional
     public void removeType(Long id) {
         InspectionType type = inspectionTypeRepository.findById(id).orElseThrow();
         inspectionTypeRepository.delete(type);
     }
-    //굳이 수정까진 필요한가
+
 
 
 

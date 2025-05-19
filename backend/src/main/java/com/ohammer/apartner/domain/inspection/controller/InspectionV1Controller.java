@@ -20,13 +20,60 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/inspection")
+@RequestMapping("/api/v1/inspection/manager")
 @Tag(name = "점검 api", description = "점검 API(일단은 메니저 전용)")
 public class InspectionV1Controller {
     private final InspectionService inspectionService;
-    //얼추 여기서 CRUD 넣기
-    //전체 불러오기
 
+
+    //추가
+    @PostMapping("/create")
+    @Operation(
+            summary = "점검 일정을 추가합니다, 점검 하는 사람은 로그인한 정보에서 뺴올 예정입니다",
+            description = "점검 일정을 추가합니다, 시작 및 종료 시간, 점검 항목, 점검내용을 넣습니다"
+    )
+    public ResponseEntity<Inspection> createInspectionSchedule(@RequestBody InspectionRequestDto dto) {
+        try{
+            inspectionService.newInspectionSchedule(dto);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    //수정
+    @PostMapping("/{id}")
+    @Operation(
+            summary = "점검 일정을 변경합니다",
+            description = "점검 일정 내용을 변경합니다"
+    )
+    public ResponseEntity<?> updateInspectionSchedule(@PathVariable("id") Long id, @RequestBody InspectionUpdateDto dto) {
+        try {
+            inspectionService.updateInspection(id, dto);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    //완료
+    @PostMapping("/complete/{id}")
+    @Operation(
+            summary = "점검 일정을 소화하고 완료 버튼을 누르면 해당 api가 쏴져서 DB에 저 일정은 완료되었다고 처리가 됩니다",
+            description = "해당 점검의 결과가 CHECKED로 변합니다"
+    )
+    public ResponseEntity<?> compeleteInspection(@PathVariable(name = "id") Long id) {
+        try {
+            inspectionService.completeInspection(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+
+    //전체 불러오기
     //그냥 여기서 제목만 불러와도 되는게 아닌가
     //TODO 매니저랑 유저에 대한 컨트롤러 각각 나누기
     @GetMapping("")
@@ -52,48 +99,6 @@ public class InspectionV1Controller {
             return ResponseEntity.badRequest().build();
         }
 
-    }
-
-
-    //추가
-    @PostMapping("/create")
-    @Operation(
-            summary = "점검 일정을 추가합니다, 점검 하는 사람은 로그인한 정보에서 뺴올 예정입니다",
-            description = "점검 일정을 추가합니다, 시작 및 종료 시간, 점검 항목, 점검내용을 넣습니다"
-    )
-    public ResponseEntity<Inspection> createInspectionSchedule(@RequestBody InspectionRequestDto dto) {
-        return ResponseEntity.ok(inspectionService.newInspectionSchedule(dto));
-    }
-
-    //수정
-    @PostMapping("/{id}")
-    @Operation(
-            summary = "점검 일정을 변경합니다",
-            description = "점검 일정 내용을 변경합니다"
-    )
-    public ResponseEntity<?> updateInspectionSchedule(@PathVariable("id") Long id, @RequestBody InspectionUpdateDto dto) {
-        try {
-            inspectionService.updateInspection(id, dto);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok().build();
-    }
-
-    //완료
-    @PostMapping("/complete/{id}")
-    @Operation(
-          summary = "점검 일정을 소화하고 완료 버튼을 누르면 해당 api가 쏴져서 DB에 저 일정은 완료되었다고 처리가 됩니다",
-            description = "해당 점검의 결과가 CHECKED로 변합니다"
-    )
-    public ResponseEntity<?> compeleteInspection(@PathVariable(name = "id") Long id) {
-        try {
-            inspectionService.completeInspection(id);
-        return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
     }
 
     //제거
