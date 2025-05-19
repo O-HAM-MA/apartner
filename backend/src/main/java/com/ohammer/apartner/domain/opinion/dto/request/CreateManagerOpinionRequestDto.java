@@ -7,5 +7,6 @@ import lombok.*;
 @AllArgsConstructor
 @Getter@Setter@Builder
 public class CreateManagerOpinionRequestDto {
+    private String title;
     private String content;
 }

@@ -22,13 +22,13 @@ public class OpinionController {
     @PostMapping("/manager")
     public ResponseEntity<?> addManagerOpinion(@RequestBody CreateManagerOpinionRequestDto requestDto) throws AccessDeniedException {
 
-        Opinion response = opinionService.createManagerOpinion(requestDto);
+        CreateManagerOpinionRequestDto response = opinionService.createManagerOpinion(requestDto);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/manager")
-    public ResponseEntity<?> getManagerOpinion() {
+    public ResponseEntity<?> getManagerOpinion() throws AccessDeniedException {
 
         List<AllManagerOpinionResponseDto> response = opinionService.getAllManagerOpinion();
 
