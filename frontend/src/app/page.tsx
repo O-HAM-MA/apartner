@@ -142,7 +142,7 @@ export default function Home() {
         </section>
       )}
 
-      <main className="flex-1">
+      <main className="flex-1 ">
         {/* Hero Section with Photo Gallery */}
         <section className="py-8">
           <div className="container mx-auto px-4">

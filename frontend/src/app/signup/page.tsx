@@ -1,843 +1,1143 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { post, get } from '@/utils/api';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { post, get } from "@/utils/api";
+import { useRouter } from "next/navigation";
+import React from "react";
 
 export default function SignUpPage() {
-   const router = useRouter();
-   const [kakaoInfo, setKakaoInfo] = useState<{
-      socialProvider?: string;
-      nickname?: string;
-      profileImage?: string;
-      email?: string;
-   }>({});
-   const [signupType, setSignupType] = useState<'NORMAL' | 'KAKAO'>('NORMAL');
-   const [emailId, setEmailId] = useState('');
-   const [emailDomain, setEmailDomain] = useState('naver.com');
-   const [customEmailDomain, setCustomEmailDomain] = useState('');
-   const [emailCheckMessage, setEmailCheckMessage] = useState({ text: '', color: '' });
-   const [emailVerificationStep, setEmailVerificationStep] = useState<
-      'NONE' | 'CHECKED' | 'CODE_SENT' | 'VERIFIED' | 'FAILED'
-   >('NONE');
-   const [verificationCode, setVerificationCode] = useState('');
-   const [isSendCodeDisabled, setIsSendCodeDisabled] = useState(false);
-   const [verificationMessage, setVerificationMessage] = useState({ text: '', color: '' });
-   const [isLoading, setIsLoading] = useState(false);
+  const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
+  const redirectUrl = `${process.env.NEXT_PUBLIC_FRONT_BASE_URL}`;
 
-   const [password, setPassword] = useState('');
-   const [passwordConfirm, setPasswordConfirm] = useState('');
-   const [passwordMatchMessage, setPasswordMatchMessage] = useState({ text: '', color: '' });
-   const [passwordPolicy, setPasswordPolicy] = useState({
-      length: false,
-      specialChar: false,
-      uppercase: false,
-      number: false,
-   });
+  const router = useRouter();
+  const [kakaoInfo, setKakaoInfo] = useState<{
+    socialProvider?: string;
+    nickname?: string;
+    profileImage?: string;
+    email?: string;
+  }>({});
+  const [signupType, setSignupType] = useState<"NORMAL" | "KAKAO">("NORMAL");
+  const [emailId, setEmailId] = useState("");
+  const [emailDomain, setEmailDomain] = useState("naver.com");
+  const [customEmailDomain, setCustomEmailDomain] = useState("");
+  const [emailCheckMessage, setEmailCheckMessage] = useState({
+    text: "",
+    color: "",
+  });
+  const [emailVerificationStep, setEmailVerificationStep] = useState<
+    "NONE" | "CHECKED" | "CODE_SENT" | "VERIFIED" | "FAILED"
+  >("NONE");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isSendCodeDisabled, setIsSendCodeDisabled] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState({
+    text: "",
+    color: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-   const [name, setName] = useState('');
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [passwordMatchMessage, setPasswordMatchMessage] = useState({
+    text: "",
+    color: "",
+  });
+  const [passwordPolicy, setPasswordPolicy] = useState({
+    length: false,
+    specialChar: false,
+    uppercase: false,
+    number: false,
+  });
 
-   const [apartment, setApartment] = useState('');
-   const [dong, setDong] = useState('');
-   const [ho, setHo] = useState('');
-   const [phoneNumber, setPhoneNumber] = useState('');
-   const [phoneCheckMessage, setPhoneCheckMessage] = useState({ text: '', color: '' });
+  const [name, setName] = useState("");
 
-   const emailDomains = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', '직접 입력'];
+  const [apartment, setApartment] = useState("");
+  const [dong, setDong] = useState("");
+  const [ho, setHo] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneCheckMessage, setPhoneCheckMessage] = useState({
+    text: "",
+    color: "",
+  });
 
-   // 아파트, 동, 호수 데이터
-   const [apartments, setApartments] = useState<{ id: number; name: string }[]>([]);
-   const [buildings, setBuildings] = useState<{ id: number; buildingNumber: string }[]>([]);
-   const [units, setUnits] = useState<{ id: number; unitNumber: string }[]>([]);
+  const emailDomains = [
+    "naver.com",
+    "gmail.com",
+    "daum.net",
+    "hanmail.net",
+    "직접 입력",
+  ];
 
-   // 아파트 목록 로드
-   useEffect(() => {
-      const fetchApartments = async () => {
-         try {
-            const response = await get<{ id: number; name: string }[]>('/api/v1/apartments');
-            setApartments(response);
-         } catch (error) {
-            console.error('아파트 목록 로드 실패:', error);
-            // 실패 시 기본 데이터 사용
-            setApartments([
-               { id: 1, name: '현대아파트' },
-               { id: 2, name: '삼성아파트' },
-               { id: 3, name: 'LG아파트' },
-            ]);
-         }
-      };
+  // 아파트, 동, 호수 데이터
+  const [apartments, setApartments] = useState<{ id: number; name: string }[]>(
+    []
+  );
+  const [buildings, setBuildings] = useState<
+    { id: number; buildingNumber: string }[]
+  >([]);
+  const [units, setUnits] = useState<{ id: number; unitNumber: string }[]>([]);
 
-      fetchApartments();
-   }, []);
+  // 추가: 타이머 관리를 위한 상태 추가
+  const [verificationTimer, setVerificationTimer] =
+    useState<NodeJS.Timeout | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number>(0);
 
-   // 선택된 아파트에 따라 동 목록 로드
-   useEffect(() => {
-      if (!apartment) {
-         setBuildings([]);
-         return;
+  // emailVerificationStep 값을 setInterval 콜백에서 최신으로 참조하기 위한 Ref
+  const emailVerificationStepRef = React.useRef(emailVerificationStep);
+  useEffect(() => {
+    emailVerificationStepRef.current = emailVerificationStep;
+  }, [emailVerificationStep]);
+
+  // 타이머 정리 함수
+  const clearVerificationTimer = () => {
+    if (verificationTimer) {
+      clearInterval(verificationTimer);
+      setVerificationTimer(null);
+    }
+  };
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => clearVerificationTimer();
+  }, []);
+
+  // 시간 포맷팅 함수 (mm:ss 형태로 변환)
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // 아파트 목록 로드
+  useEffect(() => {
+    const fetchApartments = async () => {
+      try {
+        const response = await get<{ id: number; name: string }[]>(
+          "/api/v1/apartments"
+        );
+        setApartments(response);
+      } catch (error) {
+        console.error("아파트 목록 로드 실패:", error);
+        // 실패 시 기본 데이터 사용
+        setApartments([
+          { id: 1, name: "현대아파트" },
+          { id: 2, name: "삼성아파트" },
+          { id: 3, name: "LG아파트" },
+        ]);
       }
+    };
 
-      const fetchBuildings = async () => {
-         try {
-            const selectedApartment = apartments.find(apt => apt.name === apartment);
-            if (!selectedApartment) return;
+    fetchApartments();
+  }, []);
 
-            const response = await get<{ id: number; buildingNumber: string }[]>(
-               `/api/v1/apartments/${selectedApartment.id}/buildings`,
-            );
-            setBuildings(response);
-         } catch (error) {
-            console.error('동 목록 로드 실패:', error);
-            // 실패 시 기본 데이터 사용
-            setBuildings([
-               { id: 1, buildingNumber: '101동' },
-               { id: 2, buildingNumber: '102동' },
-               { id: 3, buildingNumber: '103동' },
-            ]);
-         }
-      };
+  // 선택된 아파트에 따라 동 목록 로드
+  useEffect(() => {
+    if (!apartment) {
+      setBuildings([]);
+      return;
+    }
 
-      fetchBuildings();
-   }, [apartment, apartments]);
+    const fetchBuildings = async () => {
+      try {
+        const selectedApartment = apartments.find(
+          (apt) => apt.name === apartment
+        );
+        if (!selectedApartment) return;
 
-   // 선택된 동에 따라 호수 목록 로드
-   useEffect(() => {
-      if (!dong) {
-         setUnits([]);
-         return;
+        const response = await get<{ id: number; buildingNumber: string }[]>(
+          `/api/v1/apartments/${selectedApartment.id}/buildings`
+        );
+        setBuildings(response);
+      } catch (error) {
+        console.error("동 목록 로드 실패:", error);
+        // 실패 시 기본 데이터 사용
+        setBuildings([
+          { id: 1, buildingNumber: "101동" },
+          { id: 2, buildingNumber: "102동" },
+          { id: 3, buildingNumber: "103동" },
+        ]);
       }
+    };
 
-      const fetchUnits = async () => {
-         try {
-            const selectedBuilding = buildings.find(b => b.buildingNumber === dong);
-            if (!selectedBuilding) return;
+    fetchBuildings();
+  }, [apartment, apartments]);
 
-            const response = await get<{ id: number; unitNumber: string }[]>(
-               `/api/v1/apartments/buildings/${selectedBuilding.id}/units`,
-            );
-            setUnits(response);
-         } catch (error) {
-            console.error('호수 목록 로드 실패:', error);
-            // 실패 시 기본 데이터 사용
-            setUnits([
-               { id: 1, unitNumber: '101호' },
-               { id: 2, unitNumber: '102호' },
-               { id: 3, unitNumber: '201호' },
-               { id: 4, unitNumber: '202호' },
-            ]);
-         }
-      };
+  // 선택된 동에 따라 호수 목록 로드
+  useEffect(() => {
+    if (!dong) {
+      setUnits([]);
+      return;
+    }
 
-      fetchUnits();
-   }, [dong, buildings]);
+    const fetchUnits = async () => {
+      try {
+        const selectedBuilding = buildings.find(
+          (b) => b.buildingNumber === dong
+        );
+        if (!selectedBuilding) return;
 
-   // 카카오 소셜 로그인 정보 조회
-   useEffect(() => {
-      const fetchKakaoInfo = async () => {
-         try {
-            // URL에서 kakaoInfo 쿼리 파라미터 확인
-            const urlParams = new URLSearchParams(window.location.search);
-            const kakaoInfoParam = urlParams.get('kakaoInfo');
-            const authSource = urlParams.get('authSource');
+        const response = await get<{ id: number; unitNumber: string }[]>(
+          `/api/v1/apartments/buildings/${selectedBuilding.id}/units`
+        );
+        setUnits(response);
+      } catch (error) {
+        console.error("호수 목록 로드 실패:", error);
+        // 실패 시 기본 데이터 사용
+        setUnits([
+          { id: 1, unitNumber: "101호" },
+          { id: 2, unitNumber: "102호" },
+          { id: 3, unitNumber: "201호" },
+          { id: 4, unitNumber: "202호" },
+        ]);
+      }
+    };
 
-            if (kakaoInfoParam) {
-               // URL 파라미터에서 카카오 정보 파싱
-               try {
-                  const decodedInfo = JSON.parse(decodeURIComponent(kakaoInfoParam));
-                  console.log('Decoded Kakao info from URL:', decodedInfo);
+    fetchUnits();
+  }, [dong, buildings]);
 
-                  if (decodedInfo.socialProvider === 'kakao') {
-                     // socialId를 제외한 정보만 저장
-                     setKakaoInfo({
-                        socialProvider: decodedInfo.socialProvider,
-                        nickname: decodedInfo.nickname,
-                        profileImage: decodedInfo.profileImage,
-                        email: decodedInfo.email,
-                     });
-                     setSignupType('KAKAO');
+  // 카카오 소셜 로그인 정보 조회
+  useEffect(() => {
+    const fetchKakaoInfo = async () => {
+      try {
+        // URL에서 kakaoInfo 쿼리 파라미터 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const kakaoInfoParam = urlParams.get("kakaoInfo");
+        const authSource = urlParams.get("authSource");
 
-                     if (decodedInfo.nickname) {
-                        setName(decodedInfo.nickname);
-                     }
+        if (kakaoInfoParam) {
+          // URL 파라미터에서 카카오 정보 파싱
+          try {
+            const decodedInfo = JSON.parse(decodeURIComponent(kakaoInfoParam));
+            console.log("Decoded Kakao info from URL:", decodedInfo);
 
-                     if (decodedInfo.email) {
-                        const [id, domain] = decodedInfo.email.split('@');
-                        setEmailId(id || '');
+            if (decodedInfo.socialProvider === "kakao") {
+              // socialId를 제외한 정보만 저장
+              setKakaoInfo({
+                socialProvider: decodedInfo.socialProvider,
+                nickname: decodedInfo.nickname,
+                profileImage: decodedInfo.profileImage,
+                email: decodedInfo.email,
+              });
+              setSignupType("KAKAO");
 
-                        if (domain) {
-                           if (emailDomains.includes(domain)) {
-                              setEmailDomain(domain);
-                           } else {
-                              setEmailDomain('직접 입력');
-                              setCustomEmailDomain(domain);
-                           }
-                        }
-                     }
+              if (decodedInfo.nickname) {
+                setName(decodedInfo.nickname);
+              }
+
+              if (decodedInfo.email) {
+                const [id, domain] = decodedInfo.email.split("@");
+                setEmailId(id || "");
+
+                if (domain) {
+                  if (emailDomains.includes(domain)) {
+                    setEmailDomain(domain);
+                  } else {
+                    setEmailDomain("직접 입력");
+                    setCustomEmailDomain(domain);
                   }
-               } catch (error) {
-                  console.error('Failed to parse kakaoInfo from URL:', error);
-               }
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Failed to parse kakaoInfo from URL:", error);
+          }
 
-               // 처리 후 URL에서 파라미터 제거 (필요시)
-               const url = new URL(window.location.href);
-               url.searchParams.delete('kakaoInfo');
-               window.history.replaceState({}, document.title, url.toString());
+          // 처리 후 URL에서 파라미터 제거 (필요시)
+          const url = new URL(window.location.href);
+          url.searchParams.delete("kakaoInfo");
+          window.history.replaceState({}, document.title, url.toString());
 
-               return; // URL에서 정보를 가져왔으므로 API 호출 불필요
+          return; // URL에서 정보를 가져왔으므로 API 호출 불필요
+        }
+
+        // 카카오 로그인으로부터 온 경우 또는 기존 로직
+        if (
+          authSource === "kakao" ||
+          window.location.pathname.includes("/signup")
+        ) {
+          // API 호출 시도
+          const response = await get<{
+            socialProvider?: string;
+            nickname?: string;
+            profileImage?: string;
+            email?: string;
+          }>("/api/v1/auth/check-social-session"); // 기존 API 경로 유지
+
+          if (response && response.socialProvider === "kakao") {
+            setKakaoInfo(response);
+            setSignupType("KAKAO");
+
+            if (Object.prototype.hasOwnProperty.call(response, "nickname")) {
+              setName(response.nickname || "");
             }
 
-            // 카카오 로그인으로부터 온 경우 또는 기존 로직
-            if (authSource === 'kakao' || window.location.pathname.includes('/signup')) {
-               // API 호출 시도
-               const response = await get<{
-                  socialProvider?: string;
-                  nickname?: string;
-                  profileImage?: string;
-                  email?: string;
-               }>('/api/v1/auth/check-social-session'); // 기존 API 경로 유지
-
-               if (response && response.socialProvider === 'kakao') {
-                  setKakaoInfo(response);
-                  setSignupType('KAKAO');
-
-                  if (Object.prototype.hasOwnProperty.call(response, 'nickname')) {
-                     setName(response.nickname || '');
-                  }
-
-                  if (response.email) {
-                     const [id, domain] = response.email.split('@');
-                     setEmailId(id || '');
-                     if (domain) {
-                        if (emailDomains.includes(domain)) {
-                           setEmailDomain(domain);
-                        } else {
-                           setEmailDomain('직접 입력');
-                           setCustomEmailDomain(domain);
-                        }
-                     }
-                  }
-               }
-
-               // URL 파라미터 정리
-               if (authSource) {
-                  const url = new URL(window.location.href);
-                  url.searchParams.delete('authSource');
-                  window.history.replaceState({}, document.title, url.toString());
-               }
+            if (response.email) {
+              const [id, domain] = response.email.split("@");
+              setEmailId(id || "");
+              if (domain) {
+                if (emailDomains.includes(domain)) {
+                  setEmailDomain(domain);
+                } else {
+                  setEmailDomain("직접 입력");
+                  setCustomEmailDomain(domain);
+                }
+              }
             }
-         } catch (error) {
-            console.error('카카오 정보 조회 실패:', error);
-         }
-      };
+          }
 
-      fetchKakaoInfo();
-   }, []);
-
-   const handleEmailCheck = async () => {
-      const fullEmail = emailDomain === '직접 입력' ? `${emailId}@${customEmailDomain}` : `${emailId}@${emailDomain}`;
-      if (!emailId || (emailDomain === '직접 입력' && !customEmailDomain)) {
-         setEmailCheckMessage({ text: '이메일 주소를 입력해주세요.', color: 'text-red-500' });
-         return;
+          // URL 파라미터 정리
+          if (authSource) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("authSource");
+            window.history.replaceState({}, document.title, url.toString());
+          }
+        }
+      } catch (error) {
+        console.error("카카오 정보 조회 실패:", error);
       }
+    };
 
-      setIsLoading(true);
-      setEmailCheckMessage({ text: '', color: '' });
-      setVerificationMessage({ text: '', color: '' });
-      setEmailVerificationStep('NONE');
+    fetchKakaoInfo();
+  }, []);
 
-      try {
-         const responseData = await post<{ message: string }>('/api/v1/auth/check-email', { email: fullEmail });
+  const handleEmailCheck = async () => {
+    // 상태 초기화
+    setEmailVerificationStep("NONE");
+    setVerificationMessage({ text: "", color: "" });
+    setVerificationCode("");
+    clearVerificationTimer();
+    setIsSendCodeDisabled(false);
+    setEmailCheckMessage({
+      text: "이메일 중복 확인 중...",
+      color: "text-gray-500",
+    });
 
-         setEmailCheckMessage({ text: responseData.message || '사용 가능한 이메일입니다.', color: 'text-green-500' });
-         setEmailVerificationStep('CHECKED');
-      } catch (error: any) {
-         console.error('Email check error:', error);
-         const backendErrorMessage = error?.response?.data?.message;
-         setEmailCheckMessage({
-            text: backendErrorMessage || error.message || '이미 사용중이거나 확인할 수 없는 이메일입니다.',
-            color: 'text-red-500',
-         });
-         setEmailVerificationStep('NONE');
-      } finally {
-         setIsLoading(false);
-      }
-   };
-
-   const handlePhoneCheck = async () => {
-      if (!phoneNumber) {
-         setPhoneCheckMessage({ text: '휴대폰 번호를 입력해주세요.', color: 'text-red-500' });
-         return;
-      }
-      if (!/^\d{10,11}$/.test(phoneNumber)) {
-         setPhoneCheckMessage({ text: '유효하지 않은 휴대폰 번호 형식입니다.', color: 'text-red-500' });
-         return;
-      }
-
-      setIsLoading(true);
-      setPhoneCheckMessage({ text: '', color: '' });
-
-      try {
-         const responseData = await post<{ message: string }>('/api/v1/auth/check-phone', { phoneNumber });
-
-         setPhoneCheckMessage({
-            text: responseData.message || '사용 가능한 휴대폰 번호입니다.',
-            color: 'text-green-500',
-         });
-      } catch (error: any) {
-         console.error('Phone check error:', error);
-         const backendErrorMessage = error?.response?.data?.message;
-         setPhoneCheckMessage({
-            text: backendErrorMessage || error.message || '이미 등록되었거나 확인할 수 없는 번호입니다.',
-            color: 'text-red-500',
-         });
-      } finally {
-         setIsLoading(false);
-      }
-   };
-
-   useEffect(() => {
-      if (password && passwordConfirm) {
-         if (password === passwordConfirm) {
-            setPasswordMatchMessage({ text: '비밀번호가 일치합니다.', color: 'text-green-500' });
-         } else {
-            setPasswordMatchMessage({ text: '비밀번호가 일치하지 않습니다.', color: 'text-red-500' });
-         }
-      } else {
-         setPasswordMatchMessage({ text: '', color: '' });
-      }
-
-      setPasswordPolicy({
-         length: password.length >= 8,
-         specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-         uppercase: /[a-zA-Z]/.test(password),
-         number: /[0-9]/.test(password),
+    const fullEmail =
+      emailDomain === "직접 입력"
+        ? `${emailId}@${customEmailDomain}`
+        : `${emailId}@${emailDomain}`;
+    if (!emailId || (emailDomain === "직접 입력" && !customEmailDomain)) {
+      setEmailCheckMessage({
+        text: "이메일 주소를 입력해주세요.",
+        color: "text-red-500",
       });
-   }, [password, passwordConfirm]);
+      return;
+    }
 
-   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+    setIsLoading(true);
 
-      // 이메일을 입력했다면, 타입(일반/카카오)에 관계없이 이메일 인증 완료 여부 확인
-      if (emailId && emailVerificationStep !== 'VERIFIED') {
-         alert('이메일 인증을 완료해주세요.');
-         return;
+    try {
+      const responseData = await post<{ message: string }>(
+        "/api/v1/auth/check-email",
+        { email: fullEmail }
+      );
+
+      setEmailCheckMessage({
+        text: responseData.message || "사용 가능한 이메일입니다.",
+        color: "text-green-500",
+      });
+      setEmailVerificationStep("CHECKED");
+    } catch (error: any) {
+      console.error("Email check error:", error);
+      const backendErrorMessage = error?.response?.data?.message;
+      setEmailCheckMessage({
+        text:
+          backendErrorMessage ||
+          error.message ||
+          "이미 사용중이거나 확인할 수 없는 이메일입니다.",
+        color: "text-red-500",
+      });
+      setEmailVerificationStep("NONE");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePhoneCheck = async () => {
+    if (!phoneNumber) {
+      setPhoneCheckMessage({
+        text: "휴대폰 번호를 입력해주세요.",
+        color: "text-red-500",
+      });
+      return;
+    }
+    if (!/^\d{10,11}$/.test(phoneNumber)) {
+      setPhoneCheckMessage({
+        text: "유효하지 않은 휴대폰 번호 형식입니다.",
+        color: "text-red-500",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setPhoneCheckMessage({ text: "", color: "" });
+
+    try {
+      const responseData = await post<{ message: string }>(
+        "/api/v1/auth/check-phone",
+        { phoneNumber }
+      );
+
+      setPhoneCheckMessage({
+        text: responseData.message || "사용 가능한 휴대폰 번호입니다.",
+        color: "text-green-500",
+      });
+    } catch (error: any) {
+      console.error("Phone check error:", error);
+      const backendErrorMessage = error?.response?.data?.message;
+      setPhoneCheckMessage({
+        text:
+          backendErrorMessage ||
+          error.message ||
+          "이미 등록되었거나 확인할 수 없는 번호입니다.",
+        color: "text-red-500",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (password && passwordConfirm) {
+      if (password === passwordConfirm) {
+        setPasswordMatchMessage({
+          text: "비밀번호가 일치합니다.",
+          color: "text-green-500",
+        });
+      } else {
+        setPasswordMatchMessage({
+          text: "비밀번호가 일치하지 않습니다.",
+          color: "text-red-500",
+        });
+      }
+    } else {
+      setPasswordMatchMessage({ text: "", color: "" });
+    }
+
+    setPasswordPolicy({
+      length: password.length >= 8,
+      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      uppercase: /[a-zA-Z]/.test(password),
+      number: /[0-9]/.test(password),
+    });
+  }, [password, passwordConfirm]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // 이메일을 입력했다면, 타입(일반/카카오)에 관계없이 이메일 인증 완료 여부 확인
+    if (emailId && emailVerificationStep !== "VERIFIED") {
+      alert("이메일 인증을 완료해주세요.");
+      return;
+    }
+
+    if (!apartment || !dong || !ho) {
+      alert("아파트, 동, 호수 정보를 모두 입력해주세요.");
+      return;
+    }
+
+    if (
+      signupType !== "KAKAO" &&
+      (!phoneCheckMessage.text || phoneCheckMessage.color !== "text-green-500")
+    ) {
+      alert("휴대폰 번호 중복 확인이 필요합니다.");
+      return;
+    }
+
+    if (signupType !== "KAKAO" && password !== passwordConfirm) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (!name) {
+      alert("이름을 입력해주세요.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const fullEmail =
+        emailDomain === "직접 입력"
+          ? `${emailId}@${customEmailDomain}`
+          : `${emailId}@${emailDomain}`;
+
+      const selectedApartment = apartments.find(
+        (apt) => apt.name === apartment
+      );
+      const selectedBuilding = buildings.find((b) => b.buildingNumber === dong);
+      const selectedUnit = units.find((u) => u.unitNumber === ho);
+
+      if (!selectedApartment || !selectedBuilding || !selectedUnit) {
+        alert("선택한 주소 정보를 찾을 수 없습니다.");
+        return;
       }
 
-      if (!apartment || !dong || !ho) {
-         alert('아파트, 동, 호수 정보를 모두 입력해주세요.');
-         return;
+      const registrationData: any = {
+        email: fullEmail,
+        userName: name,
+        apartmentId: selectedApartment.id,
+        buildingId: selectedBuilding.id,
+        unitId: selectedUnit.id,
+      };
+
+      if (signupType === "KAKAO") {
+        registrationData.socialProvider = "kakao";
+      } else {
+        registrationData.password = password;
+        registrationData.phoneNum = phoneNumber;
       }
 
-      if (signupType !== 'KAKAO' && (!phoneCheckMessage.text || phoneCheckMessage.color !== 'text-green-500')) {
-         alert('휴대폰 번호 중복 확인이 필요합니다.');
-         return;
-      }
+      const response = await post("/api/v1/users/userreg", registrationData);
 
-      if (signupType !== 'KAKAO' && password !== passwordConfirm) {
-         alert('비밀번호가 일치하지 않습니다.');
-         return;
-      }
+      console.log("회원가입 성공:", response);
+      alert("회원가입이 완료되었습니다.");
+      router.push("/signup/success");
+    } catch (error: any) {
+      console.error("회원가입 오류:", error);
+      const errorMessage =
+        error?.response?.data || "회원가입 처리 중 오류가 발생했습니다.";
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      if (!name) {
-         alert('이름을 입력해주세요.');
-         return;
-      }
+  const 정책문구스타일 = "text-xs";
+  const 충족스타일 = "text-green-500";
+  const 미충족스타일 = "text-red-500";
 
-      setIsLoading(true);
+  const handleSendVerificationCode = async () => {
+    // 기존 타이머 정리
+    clearVerificationTimer();
+    setIsSendCodeDisabled(true);
+    setIsLoading(true);
+    setEmailCheckMessage({ text: "", color: "" });
+    setVerificationMessage({
+      text: "인증번호를 전송 중입니다...",
+      color: "text-gray-500",
+    });
+    const fullEmail =
+      emailDomain === "직접 입력"
+        ? `${emailId}@${customEmailDomain}`
+        : `${emailId}@${emailDomain}`;
 
-      try {
-         const fullEmail =
-            emailDomain === '직접 입력' ? `${emailId}@${customEmailDomain}` : `${emailId}@${emailDomain}`;
+    try {
+      const responseData = await post<{ message: string }>(
+        "/api/v1/auth/send-verification-code",
+        {
+          email: fullEmail,
+        }
+      );
 
-         const selectedApartment = apartments.find(apt => apt.name === apartment);
-         const selectedBuilding = buildings.find(b => b.buildingNumber === dong);
-         const selectedUnit = units.find(u => u.unitNumber === ho);
+      setEmailVerificationStep("CODE_SENT");
+      const timerDuration = 300;
+      setRemainingTime(timerDuration);
+      setVerificationMessage({
+        text: `✅ 인증번호가 발송되었습니다. 이메일을 확인해주세요. (유효시간: ${formatTime(
+          timerDuration
+        )})`,
+        color: "text-green-500",
+      });
 
-         if (!selectedApartment || !selectedBuilding || !selectedUnit) {
-            alert('선택한 주소 정보를 찾을 수 없습니다.');
-            return;
-         }
-
-         const registrationData: any = {
-            email: fullEmail,
-            userName: name,
-            apartmentId: selectedApartment.id,
-            buildingId: selectedBuilding.id,
-            unitId: selectedUnit.id,
-         };
-
-         if (signupType === 'KAKAO') {
-            registrationData.socialProvider = 'kakao';
-         } else {
-            registrationData.password = password;
-            registrationData.phoneNum = phoneNumber;
-         }
-
-         const response = await post('/api/v1/users/userreg', registrationData);
-
-         console.log('회원가입 성공:', response);
-         alert('회원가입이 완료되었습니다.');
-         router.push('/signup/success');
-      } catch (error: any) {
-         console.error('회원가입 오류:', error);
-         const errorMessage = error?.response?.data || '회원가입 처리 중 오류가 발생했습니다.';
-         alert(errorMessage);
-      } finally {
-         setIsLoading(false);
-      }
-   };
-
-   const 정책문구스타일 = 'text-xs';
-   const 충족스타일 = 'text-green-500';
-   const 미충족스타일 = 'text-red-500';
-
-   const handleSendVerificationCode = async () => {
-      setIsSendCodeDisabled(true);
-      setIsLoading(true);
-      setVerificationMessage({ text: '인증번호를 전송 중입니다...', color: 'text-gray-500' });
-      const fullEmail = emailDomain === '직접 입력' ? `${emailId}@${customEmailDomain}` : `${emailId}@${emailDomain}`;
-
-      try {
-         const responseData = await post<{ message: string }>('/api/v1/auth/send-verification-code', {
-            email: fullEmail,
-         });
-
-         setEmailVerificationStep('CODE_SENT');
-         setVerificationMessage({
-            text: responseData.message || '✅ 인증번호가 발송되었습니다. 이메일을 확인해주세요.',
-            color: 'text-green-500',
-         });
-
-         setTimeout(() => {
+      const newTimer = setInterval(() => {
+        setRemainingTime((prevTime) => {
+          if (prevTime <= 1) {
+            clearVerificationTimer();
             setIsSendCodeDisabled(false);
-         }, 60000);
-      } catch (error: any) {
-         console.error('Send verification code error:', error);
-         setEmailVerificationStep('FAILED');
-         const backendErrorMessage = error?.response?.data?.message;
-         setVerificationMessage({
-            text: `❌ ${backendErrorMessage || error.message || '인증번호 발송 실패'}`,
-            color: 'text-red-500',
-         });
-         setIsSendCodeDisabled(false);
-      } finally {
-         setIsLoading(false);
-      }
-   };
+            setVerificationMessage({
+              text: "인증번호 유효시간이 만료되었습니다. 재전송이 필요하면 '인증번호 재전송' 버튼을 클릭해주세요.",
+              color: "text-blue-500",
+            });
+            return 0;
+          } else {
+            if (emailVerificationStepRef.current !== "FAILED") {
+              setVerificationMessage({
+                text: `✅ 인증번호가 발송되었습니다. 이메일을 확인해주세요. (유효시간: ${formatTime(
+                  prevTime - 1
+                )})`,
+                color: "text-green-500",
+              });
+            }
+            return prevTime - 1;
+          }
+        });
+      }, 1000);
+      setVerificationTimer(newTimer);
+    } catch (error: any) {
+      console.error("Send verification code error:", error);
+      setEmailVerificationStep("FAILED");
+      const backendErrorMessage = error?.response?.data?.message;
+      setVerificationMessage({
+        text: `❌ ${
+          backendErrorMessage || error.message || "인증번호 발송 실패"
+        }`,
+        color: "text-red-500",
+      });
+      setIsSendCodeDisabled(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-   const handleVerifyCode = async () => {
-      if (!verificationCode) {
-         setVerificationMessage({ text: '인증번호를 입력해주세요.', color: 'text-red-500' });
-         return;
-      }
+  const handleVerifyCode = async () => {
+    if (!verificationCode) {
+      setVerificationMessage({
+        text: "인증번호를 입력해주세요.",
+        color: "text-red-500",
+      });
+      return;
+    }
 
-      setIsLoading(true);
-      setVerificationMessage({ text: '인증번호를 확인 중입니다...', color: 'text-gray-500' });
-      const fullEmail = emailDomain === '직접 입력' ? `${emailId}@${customEmailDomain}` : `${emailId}@${emailDomain}`;
+    setIsLoading(true);
+    setEmailCheckMessage({ text: "", color: "" });
+    setVerificationMessage({
+      text: "인증번호를 확인 중입니다...",
+      color: "text-gray-500",
+    });
+    const fullEmail =
+      emailDomain === "직접 입력"
+        ? `${emailId}@${customEmailDomain}`
+        : `${emailId}@${emailDomain}`;
 
-      try {
-         const responseData = await post<{ message: string }>('/api/v1/auth/verify-code', {
-            email: fullEmail,
-            code: verificationCode,
-         });
+    try {
+      const responseData = await post<{ message: string }>(
+        "/api/v1/auth/verify-code",
+        {
+          email: fullEmail,
+          code: verificationCode,
+        }
+      );
 
-         setEmailVerificationStep('VERIFIED');
-         setVerificationMessage({ text: responseData.message || '✅ 인증이 완료되었습니다.', color: 'text-green-500' });
-      } catch (error: any) {
-         console.error('Verify code error:', error);
-         setEmailVerificationStep('FAILED');
-         const backendErrorMessage = error?.response?.data?.message;
-         setVerificationMessage({
-            text: `❌ ${backendErrorMessage || error.message || '인증번호가 올바르지 않거나 만료되었습니다.'}`,
-            color: 'text-red-500',
-         });
-      } finally {
-         setIsLoading(false);
-      }
-   };
+      clearVerificationTimer();
+      setEmailVerificationStep("VERIFIED");
+      setEmailCheckMessage({ text: "", color: "" });
+      setVerificationMessage({
+        text: responseData.message || "✅ 인증번호가 일치합니다.",
+        color: "text-green-500",
+      });
+    } catch (error: any) {
+      console.error("Verify code error:", error);
+      setEmailVerificationStep("FAILED");
+      const backendErrorMessage = error?.response?.data?.message;
+      setVerificationMessage({
+        text: `❌ ${
+          backendErrorMessage ||
+          "인증번호가 일치하지 않습니다. 다시 확인해주세요."
+        }`,
+        color: "text-red-500",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-   return (
-      <>
-         <div className="flex flex-col items-center justify-center bg-white-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-2xl p-8 space-y-8 bg-white shadow-xl rounded-xl">
-               <div>
-                  <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                     {signupType === 'KAKAO' ? '카카오 계정으로 회원가입' : '회원가입'}
-                  </h2>
-               </div>
-               <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                  <div className="rounded-md shadow-sm -space-y-px">
-                     <div className="mb-6">
-                        <label htmlFor="email-id" className="block text-sm font-medium text-gray-700 mb-1">
-                           이메일
-                        </label>
-                        <div className="flex items-center space-x-2">
-                           <input
-                              id="email-id"
-                              name="email-id"
-                              type="text"
-                              autoComplete="email-id"
-                              required
-                              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                              placeholder="이메일 아이디"
-                              value={emailId}
-                              onChange={e => {
-                                 setEmailId(e.target.value);
-                                 setEmailCheckMessage({ text: '', color: '' });
-                                 setEmailVerificationStep('NONE');
-                                 setVerificationMessage({ text: '', color: '' });
-                                 setVerificationCode('');
-                              }}
-                              disabled={emailVerificationStep === 'VERIFIED' || isLoading}
-                           />
-                           <span className="text-gray-500">@</span>
-                           {emailDomain === '직접 입력' ? (
-                              <input
-                                 type="text"
-                                 required
-                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                 placeholder="도메인 입력"
-                                 value={customEmailDomain}
-                                 onChange={e => {
-                                    setCustomEmailDomain(e.target.value);
-                                    setEmailCheckMessage({ text: '', color: '' });
-                                    setEmailVerificationStep('NONE');
-                                    setVerificationMessage({ text: '', color: '' });
-                                    setVerificationCode('');
-                                 }}
-                                 disabled={emailVerificationStep === 'VERIFIED' || isLoading}
-                              />
-                           ) : (
-                              <select
-                                 id="email-domain"
-                                 name="email-domain"
-                                 value={emailDomain}
-                                 onChange={e => {
-                                    setEmailDomain(e.target.value);
-                                    if (e.target.value !== '직접 입력') setCustomEmailDomain('');
-                                    setEmailCheckMessage({ text: '', color: '' });
-                                    setEmailVerificationStep('NONE');
-                                    setVerificationMessage({ text: '', color: '' });
-                                    setVerificationCode('');
-                                 }}
-                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                 disabled={emailVerificationStep === 'VERIFIED' || isLoading}>
-                                 {emailDomains.map(domain => (
-                                    <option key={domain} value={domain}>
-                                       {domain}
-                                    </option>
-                                 ))}
-                              </select>
-                           )}
-                           <button
-                              type="button"
-                              onClick={handleEmailCheck}
-                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                                 isLoading || emailVerificationStep === 'VERIFIED'
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-indigo-600 hover:bg-indigo-700'
-                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
-                              disabled={isLoading || emailVerificationStep === 'VERIFIED'}>
-                              {isLoading && emailVerificationStep === 'NONE' ? '확인중...' : '중복체크'}
-                           </button>
-                        </div>
-                        {emailCheckMessage.text && (
-                           <p className={`mt-2 text-xs ${emailCheckMessage.color}`}>{emailCheckMessage.text}</p>
-                        )}
-                        {/* 이메일 인증 UI 조건 수정: emailId가 있고, 아직 인증 전이며, 중복 체크 후 상태일 때 표시 */}
-                        {emailId &&
-                           emailVerificationStep !== 'VERIFIED' &&
-                           (emailVerificationStep === 'CHECKED' ||
-                              emailVerificationStep === 'CODE_SENT' ||
-                              emailVerificationStep === 'FAILED') && (
-                              <div className="flex items-center space-x-2 mt-2">
-                                 <input
-                                    type="text"
-                                    placeholder="인증번호를 입력해주세요"
-                                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                    value={verificationCode}
-                                    onChange={e => setVerificationCode(e.target.value)}
-                                    disabled={isLoading}
-                                 />
-                                 {(emailVerificationStep === 'CHECKED' || emailVerificationStep === 'FAILED') && (
-                                    <button
-                                       type="button"
-                                       onClick={handleSendVerificationCode}
-                                       className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                                          isSendCodeDisabled || isLoading
-                                             ? 'bg-gray-400 cursor-not-allowed'
-                                             : 'bg-indigo-600 hover:bg-indigo-700'
-                                       } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
-                                       disabled={isSendCodeDisabled || isLoading}>
-                                       {isLoading && isSendCodeDisabled
-                                          ? '전송중...'
-                                          : isSendCodeDisabled
-                                          ? '재전송 대기'
-                                          : emailVerificationStep === 'FAILED'
-                                          ? '재전송'
-                                          : '인증번호 보내기'}
-                                    </button>
-                                 )}
-                                 {emailVerificationStep === 'CODE_SENT' && (
-                                    <button
-                                       type="button"
-                                       onClick={handleVerifyCode}
-                                       className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                                          verificationCode.length === 0 || isLoading
-                                             ? 'bg-gray-400 cursor-not-allowed'
-                                             : 'bg-blue-600 hover:bg-blue-700'
-                                       } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap`}
-                                       disabled={verificationCode.length === 0 || isLoading}>
-                                       {isLoading ? '확인중...' : '확인'}
-                                    </button>
-                                 )}
-                              </div>
-                           )}
-                        {isLoading && <p className="mt-2 text-xs text-gray-500">처리 중...</p>}
-                        {verificationMessage.text && (
-                           <p className={`mt-2 text-xs ${verificationMessage.color}`}>{verificationMessage.text}</p>
-                        )}
-                        <p className="mt-2 text-xs text-gray-500">이메일은 로그인 ID로 사용됩니다.</p>
-                     </div>
-
-                     {signupType !== 'KAKAO' && (
-                        <>
-                           <div className="mb-6">
-                              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                                 비밀번호
-                              </label>
-                              <input
-                                 id="password"
-                                 name="password"
-                                 type="password"
-                                 autoComplete="new-password"
-                                 required
-                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                 placeholder="비밀번호를 입력하세요"
-                                 value={password}
-                                 onChange={e => setPassword(e.target.value)}
-                              />
-                           </div>
-
-                           <div className="mb-6">
-                              <label
-                                 htmlFor="password-confirm"
-                                 className="block text-sm font-medium text-gray-700 mb-1">
-                                 비밀번호 확인
-                              </label>
-                              <input
-                                 id="password-confirm"
-                                 name="password-confirm"
-                                 type="password"
-                                 autoComplete="new-password"
-                                 required
-                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                 placeholder="비밀번호를 다시 입력하세요"
-                                 value={passwordConfirm}
-                                 onChange={e => setPasswordConfirm(e.target.value)}
-                              />
-                              {passwordMatchMessage.text && (
-                                 <p className={`mt-2 text-xs ${passwordMatchMessage.color}`}>
-                                    {passwordMatchMessage.text}
-                                 </p>
-                              )}
-                              <ul className="mt-2 list-disc list-inside space-y-1">
-                                 <li
-                                    className={`${정책문구스타일} ${
-                                       passwordPolicy.length ? 충족스타일 : 미충족스타일
-                                    }`}>
-                                    총 8글자 이상
-                                 </li>
-                                 <li
-                                    className={`${정책문구스타일} ${
-                                       passwordPolicy.specialChar ? 충족스타일 : 미충족스타일
-                                    }`}>
-                                    특수문자 1개 이상
-                                 </li>
-                                 <li
-                                    className={`${정책문구스타일} ${
-                                       passwordPolicy.uppercase ? 충족스타일 : 미충족스타일
-                                    }`}>
-                                    영문자 1개 이상
-                                 </li>
-                                 <li
-                                    className={`${정책문구스타일} ${
-                                       passwordPolicy.number ? 충족스타일 : 미충족스타일
-                                    }`}>
-                                    숫자 1개 이상
-                                 </li>
-                              </ul>
-                           </div>
-                        </>
-                     )}
-
-                     <div className="mb-6">
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                           이름
-                        </label>
-                        <input
-                           id="name"
-                           name="name"
-                           type="text"
-                           autoComplete="name"
-                           required
-                           className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                           placeholder="이름을 입력하세요"
-                           value={name}
-                           onChange={e => setName(e.target.value)}
-                           disabled={signupType === 'KAKAO' && kakaoInfo.nickname !== undefined}
-                        />
-                        {signupType === 'KAKAO' && kakaoInfo.nickname && (
-                           <p className="mt-2 text-xs text-green-500">카카오에서 가져온 이름입니다.</p>
-                        )}
-                     </div>
-
-                     <div className="mb-6">
-                        <label htmlFor="address-apartment" className="block text-sm font-medium text-gray-700 mb-1">
-                           주소
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                           <select
-                              id="address-apartment"
-                              name="address-apartment"
-                              value={apartment}
-                              onChange={e => setApartment(e.target.value)}
-                              required
-                              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm">
-                              <option value="" disabled>
-                                 아파트 선택
-                              </option>
-                              {apartments.map(apt => (
-                                 <option key={apt.id} value={apt.name}>
-                                    {apt.name}
-                                 </option>
-                              ))}
-                           </select>
-                           <select
-                              id="address-dong"
-                              name="address-dong"
-                              value={dong}
-                              onChange={e => setDong(e.target.value)}
-                              required
-                              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm">
-                              <option value="" disabled>
-                                 동 선택
-                              </option>
-                              {buildings.map(b => (
-                                 <option key={b.id} value={b.buildingNumber}>
-                                    {b.buildingNumber}
-                                 </option>
-                              ))}
-                           </select>
-                           <select
-                              id="address-ho"
-                              name="address-ho"
-                              value={ho}
-                              onChange={e => setHo(e.target.value)}
-                              required
-                              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm">
-                              <option value="" disabled>
-                                 호 선택
-                              </option>
-                              {units.map(u => (
-                                 <option key={u.id} value={u.unitNumber}>
-                                    {u.unitNumber}
-                                 </option>
-                              ))}
-                           </select>
-                        </div>
-                        <p className="mt-2 text-xs text-gray-500">Enter your address</p>
-                     </div>
-
-                     {signupType !== 'KAKAO' && (
-                        <div className="mb-8">
-                           <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 mb-1">
-                              휴대폰 번호
-                           </label>
-                           <div className="flex items-center space-x-2">
-                              <input
-                                 id="phone-number"
-                                 name="phone-number"
-                                 type="tel"
-                                 autoComplete="tel"
-                                 required
-                                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                 placeholder="휴대폰 번호를 입력하세요 (예: 01012345678)"
-                                 value={phoneNumber}
-                                 onChange={e => {
-                                    setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''));
-                                    setPhoneCheckMessage({ text: '', color: '' });
-                                 }}
-                                 disabled={isLoading}
-                              />
-                              <button
-                                 type="button"
-                                 onClick={handlePhoneCheck}
-                                 className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                                    isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
-                                 } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
-                                 disabled={isLoading}>
-                                 {isLoading ? '확인중...' : '중복체크'}
-                              </button>
-                           </div>
-                           {phoneCheckMessage.text && (
-                              <p className={`mt-2 text-xs ${phoneCheckMessage.color}`}>{phoneCheckMessage.text}</p>
-                           )}
-                        </div>
-                     )}
-                  </div>
-
-                  <div>
-                     <button
-                        type="submit"
-                        className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
-                           // 버튼 활성화 조건: 로딩중이 아니고,
-                           // (카카오 가입이거나 일반 가입에서 이메일 인증이 완료되었거나)
-                           // 그리고 이메일이 입력되었다면 반드시 인증 완료 상태여야 함.
-                           !isLoading &&
-                           (signupType === 'KAKAO'
-                              ? emailId
-                                 ? emailVerificationStep === 'VERIFIED'
-                                 : true
-                              : emailVerificationStep === 'VERIFIED')
-                              ? 'bg-pink-500 hover:bg-pink-600'
-                              : 'bg-gray-400 cursor-not-allowed'
-                        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400`}
-                        disabled={
-                           isLoading ||
-                           (signupType === 'NORMAL' && emailVerificationStep !== 'VERIFIED') ||
-                           (emailId !== '' && emailVerificationStep !== 'VERIFIED')
-                        }>
-                        {isLoading ? '가입 처리중...' : '회원가입'}
-                     </button>
-                  </div>
-
-                  {signupType !== 'KAKAO' && (
-                     <>
-                        <div className="relative my-6">
-                           <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                              <div className="w-full border-t border-gray-300" />
-                           </div>
-                           <div className="relative flex justify-center text-sm">
-                              <span className="px-2 bg-white text-gray-500">간편 회원가입</span>
-                           </div>
-                        </div>
-
-                        <div>
-                           <a href="/api/v1/oauth2/authorization/kakao?state=/">
-                              <button
-                                 type="button"
-                                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300"
-                                 disabled={isLoading}>
-                                 카카오톡으로 회원가입
-                              </button>
-                           </a>
-                        </div>
-                     </>
+  return (
+    <>
+      <div className="min-h-screen bg-pink-50 p-4 sm:p-8 flex flex-col items-center  dark:bg-gray-900">
+        <div className="w-full max-w-2xl p-8 space-y-8 bg-white  dark:bg-gray-800  shadow-xl rounded-xl">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+              {signupType === "KAKAO" ? "카카오 계정으로 회원가입" : "회원가입"}
+            </h2>
+          </div>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <div className="rounded-md -space-y-px">
+              <div className="mb-5">
+                <label
+                  htmlFor="email-id"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  이메일
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="email-id"
+                    name="email-id"
+                    type="text"
+                    autoComplete="email-id"
+                    required
+                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                    placeholder="이메일 아이디"
+                    value={emailId}
+                    onChange={(e) => {
+                      setEmailId(e.target.value);
+                      setEmailCheckMessage({ text: "", color: "" });
+                      setEmailVerificationStep("NONE");
+                      setVerificationMessage({ text: "", color: "" });
+                      setVerificationCode("");
+                    }}
+                    disabled={isLoading}
+                  />
+                  <span className="text-gray-500 dark:text-gray-400">@</span>
+                  {emailDomain === "직접 입력" ? (
+                    <input
+                      type="text"
+                      required
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      placeholder="도메인 입력"
+                      value={customEmailDomain}
+                      onChange={(e) => {
+                        setCustomEmailDomain(e.target.value);
+                        setEmailCheckMessage({ text: "", color: "" });
+                        setEmailVerificationStep("NONE");
+                        setVerificationMessage({ text: "", color: "" });
+                        setVerificationCode("");
+                      }}
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      disabled={isLoading}
+                    />
+                  ) : (
+                    <select
+                      id="email-domain"
+                      name="email-domain"
+                      value={emailDomain}
+                      onChange={(e) => {
+                        setEmailDomain(e.target.value);
+                        if (e.target.value !== "직접 입력")
+                          setCustomEmailDomain("");
+                        setEmailCheckMessage({ text: "", color: "" });
+                        setEmailVerificationStep("NONE");
+                        setVerificationMessage({ text: "", color: "" });
+                        setVerificationCode("");
+                      }}
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      disabled={isLoading}
+                    >
+                      {emailDomains.map((domain) => (
+                        <option key={domain} value={domain}>
+                          {domain}
+                        </option>
+                      ))}
+                    </select>
                   )}
-               </form>
+                  <button
+                    type="button"
+                    onClick={handleEmailCheck}
+                    className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                      isLoading || emailVerificationStep === "VERIFIED"
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-indigo-600 hover:bg-indigo-700"
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                    disabled={isLoading || emailVerificationStep === "VERIFIED"}
+                  >
+                    {isLoading && emailVerificationStep === "NONE"
+                      ? "확인중..."
+                      : "중복체크"}
+                  </button>
+                </div>
+                {emailCheckMessage.text && (
+                  <p
+                    className={`mt-2 text-xs ${emailCheckMessage.color} ${
+                      emailCheckMessage.color === "text-green-500"
+                        ? "dark:text-green-400"
+                        : emailCheckMessage.color === "text-red-500"
+                        ? "dark:text-red-400"
+                        : "dark:text-gray-400"
+                    }`}
+                  >
+                    {emailCheckMessage.text}
+                  </p>
+                )}
+                {/* 이메일 인증 UI - CHECKED, CODE_SENT, FAILED, VERIFIED 상태일 때 표시 */}
+                {(emailVerificationStep === "CHECKED" ||
+                  emailVerificationStep === "CODE_SENT" ||
+                  emailVerificationStep === "FAILED" ||
+                  emailVerificationStep === "VERIFIED") && (
+                  <div className="flex flex-col space-y-2 mt-2">
+                    {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
+                    {emailVerificationStep !== "VERIFIED" && (
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          placeholder="인증번호를 입력해주세요"
+                          className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          disabled={isLoading}
+                        />
+                        {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
+                        {(emailVerificationStep === "CHECKED" ||
+                          emailVerificationStep === "FAILED") && (
+                          <button
+                            type="button"
+                            onClick={handleSendVerificationCode}
+                            className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                              isSendCodeDisabled || isLoading
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-indigo-600 hover:bg-indigo-700"
+                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                            disabled={isSendCodeDisabled || isLoading}
+                          >
+                            {isLoading && isSendCodeDisabled
+                              ? "전송중..."
+                              : isSendCodeDisabled
+                              ? "재전송 대기"
+                              : emailVerificationStep === "FAILED"
+                              ? "인증번호 재전송"
+                              : "인증번호 보내기"}
+                          </button>
+                        )}
+                        {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
+                        {(emailVerificationStep === "CODE_SENT" ||
+                          emailVerificationStep === "FAILED") && (
+                          <button
+                            type="button"
+                            onClick={handleVerifyCode}
+                            className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                              verificationCode.length === 0 || isLoading
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700"
+                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap`}
+                            disabled={
+                              verificationCode.length === 0 || isLoading
+                            }
+                          >
+                            {isLoading && emailVerificationStep === "CODE_SENT"
+                              ? "확인중..."
+                              : "확인"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
+                    {verificationMessage.text && (
+                      <p
+                        className={`text-xs ${verificationMessage.color} ${
+                          verificationMessage.color === "text-green-500"
+                            ? "dark:text-green-400"
+                            : verificationMessage.color === "text-red-500"
+                            ? "dark:text-red-400"
+                            : verificationMessage.color === "text-blue-500"
+                            ? "dark:text-blue-400"
+                            : "dark:text-gray-400"
+                        }`}
+                      >
+                        {verificationMessage.text}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {isLoading &&
+                  emailVerificationStep !== "CHECKED" &&
+                  emailVerificationStep !== "CODE_SENT" &&
+                  emailVerificationStep !== "FAILED" && (
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      처리 중...
+                    </p>
+                  )}
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  이메일은 로그인 ID로 사용됩니다.
+                </p>
+              </div>
+
+              {signupType !== "KAKAO" && (
+                <>
+                  <div className="pb-5">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      비밀번호
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      placeholder="비밀번호를 입력하세요"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="pb-5">
+                    <label
+                      htmlFor="password-confirm"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      비밀번호 확인
+                    </label>
+                    <input
+                      id="password-confirm"
+                      name="password-confirm"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      placeholder="비밀번호를 다시 입력하세요"
+                      value={passwordConfirm}
+                      onChange={(e) => setPasswordConfirm(e.target.value)}
+                    />
+                    {passwordMatchMessage.text && (
+                      <p
+                        className={`mt-2 text-xs ${
+                          passwordMatchMessage.color
+                        } ${
+                          passwordMatchMessage.color === "text-green-500"
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
+                        }`}
+                      >
+                        {passwordMatchMessage.text}
+                      </p>
+                    )}
+                    <ul className="mt-2 list-disc list-inside space-y-1">
+                      <li
+                        className={`${정책문구스타일} ${
+                          passwordPolicy.length ? 충족스타일 : 미충족스타일
+                        } ${
+                          passwordPolicy.length
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
+                        }`}
+                      >
+                        총 8글자 이상
+                      </li>
+                      <li
+                        className={`${정책문구스타일} ${
+                          passwordPolicy.specialChar ? 충족스타일 : 미충족스타일
+                        } ${
+                          passwordPolicy.specialChar
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
+                        }`}
+                      >
+                        특수문자 1개 이상
+                      </li>
+                      <li
+                        className={`${정책문구스타일} ${
+                          passwordPolicy.uppercase ? 충족스타일 : 미충족스타일
+                        } ${
+                          passwordPolicy.uppercase
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
+                        }`}
+                      >
+                        영문자 1개 이상
+                      </li>
+                      <li
+                        className={`${정책문구스타일} ${
+                          passwordPolicy.number ? 충족스타일 : 미충족스타일
+                        } ${
+                          passwordPolicy.number
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
+                        }`}
+                      >
+                        숫자 1개 이상
+                      </li>
+                    </ul>
+                  </div>
+                </>
+              )}
+
+              <div className="pb-5">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  이름
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="이름을 입력하세요"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={
+                    signupType === "KAKAO" && kakaoInfo.nickname !== undefined
+                  }
+                />
+                {signupType === "KAKAO" && kakaoInfo.nickname && (
+                  <p className="mt-2 text-xs text-green-500 dark:text-green-400">
+                    카카오에서 가져온 이름입니다.
+                  </p>
+                )}
+              </div>
+
+              <div className="pb-5">
+                <label
+                  htmlFor="address-apartment"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  주소
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <select
+                    id="address-apartment"
+                    name="address-apartment"
+                    value={apartment}
+                    onChange={(e) => setApartment(e.target.value)}
+                    required
+                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  >
+                    <option value="" disabled>
+                      아파트 선택
+                    </option>
+                    {apartments.map((apt) => (
+                      <option key={apt.id} value={apt.name}>
+                        {apt.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    id="address-dong"
+                    name="address-dong"
+                    value={dong}
+                    onChange={(e) => setDong(e.target.value)}
+                    required
+                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  >
+                    <option value="" disabled>
+                      동 선택
+                    </option>
+                    {buildings.map((b) => (
+                      <option key={b.id} value={b.buildingNumber}>
+                        {b.buildingNumber}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    id="address-ho"
+                    name="address-ho"
+                    value={ho}
+                    onChange={(e) => setHo(e.target.value)}
+                    required
+                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  >
+                    <option value="" disabled>
+                      호 선택
+                    </option>
+                    {units.map((u) => (
+                      <option key={u.id} value={u.unitNumber}>
+                        {u.unitNumber}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Enter your address
+                </p>
+              </div>
+
+              {signupType !== "KAKAO" && (
+                <div className="pb-5">
+                  <label
+                    htmlFor="phone-number"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    휴대폰 번호
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id="phone-number"
+                      name="phone-number"
+                      type="tel"
+                      autoComplete="tel"
+                      required
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      placeholder="휴대폰 번호를 입력하세요 (예: 01012345678)"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""));
+                        setPhoneCheckMessage({ text: "", color: "" });
+                      }}
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={handlePhoneCheck}
+                      className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                        isLoading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-indigo-600 hover:bg-indigo-700"
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "확인중..." : "중복체크"}
+                    </button>
+                  </div>
+                  {phoneCheckMessage.text && (
+                    <p
+                      className={`mt-2 text-xs ${phoneCheckMessage.color} ${
+                        phoneCheckMessage.color === "text-green-500"
+                          ? "dark:text-green-400"
+                          : phoneCheckMessage.color === "text-red-500"
+                          ? "dark:text-red-400"
+                          : "dark:text-gray-400"
+                      }`}
+                    >
+                      {phoneCheckMessage.text}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-         </div>
-      </>
-   );
+
+            <div>
+              <button
+                type="submit"
+                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
+                  !isLoading &&
+                  (signupType === "KAKAO"
+                    ? emailId
+                      ? emailVerificationStep === "VERIFIED"
+                      : true
+                    : emailVerificationStep === "VERIFIED")
+                    ? "bg-pink-500 hover:bg-pink-600 dark:bg-pink-700 dark:hover:bg-pink-800"
+                    : "bg-gray-400 cursor-not-allowed"
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400`}
+                disabled={
+                  isLoading ||
+                  (emailId !== "" && emailVerificationStep !== "VERIFIED")
+                }
+              >
+                {isLoading ? "가입 처리중..." : "회원가입"}
+              </button>
+            </div>
+
+            {signupType !== "KAKAO" && (
+              <>
+                <div className="relative my-6">
+                  <div
+                    className="absolute inset-0 flex items-center"
+                    aria-hidden="true"
+                  >
+                    <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400">
+                      간편 회원가입
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <a
+                    href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrl}`}
+                  >
+                    <button
+                      type="button"
+                      className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300 dark:text-black dark:bg-yellow-400 dark:hover:bg-yellow-500"
+                      disabled={isLoading}
+                    >
+                      카카오톡으로 회원가입
+                    </button>
+                  </a>
+                </div>
+              </>
+            )}
+          </form>
+        </div>
+      </div>
+    </>
+  );
 }

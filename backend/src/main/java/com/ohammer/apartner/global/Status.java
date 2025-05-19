@@ -9,7 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public enum Status {
     ACTIVE("active"),
     INACTIVE("inactive"),
-    PENDING("pending");
+    PENDING("pending"),
+    WITHDRAWN("withdrawn");
 
     private final String value;
 
@@ -17,7 +18,7 @@ public enum Status {
         this.value = value;
     }
 
-    @JsonValue //enum → 문자열 응답
+    @JsonValue 
     public String getValue() {
         return value;
     }

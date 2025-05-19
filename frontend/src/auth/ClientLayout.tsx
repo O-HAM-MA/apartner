@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import {
-  LoginMemberContext,
-  useLoginMember,
-} from "@/auth/loginMember";
+import { LoginMemberContext, useLoginMember } from "@/auth/loginMember";
 import Layout from "@/components/layout";
 import { get } from "@/utils/api";
 
@@ -20,6 +17,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     isLogin,
     logout,
     logoutAndHome,
+    clearLoginState,
   } = useLoginMember();
 
   // 전역관리를 위한 Store 등록 - context api 사용
@@ -30,6 +28,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     isLogin,
     logout,
     logoutAndHome,
+    clearLoginState,
   };
 
   useEffect(() => {

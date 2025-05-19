@@ -110,14 +110,20 @@ public class ApiV1AuthController {
             MeDto meDto = new MeDto(
                     user.getId(),
                     user.getUserName(),
+                    user.getEmail(),
+                    user.getPhoneNum(),
                     user.getCreatedAt(),
                     user.getModifiedAt(),
                     profileImageUrl,
                     apartmentName,
                     buildingName,
-                    unitNumber
+                    unitNumber,
+                    user.getSocialProvider()
             );
             log.info("[/me] Successfully retrieved user info for userId: {}", userIdLong);
+            log.info("[/me] Successfully retrieved 너의 핸드폰번호 : {}", meDto.getPhoneNum());
+
+
 
             // 8. MeDto를 담아서 200 OK 응답 보내기
             return ResponseEntity.ok(meDto);
@@ -145,6 +151,25 @@ public class ApiV1AuthController {
             }
             if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
                 return ResponseEntity.status(401).body("비밀번호가 틀렸습니다.");
+            }
+            
+            // 사용자 상태 확인 - ACTIVE 상태가 아니면 로그인 불가, 상태별 메시지 처리
+            switch (user.getStatus()) {
+                case ACTIVE:
+                    // 활성 상태이면 정상 진행
+                    break;
+                case INACTIVE:
+                    log.warn("[/login] INACTIVE user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비활성화된 계정입니다. 관리자에게 문의하세요.");
+                case PENDING:
+                    log.warn("[/login] PENDING user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정이 일시 중지되었습니다. 관리자에게 문의하세요.");
+                case WITHDRAWN:
+                    log.warn("[/login] WITHDRAWN user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("이미 탈퇴한 계정입니다.");
+                default:
+                    log.warn("[/login] Unknown status user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정 상태를 확인할 수 없습니다. 관리자에게 문의하세요.");
             }
 
             String accessToken = authService.genAccessToken(user);
