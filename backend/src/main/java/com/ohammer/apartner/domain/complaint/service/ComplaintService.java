@@ -109,6 +109,8 @@ public class ComplaintService {
 
         log.info("user Id : {}", user.getId());
 
+        complaintRepository.save(complaint);
+
         return requestDto;
     }
 
@@ -129,6 +131,8 @@ public class ComplaintService {
         complaint.setTitle(requestDto.getTitle());
         complaint.setContent(requestDto.getContent());
         complaint.setCategory(requestDto.getCategory());
+
+        complaintRepository.save(complaint);
 
         return requestDto;
     }
@@ -167,6 +171,8 @@ public class ComplaintService {
         }
 
         complaint.setStatus(state);
+
+        complaintRepository.save(complaint);
 
         return UpdateComplaintStatusResponseDto.builder()
                 .id(complaint.getId())

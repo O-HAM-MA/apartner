@@ -56,6 +56,8 @@ public class ComplaintFeedbackService {
                 .user(user)
                 .build();
 
+        complaintFeedbackRepository.save(complaintFeedback);
+
         return complaintFeedbackRequestDto;
     }
 
@@ -79,6 +81,9 @@ public class ComplaintFeedbackService {
         }
 
         complaintFeedback.setContent(complaintFeedbackRequestDto.getContent());
+
+        complaintFeedbackRepository.save(complaintFeedback);
+
         return complaintFeedbackRequestDto;
     }
 
