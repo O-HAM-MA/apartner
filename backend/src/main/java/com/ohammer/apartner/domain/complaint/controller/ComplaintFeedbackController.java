@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.complaint.controller;
 
 import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintFeedbackRequestDto;
+import com.ohammer.apartner.domain.complaint.dto.request.UpdateComplaintFeedbackRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintFeedbackResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.ComplaintFeedback;
 import com.ohammer.apartner.domain.complaint.service.ComplaintFeedbackService;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -27,7 +29,7 @@ public class ComplaintFeedbackController {
             description = "해당 민원에 맞는 피드백을 전부 읽어 제공하는 기능",
             tags = "민원 피드백 관리 API"
     )
-    public ResponseEntity<?> getComplaintFeedback(@PathVariable Long complaintId) {
+    public ResponseEntity<?> getComplaintFeedback(@PathVariable(name = "complaintId") Long complaintId) throws AccessDeniedException {
 
         List<AllComplaintFeedbackResponseDto> response = complaintFeedbackService.findComplaintFeedbackByComplaintId(complaintId);
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -41,7 +43,7 @@ public class ComplaintFeedbackController {
     )
     public ResponseEntity<?> saveComplaintFeedback(@RequestBody CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) {
 
-        ComplaintFeedback response = complaintFeedbackService.save(complaintFeedbackRequestDto);
+        CreateComplaintFeedbackRequestDto response = complaintFeedbackService.save(complaintFeedbackRequestDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -51,9 +53,9 @@ public class ComplaintFeedbackController {
             description = "민원에 대한 피드백을 수정하는 기능",
             tags = "민원 피드백 관리 API"
     )
-    public ResponseEntity<?> updateComplaintFeedback(@PathVariable Long feedbackId, @RequestBody CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws Exception {
+    public ResponseEntity<?> updateComplaintFeedback(@PathVariable(name = "feedbackId") Long feedbackId, @RequestBody UpdateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws Exception {
 
-        ComplaintFeedback response = complaintFeedbackService.updateComplaintFeedback(feedbackId,complaintFeedbackRequestDto);
+        UpdateComplaintFeedbackRequestDto response = complaintFeedbackService.updateComplaintFeedback(feedbackId,complaintFeedbackRequestDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -63,7 +65,7 @@ public class ComplaintFeedbackController {
             description = "민원에 대한 피드백을 삭제하는 기능",
             tags = "민원 피드백 관리 API"
     )
-    public ResponseEntity<?> deleteComplaintFeedback(@PathVariable Long feedbackId) throws Exception {
+    public ResponseEntity<?> deleteComplaintFeedback(@PathVariable(name = "feedbackId") Long feedbackId) throws Exception {
         complaintFeedbackService.deleteComplainFeedback(feedbackId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
