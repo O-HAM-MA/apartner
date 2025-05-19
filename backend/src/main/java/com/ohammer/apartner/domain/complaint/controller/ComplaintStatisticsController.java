@@ -1,7 +1,9 @@
 package com.ohammer.apartner.domain.complaint.controller;
 
+import com.ohammer.apartner.domain.complaint.dto.response.ComplaintCountByStatusResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.TodayComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.service.ComplaintStatisticsService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,19 @@ public class ComplaintStatisticsController {
     private final ComplaintStatisticsService complaintStatisticsService;
 
     @GetMapping("/today")
+    @Operation(summary = "일별 민원 수 조회", description = "일별 민원 수, 상태 조회")
     public ResponseEntity<?> getTodayStats() throws AccessDeniedException {
 
         List<TodayComplaintResponseDto> response = complaintStatisticsService.getTodayComplaintStats();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/status")
+    @Operation(summary = "상태별 처리수 조회", description = "상태별 처리수 조회")
+    public ResponseEntity<?> getComplaintStatus() throws AccessDeniedException {
+
+        List<ComplaintCountByStatusResponseDto> response = complaintStatisticsService.getComplainsGroupByStatus();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.complaint.service;
 
+import com.ohammer.apartner.domain.complaint.dto.response.ComplaintCountByStatusResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.TodayComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +51,33 @@ public class ComplaintStatisticsService {
                         .count((Long) obj[1])
                         .build())
                 .toList();
+    }
+
+    public List<ComplaintCountByStatusResponseDto> getComplainsGroupByStatus() throws AccessDeniedException {
+        User user = SecurityUtil.getCurrentUser();
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
+        Set<Role> userRoles = user.getRoles();
+
+        boolean hasRequiredRole = userRoles.stream()
+                .anyMatch(role -> role == Role.ADMIN);
+
+        if (!hasRequiredRole) {
+            throw new AccessDeniedException("통계를 확인할 권한이 없습니다.");
+        }
+
+        // 상태별 개수 조회
+        List<Object[]> results = complaintRepository.countComplaintsGroupByStatus();
+
+        // DTO로 변환
+        return results.stream()
+                .map(result -> ComplaintCountByStatusResponseDto.builder()
+                        .status(result[0].toString()) // Enum.name()
+                        .count((Long) result[1])
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }
