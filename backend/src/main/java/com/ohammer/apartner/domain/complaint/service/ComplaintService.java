@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.complaint.service;
 
 import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintStatusResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
@@ -93,7 +94,7 @@ public class ComplaintService {
     }
 
     // Create
-    public Complaint createComplaint(CreateComplaintRequestDto requestDto) {
+    public CreateComplaintRequestDto createComplaint(CreateComplaintRequestDto requestDto) {
 
         // 유저 찾는 로직
         User user = SecurityUtil.getCurrentUser();
@@ -106,12 +107,14 @@ public class ComplaintService {
                 .status(Complaint.Status.PENDING)
                 .build();
 
-        return complaintRepository.save(complaint);
+        log.info("user Id : {}", user.getId());
+
+        return requestDto;
     }
 
 
     // Update
-    public Complaint updateComplaint(CreateComplaintRequestDto requestDto, Long complaintId) throws AccessDeniedException {
+    public CreateComplaintRequestDto updateComplaint(CreateComplaintRequestDto requestDto, Long complaintId) throws AccessDeniedException {
 
         // 유저 찾기
         User user = SecurityUtil.getCurrentUser();
@@ -126,11 +129,12 @@ public class ComplaintService {
         complaint.setTitle(requestDto.getTitle());
         complaint.setContent(requestDto.getContent());
         complaint.setCategory(requestDto.getCategory());
-        return complaintRepository.save(complaint);
+
+        return requestDto;
     }
 
     // Update
-    public Complaint updateStatus(Long comlaintId, Long status) throws Exception {
+    public UpdateComplaintStatusResponseDto updateStatus(Long comlaintId, Long status) throws Exception {
 
         Complaint complaint = complaintRepository.findById(comlaintId).orElseThrow(()->new Exception("컴플레인을 찾을 수 없습니다."));
 
@@ -154,11 +158,21 @@ public class ComplaintService {
         // 조건문에 따라 상태 변경
         if(status == 1){
           state = Complaint.Status.PENDING;
+        } else if (status == 2) {
+            state = Complaint.Status.IN_PROGRESS;
+        }else if(status == 3){
+            state = Complaint.Status.COMPLETED;
+        }else if(status == 4){
+            state = Complaint.Status.REJECTED;
         }
 
         complaint.setStatus(state);
 
-        return complaintRepository.save(complaint);
+        return UpdateComplaintStatusResponseDto.builder()
+                .id(complaint.getId())
+                .content(complaint.getContent())
+                .title(complaint.getTitle())
+                .build();
     }
 
     // delete
