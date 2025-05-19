@@ -93,6 +93,44 @@ public class ComplaintService {
         return complaintRepository.findById(complaintId).orElse(null);
     }
 
+
+    // Read
+    public List<AllComplaintResponseDto> getAllComplaintsByStatus(Long status) throws AccessDeniedException {
+        User user = SecurityUtil.getCurrentUser();
+
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
+        Set<Role> userRoles = user.getRoles();
+
+        boolean hasRequiredRole = userRoles.stream()
+                .anyMatch(role -> role == Role.ADMIN || role == Role.MODERATOR);
+
+        if (!hasRequiredRole) {
+            throw new AccessDeniedException("전체 민원 목록을 조회할 권한이 없습니다.");
+        }
+
+        Complaint.Status state = mapStatus(status);
+        if (state == null) {
+            throw new IllegalArgumentException("유효하지 않은 상태값입니다: " + status);
+        }
+
+        // Repository에서 상태별 조회
+        List<Complaint> complaints = complaintRepository.findByStatus(state);
+
+        // DTO 변환
+        return complaints.stream()
+                .map(response -> AllComplaintResponseDto.builder()
+                        .id(response.getId())
+                        .title(response.getTitle())
+                        .category(response.getCategory())
+                        .status(response.getStatus().name())
+                        .createdAt(response.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     // Create
     public CreateComplaintRequestDto createComplaint(CreateComplaintRequestDto requestDto) {
 
@@ -142,8 +180,6 @@ public class ComplaintService {
 
         Complaint complaint = complaintRepository.findById(comlaintId).orElseThrow(()->new Exception("컴플레인을 찾을 수 없습니다."));
 
-        Complaint.Status state = null;
-
         User user = SecurityUtil.getCurrentUser();
 
         if (user == null) {
@@ -159,18 +195,7 @@ public class ComplaintService {
             throw new AccessDeniedException("민원 상태를 변경할 권한이 없습니다.");
         }
 
-        // 조건문에 따라 상태 변경
-        if(status == 1){
-          state = Complaint.Status.PENDING;
-        } else if (status == 2) {
-            state = Complaint.Status.IN_PROGRESS;
-        }else if(status == 3){
-            state = Complaint.Status.COMPLETED;
-        }else if(status == 4){
-            state = Complaint.Status.REJECTED;
-        }
-
-        complaint.setStatus(state);
+        complaint.setStatus(mapStatus(status));
 
         complaintRepository.save(complaint);
 
@@ -200,4 +225,15 @@ public class ComplaintService {
         complaintRepository.deleteById(complaintId);
     }
 
+
+    // 상태 매핑 매서드
+    private Complaint.Status mapStatus(Long statusCode) {
+        return switch (statusCode.intValue()) {
+            case 1 -> Complaint.Status.PENDING;
+            case 2 -> Complaint.Status.IN_PROGRESS;
+            case 3 -> Complaint.Status.COMPLETED;
+            case 4 -> Complaint.Status.REJECTED;
+            default -> null;
+        };
+    }
 }

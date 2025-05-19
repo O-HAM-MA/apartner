@@ -78,6 +78,14 @@ public class ComplaintController {
         return new ResponseEntity<>("민원이 삭제되었습니다.",HttpStatus.OK);
     }
 
+    @PostMapping("/status")
+    @Operation(summary = "상태별 검색", description = "민원 상태 별 조회")
+    public ResponseEntity<?> searchComplaintByStatus(@RequestParam(name = "status") Long status) throws Exception {
+
+        List<AllComplaintResponseDto> response= complaintService.getAllComplaintsByStatus(status);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 
 }
