@@ -37,8 +37,8 @@ public class EntryRecordController {
 
     // 🚙 출차
     @PostMapping("/exit")
-    public ResponseEntity<EntryRecordResponseDto> exit() { // @RequestBody EntryRecordRequestDto dto
-        return ResponseEntity.ok(entryRecordService.exitVehicle());
+    public ResponseEntity<EntryRecordResponseDto> exit(@RequestBody EntryRecordRequestDto dto) { // @RequestBody EntryRecordRequestDto dto
+        return ResponseEntity.ok(entryRecordService.exitVehicle(dto));
     }
 
     // 📜 출입 기록 전체 조회
