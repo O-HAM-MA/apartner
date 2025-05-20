@@ -1,6 +1,5 @@
 package com.ohammer.apartner.domain.notice.service;
 
-import com.github.dockerjava.api.exception.NotFoundException;
 import com.ohammer.apartner.domain.apartment.entity.Building;
 import com.ohammer.apartner.domain.apartment.repository.BuildingRepository;
 import com.ohammer.apartner.domain.image.entity.Image;
@@ -101,7 +100,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Transactional
     public NoticeReadResponseDto readNotice(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new NotFoundException("해당 공지사항이 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 공지사항이 존재하지 않습니다."));
 
         if (notice.getStatus() != Status.ACTIVE) {
             throw new IllegalArgumentException("삭제되었거나 비활성화된 공지사항입니다.");
@@ -145,7 +144,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Transactional
     public void updateNotice(Long noticeId, NoticeUpdateRequestDto noticeUpdateRequestDto, Long userId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new NotFoundException("해당 공지사항이 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 공지사항이 존재하지 않습니다."));
 
         if (notice.getStatus() != Status.ACTIVE) {
             throw new IllegalArgumentException("삭제되었거나 비활성화된 공지사항입니다.");
@@ -196,7 +195,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Transactional
     public void deleteNotice(Long noticeId, Long userId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new NotFoundException("해당 공지사항이 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 공지사항이 존재하지 않습니다."));
 
         if (!notice.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("작성자만 게시글을 삭제할 수 있습니다.");
