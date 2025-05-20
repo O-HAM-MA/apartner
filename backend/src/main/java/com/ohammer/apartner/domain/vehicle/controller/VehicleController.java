@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.vehicle.controller;
 
 import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.service.VehicleService;
+import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,6 +82,46 @@ public class VehicleController {
         List<VehicleRegistrationInfoDto> approvedVehicles = vehicleService.getApprovedVehicles();
         return ResponseEntity.ok(approvedVehicles);
     }
+
+    @GetMapping("/visitors/pending")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getMyRequests() {
+        Long inviterId = SecurityUtil.getCurrentUserId();
+        if (inviterId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(
+                vehicleService.getMyVisitorRequests(inviterId)
+        );
+    }
+
+    @GetMapping("/invited-approved")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getInvitedApprovedVehicles() {
+        List<VehicleRegistrationInfoDto> approvedVehicles = vehicleService.getInvitedApprovedVehicles();
+        return ResponseEntity.ok(approvedVehicles);
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getActiveVehicles() {
+        List<VehicleRegistrationInfoDto> list = vehicleService.getActiveVehicles();
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<ParkingStatusDto> getParkingStatus() {
+        return ResponseEntity.ok(vehicleService.getParkingStatus());
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getMyVehicles() {
+        List<VehicleRegistrationInfoDto> list = vehicleService.getMyVehicleRegistrations();
+        return ResponseEntity.ok(list);
+    }
+
+
+
+
+
 
 
 

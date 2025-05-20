@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 public class ResidentVehicleRequestDto {
 
-    private Long userId;
+    // private Long userId;
     private String vehicleNum;
     private String type;
 }
