@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.ohammer.apartner.domain.chat.entity.Message;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
+    boolean existsByChatroomIdAndCreatedAtAfter(Long chatroomId, LocalDateTime lastCheckAt);
+
     List<Message> findAllByChatroomId(Long chatroomId);
 
-    Boolean existsByChatroomIdAndCreatedAtAfter(Long chatroomId, LocalDateTime createdAt);
+    List<Message> findAllByChatroomIdOrderByCreatedAtAsc(Long chatroomId);
 }

@@ -124,28 +124,39 @@ export async function fetchApi(
       response.ok &&
       !url.includes("/api/v1/myInfos") &&
       !url.includes("/api/v1/auth/logout") && // 로그아웃 URL 제외 조건 추가
-      !url.includes("/api/v1/auth/me") // me API도 제외 조건 추가
+      !url.includes("/api/v1/auth/me") && // me API도 제외 조건 추가
+      !url.includes("/api/v1/admin") // 관리자 API 경로도 제외 조건 추가
     ) {
       if (myInfosFetchCount < MAX_MYINFOS_FETCH_ATTEMPTS) {
         // 최대 시도 횟수 체크
         try {
-          // 사용자 정보 갱신
-          const userInfoResponse = await fetchApi(
-            `/api/v1/myInfos`,
-            {
-              credentials: "include",
-            },
-            true
-          );
+          // 현재 경로가 관리자 페이지인지 확인
+          const isAdminPath =
+            typeof window !== "undefined" &&
+            window.location.pathname.startsWith("/admin");
 
-          if (userInfoResponse.ok) {
-            const userInfo = await userInfoResponse.json();
-            myInfosFetchCount = 0; // 성공 시 카운터 초기화
+          // 관리자 페이지에서는 myInfos 호출 건너뛰기
+          if (isAdminPath) {
+            console.info("[fetchApi] myInfos update skipped for admin page");
           } else {
-            myInfosFetchCount++; // 실패 시 카운터 증가
-            console.warn(
-              `[fetchApi] Internal myInfos update failed (attempt ${myInfosFetchCount}/${MAX_MYINFOS_FETCH_ATTEMPTS}). Status: ${userInfoResponse.status}`
+            // 사용자 정보 갱신
+            const userInfoResponse = await fetchApi(
+              `/api/v1/myInfos`,
+              {
+                credentials: "include",
+              },
+              true
             );
+
+            if (userInfoResponse.ok) {
+              const userInfo = await userInfoResponse.json();
+              myInfosFetchCount = 0; // 성공 시 카운터 초기화
+            } else {
+              myInfosFetchCount++; // 실패 시 카운터 증가
+              console.warn(
+                `[fetchApi] Internal myInfos update failed (attempt ${myInfosFetchCount}/${MAX_MYINFOS_FETCH_ATTEMPTS}). Status: ${userInfoResponse.status}`
+              );
+            }
           }
         } catch (error) {
           myInfosFetchCount++; // 예외 발생 시 카운터 증가
@@ -367,3 +378,218 @@ export const del = async <T>(
 
 //   return response.json();
 // };
+
+/**
+ * 일반 사용자 인증 상태 확인
+ * @returns 사용자 정보
+ */
+export async function checkUserAuth<T = any>(): Promise<T> {
+  return await get<T>("/api/v1/auth/me", {}, true);
+}
+
+/**
+ * 관리자 인증 상태 확인
+ * @returns 관리자 정보
+ */
+export async function checkAdminAuth<T = any>(): Promise<T> {
+  return await get<T>("/api/v1/admin/me", {}, true);
+}
+
+/**
+ * 현재 경로에 따라 적절한 인증 API 호출
+ * @param isAdminPath 관리자 경로 여부
+ * @returns 사용자 또는 관리자 정보
+ */
+export async function checkAuth<T = any>(isAdminPath: boolean): Promise<T> {
+  if (isAdminPath) {
+    return await checkAdminAuth<T>();
+  } else {
+    return await checkUserAuth<T>();
+  }
+}
+
+/**
+ * [사용자] 채팅방 목록 조회
+ */
+export async function getUserChatrooms<T = any>(): Promise<T> {
+  const response = await get<any>("/api/v1/chats", {}, true);
+  // API 응답에서 data 속성 반환
+  return response.data;
+}
+
+/**
+ * [사용자] 채팅방 메시지 조회
+ * @param chatroomId 채팅방 ID
+ */
+export async function getUserChatMessages<T = any>(
+  chatroomId: number
+): Promise<T> {
+  const response = await get<any>(
+    `/api/v1/chats/${chatroomId}/messages`,
+    {},
+    true
+  );
+  // API 응답에서 data 속성 반환
+  return response.data;
+}
+
+/**
+ * [사용자] 채팅방 정보 조회
+ * @param chatroomId 채팅방 ID
+ */
+export async function getUserChatroom<T = any>(chatroomId: number): Promise<T> {
+  return await get<T>(`/api/v1/chats/${chatroomId}`, {}, true);
+}
+
+/**
+ * [사용자] 관리자와 채팅 시작
+ * @param title 채팅방 제목
+ */
+export async function startChatWithAdmin<T = any>(title: string): Promise<T> {
+  return await post<T>("/api/v1/chats", { title }, {}, true);
+}
+
+/**
+ * [사용자] 채팅방 참여
+ * @param chatroomId 참여할 채팅방 ID
+ * @param currentChatroomId 현재 참여 중인 채팅방 ID
+ */
+export async function joinUserChatroom<T = any>(
+  chatroomId: number,
+  currentChatroomId?: number
+): Promise<T> {
+  return await post<T>(
+    `/api/v1/chats/${chatroomId}/join`,
+    { currentChatroomId },
+    {},
+    true
+  );
+}
+
+/**
+ * [사용자] 채팅방 나가기
+ * @param chatroomId 나갈 채팅방 ID
+ */
+export async function leaveUserChatroom<T = any>(
+  chatroomId: number
+): Promise<T> {
+  return await post<T>(`/api/v1/chats/${chatroomId}/leave`, {}, {}, true);
+}
+
+/**
+ * [관리자] 채팅방 목록 조회
+ */
+export async function getAdminChatrooms<T = any>(): Promise<T> {
+  return await get<T>("/api/v1/chats", {}, true);
+}
+
+/**
+ * [관리자] 채팅방 메시지 조회
+ * @param chatroomId 채팅방 ID
+ */
+export async function getAdminChatMessages<T = any>(
+  chatroomId: number
+): Promise<T> {
+  return await get<T>(`/api/v1/chats/${chatroomId}/messages`, {}, true);
+}
+
+/**
+ * [관리자] 채팅방 정보 조회
+ * @param chatroomId 채팅방 ID
+ */
+export async function getAdminChatroom<T = any>(
+  chatroomId: number
+): Promise<T> {
+  return await get<T>(`/api/v1/chats/${chatroomId}`, {}, true);
+}
+
+/**
+ * [관리자] 채팅방 생성
+ * @param title 채팅방 제목
+ */
+export async function createAdminChatroom<T = any>(title: string): Promise<T> {
+  return await post<T>("/api/v1/chats", { title }, {}, true);
+}
+
+/**
+ * [관리자] 채팅방 참여
+ * @param chatroomId 참여할 채팅방 ID
+ * @param currentChatroomId 현재 참여 중인 채팅방 ID
+ */
+export async function joinAdminChatroom<T = any>(
+  chatroomId: number,
+  currentChatroomId?: number
+): Promise<T> {
+  return await post<T>(
+    `/api/v1/chats/${chatroomId}/join`,
+    { currentChatroomId },
+    {},
+    true
+  );
+}
+
+/**
+ * [관리자] 채팅방 나가기
+ * @param chatroomId 나갈 채팅방 ID
+ */
+export async function leaveAdminChatroom<T = any>(
+  chatroomId: number
+): Promise<T> {
+  return await post<T>(`/api/v1/chats/${chatroomId}/leave`, {}, {}, true);
+}
+
+/**
+ * [authApi] 채팅방 목록 조회
+ */
+export async function getChatrooms<T = any>(): Promise<T> {
+  return await get<T>("/api/v1/chats", {}, true);
+}
+
+/**
+ * [authApi] 채팅방 메시지 조회
+ * @param chatroomId 채팅방 ID
+ */
+export async function getChatMessages<T = any>(chatroomId: number): Promise<T> {
+  return await get<T>(`/api/v1/chats/${chatroomId}/messages`, {}, true);
+}
+
+/**
+ * [authApi] 채팅방 정보 조회
+ * @param chatroomId 채팅방 ID
+ */
+export async function getChatroom<T = any>(chatroomId: number): Promise<T> {
+  return await get<T>(`/api/v1/chats/${chatroomId}`, {}, true);
+}
+
+/**
+ * [authApi] 채팅방 생성
+ * @param title 채팅방 제목
+ */
+export async function createChatroom<T = any>(title: string): Promise<T> {
+  return await post<T>("/api/v1/chats", { title }, {}, true);
+}
+
+/**
+ * [authApi] 채팅방 참여
+ * @param chatroomId 참여할 채팅방 ID
+ * @param currentChatroomId 현재 참여 중인 채팅방 ID
+ */
+export async function joinChatroom<T = any>(
+  chatroomId: number,
+  currentChatroomId?: number
+): Promise<T> {
+  return await post<T>(
+    `/api/v1/chats/${chatroomId}/join`,
+    { currentChatroomId },
+    {},
+    true
+  );
+}
+
+/**
+ * [authApi] 채팅방 나가기
+ * @param chatroomId 나갈 채팅방 ID
+ */
+export async function leaveChatroom<T = any>(chatroomId: number): Promise<T> {
+  return await post<T>(`/api/v1/chats/${chatroomId}/leave`, {}, {}, true);
+}

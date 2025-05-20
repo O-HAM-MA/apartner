@@ -79,3 +79,76 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* 스크롤바 스타일 */
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+    opacity: 0;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 4px;
+  }
+
+  .hover\:show-scrollbar:hover::-webkit-scrollbar-thumb,
+  .active\:show-scrollbar:active::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  /* Firefox */
+  .hide-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .hover\:show-scrollbar:hover,
+  .active\:show-scrollbar:active {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+}
+
+/* 메시지 애니메이션 */
+@keyframes message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-animation {
+  animation: message-appear 0.3s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+/* 고성능 스크롤 및 애니메이션 설정 */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  will-change: scroll-position;
+}
+
+/* 초고성능 애니메이션 - 프레임 끊김 없는 120hz 최적화 */
+.ultra-smooth-animation {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ultra-smooth-transition {
+    transition: transform 180ms cubic-bezier(0.33, 1, 0.68, 1),
+      opacity 180ms cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: transform, opacity;
+  }
+}

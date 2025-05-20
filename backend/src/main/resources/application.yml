@@ -111,6 +111,12 @@ logging:
     org.springframework.transaction.interceptor: TRACE
     com.ohammer.apartner.security.OAuth.CustomOAuth2SuccessHandler: DEBUG
     org.springframework.security.oauth2: DEBUG
+    com.ohammer.apartner.domain.chat.controller.StompChatController: DEBUG
+  file:
+    name: ./logs/apartner-app.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 custom:
   dev:
