@@ -62,7 +62,7 @@ public class ComplaintController {
     // status를 뭐로 받을지는 생각해봐야할듯 숫자 or 문자열
     @PatchMapping("/{complaintId}/status")
     @Operation(summary = "민원 상태 변경", description = "민원의 상태(PENDING, IN_PROGRESS 등)를 변경합니다")
-    public ResponseEntity<?> updateComplaintStatus(@PathVariable(name = "complainId") Long complainId, @RequestParam(name = "status") Long status) throws Exception {
+    public ResponseEntity<?> updateComplaintStatus(@PathVariable(name = "complaintId") Long complainId, @RequestParam(name = "status") Long status) throws Exception {
 
         UpdateComplaintStatusResponseDto response = complaintService.updateStatus(complainId, status);
 
@@ -72,7 +72,7 @@ public class ComplaintController {
     @DeleteMapping("/{complaintId}")
     @Operation(summary = "민원 삭제", description = "민원 ID를 이용해 민원을 삭제합니다")
     public ResponseEntity<?> deleteComplaint(
-            @PathVariable(name = "complainId")
+            @PathVariable(name = "complaintId")
             Long complainId){
         complaintService.deleteComplaint(complainId);
         return new ResponseEntity<>("민원이 삭제되었습니다.",HttpStatus.OK);

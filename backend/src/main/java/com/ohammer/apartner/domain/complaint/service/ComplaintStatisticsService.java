@@ -2,12 +2,12 @@ package com.ohammer.apartner.domain.complaint.service;
 
 import com.ohammer.apartner.domain.complaint.dto.response.ComplaintCountByStatusResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.ComplaintHandlingRateResponseDto;
-import com.ohammer.apartner.domain.complaint.dto.response.TodayComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -19,12 +19,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ComplaintStatisticsService {
 
 
     private final ComplaintRepository complaintRepository;
 
-    public List<TodayComplaintResponseDto> getTodayComplaintStats() throws AccessDeniedException {
+    public Long getTodayTotalComplaintCount() throws AccessDeniedException {
 
         User user = SecurityUtil.getCurrentUser();
 
@@ -45,13 +46,10 @@ public class ComplaintStatisticsService {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
 
-        return complaintRepository.countTodayComplaintsByStatus(startOfDay, endOfDay)
-                .stream()
-                .map(obj -> TodayComplaintResponseDto.builder()
-                        .status(obj[0].toString())
-                        .count((Long) obj[1])
-                        .build())
-                .toList();
+        // 새로 추가한 메서드를 호출하여 전체 개수 가져오기
+        Long totalCount = complaintRepository.countTotalComplaintsToday(startOfDay, endOfDay);
+
+        return totalCount; // 전체 개수 반환
     }
 
     public List<ComplaintCountByStatusResponseDto> getComplainsGroupByStatus() throws AccessDeniedException {

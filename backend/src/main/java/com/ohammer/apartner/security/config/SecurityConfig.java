@@ -58,11 +58,11 @@ public class SecurityConfig {
 
                                 "/api/v1/sms/**", // sms 경로는 여기에 유지
                                 "/api/v1/vehicles/**",
-                                "/api/v1/entry-records/**"
+                                "/api/v1/entry-records/**",
 
 
                                 //암시로 넣어야징
-                                "/api/v1/inspection/**",
+                                "/api/v1/inspection/**"
                 
                         ).permitAll()
                         // 관리자 전용 API -> adminSecurityFilterChain에서 처리하므로 이 부분은 제거됨
