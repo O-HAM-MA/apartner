@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.opinion.service;
 
 import com.ohammer.apartner.domain.opinion.dto.request.CreateManagerOpinionRequestDto;
 import com.ohammer.apartner.domain.opinion.dto.response.AllManagerOpinionResponseDto;
+import com.ohammer.apartner.domain.opinion.dto.response.CreateManagerOpinionResponseDto;
 import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.opinion.repository.OpinionRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
@@ -21,7 +22,7 @@ public class OpinionService {
 
     private final OpinionRepository opinionRepository;
 
-    public CreateManagerOpinionRequestDto createManagerOpinion(CreateManagerOpinionRequestDto opinion) throws AccessDeniedException {
+    public CreateManagerOpinionResponseDto createManagerOpinion(CreateManagerOpinionRequestDto opinion) throws AccessDeniedException {
 
 //        대충 유저 가져오는 로직
         User user = SecurityUtil.getCurrentUser();
@@ -33,7 +34,7 @@ public class OpinionService {
         Set<Role> userRoles = user.getRoles();
 
         boolean hasRequiredRole = userRoles.stream()
-                .anyMatch(role -> role == Role.ADMIN || role == Role.MODERATOR);
+                .anyMatch(role -> role == Role.ADMIN || role == Role.MANAGER);
 
         if (!hasRequiredRole) {
             throw new AccessDeniedException("의견을 생성할 권한이 없습니다.");
@@ -48,7 +49,13 @@ public class OpinionService {
 
         opinionRepository.save(opinionEntity);
 
-        return opinion;
+        return CreateManagerOpinionResponseDto.builder()
+                .id(opinionEntity.getId())
+                .content(opinionEntity.getContent())
+                .userId(user.getId())
+                .title(opinionEntity.getTitle())
+                .createdAt(opinionEntity.getCreatedAt())
+                .build();
     }
 
     public List<AllManagerOpinionResponseDto> getAllManagerOpinion() throws AccessDeniedException {
@@ -62,7 +69,7 @@ public class OpinionService {
         Set<Role> userRoles = user.getRoles();
 
         boolean hasRequiredRole = userRoles.stream()
-                .anyMatch(role -> role == Role.ADMIN || role == Role.MODERATOR);
+                .anyMatch(role -> role == Role.ADMIN || role == Role.MANAGER);
 
         if (!hasRequiredRole) {
             throw new AccessDeniedException("의견 목록을 조회할 권한이 없습니다.");
@@ -76,5 +83,9 @@ public class OpinionService {
                         .userName(opinion.getUser().getUserName())
                         .build())
                         .collect(Collectors.toList());
+    }
+
+    public Opinion getOpinionById(Long id) {
+        return opinionRepository.findById(id).orElse(null);
     }
 }

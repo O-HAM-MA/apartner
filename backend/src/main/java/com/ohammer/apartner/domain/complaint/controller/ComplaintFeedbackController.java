@@ -3,6 +3,8 @@ package com.ohammer.apartner.domain.complaint.controller;
 import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintFeedbackRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.request.UpdateComplaintFeedbackRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintFeedbackResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.CreateComplaintFeedbackResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintFeedbackResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.ComplaintFeedback;
 import com.ohammer.apartner.domain.complaint.service.ComplaintFeedbackService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,7 +25,7 @@ public class ComplaintFeedbackController {
 
     private final ComplaintFeedbackService complaintFeedbackService;
 
-    @GetMapping
+    @GetMapping("/{complaintId}")
     @Operation(
             summary = "민원에 대한 피드백 목록 조회",
             description = "해당 민원 ID로 모든 피드백을 조회합니다",
@@ -41,10 +43,10 @@ public class ComplaintFeedbackController {
             description = "민원에 대한 새로운 피드백을 저장합니다",
             tags = "민원 피드백 관리 API"
     )
-    public ResponseEntity<?> saveComplaintFeedback(@RequestBody CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) {
+    public ResponseEntity<?> saveComplaintFeedback(@RequestBody CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws AccessDeniedException {
 
-        CreateComplaintFeedbackRequestDto response = complaintFeedbackService.save(complaintFeedbackRequestDto);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        CreateComplaintFeedbackResponseDto response = complaintFeedbackService.save(complaintFeedbackRequestDto);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{feedbackId}")
@@ -55,7 +57,7 @@ public class ComplaintFeedbackController {
     )
     public ResponseEntity<?> updateComplaintFeedback(@PathVariable(name = "feedbackId") Long feedbackId, @RequestBody UpdateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws Exception {
 
-        UpdateComplaintFeedbackRequestDto response = complaintFeedbackService.updateComplaintFeedback(feedbackId,complaintFeedbackRequestDto);
+        UpdateComplaintFeedbackResponseDto response = complaintFeedbackService.updateComplaintFeedback(feedbackId,complaintFeedbackRequestDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -67,6 +69,6 @@ public class ComplaintFeedbackController {
     )
     public ResponseEntity<?> deleteComplaintFeedback(@PathVariable(name = "feedbackId") Long feedbackId) throws Exception {
         complaintFeedbackService.deleteComplainFeedback(feedbackId);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

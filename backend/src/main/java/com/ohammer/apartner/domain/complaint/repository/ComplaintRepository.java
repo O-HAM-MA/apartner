@@ -16,10 +16,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     List<Complaint> findByUserId(Long userId);
 
-    @Query("SELECT c.status, COUNT(c) FROM Complaint c " +
-            "WHERE c.createdAt >= :start AND c.createdAt < :end " +
-            "GROUP BY c.status")
-    List<Object[]> countTodayComplaintsByStatus(
+    @Query("SELECT COUNT(c) FROM Complaint c " +
+            "WHERE c.createdAt >= :start AND c.createdAt < :end")
+    Long countTotalComplaintsToday(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );

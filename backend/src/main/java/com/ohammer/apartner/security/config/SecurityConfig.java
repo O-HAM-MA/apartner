@@ -1,14 +1,13 @@
 package com.ohammer.apartner.security.config;
 
 
+import com.ohammer.apartner.security.OAuth.CustomOAuth2RequestResolver;
+import com.ohammer.apartner.security.OAuth.CustomOAuth2SuccessHandler;
+import com.ohammer.apartner.security.jwt.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.ohammer.apartner.security.jwt.JwtAuthFilter;
-import com.ohammer.apartner.security.OAuth.CustomOAuth2SuccessHandler;
-import com.ohammer.apartner.security.OAuth.CustomOAuth2RequestResolver;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -62,6 +61,7 @@ public class SecurityConfig {
 
 
                                 //암시로 넣어야징
+
                                 "/api/v1/inspection/**",
                                 
                                 // WebSocket 엔드포인트 추가
@@ -69,6 +69,7 @@ public class SecurityConfig {
                                 "/stomp/chats/**",
                                 "/sub/**",
                                 "/pub/**"
+
                         ).permitAll()
                         // 채팅 API는 제거 (adminSecurityFilterChain에서 처리)
                         // .requestMatchers("/api/v1/chats/**").authenticated()
