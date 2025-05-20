@@ -79,7 +79,7 @@ private void updateUserCheckedAt(User user, Long currentChatroomId){
 
 
 
-// 탈퇴
+// 채팅방 나가기
     @Transactional
     public Boolean leaveChatroom(User user, Long chatroomId){
         if(!userChatroomMappingRepository.existsByUserIdAndChatroomId(user.getId(), chatroomId)){
@@ -130,6 +130,12 @@ return userChatroomMappingList.stream()
     @Transactional(readOnly = true)
     public List<Message> getMessageList(Long chatroomId){
         return messageRepository.findAllByChatroomId(chatroomId);
+    }
+
+    // 모든 채팅방 조회
+    @Transactional(readOnly = true)
+    public List<Chatroom> getAllChatrooms(){
+        return chatroomRepository.findAll();
     }
 
 

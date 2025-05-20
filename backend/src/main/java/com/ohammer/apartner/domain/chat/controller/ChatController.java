@@ -64,6 +64,14 @@ public class ChatController {
             .collect(Collectors.toList());
     }
 
+    // 모든 채팅방 조회
+    @GetMapping("/all")
+    public List<ChatroomDto> getAllChatrooms() {
+        return chatService.getAllChatrooms().stream()
+            .map(ChatroomDto::from)
+            .collect(Collectors.toList());
+    }
+
 
 
 

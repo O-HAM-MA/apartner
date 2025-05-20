@@ -46,7 +46,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/**", // 인증 관련 글로벌 API 경로 추가
                                 "/api/v1/apartments/**",
-                                // 관리자 로그인/회원가입
+                                // 관리자 로그인/회원가입 관련 경로는 adminSecurityFilterChain에서 처리
 
                                 "/api/v1/users/userreg",
                                 "/api/v1/users/check-username",
@@ -55,14 +55,12 @@ public class SecurityConfig {
 
                                 // 추가
                                 "/api/v1/usernames/**",
-                                // ✅ 관리자 로그인/회원가입은 열어두기
-                                "/api/v1/admin/login",
-                                "/api/v1/admin/register", "/api/v1/admin/check", "/api/v1/sms/**",
+                                "/api/v1/sms/**", // sms 경로는 여기에 유지
                                 "/api/v1/vehicles/**",
                                 "/api/v1/entry-records/**"
                         ).permitAll()
-                        // 관리자 전용 API
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // 관리자 전용 API -> adminSecurityFilterChain에서 처리하므로 이 부분은 제거됨
+                        // .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                         // 나머지는 모두 인증 필요
                         .anyRequest().authenticated()
@@ -102,22 +100,36 @@ public class SecurityConfig {
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity security) throws Exception {
         security
                 .securityMatcher("/api/v1/admin/**")
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/admin").permitAll()
+                        .requestMatchers(
+                                "/api/v1/admin/login",
+                                "/api/v1/admin/check"
+                        ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginPage("/api/v1/admin")
-                        .loginProcessingUrl("/api/v1/admin/login")
-                        .defaultSuccessUrl("/api/v1/admin/dashboard", true)
-                        .failureUrl("/api/v1/admin?error=true")
-                        .permitAll()
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .exceptionHandling(exception -> exception
-                        .accessDeniedPage("/api/v1/admin/access-denied")
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            log.warn("Admin authentication failed for {} {}: {}", request.getMethod(), request.getRequestURI(), authException.getMessage());
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\": \"관리자 인증이 필요합니다. 유효한 토큰을 포함해주세요.\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            log.warn("Admin access denied for {} {}: {}", request.getMethod(), request.getRequestURI(), accessDeniedException.getMessage());
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\": \"관리자 권한이 없습니다.\"}");
+                        })
                 )
-                .csrf(csrf -> csrf.disable());
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .formLogin(form -> form.disable());
                 
         return security.build();
     }
