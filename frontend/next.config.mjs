@@ -9,6 +9,17 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+  // experimental: {
+  //   serverActions: {
+  //     bodySizeLimit: '10mb', // 10MB로 제한 늘리기
+  //   },
+  // },
+  experimental: {
+    optimizeCss: true,
+    appDir: true,
+    scrollRestoration: true,
+    serverActions: true,
+  },
+};
 
-export default nextConfig
+export default nextConfig;

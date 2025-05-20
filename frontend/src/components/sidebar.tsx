@@ -1,4 +1,13 @@
-import { Home, Settings, Bell, BarChart, Users, MessageSquare, UserCircle, Building } from 'lucide-react';
+import {
+  Home,
+  Settings,
+  Bell,
+  BarChart,
+  Users,
+  MessageSquare,
+  UserCircle,
+  Building,
+} from 'lucide-react';
 import Link from 'next/link';
 
 interface NavItemProps {
@@ -8,10 +17,23 @@ interface NavItemProps {
   isActive?: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, isActive }) => {
+const NavItem: React.FC<NavItemProps> = ({
+  href,
+  icon: Icon,
+  label,
+  isActive,
+}) => {
   return (
-    <Link href={href} className={`flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-pink-50 ${isActive ? 'bg-pink-100 text-pink-700 font-semibold' : 'text-gray-700'}`}>
-      <Icon size={20} className={isActive ? 'text-pink-700' : 'text-gray-500'} />
+    <Link
+      href={href}
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-pink-50 ${
+        isActive ? 'bg-pink-100 text-pink-700 font-semibold' : 'text-gray-700'
+      }`}
+    >
+      <Icon
+        size={20}
+        className={isActive ? 'text-pink-700' : 'text-gray-500'}
+      />
       <span>{label}</span>
     </Link>
   );
@@ -24,7 +46,7 @@ const Sidebar = () => {
     { href: '#', icon: UserCircle, label: '차량 관리' },
     { href: '#', icon: Settings, label: '점검 (소방/가스/전기/수도)' },
     { href: '#', icon: Users, label: '민원 관리' },
-    { href: '#', icon: Bell, label: '공지사항' },
+    { href: '/notice', icon: Bell, label: '공지사항' },
     { href: '#', icon: BarChart, label: '소통' },
     { href: '#', icon: MessageSquare, label: '실시간 채팅' },
   ];
@@ -45,7 +67,12 @@ const Sidebar = () => {
         <ul className="space-y-2">
           {navItems.map((item) => (
             <li key={item.label}>
-              <NavItem href={item.href} icon={item.icon} label={item.label} isActive={item.isActive} />
+              <NavItem
+                href={item.href}
+                icon={item.icon}
+                label={item.label}
+                isActive={item.isActive}
+              />
             </li>
           ))}
         </ul>
@@ -57,4 +84,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
