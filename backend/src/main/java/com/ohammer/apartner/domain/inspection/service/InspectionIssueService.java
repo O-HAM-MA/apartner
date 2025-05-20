@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.inspection.service;
 import com.ohammer.apartner.domain.inspection.dto.IssueResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.entity.Inspection;
 import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
+import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionIssueRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class InspectionIssueService {
     @Transactional
     public InspectionIssue makeInspectionIssue(Long id, String description) {
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
+        inspection.setResult(Result.ISSUE);
 
         InspectionIssue inspectionIssue = InspectionIssue.builder()
                 .inspection(inspection)
@@ -33,6 +35,7 @@ public class InspectionIssueService {
                 .build();
 
         inspectionService.IssueInspection(id);
+        inspectionRepository.save(inspection);
         return issueRepository.save(inspectionIssue);
     }
 
