@@ -15,7 +15,9 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 클라이언트가 WebSocket으로 연결할 엔드포인트를 등록한다. (ex: ws://서버주소/stomp/chats)
-        registry.addEndpoint("/stomp/chats"); // 웹소켓 엔드포인트 등록
+        registry.addEndpoint("/stomp/chats") // 웹소켓 엔드포인트 등록
+               .setAllowedOrigins("http://localhost:3000", "https://www.apartner.site") // CORS 설정 추가
+               .withSockJS(); // SockJS 지원 추가 (폴백 메커니즘)
     }
 
     @Override

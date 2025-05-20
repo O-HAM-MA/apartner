@@ -1,8 +1,10 @@
 package com.ohammer.apartner.domain.opinion.service;
 
 import com.ohammer.apartner.domain.opinion.dto.request.CreateOpinionReplyRequestDto;
-import com.ohammer.apartner.domain.opinion.dto.request.UpdateOpinionRequestDto;
+import com.ohammer.apartner.domain.opinion.dto.request.UpdateOpinionReplyRequestDto;
+import com.ohammer.apartner.domain.opinion.dto.response.CreateOpinionReplyResponseDto;
 import com.ohammer.apartner.domain.opinion.dto.response.OpinionReplyResponseDto;
+import com.ohammer.apartner.domain.opinion.dto.response.UpdateOpinionReplyResponseDto;
 import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.opinion.entity.OpinionReply;
 import com.ohammer.apartner.domain.opinion.repository.OpinionReplyRepository;
@@ -37,7 +39,7 @@ public class OpinionReplyService {
                 ).collect(Collectors.toList());
     }
 
-    public CreateOpinionReplyRequestDto saveOpinionReply(Long opinionId, CreateOpinionReplyRequestDto createOpinionReplyRequestDto) throws AccessDeniedException {
+    public CreateOpinionReplyResponseDto saveOpinionReply(Long opinionId, CreateOpinionReplyRequestDto createOpinionReplyRequestDto) throws AccessDeniedException {
 
         Opinion opinion = opinionService.getOpinionById(opinionId);
 
@@ -55,11 +57,16 @@ public class OpinionReplyService {
 
         opinionReplyRepository.save(opinionReply);
 
-        return createOpinionReplyRequestDto;
+        return CreateOpinionReplyResponseDto.builder()
+                .id(opinionReply.getId())
+                .createdAt(opinionReply.getCreatedAt())
+                .reply(opinionReply.getReply())
+                .userId(user.getId())
+                .build();
     }
 
 
-    public UpdateOpinionRequestDto updateOpinionReply(Long replyId, UpdateOpinionRequestDto updateOpinionReplyRequestDto) throws Exception {
+    public UpdateOpinionReplyResponseDto updateOpinionReply(Long replyId, UpdateOpinionReplyRequestDto updateOpinionReplyRequestDto) throws Exception {
 
         OpinionReply opinionReply = opinionReplyRepository.findById(replyId).orElse(null);
 
@@ -82,7 +89,12 @@ public class OpinionReplyService {
 
         opinionReplyRepository.save(opinionReply);
 
-        return updateOpinionReplyRequestDto;
+        return UpdateOpinionReplyResponseDto.builder()
+                .id(opinionReply.getId())
+                .createdAt(opinionReply.getCreatedAt())
+                .reply(opinionReply.getReply())
+                .userId(user.getId())
+                .build();
 
     }
 

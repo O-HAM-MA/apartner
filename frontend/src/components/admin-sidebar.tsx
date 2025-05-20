@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -18,10 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useGlobalAdminMember } from "@/auth/adminMember";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { adminMember, logoutAndRedirect } = useGlobalAdminMember();
 
   const navItems = [
     {
@@ -64,16 +67,16 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="fixed lg:hidden top-4 left-4 z-40">
         <Button
           variant="outline"
           size="icon"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? (
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           ) : (
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           )}
         </Button>
       </div>
@@ -81,63 +84,67 @@ export default function AdminSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "h-screen w-64 bg-background border-r transition-transform duration-200 ease-in-out lg:block",
-          isMobileMenuOpen
-            ? "fixed inset-y-0 left-0 z-40 translate-x-0"
-            : "fixed inset-y-0 left-0 z-40 -translate-x-full lg:relative lg:translate-x-0"
+          "fixed lg:static inset-0 z-30 lg:z-0 bg-background/80 backdrop-blur-sm lg:backdrop-blur-none lg:bg-transparent transform transition-transform duration-200 lg:translate-x-0",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex flex-col h-full">
+        <div className="h-full w-64 border-r bg-background flex flex-col">
           <div className="p-4 border-b">
-            <Link href="/admin" className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-apartner-600 dark:text-apartner-400">
-                Apartner Admin
-              </span>
-            </Link>
+            <div className="font-bold text-lg">Apartner Admin</div>
+            <div className="text-sm text-muted-foreground">관리자 대시보드</div>
           </div>
-
-          <div className="flex-1 overflow-y-auto py-4">
-            <nav className="space-y-1 px-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    pathname === item.href
-                      ? "bg-apartner-100 text-apartner-600 dark:bg-apartner-900/50 dark:text-apartner-400"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.title}
-                </Link>
-              ))}
+          <div className="flex-1 overflow-auto py-2">
+            <nav className="grid gap-1 px-2">
+              {navItems.map((item, index) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={index}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted",
+                      isActive
+                        ? "bg-muted font-medium text-foreground"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.title}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
-
-          <div className="p-4 border-t">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Avatar className="h-8 w-8 mr-2">
-                  <AvatarImage
-                    src="/placeholder.svg?height=32&width=32"
-                    alt="Admin"
-                  />
-                  <AvatarFallback>AD</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-muted-foreground">
-                    admin@apartner.com
-                  </p>
+          <div className="mt-auto p-4 border-t">
+            <div className="flex items-center gap-3 mb-4">
+              <Avatar className="h-9 w-9">
+                <AvatarImage
+                  src={adminMember.profileImageUrl || undefined}
+                  alt="Admin"
+                />
+                <AvatarFallback>
+                  {adminMember.userName?.charAt(0) || "A"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">
+                  {adminMember.userName || "관리자"}
+                </div>
+                <div className="text-xs text-muted-foreground truncate max-w-28">
+                  {adminMember.email || "admin@apartner.com"}
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
-                <LogOut className="h-4 w-4" />
-              </Button>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={logoutAndRedirect}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              로그아웃
+            </Button>
           </div>
         </div>
       </div>

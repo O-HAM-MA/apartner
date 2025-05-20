@@ -1,6 +1,8 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
 
+import com.ohammer.apartner.domain.user.entity.Role;
+import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordResponseDto;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordStatusDto;
@@ -10,13 +12,16 @@ import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 //import jakarta.transaction.Transactional;
 import com.ohammer.apartner.security.utils.SecurityUtil;
+import com.ohammer.apartner.security.utils.checkRoleUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,11 +53,58 @@ public class EntryRecordService {
         EntryRecord record = entryRecordRepository.findById(entryRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 출입기록이 없습니다."));
 
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalStateException("로그인한 사용자 정보를 불러올 수 없습니다.");
+        }
+
+        // 유저가 가진 역할들
+        Set<Role> roles = currentUser.getRoles();
+        boolean isMG = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR);
+
+
+
         // 소유자 확인 (출입기록 → 차량 → 소유자)
-        Long currentUserId = SecurityUtil.getCurrentUserId();
-        if (!record.getVehicle().getUser().getId().equals(currentUserId)) {
+//        Long currentUserId = SecurityUtil.getCurrentUserId();
+//        if (!record.getVehicle().getUser().getId().equals(currentUserId)) {
+//            throw new IllegalArgumentException("본인의 차량에 대한 요청만 처리할 수 있습니다.");
+//        }
+
+        // 소유자 확인 (관리자 계열이 아니면 본인 차량인지 검사)
+        if (!isMG && !record.getVehicle().getUser().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("본인의 차량에 대한 요청만 처리할 수 있습니다.");
         }
+
+        // 소유자 확인
+
+
+        // 유저가 가진 역할들
+        //Set<Role> roles = currentUser.getRoles(); // 복수형! Set<Role>
+
+        // “관리자 계열” 역할 셋 정의
+        Set<Role> adminRoles = Set.of(Role.MANAGER, Role.MODERATOR);
+
+        // 역할에 따라 허용된 상태 모음 구성
+        Set<EntryRecord.Status> allowedStatuses = new HashSet<>();
+
+        if (roles.contains(Role.USER)) {
+            allowedStatuses.addAll(Set.of(EntryRecord.Status.INVITER_AGREE, EntryRecord.Status.INAGREE));
+        }
+        if (isMG) {
+            allowedStatuses.addAll(Set.of(EntryRecord.Status.INAGREE, EntryRecord.Status.AGREE));
+        }
+
+        if (allowedStatuses.isEmpty()) {
+            throw new IllegalArgumentException("해당 역할은 상태 변경 권한이 없습니다.");
+        }
+
+        if (!allowedStatuses.contains(newStatus)) {
+            throw new IllegalArgumentException("요청한 상태로 변경할 권한이 없습니다.");
+        }
+
+
+
+
 
 
 
@@ -170,6 +222,24 @@ public class EntryRecordService {
 
     // 📜 출입 기록 조회
     public List<EntryRecordResponseDto> getEntryRecords(Long vehicleId) {
+
+//        User currentUser = SecurityUtil.getCurrentUser();
+//        if (currentUser == null) {
+//            throw new IllegalArgumentException("로그인이 필요합니다.");
+//        }
+//
+//        Set<Role> roles = currentUser.getRoles();
+//
+//        // 관리자 권한 확인 (MANAGER 또는 MODERATOR가 하나라도 있는지)
+//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
+//                role == Role.MANAGER || role == Role.MODERATOR);
+//
+//        if (!isManagerOrModerator) {
+//            throw new IllegalArgumentException("해당 기능은 관리자만 접근할 수 있습니다.");
+//        }
+
+        checkRoleUtils.validateAdminAccess();
+
         return entryRecordRepository.findByVehicleIdOrderByEntryTimeDesc(vehicleId)
                 .stream()
                 .map(EntryRecordResponseDto::from)

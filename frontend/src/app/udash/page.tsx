@@ -1,4 +1,3 @@
-import Sidebar from "@/components/sidebar";
 import FeatureCard from "@/components/feature-card";
 import NotificationItem from "@/components/notification-item";
 import {
@@ -11,6 +10,7 @@ import {
   MessageCircle,
   UserCircle,
   Car,
+  CarFront,
 } from "lucide-react";
 
 const DashboardPage = () => {
@@ -26,7 +26,7 @@ const DashboardPage = () => {
     {
       title: "차량관리",
       description: "입주민 차량 등록 및 관리",
-      icon: "Car",
+      icon: "CarFront",
       actionIcon: "Zap",
       iconBgColor: "bg-green-100",
       iconColor: "text-green-600",
@@ -55,7 +55,7 @@ const DashboardPage = () => {
       iconBgColor: "bg-red-100",
       iconColor: "text-red-600",
     },
-  ];
+  ] as const;
 
   const notifications = [
     {
@@ -77,12 +77,11 @@ const DashboardPage = () => {
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
+      {/* <Sidebar /> */}
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">대시보드</h2>
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">김아파트 님</span>
             <button className="relative p-2 rounded-full hover:bg-gray-200 focus:outline-none">
               <BellRing size={22} className="text-gray-600" />
               <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-white"></span>

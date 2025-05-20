@@ -5,7 +5,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.ohammer.apartner.security.CustomUserDetails;
 import com.ohammer.apartner.security.CustomUserDetailsService;
 import com.ohammer.apartner.domain.user.entity.User;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SecurityUtil {
 
     /**

@@ -95,9 +95,15 @@ public class AdminAuthController {
 
             LoginResponseDto loginResponseDto = new LoginResponseDto(accessToken, refreshToken, adminUser.getId(), adminUser.getUserName());
 
+            // 인증 토큰 생성 로그 추가
+            log.info("[AdminLogin] Tokens generated for admin {}: accessToken={}, refreshToken={}",
+                    adminUser.getEmail(), 
+                    accessToken.substring(0, Math.min(10, accessToken.length())) + "...",
+                    refreshToken.substring(0, Math.min(10, refreshToken.length())) + "...");
+
             ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", accessToken)
                 .httpOnly(true)
-                .secure(false)
+                .secure(false)  // 개발 환경에서는 false, 프로덕션에서는 true로 설정
                 .path("/")
                 .maxAge(JwtTokenizer.ACCESS_TOKEN_EXPIRE_COUNT / 1000)
                 .sameSite("Lax") 
@@ -105,13 +111,14 @@ public class AdminAuthController {
 
             ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(false)
+                .secure(false)  // 개발 환경에서는 false, 프로덕션에서는 true로 설정
                 .path("/") 
                 .maxAge(JwtTokenizer.REFRESH_TOKEN_EXPIRE_COUNT / 1000)
                 .sameSite("Lax")
                 .build();
 
-            log.info("Admin login successful for username/email: {}", loginRequest.getUsername());
+            log.info("[AdminLogin] Cookies created: accessToken={}, refreshToken={}", 
+                    accessTokenCookie.toString(), refreshTokenCookie.toString());
             
             return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())

@@ -3,6 +3,9 @@ package com.ohammer.apartner.domain.complaint.service;
 import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintFeedbackRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.request.UpdateComplaintFeedbackRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintFeedbackResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.CreateComplaintFeedbackResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.CreateComplaintResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintFeedbackResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.entity.ComplaintFeedback;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintFeedbackRepository;
@@ -43,12 +46,16 @@ public class ComplaintFeedbackService {
 
 
     // Create
-    public CreateComplaintFeedbackRequestDto save(CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) {
+    public CreateComplaintFeedbackResponseDto save(CreateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws AccessDeniedException {
 
         Complaint complaint = complaintService.findById(complaintFeedbackRequestDto.getComplaintId());
 
         // 로그인 로직에 따라 변경 필요
         User user = SecurityUtil.getCurrentUser();
+
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
 
         ComplaintFeedback complaintFeedback = ComplaintFeedback.builder()
                 .content(complaintFeedbackRequestDto.getContent())
@@ -58,11 +65,16 @@ public class ComplaintFeedbackService {
 
         complaintFeedbackRepository.save(complaintFeedback);
 
-        return complaintFeedbackRequestDto;
+        return CreateComplaintFeedbackResponseDto.builder()
+                .id(complaintFeedback.getId())
+                .content(complaintFeedback.getContent())
+                .userId(user.getId())
+                .createdAt(complaintFeedback.getCreatedAt())
+                .build();
     }
 
     // Update
-    public UpdateComplaintFeedbackRequestDto updateComplaintFeedback(Long feedbackId, UpdateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws Exception {
+    public UpdateComplaintFeedbackResponseDto updateComplaintFeedback(Long feedbackId, UpdateComplaintFeedbackRequestDto complaintFeedbackRequestDto) throws Exception {
 
         User user = SecurityUtil.getCurrentUser();
 
@@ -84,7 +96,12 @@ public class ComplaintFeedbackService {
 
         complaintFeedbackRepository.save(complaintFeedback);
 
-        return complaintFeedbackRequestDto;
+        return UpdateComplaintFeedbackResponseDto.builder()
+                .id(complaintFeedback.getId())
+                .content(complaintFeedback.getContent())
+                .userId(user.getId())
+                .createdAt(complaintFeedback.getCreatedAt())
+                .build();
     }
 
 
