@@ -77,4 +77,8 @@ public class OpinionService {
                         .build())
                         .collect(Collectors.toList());
     }
+
+    public Opinion getOpinionById(Long id) {
+        return opinionRepository.findById(id).orElse(null);
+    }
 }
