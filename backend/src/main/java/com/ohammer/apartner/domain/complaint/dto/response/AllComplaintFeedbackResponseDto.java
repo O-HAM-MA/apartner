@@ -1,11 +1,11 @@
 package com.ohammer.apartner.domain.complaint.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter@Setter@Builder
 public class AllComplaintFeedbackResponseDto {
 
