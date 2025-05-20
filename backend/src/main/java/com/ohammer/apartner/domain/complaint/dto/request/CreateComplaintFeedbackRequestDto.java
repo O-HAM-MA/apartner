@@ -1,10 +1,10 @@
 package com.ohammer.apartner.domain.complaint.dto.request;
 
 import com.ohammer.apartner.domain.complaint.entity.ComplaintFeedback;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter@Setter@Builder
 public class CreateComplaintFeedbackRequestDto {
     private Long complaintId;

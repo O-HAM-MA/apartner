@@ -2,13 +2,16 @@ package com.ohammer.apartner.domain.user.repository;
 
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
-import java.util.Optional;
+
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -36,7 +39,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = "roles") // 🎯 roles 컬렉션을 함께 로딩
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmailWithRoles(@Param("email") String email);
-    
+
     Optional<User> findByPhoneNum(String testPhone);
 
     Page<User> findAllByRoles(Role role, Pageable pageable);
@@ -52,4 +55,27 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
     Optional<User> findBySocialProviderAndSocialId(String socialProvider, String socialId);
+
+    @Query("SELECT u FROM User u JOIN FETCH u.building JOIN FETCH u.unit WHERE u.id = :id")
+    Optional<User> findByIdWithBuildingAndUnit(@Param("id") Long id);
+
+
+    //Optional<User> findByBuilding_BuildingNumberAndUnit_UnitNumber(String buildingNum, String unitNum);
+
+
+    @Query("""
+        SELECT u FROM User u
+         JOIN u.apartment a
+         JOIN u.building b
+         JOIN u.unit   t
+        WHERE a.name       = :aptName
+          AND b.buildingNumber = :bldgNum
+          AND t.unitNumber     = :unitNum
+      """)
+    Optional<User> findByAptAndBuildingAndUnit(
+            @Param("aptName") String aptName,
+            @Param("bldgNum") String bldgNum,
+            @Param("unitNum") String unitNum
+    );
+
 }

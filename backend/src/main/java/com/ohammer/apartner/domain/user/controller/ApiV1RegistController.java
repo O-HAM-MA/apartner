@@ -5,6 +5,7 @@ import com.ohammer.apartner.domain.user.exception.UserException;
 import com.ohammer.apartner.domain.user.items.WithdrawResult;
 import com.ohammer.apartner.domain.user.dto.DeleteUserRequestDto;
 import com.ohammer.apartner.domain.user.dto.UserRegistRequestDTO;
+import com.ohammer.apartner.domain.user.dto.UserWithdrawRequestDto;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.user.service.UserRegistService;
 import com.ohammer.apartner.security.CustomUserDetails;
@@ -46,7 +47,7 @@ import com.ohammer.apartner.security.service.AuthService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
-@Tag(name = "회원가입 API", description = "회원가입, 탈퇴, 로그아웃 API")
+@Tag(name = "1. 회원 가입/탈퇴", description = "회원 가입 및 탈퇴 관련 api")
 @Slf4j
 public class ApiV1RegistController {
     private final UserRegistService userRegistService;
@@ -194,23 +195,30 @@ public class ApiV1RegistController {
     } 
 
 
-    @Operation(summary = "회원 탈퇴", description = "비밀번호 확인 후 회원 비활성화 처리")
+    @Operation(summary = "회원 탈퇴", description = "로그인된 사용자가 본인의 계정을 탈퇴합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
-            @ApiResponse(responseCode = "401", description = "비밀번호 불일치"),
+            @ApiResponse(responseCode = "204", description = "회원 탈퇴 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (비밀번호 불일치, 이미 탈퇴한 계정 등)"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (로그인 필요)"),
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
-    @DeleteMapping("/withdraw")
-    public ResponseEntity<String> withdrawUser(@RequestBody DeleteUserRequestDto dto,
-                                               @AuthenticationPrincipal CustomUserDetails principal) {
-        Long userId = principal.getUser().getId();
-        WithdrawResult result = userRegistService.withdraw(userId, dto.getPassword());
+    @DeleteMapping("/me/withdraw")
+    public ResponseEntity<Void> withdrawUser(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody UserWithdrawRequestDto withdrawRequestDto,
+            HttpServletRequest request
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        userRegistService.withdraw(userDetails.getUserId(), withdrawRequestDto);
 
-        return switch (result) {
-            case SUCCESS -> ResponseEntity.ok("회원 탈퇴 완료");
-            case USER_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 사용자입니다");
-            case WRONG_PASSWORD -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 일치하지 않습니다");
-        };
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "로그아웃", description = "Token 제거합니다.")

@@ -1,31 +1,23 @@
 package com.ohammer.apartner.security.dto;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Getter
-public class MeDto {
-    private final Long id;
-    private final String userName;
-    private final LocalDateTime createdAt;
-    private final LocalDateTime modifiedAt;
-    private final String profileImageUrl;
-    private final String apartmentName;
-    private final String buildingName;
-    private final String unitNumber;
 
-    public MeDto(Long id, String userName, LocalDateTime createdAt, LocalDateTime modifiedAt, String profileImageUrl, String apartmentName, String buildingName, String unitNumber) {
-        this.id = id;
-        this.userName = userName;
-        this.createdAt = createdAt;
-        this.modifiedAt = modifiedAt;
-        this.profileImageUrl = profileImageUrl;
-        this.apartmentName = apartmentName;
-        this.buildingName = buildingName;
-        this.unitNumber = unitNumber;
-    }
+@Getter
+@AllArgsConstructor
+public class MeDto {
+    private  Long id;
+    private  String userName;
+    private  String email;
+    private  String phoneNum;
+    private  LocalDateTime createdAt;
+    private  LocalDateTime modifiedAt;
+    private  String profileImageUrl;
+    private  String apartmentName;
+    private  String buildingName;
+    private  String unitNumber;
+    private  String socialProvider;
 }

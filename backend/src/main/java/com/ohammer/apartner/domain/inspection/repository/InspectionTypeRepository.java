@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface InspectionTypeRepository extends JpaRepository<InspectionType, Long> {
     InspectionType findByTypeName(String typeName);
+
 }

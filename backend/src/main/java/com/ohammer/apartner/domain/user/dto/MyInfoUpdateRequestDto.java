@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Schema(description = "학원 정보 요청 DTO")
+@Schema(description = "사용자 정보 요청 DTO")
 public class MyInfoUpdateRequestDto { //사용자 정보 수정용
 
     @Schema(description = "수정할 이름", example = "홍길동")
@@ -20,13 +20,16 @@ public class MyInfoUpdateRequestDto { //사용자 정보 수정용
     @Schema(description = "수정할 전화번호", example = "01012345678")
     private String phoneNum;
 
-    @Schema(description = "수정할 아파트", example = "홍길동")
-    private Apartment apartment;
+    @Schema(description = "사용자 이메일", example = "test@example.com")
+    private String email;
 
-    @Schema(description = "수정할 건물", example = "101동")
-    private Building building;
+    @Schema(description = "아파트 ID", example = "1")
+    private Long apartmentId;
 
-    @Schema(description = "수정할 호수", example = "101호")
-    private Unit unit;
+    @Schema(description = "동 ID", example = "1")
+    private Long buildingId;
+
+    @Schema(description = "호수 ID", example = "1")
+    private Long unitId;
 
 }
