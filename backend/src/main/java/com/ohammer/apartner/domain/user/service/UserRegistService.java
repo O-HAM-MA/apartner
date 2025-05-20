@@ -78,7 +78,7 @@ public class UserRegistService {
                 .apartment(apartment)
                 .building(building)
                 .unit(unit)
-                .gradeId(2L) 
+                .gradeId(1L) 
                 .status(Status.ACTIVE)
                 .roles(new HashSet<>(Set.of(Role.USER)));
 
