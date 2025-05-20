@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, useRef } from "react";
 import {
   Card,
@@ -12,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Send, MoreVertical } from "lucide-react";
+import { Search, Send, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,47 +28,45 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useChatContext, ChatProvider } from "@/contexts/ChatContext";
-import { format, parseISO, isToday } from "date-fns";
-import { ko } from "date-fns/locale"; // 한국어 locale 추가
+import {
+  useUserChatContext,
+  UserChatProvider,
+} from "@/contexts/UserChatContext";
+import { format, isToday, parseISO } from "date-fns";
+import { ko } from "date-fns/locale";
 import { Spinner } from "@/components/ui/spinner";
 import type { ChatroomType, ChatMessageType } from "@/types/chat";
-import * as api from "@/utils/api";
-import { useGlobalAdminMember } from "@/auth/adminMember";
 
-// 메인 컴포넌트를 ChatProvider로 감싸는 래퍼
-export default function ChatManagementPage() {
+// 메인 컴포넌트를 UserChatProvider로 감싸는 래퍼
+export default function UserChatPage() {
   return (
-    <ChatProvider>
-      <ChatManagement />
-    </ChatProvider>
+    <UserChatProvider>
+      <UserChat />
+    </UserChatProvider>
   );
 }
 
 // 실제 채팅 관리 컴포넌트
-function ChatManagement() {
+// UserChatContext에서 이미 로그인 상태와 사용자 ID를 관리하므로 별도 로그인 정보를 사용하지 않음
+// 메시지의 isMyMessage 속성은 UserChatContext 내부에서 이미 계산되어 있음
+function UserChat() {
+  // UserChatContext에서 필요한 모든 것을 가져옴
   const {
     chatrooms,
     selectedChatroom,
     messages,
     connecting,
     connected,
-    createChatroom,
-    joinChatroom,
-    leaveChatroom,
     sendMessage,
     selectChatroom,
     disconnect,
-  } = useChatContext();
+  } = useUserChatContext();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [newRoomTitle, setNewRoomTitle] = useState("");
   const [newMessage, setNewMessage] = useState("");
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  const { adminMember } = useGlobalAdminMember();
 
   const filteredChatrooms = chatrooms.filter((chatroom) =>
     chatroom.title?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -104,7 +101,7 @@ function ChatManagement() {
   useEffect(() => {
     if (chatrooms.length > 0) {
       console.log(
-        "관리자 채팅방 목록 정보:",
+        "채팅방 목록 정보:",
         chatrooms.map((room) => ({
           id: room.id,
           title: room.title,
@@ -114,9 +111,6 @@ function ChatManagement() {
     }
   }, [chatrooms]);
 
-  // 채팅방 생성 처리
-
-  // 메시지 전송 처리
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedChatroom) return;
     const messageToSend = newMessage.trim();
@@ -134,21 +128,6 @@ function ChatManagement() {
     }
   };
 
-  const handleCreateChatroom = async () => {
-    if (!newRoomTitle.trim()) return;
-    try {
-      const createdChatroom = await createChatroom(newRoomTitle);
-      setNewRoomTitle("");
-      setCreateDialogOpen(false);
-      if (createdChatroom) {
-        selectChatroom(createdChatroom);
-      }
-    } catch (error) {
-      console.error("채팅방 생성 중 오류 발생:", error);
-    }
-  };
-
-  // 채팅방 선택 로직 개선
   const handleSelectChatroom = (chatroom: ChatroomType) => {
     // 이미 선택된 채팅방인 경우 무시
     if (selectedChatroom?.id === chatroom.id) {
@@ -182,40 +161,8 @@ function ChatManagement() {
   };
 
   const formatUserInfo = (message: ChatMessageType) => {
-    // 가능한 이름 필드들을 확인합니다
-    const possibleNameFields = [
-      "userName",
-      "username",
-      "name",
-      "nick",
-      "nickname",
-    ];
+    let displayName = message.userName || "사용자";
 
-    // 디버깅 용도로 원본 데이터 확인
-    console.log("formatUserInfo - 원본 메시지 객체:", message);
-    console.log("formatUserInfo - 메시지 객체 키:", Object.keys(message));
-
-    // 사용자 이름이 없거나 빈 문자열인 경우를 명시적으로 처리
-    let displayName = "사용자";
-
-    // userName 필드가 있는지 확인합니다
-    if (message.userName && message.userName.trim() !== "") {
-      displayName = message.userName;
-      console.log("formatUserInfo - userName 필드 사용:", displayName);
-    } else {
-      // 다른 가능한 이름 필드들을 확인합니다
-      for (const field of possibleNameFields) {
-        if ((message as any)[field] && (message as any)[field].trim() !== "") {
-          displayName = (message as any)[field];
-          console.log(
-            `formatUserInfo - 대체 이름 필드 사용: ${field} = ${displayName}`
-          );
-          break;
-        }
-      }
-    }
-
-    // 추가 정보와 함께 사용자 이름 형식 지정
     if (message.apartmentName && message.buildingName && message.unitNumber) {
       return `${displayName} (${message.apartmentName} ${message.buildingName}동 ${message.unitNumber}호)`;
     }
@@ -228,48 +175,32 @@ function ChatManagement() {
       return `${displayName} (${message.apartmentName} ${message.buildingName}동)`;
     }
 
-    // userName만 있는 경우
     return displayName;
   };
 
-  // 타임스탬프 포맷팅 함수 추가
   const formatTimestamp = (timestamp: string | undefined) => {
     if (!timestamp) return "";
 
-    // 이미 "오전" 또는 "오후"가 포함된 포맷팅된 문자열인 경우 그대로 반환
-    if (
-      typeof timestamp === "string" &&
-      (timestamp.includes("오전") || timestamp.includes("오후"))
-    ) {
-      return timestamp;
-    }
-
     try {
-      // ISO 문자열인 경우 parseISO 사용
-      const date =
-        typeof timestamp === "string"
-          ? parseISO(timestamp)
-          : new Date(timestamp);
+      const date = parseISO(timestamp);
 
-      // 오늘 날짜인 경우 시간만 표시
       if (isToday(date)) {
-        return format(date, "a h:mm", { locale: ko });
+        return format(date, "HH:mm");
       } else {
-        return format(date, "yyyy-MM-dd a h:mm", { locale: ko });
+        return format(date, "yyyy-MM-dd HH:mm");
       }
     } catch (error) {
-      console.error("타임스탬프 형식 변환 오류:", error, "원본 값:", timestamp);
-      // 유효하지 않은 날짜 형식이면 원본 그대로 반환
-      return typeof timestamp === "string" ? timestamp : "";
+      return timestamp;
     }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">채팅 관리</h1>
+        <h1 className="text-3xl font-bold tracking-tight">실시간 문의하기</h1>
         <p className="text-muted-foreground">
-          실시간 채팅방을 관리하고 입주민과 소통하세요.
+          궁금하거나 불편한 점이 있으시면 언제든지 문의해주세요. 관리자와 1:1
+          채팅으로 신속하게 답변드리겠습니다.
         </p>
       </div>
 
@@ -286,49 +217,12 @@ function ChatManagement() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Dialog
-                open={createDialogOpen}
-                onOpenChange={setCreateDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button size="sm" className="ml-2">
-                    <Plus className="h-4 w-4 mr-1" />새 채팅
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>새 채팅방 만들기</DialogTitle>
-                    <DialogDescription>
-                      새로운 채팅방을 생성합니다. 제목을 입력하세요.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <Label htmlFor="chatroom-title">채팅방 제목</Label>
-                    <Input
-                      id="chatroom-title"
-                      value={newRoomTitle}
-                      onChange={(e) => setNewRoomTitle(e.target.value)}
-                      placeholder="채팅방 제목을 입력하세요"
-                      className="mt-2"
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setCreateDialogOpen(false)}
-                    >
-                      취소
-                    </Button>
-                    <Button onClick={handleCreateChatroom}>생성</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-auto flex-grow">
             {filteredChatrooms.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground">
-                채팅방이 없습니다. 새 채팅방을 만들어보세요.
+                참여중인 채팅방이 없습니다.
               </div>
             ) : (
               <div className="divide-y">
@@ -363,9 +257,6 @@ function ChatManagement() {
                           </span>
                         </div>
                         <div className="mt-1 flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">
-                            참여자 {chatroom.userCount || 0}명
-                          </span>
                           {chatroom.hasNewMessage && (
                             <>
                               <Badge className="h-2 w-2 rounded-full p-0 bg-red-500" />
@@ -401,40 +292,15 @@ function ChatManagement() {
                           ? `채팅방 #${selectedChatroom.id}`
                           : "채팅방")}
                     </CardTitle>
-                    <CardDescription>
-                      참여자 {selectedChatroom.userCount || 0}명
-                      <span className="hidden">
-                        {JSON.stringify({
-                          id: selectedChatroom.id,
-                          title: selectedChatroom.title,
-                          hasTitle: selectedChatroom.title ? true : false,
-                        })}
-                      </span>
-                    </CardDescription>
+                    <span className="hidden">
+                      {JSON.stringify({
+                        id: selectedChatroom.id,
+                        title: selectedChatroom.title,
+                        hasTitle: selectedChatroom.title ? true : false,
+                      })}
+                    </span>
                   </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (selectedChatroom) {
-                          const confirm =
-                            window.confirm("정말 채팅방을 나가시겠습니까?");
-                          if (confirm) {
-                            leaveChatroom(selectedChatroom.id);
-                          }
-                        }
-                      }}
-                    >
-                      채팅방 나가기
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </CardHeader>
 
               <CardContent
@@ -475,7 +341,7 @@ function ChatManagement() {
                       }, 0);
                     }}
                   >
-                    <span className="text-black dark:text-black">
+                    <span className="text-black dark:text-white">
                       ↓ 새 메시지로 이동
                     </span>
                   </Button>
@@ -483,24 +349,24 @@ function ChatManagement() {
 
                 {!connecting &&
                   messages.map((message, index) => {
-                    // 관리자인지 확인
-                    const isAdminMessage =
-                      adminMember && message.userId === adminMember.id;
+                    // message 객체에 이미 포함된 isMyMessage 속성 사용
+                    // 컨텍스트에서 이미 계산되어 있음
+                    const isMyMessage = message.isMyMessage || false;
 
                     // 고유한 키 생성
-                    const uniqueKey = `${message.id || "msg"}-${index}-${
-                      message.userId
-                    }-${Date.now()}`;
+                    const uniqueKey = `${
+                      message.messageId || message.id || "msg"
+                    }-${index}-${message.userId}-${Date.now()}`;
 
                     return (
                       <div
                         key={uniqueKey}
-                        className={`flex ${
+                        className={`flex w-full ${
                           message.isNew ? "ultra-smooth-animation" : ""
                         } ${
                           message.isSystem
                             ? "justify-center"
-                            : isAdminMessage
+                            : isMyMessage
                             ? "justify-end"
                             : "justify-start"
                         }`}
@@ -514,7 +380,7 @@ function ChatManagement() {
                         ) : (
                           <div
                             className={`flex items-end gap-2 ${
-                              isAdminMessage ? "flex-row-reverse" : "flex-row"
+                              isMyMessage ? "flex-row-reverse" : "flex-row"
                             } max-w-[90%]`}
                           >
                             <Avatar className="w-8 h-8 self-start shrink-0">
@@ -531,39 +397,31 @@ function ChatManagement() {
                             </Avatar>
                             <div
                               className={`flex flex-col ${
-                                isAdminMessage ? "items-end" : "items-start"
+                                isMyMessage ? "items-end" : "items-start"
                               }`}
                             >
-                              {/* User Info (only for other's messages, above bubble) */}
-                              {!isAdminMessage && (
+                              {!isMyMessage && (
                                 <p className="text-xs mb-1 font-medium dark:text-white text-black">
                                   {formatUserInfo(message)}
                                 </p>
                               )}
-
-                              {/* Bubble and Timestamp are siblings, arranged horizontally */}
                               <div
                                 className={`flex items-end gap-1 ${
-                                  isAdminMessage
-                                    ? "flex-row-reverse"
-                                    : "flex-row"
+                                  isMyMessage ? "flex-row-reverse" : "flex-row"
                                 }`}
                               >
-                                {/* Message Bubble */}
                                 <div
-                                  className={`max-w-xs rounded-lg p-3 ultra-smooth-transition ${
-                                    // Constrained max-width for bubble
-                                    isAdminMessage
-                                      ? "bg-[#f795a7] dark:bg-pink-800 text-black dark:text-white" // Pink for my messages
-                                      : "bg-[#f0f0f0] dark:bg-gray-700 text-black dark:text-white" // Gray for other's messages
+                                  className={`max-w-xs md:max-w-sm rounded-lg p-3 ultra-smooth-transition ${
+                                    isMyMessage
+                                      ? "bg-[#f795a7] dark:bg-pink-800 text-black dark:text-white font-medium"
+                                      : "bg-[#f0f0f0] dark:bg-gray-700 text-black dark:text-white font-medium"
                                   }`}
                                 >
-                                  <p className="text-sm font-medium break-words">
+                                  <p className="break-words text-sm">
                                     {message.message}
                                   </p>
                                 </div>
-                                {/* Timestamp */}
-                                <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap shrink-0">
                                   {formatTimestamp(message.timestamp)}
                                 </p>
                               </div>
@@ -583,6 +441,11 @@ function ChatManagement() {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    onCompositionEnd={(e) => {
+                      if (e.data && e.data.endsWith("\n")) {
+                        handleSendMessage();
+                      }
+                    }}
                     className="flex-1"
                     disabled={!connected}
                   />

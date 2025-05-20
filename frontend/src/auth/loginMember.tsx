@@ -1,4 +1,4 @@
-import { createContext, useState, use } from "react";
+import { createContext, useState, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/utils/api";
 
@@ -56,45 +56,51 @@ export function useLoginMember() {
   const [isLoginMemberPending, setLoginMemberPending] = useState(true);
   const [loginMember, _setLoginMember] = useState<Member>(createEmptyMember());
 
-  const removeLoginMember = () => {
+  const removeLoginMember = useCallback(() => {
     _setLoginMember(createEmptyMember());
-  };
+  }, []);
 
-  const setLoginMember = (member: Member) => {
+  const setLoginMember = useCallback((member: Member) => {
     _setLoginMember(member);
     setLoginMemberPending(false);
-  };
+  }, []);
 
-  const setNoLoginMember = () => {
+  const setNoLoginMember = useCallback(() => {
     _setLoginMember(createEmptyMember());
     setLoginMemberPending(false);
-  };
+  }, []);
 
-  const clearLoginState = () => {
+  const clearLoginState = useCallback(() => {
     removeLoginMember();
-  };
+  }, [removeLoginMember]);
 
   const isLogin = loginMember.id !== 0;
 
-  const logout = (callback: () => void) => {
-    fetchApi("/api/v1/auth/logout", { method: "DELETE" })
-      .then((response) => {
-        if (!response.ok) {
-          console.error("Logout request failed with status:", response.status);
-        }
-        removeLoginMember();
-        callback();
-      })
-      .catch((error) => {
-        console.error("Logout failed:", error);
-        removeLoginMember();
-        callback();
-      });
-  };
+  const logout = useCallback(
+    (callback: () => void) => {
+      fetchApi("/api/v1/auth/logout", { method: "DELETE" })
+        .then((response) => {
+          if (!response.ok) {
+            console.error(
+              "Logout request failed with status:",
+              response.status
+            );
+          }
+          removeLoginMember();
+          callback();
+        })
+        .catch((error) => {
+          console.error("Logout failed:", error);
+          removeLoginMember();
+          callback();
+        });
+    },
+    [removeLoginMember]
+  );
 
-  const logoutAndHome = () => {
+  const logoutAndHome = useCallback(() => {
     logout(() => router.replace("/"));
-  };
+  }, [logout, router]);
 
   return {
     loginMember,
