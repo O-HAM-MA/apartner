@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/opinion/reply/{replyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateOpinionReply"];
+        post?: never;
+        delete: operations["deleteOpinionReply"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notices/{noticeId}/update": {
         parameters: {
             query?: never;
@@ -17,6 +33,86 @@ export interface paths {
          * @description 게시글 수정 작성사항: 제목, 내용, 파일
          */
         put: operations["updateNotice"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entry-records/update-status/{vehicleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateLatestPendingStatus"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaints/{complaintId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 민원 수정
+         * @description 민원 ID로 기존 민원을 수정합니다
+         */
+        put: operations["updateComplaint"];
+        post?: never;
+        /**
+         * 민원 삭제
+         * @description 민원 ID를 이용해 민원을 삭제합니다
+         */
+        delete: operations["deleteComplaint"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaint-feedbacks/{feedbackId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 민원 피드백 수정
+         * @description 기존 민원 피드백을 수정합니다
+         */
+        put: operations["updateComplaintFeedback"];
+        post?: never;
+        /**
+         * 민원 피드백 삭제
+         * @description 특정 피드백 ID를 가진 민원 피드백을 삭제합니다
+         */
+        delete: operations["deleteComplaintFeedback"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/update/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -112,15 +208,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/opinion/{userId}/manager": {
+    "/api/v1/opinion/reply/{opinionId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getOpinionReply"];
         put?: never;
+        post: operations["createOpinionReply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opinion/manager": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 동 대표 의견 목록 조회
+         * @description 작성자의 권한이 매니저인 의견 목록 조회
+         */
+        get: operations["getManagerOpinion"];
+        put?: never;
+        /**
+         * 동 대표 의견 생성
+         * @description 권한이 매니저인 유저의 의견 생성
+         */
         post: operations["addManagerOpinion"];
         delete?: never;
         options?: never;
@@ -188,23 +308,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["showAllInspections"];
-        put?: never;
-        post: operations["createInspectionSchedule"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/inspection/{id}": {
+    "/api/v1/myInfos/change-password": {
         parameters: {
             query?: never;
             header?: never;
@@ -213,8 +317,144 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * 비밀번호 변경
+         * @description 사용자의 비밀번호를 변경합니다.
+         */
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/type": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 점검 항목 내용들을 싹다 보여주기
+         * @description 점검 항목들을 보여줍니다, 그리고 주호야 페이징 언제 만들꺼니
+         */
+        get: operations["showAllTypes"];
+        put?: never;
+        /**
+         * 점검 항목을 추가합니다
+         * @description 점검 항목을 추가합니다
+         */
+        post: operations["addNewType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/manager/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 점검 일정에 대한 상세 내용을 봅니다, 그래봤자 detail 추가된거 뿐이지만요
+         * @description 해당 점검 일정에 대한 상세 내용을 볼 수 있음
+         */
+        get: operations["showInspection"];
+        put?: never;
+        /**
+         * 점검 일정을 변경합니다
+         * @description 점검 일정 내용을 변경합니다
+         */
         post: operations["updateInspectionSchedule"];
+        /**
+         * 해당 점검 내용을 지우고 싶을때 사용합니다, 그런데 지울 일이 있을까요?
+         * @description 해당 점검 일정을 삭제합니다
+         */
         delete: operations["deleteInspectionSchedule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/manager/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 점검 일정을 추가합니다, 점검 하는 사람은 로그인한 정보에서 뺴올 예정입니다
+         * @description 점검 일정을 추가합니다, 시작 및 종료 시간, 점검 항목, 점검내용을 넣습니다
+         */
+        post: operations["createInspectionSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/manager/complete/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 점검 일정을 소화하고 완료 버튼을 누르면 해당 api가 쏴져서 DB에 저 일정은 완료되었다고 처리가 됩니다
+         * @description 해당 점검의 결과가 CHECKED로 변합니다
+         */
+        post: operations["compeleteInspection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/issue/{id}/update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 해당 이슈에 대한 내용을 수정 할 수 있음
+         * @description 해당 이슈에 대한 수정 내용
+         */
+        post: operations["updateInspectionIssue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/issue/{id}/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 해당 점검 사항에 문제가 생겼을 경우 이슈를 생성
+         * @description 해당 점검에 대한 이슈 생성
+         */
+        post: operations["makeInspectionIssue"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -240,7 +480,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaint/feedback/save": {
+    "/api/v1/entry-records/request/{vehicleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["requestEntryRecord"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entry-records/exit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["exit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entry-records/enter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["enter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 민원 목록 조회
+         * @description 로그인한 유저의 민원 목록을 조회
+         */
+        get: operations["getAllComplaint"];
+        put?: never;
+        /**
+         * 민원 등록
+         * @description 새로운 민원을 등록합니다
+         */
+        post: operations["createComplaint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaints/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -250,8 +562,32 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * 민원에 대한 피드백을 저장하는 기능
-         * @description 입력된 피드백을 DB에 저장하는 기능
+         * 상태별 검색
+         * @description 민원 상태 별 조회
+         */
+        post: operations["searchComplaintByStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaint-feedbacks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 민원에 대한 피드백 목록 조회
+         * @description 해당 민원 ID로 모든 피드백을 조회합니다
+         */
+        get: operations["getComplaintFeedback"];
+        put?: never;
+        /**
+         * 민원 피드백 생성
+         * @description 민원에 대한 새로운 피드백을 저장합니다
          */
         post: operations["saveComplaintFeedback"];
         delete?: never;
@@ -260,7 +596,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaint/create/{userId}": {
+    "/api/v1/community": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/{id}/pin": {
         parameters: {
             query?: never;
             header?: never;
@@ -269,12 +621,40 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * 유저의 민원을 생성하는 기능
-         * @description 유저가 입력한 정보를 기반으로 민원을 생성하는 기능
-         */
-        post: operations["createComplaint"];
+        post: operations["pin"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createChatroom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chats/{chatroomId}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChatroomList"];
+        put?: never;
+        post: operations["joinChatroom"];
+        delete: operations["leaveChatroom"];
         options?: never;
         head?: never;
         patch?: never;
@@ -376,6 +756,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 관리자 계정 등록
+         * @description 새로운 관리자 계정을 등록합니다. (이메일, 사용자 이름, 비밀번호 필요)
+         */
+        post: operations["adminRegister"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 관리자 로그인
+         * @description 관리자 아이디(이메일)와 비밀번호로 로그인하고 JWT 토큰을 발급받습니다.
+         */
+        post: operations["adminLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/update/{vehicleId}": {
         parameters: {
             query?: never;
@@ -407,7 +827,7 @@ export interface paths {
         head?: never;
         /**
          * 내 정보 수정
-         * @description 사용자의 닉네임, 전화번호, 학원 정보를 수정합니다.
+         * @description 사용자의 프로필 정보를 수정합니다. (이름, 주소, 전화번호 등. 이메일, 비밀번호 변경은 별도 API 사용)
          */
         patch: operations["updateMyInfo"];
         trace?: never;
@@ -468,7 +888,7 @@ export interface paths {
         patch: operations["updateEntryStatus"];
         trace?: never;
     };
-    "/api/v1/complaint/update/{userId}": {
+    "/api/v1/complaints/{complaintId}/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -482,50 +902,42 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * 유저의 민원을 수정하는 기능
-         * @description 유저가 입력한 정보를 기반으로 민원을 수정하는 기능
-         */
-        patch: operations["updateComplaint"];
-        trace?: never;
-    };
-    "/api/v1/complaint/update/status/{complainId}/{status}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * 유저의 민원 상태를 수정하는 기능
-         * @description 매니저가 민원 처리 여부에 따른 상태 변경을 위한 기능
+         * 민원 상태 변경
+         * @description 민원의 상태(PENDING, IN_PROGRESS 등)를 변경합니다
          */
         patch: operations["updateComplaintStatus"];
         trace?: never;
     };
-    "/api/v1/complaint/feedback/update/{feedbackId}": {
+    "/api/v1/vehicles/visitors/pending": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getMyRequests"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /**
-         * 민원 피드백을 수정하는 기능
-         * @description 민원에 대한 피드백을 수정하는 기능
-         */
-        patch: operations["updateComplaintFeedback"];
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicles/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getParkingStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/vehicles/resident": {
@@ -576,6 +988,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vehicles/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyVehicles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicles/invited-approved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInvitedApprovedVehicles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/foreign": {
         parameters: {
             query?: never;
@@ -600,6 +1044,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getApprovedVehicles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicles/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getActiveVehicles"];
         put?: never;
         post?: never;
         delete?: never;
@@ -640,22 +1100,6 @@ export interface paths {
          * @description 이메일의 중복 여부를 확인합니다.
          */
         get: operations["checkEmail_1"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/opinion/manager": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getManagerOpinion"];
         put?: never;
         post?: never;
         delete?: never;
@@ -740,6 +1184,46 @@ export interface paths {
          * @description 사용자의 프로필 정보를 조회합니다.
          */
         get: operations["getMyInfo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/manager": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 점검 일정을 가져옵니다
+         * @description 점검 일정 목록을 가져옵니다, 주호야 페이징 처리해라
+         */
+        get: operations["showAllInspections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/issue/show/{issueId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 해당 이슈에 대한 내용을 볼 수 있음
+         * @description 해당 이슈에 대한 내용
+         */
+        get: operations["getInspectionIssue"];
         put?: never;
         post?: never;
         delete?: never;
@@ -948,18 +1432,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaint/feedback/{complaintId}": {
+    "/api/v1/entry-records/{vehicleId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 민원에 대한 피드백을 읽어오는 기능
-         * @description 해당 민원에 맞는 피드백을 전부 읽어 제공하는 기능
-         */
-        get: operations["getComplaintFeedback"];
+        get: operations["getRecords"];
         put?: never;
         post?: never;
         delete?: never;
@@ -968,7 +1448,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaint/all/complaint/{userId}": {
+    "/api/v1/complaints/statistics/today": {
         parameters: {
             query?: never;
             header?: never;
@@ -976,10 +1456,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 유저의 민원들을 가져오는 기능
-         * @description 유저의 Id를 통해 유저의 민원들을 가져오는 기능
+         * 일별 민원 수 조회
+         * @description 일별 민원 수, 상태 조회
          */
-        get: operations["getAllComplaint"];
+        get: operations["getTodayStats"];
         put?: never;
         post?: never;
         delete?: never;
@@ -988,7 +1468,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaint/all/complaint/": {
+    "/api/v1/complaints/statistics/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -996,10 +1476,98 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 유저들의 민원을 가져오는 기능
-         * @description 매니저가 유저의 민원을 확인하기 위한 기능
+         * 상태별 처리수 조회
+         * @description 상태별 처리수 조회
          */
-        get: operations["getAllComplaint_1"];
+        get: operations["getComplaintStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaints/statistics/handling-rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 민원 처리율 조회
+         * @description 전체 민원 중 처리 완료된 민원의 비율을 반환
+         */
+        get: operations["getComplaintHandlingRate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaints/manager": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 모든 민원 목록 조회
+         * @description 관리자 권한으로 전체 민원 목록을 조회
+         */
+        get: operations["getAllComplaintByManager"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listBranch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chats/{chatroomId}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMessageList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chats/all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAllChatrooms"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1116,6 +1684,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 관리자 정보 조회
+         * @description 현재 로그인된 관리자의 프로필 정보를 조회합니다.
+         */
+        get: operations["me_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 관리자 상태 확인
+         * @description 현재 인증된 관리자의 상태 또는 특정 정보를 확인합니다.
+         */
+        get: operations["adminCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/delete/{vehicleId}": {
         parameters: {
             query?: never;
@@ -1132,7 +1740,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/users/withdraw": {
+    "/api/v1/users/me/withdraw": {
         parameters: {
             query?: never;
             header?: never;
@@ -1144,7 +1752,7 @@ export interface paths {
         post?: never;
         /**
          * 회원 탈퇴
-         * @description 비밀번호 확인 후 회원 비활성화 처리
+         * @description 로그인된 사용자가 본인의 계정을 탈퇴합니다.
          */
         delete: operations["withdrawUser"];
         options?: never;
@@ -1212,7 +1820,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaint/feedback/delete/{feedbackId}": {
+    "/api/v1/community/delete/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1222,27 +1830,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["deleteComplaintFeedback"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/complaint/delete/{complainId}/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * 유저의 민원을 삭제하는 기능
-         * @description 선택한 민원을 삭제하는 기능
-         */
-        delete: operations["deleteComplaint"];
+        delete: operations["delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1264,10 +1852,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 관리자 로그아웃
+         * @description 관리자 계정의 로그아웃을 처리하고 토큰을 무효화합니다.
+         */
+        delete: operations["adminLogout"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        UpdateOpinionRequestDto: {
+            reply?: string;
+        };
         /** @description 공지사항 게시글 수정 요청 DTO */
         NoticeUpdateRequestDto: {
             /**
@@ -1285,9 +1896,44 @@ export interface components {
             /** @description tiptap에 삽입된 첨부파일 ID들 */
             fileIds?: number[];
         };
-        ResidentVehicleRequestDto: {
+        EntryRecordStatusDto: {
             /** Format: int64 */
-            userId?: number;
+            id?: number;
+            status?: string;
+        };
+        CreateComplaintRequestDto: {
+            title?: string;
+            content?: string;
+            category?: string;
+        };
+        UpdateComplaintFeedbackRequestDto: {
+            content?: string;
+        };
+        CommunityRequestDto: {
+            content?: string;
+            /** Format: int64 */
+            parentId?: number;
+        };
+        CommunityResponseDto: {
+            /** Format: int64 */
+            id?: number;
+            content?: string;
+            author?: components["schemas"]["UserBasicDto"];
+            /** Format: int64 */
+            parentId?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
+            status?: string;
+            pinned?: boolean;
+        };
+        UserBasicDto: {
+            /** Format: int64 */
+            id?: number;
+            username?: string;
+        };
+        ResidentVehicleRequestDto: {
             vehicleNum?: string;
             type?: string;
         };
@@ -1304,6 +1950,9 @@ export interface components {
             type?: string;
             phone?: string;
             reason?: string;
+            apartmentName?: string;
+            buildingNum?: string;
+            unitNum?: string;
         };
         /** @description 회원가입 시 입력하는 사용자 정보 DTO */
         UserRegistRequestDTO: {
@@ -1361,7 +2010,11 @@ export interface components {
              */
             profileImage?: string;
         };
+        CreateOpinionReplyRequestDto: {
+            reply?: string;
+        };
         CreateManagerOpinionRequestDto: {
+            title?: string;
             content?: string;
         };
         /** @description 공지사항 게시글 등록 요청 DTO */
@@ -1387,12 +2040,134 @@ export interface components {
             /** @description tiptap에 삽입된 첨부파일 ID들 */
             fileIds?: number[];
         };
-        InspectionRequestDto: {
+        /** @description 비밀번호 재설정 요청 DTO */
+        ResetPasswordRequest: {
+            /**
+             * @description 현재 비밀번호
+             * @example currentPassword123!
+             */
+            currentPassword?: string;
+            /**
+             * @description 새 비밀번호 (8자 이상, 영문자, 숫자, 특수문자 포함)
+             * @example newPassword123!
+             */
+            newPassword?: string;
+            /**
+             * @description 새 비밀번호 확인
+             * @example newPassword123!
+             */
+            newPasswordConfirm?: string;
+        };
+        /** @description 점검 분류를 지정해서 추가/수정을 위한 DTO */
+        InspectionTypeDto: {
+            /**
+             * @description 추가/수정할 점검 분류
+             * @example 차량
+             */
+            name?: string;
+        };
+        InspectionType: {
+            /** Format: int64 */
+            id?: number;
             /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
+            typeName?: string;
+        };
+        /** @description 점검 항목을 업데이트 위한 DTO */
+        InspectionUpdateDto: {
+            /**
+             * Format: date-time
+             * @description 시작 시간
+             * @example 2025-05-25T00:00
+             */
             startAt?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description 종료 시간
+             * @example 2025-05-26T00:00
+             */
             finishAt?: string;
+            /**
+             * @description 점검 제목
+             * @example 아이스크림 스타스크림
+             */
+            title?: string;
+            /**
+             * @description 점검 상세 내용
+             * @example ルビィちゃん！[「はーい！」] 何が好き？
+             *     루비쨩 나니가 스키
+             *     루비쨩! 어떤 게 좋아?
+             *
+             *     チョコミント　よりも　あ･な･た･♡
+             *     쵸코민토 요리모 아나타
+             *     민트초코보다도 바･로･너･♡
+             *
+             *     歩夢ちゃん！[「はーい！」] 何が好き？
+             *     아유무쨩 나니가 스키
+             *     아유무쨩! 어떤 게 좋아?
+             *
+             *     ストロベリーフレイバー　よりも　あ･な･た･♡
+             *     스토로베리이 후레이바아 요리모 아나타
+             *     딸기 맛보다도 바･로･너･♡
+             *
+             *     四季ちゃん！[「はーい！」] 何が好き？
+             *     시키쨩 나니가 스키
+             *     시키쨩! 어떤 게 좋아?
+             *
+             *     クッキー＆クリーム　よりも　あ･な･た･♡
+             *     쿳키이 안도 크리이무 요리모 아나타
+             *     쿠키 앤 크림보다도 바･로･너･♡
+             *
+             *     みんな[「はーい！」] 何が好き？
+             *     민나 나니가 스키
+             *     얘들아, 어떤 게 좋아?
+             *
+             *     モチロン大好き　AiScReam
+             *     모치론 다이스키 AiScReam
+             *     당연히 제일 좋아하는 건 AiScReam
+             */
             detail?: string;
+            /**
+             * @description 점검 분류
+             * @example 소방
+             */
+            type?: string;
+            /**
+             * @description 점검 결과
+             * @example CHECKED
+             */
+            result?: string;
+        };
+        /** @description 점검 일정에 대한 정보가 들어있는 DTO */
+        InspectionRequestDto: {
+            /**
+             * Format: date-time
+             * @description 시작 시간
+             * @example 2025-05-12T00:00
+             */
+            startAt?: string;
+            /**
+             * Format: date-time
+             * @description 종료 시간
+             * @example 2025-11-21T00:00
+             */
+            finishAt?: string;
+            /**
+             * @description 점검 제목
+             * @example 명장면 다시보기
+             */
+            title?: string;
+            /**
+             * @description 점검 상세 내용
+             * @example 근데 드레이븐🎅이 문제에요 이 와중에 진짜 예 타워🏦 안쪽 그래도 잭키러브🎅가 문제에요 케넨🌩없을때 그래도 이쪽도⏩⏩ 달려들어야되는거아닌가요 재키러브🎅가문제에요 예 스턴걸고 쫓아가자 재키러브🎅가 아아악😱😱 잭키러브🎅🎅가 문제에요 돈도왕창떨어졌고요💵💵💵💵 재키러브 어떡하나요😱😱😱😱 저 재키러브를 또 더블킬 케넨🌩이없어요🙅🙅 재키러브가 퍽퍽🤜🤜 케넨🌩🌩이 없어요 기다려라 근데 이겼어요 좀 그만죽여 나도좀 죽이자😈😈 더샤이 오고있습니다 트리플킬 그리고 밀면되나요 왜이렇게빨리끝내나요 아이지❓❓😰😰😰😢😢😢이거 16분대 16분되기전에 이건아이지 이건 역대급인데요 와 아니 16분이 안됩니다 와 15분 50초 아이지 야 빨리 끝내자 기록🌟🌟이라도 세우자 끝났습니다 15분 55초 56초 쥐쥐
+             */
+            detail?: string;
+            /**
+             * @description 점검 분류
+             * @example 소방
+             */
             type?: string;
         };
         Apartment: {
@@ -1452,18 +2227,15 @@ export interface components {
             /** Format: date-time */
             finishAt?: string;
             type?: components["schemas"]["InspectionType"];
+            title?: string;
             detail?: string;
             /** @enum {string} */
-            result?: "CHECKED" | "PENDING" | "NOTYET";
-        };
-        InspectionType: {
-            /** Format: int64 */
-            id?: number;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            modifiedAt?: string;
-            typeName?: string;
+            result?: "CHECKED" | "PENDING" | "NOTYET" | "ISSUE";
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status?: "active" | "inactive" | "pending" | "withdrawn";
         };
         Unit: {
             /** Format: int64 */
@@ -1489,7 +2261,7 @@ export interface components {
             gradeId?: number;
             socialProvider?: string;
             socialId?: string;
-            roles?: ("ADMIN" | "USER" | "MODERATOR")[];
+            roles?: ("ADMIN" | "USER" | "MANAGER")[];
             password?: string;
             email?: string;
             phoneNum?: string;
@@ -1498,18 +2270,28 @@ export interface components {
              * @description 상태
              * @enum {string}
              */
-            status?: "active" | "inactive" | "pending";
+            status?: "active" | "inactive" | "pending" | "withdrawn";
             refreshToken?: string;
+            leaveReason?: string;
             profileImage?: components["schemas"]["Image"];
         };
-        InspectionUpdateDto: {
-            /** Format: date-time */
-            startAt?: string;
-            /** Format: date-time */
-            finishAt?: string;
-            detail?: string;
-            type?: string;
-            result?: string;
+        /** @description 이슈 등록/수정 요청 DTO */
+        InspectionIssueDto: {
+            /**
+             * @description 넣을 이슈 내용
+             * @example 어어어어! / 어어어 들어가면 큰 일 나죠, 이거는!
+             *     아아아아아! / 들어갔어요, 들어갔어요!
+             *     으아아아아! / 자, 스파이더 마인 심어놓고
+             *     야아아아 박정욱! / 야, 이거 큰일 났습니다, 큰일 났습니다.
+             *     아아아아아! / 거기서 탱크 잃으면 큰일이에요!
+             *     망했어요~ / 탱크 한 개 깨졌고!
+             *     망했어요... 아~ / 벌쳐가 들어가면 무방비상태!
+             *     망했어요, 아~ / 자, 여기 마인 심어놓고 쭉 들어갑니다, 임요환!
+             *     박정욱~ 박정욱~ / 레이스밖에 막을 수 있는 방법이 없어요, 레이스밖에 없어요!
+             *     망했어요, 이 게임 / 아, 박정욱!
+             *     아~ 피해가 너무 크다아아아아앜! / 으아아아아아아아!
+             */
+            description?: string;
         };
         /** @description 공용시설 예약 요청 DTO */
         FacilityReservationRequestDto: {
@@ -1530,15 +2312,34 @@ export interface components {
              */
             endTime?: string;
         };
+        EntryRecordResponseDto: {
+            /** Format: int64 */
+            vehicleId?: number;
+            /** Format: date-time */
+            entryTime?: string;
+            /** Format: date-time */
+            exitTime?: string;
+            /** @enum {string} */
+            status?: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+        };
+        EntryRecordRequestDto: {
+            phone?: string;
+        };
         CreateComplaintFeedbackRequestDto: {
             /** Format: int64 */
             complaintId?: number;
             content?: string;
         };
-        CreateComplaintRequestDto: {
+        SecurityUtil: Record<string, never>;
+        ChatroomDto: {
+            /** Format: int64 */
+            id?: number;
             title?: string;
-            content?: string;
-            category?: string;
+            hasNewMessage?: boolean;
+            /** Format: int32 */
+            userCount?: number;
+            /** Format: date-time */
+            createdAt?: string;
         };
         /** @description 인증번호 확인 요청 DTO */
         VerifyCodeRequestDto: {
@@ -1633,11 +2434,42 @@ export interface components {
              */
             available?: boolean;
         };
+        /** @description 관리자 등록 요청 DTO */
+        AdminRegistrationRequest: {
+            /**
+             * @description 관리자 아이디
+             * @example newadmin
+             */
+            username?: string;
+            /**
+             * @description 관리자 비밀번호
+             * @example newpassword123
+             */
+            password?: string;
+            /**
+             * @description 관리자 이메일
+             * @example admin@example.com
+             */
+            email?: string;
+        };
+        /** @description 관리자 로그인 요청 DTO */
+        AdminLoginRequest: {
+            /**
+             * @description 관리자 아이디
+             * @example admin
+             */
+            username?: string;
+            /**
+             * @description 관리자 비밀번호
+             * @example password123
+             */
+            password?: string;
+        };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;
             type?: string;
         };
-        /** @description 학원 정보 요청 DTO */
+        /** @description 사용자 정보 요청 DTO */
         MyInfoUpdateRequestDto: {
             /**
              * @description 수정할 이름
@@ -1650,31 +2482,35 @@ export interface components {
              */
             phoneNum?: string;
             /**
-             * @description 수정할 아파트
-             * @example 홍길동
+             * @description 사용자 이메일
+             * @example test@example.com
              */
-            apartment?: components["schemas"]["Apartment"];
+            email?: string;
             /**
-             * @description 수정할 건물
-             * @example 101동
+             * Format: int64
+             * @description 아파트 ID
+             * @example 1
              */
-            building?: components["schemas"]["Building"];
+            apartmentId?: number;
             /**
-             * @description 수정할 호수
-             * @example 101호
+             * Format: int64
+             * @description 동 ID
+             * @example 1
              */
-            unit?: components["schemas"]["Unit"];
-        };
-        EntryRecordStatusDto: {
-            /** Format: int64 */
-            id?: number;
-            status?: string;
+            buildingId?: number;
+            /**
+             * Format: int64
+             * @description 호수 ID
+             * @example 1
+             */
+            unitId?: number;
         };
         VehicleRegistrationInfoDto: {
             /** Format: int64 */
             id?: number;
             registerType?: string;
             applicantName?: string;
+            apartmentName?: string;
             buildingName?: string;
             unitName?: string;
             vehicleNum?: string;
@@ -1682,11 +2518,17 @@ export interface components {
             phone?: string;
             /** Format: date-time */
             createdAt?: string;
-            /** Format: date-time */
-            visitPeriod?: string;
             reason?: string;
             userPhone?: string;
             status?: string;
+        };
+        ParkingStatusDto: {
+            /** Format: int32 */
+            totalCapacity?: number;
+            /** Format: int64 */
+            activeCount?: number;
+            /** Format: int32 */
+            remainingSpace?: number;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         NoticeSummaryResponseDto: {
@@ -1726,10 +2568,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -1738,26 +2580,26 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         NoticeFileDto: {
             originalName?: string;
@@ -1812,10 +2654,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -1824,9 +2666,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -1863,6 +2705,12 @@ export interface components {
         /** @description 사용자 정보 응답 DTO */
         MyInfoResponseDto: {
             /**
+             * Format: int64
+             * @description 사용자 ID
+             * @example 1
+             */
+            id?: number;
+            /**
              * @description 계정 이메일
              * @example lion@gmail.com
              */
@@ -1889,6 +2737,58 @@ export interface components {
             modifiedAt?: string;
             /** @description 프로필 이미지 url */
             profileImageUrl?: string;
+            /**
+             * @description 아파트 이름
+             * @example 행복 아파트
+             */
+            apartmentName?: string;
+            /**
+             * @description 아파트 동
+             * @example 101동
+             */
+            buildingName?: string;
+            /**
+             * @description 아파트 호수
+             * @example 1004호
+             */
+            unitNumber?: string;
+            /**
+             * @description 소셜 로그인 제공자
+             * @example Google
+             */
+            socialProvider?: string;
+        };
+        InspectionResponseDetailDto: {
+            /** Format: int64 */
+            inspectionId?: number;
+            /** Format: int64 */
+            userId?: number;
+            userName?: string;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            finishAt?: string;
+            title?: string;
+            detail?: string;
+            /** @enum {string} */
+            result?: "CHECKED" | "PENDING" | "NOTYET" | "ISSUE";
+            typeName?: string;
+        };
+        IssueResponseDetailDto: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            inspectionId?: number;
+            /** Format: int64 */
+            userId?: number;
+            userName?: string;
+            title?: string;
+            description?: string;
+            typeName?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
         };
         /** @description 공용시설 목록 응답 DTO */
         FacilityResponseDto: {
@@ -2088,10 +2988,10 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2100,10 +3000,23 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
+        };
+        ComplaintHandlingRateResponseDto: {
+            /** Format: int64 */
+            totalCount?: number;
+            /** Format: int64 */
+            handledCount?: number;
+            /** Format: double */
+            handlingRate?: number;
+        };
+        ChatMessageDto: {
+            /** Format: int64 */
+            userId?: number;
+            message?: string;
         };
         /** @description 아파트 정보 응답 DTO */
         ApartmentResponseDto: {
@@ -2165,12 +3078,17 @@ export interface components {
             buildingId?: number;
         };
         /** @description 회원 탈퇴 요청 DTO */
-        DeleteUserRequestDto: {
+        UserWithdrawRequestDto: {
             /**
-             * @description 현재 비밀번호
-             * @example mySecurePassword
+             * @description 사용자 비밀번호
+             * @example password123!
              */
             password?: string;
+            /**
+             * @description 탈퇴 사유
+             * @example 서비스 불만
+             */
+            leaveReason?: string;
         };
     };
     responses: never;
@@ -2181,6 +3099,50 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    updateOpinionReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOpinionRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    deleteOpinionReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     updateNotice: {
         parameters: {
             query?: never;
@@ -2205,6 +3167,152 @@ export interface operations {
                     "*/*": {
                         [key: string]: Record<string, never>;
                     };
+                };
+            };
+        };
+    };
+    updateLatestPendingStatus: {
+        parameters: {
+            query: {
+                arg1: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+            };
+            header?: never;
+            path: {
+                vehicleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntryRecordStatusDto"];
+                };
+            };
+        };
+    };
+    updateComplaint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                complaintId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateComplaintRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    deleteComplaint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                complaintId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    updateComplaintFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                feedbackId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateComplaintFeedbackRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    deleteComplaintFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                feedbackId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommunityRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommunityResponseDto"];
                 };
             };
         };
@@ -2348,6 +3456,70 @@ export interface operations {
             };
         };
     };
+    getOpinionReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    createOpinionReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOpinionReplyRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    getManagerOpinion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     addManagerOpinion: {
         parameters: {
             query?: never;
@@ -2448,7 +3620,66 @@ export interface operations {
             };
         };
     };
-    showAllInspections: {
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description 비밀번호 변경 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description 입력 값 오류 (비밀번호 정책 위반, 현재 비밀번호 불일치 등) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description 인증 실패 (로그인 필요) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description 사용자를 찾을 수 없음 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    showAllTypes: {
         parameters: {
             query?: never;
             header?: never;
@@ -2463,12 +3694,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Inspection"][];
+                    "*/*": components["schemas"]["InspectionType"][];
                 };
             };
         };
     };
-    createInspectionSchedule: {
+    addNewType: {
         parameters: {
             query?: never;
             header?: never;
@@ -2477,7 +3708,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["InspectionRequestDto"];
+                "application/json": components["schemas"]["InspectionTypeDto"];
             };
         };
         responses: {
@@ -2487,7 +3718,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Inspection"];
+                    "*/*": components["schemas"]["InspectionType"];
+                };
+            };
+        };
+    };
+    showInspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InspectionResponseDetailDto"];
                 };
             };
         };
@@ -2540,6 +3793,104 @@ export interface operations {
             };
         };
     };
+    createInspectionSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InspectionRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Inspection"];
+                };
+            };
+        };
+    };
+    compeleteInspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    updateInspectionIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InspectionIssueDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    makeInspectionIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InspectionIssueDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     reserveFacility: {
         parameters: {
             query?: never;
@@ -2554,6 +3905,160 @@ export interface operations {
                 "application/json": components["schemas"]["FacilityReservationRequestDto"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    requestEntryRecord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntryRecordResponseDto"];
+                };
+            };
+        };
+    };
+    exit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntryRecordRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntryRecordResponseDto"];
+                };
+            };
+        };
+    };
+    enter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntryRecordRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntryRecordResponseDto"];
+                };
+            };
+        };
+    };
+    getAllComplaint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    createComplaint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateComplaintRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    searchComplaintByStatus: {
+        parameters: {
+            query: {
+                status: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    getComplaintFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -2590,7 +4095,27 @@ export interface operations {
             };
         };
     };
-    createComplaint: {
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommunityResponseDto"][];
+                };
+            };
+        };
+    };
+    create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2599,7 +4124,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateComplaintRequestDto"];
+                "application/json": components["schemas"]["CommunityRequestDto"];
             };
         };
         responses: {
@@ -2609,7 +4134,123 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["CommunityResponseDto"];
+                };
+            };
+        };
+    };
+    pin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommunityResponseDto"];
+                };
+            };
+        };
+    };
+    createChatroom: {
+        parameters: {
+            query: {
+                arg0: components["schemas"]["SecurityUtil"];
+                title: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatroomDto"];
+                };
+            };
+        };
+    };
+    getChatroomList: {
+        parameters: {
+            query: {
+                arg0: components["schemas"]["SecurityUtil"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatroomDto"][];
+                };
+            };
+        };
+    };
+    joinChatroom: {
+        parameters: {
+            query: {
+                arg0: components["schemas"]["SecurityUtil"];
+                currentChatroomId?: number;
+            };
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": boolean;
+                };
+            };
+        };
+    };
+    leaveChatroom: {
+        parameters: {
+            query: {
+                arg0: components["schemas"]["SecurityUtil"];
+            };
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": boolean;
                 };
             };
         };
@@ -2734,6 +4375,54 @@ export interface operations {
             };
         };
     };
+    adminRegister: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRegistrationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    adminLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     updateVehicle: {
         parameters: {
             query?: never;
@@ -2777,7 +4466,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "application/json": unknown;
                 };
             };
             /** @description 입력 값 오류 */
@@ -2786,7 +4475,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "*/*": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description 사용자를 찾을 수 없음 */
@@ -2795,7 +4486,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string;
+                    "*/*": {
+                        [key: string]: string;
+                    };
                 };
             };
         };
@@ -2849,7 +4542,7 @@ export interface operations {
     updateEntryStatus: {
         parameters: {
             query: {
-                status: "AGREE" | "INAGREE" | "PENDING";
+                status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
             };
             header?: never;
             path: {
@@ -2870,35 +4563,15 @@ export interface operations {
             };
         };
     };
-    updateComplaint: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateComplaintRequestDto"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
     updateComplaintStatus: {
         parameters: {
-            query?: never;
+            query: {
+                status: number;
+            };
             header?: never;
-            path?: never;
+            path: {
+                complaintId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -2914,18 +4587,14 @@ export interface operations {
             };
         };
     };
-    updateComplaintFeedback: {
+    getMyRequests: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateComplaintFeedbackRequestDto"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -2933,7 +4602,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
+                };
+            };
+        };
+    };
+    getParkingStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ParkingStatusDto"];
                 };
             };
         };
@@ -3002,6 +4691,46 @@ export interface operations {
             };
         };
     };
+    getMyVehicles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
+                };
+            };
+        };
+    };
+    getInvitedApprovedVehicles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
+                };
+            };
+        };
+    };
     getForeignVehicles: {
         parameters: {
             query?: never;
@@ -3023,6 +4752,26 @@ export interface operations {
         };
     };
     getApprovedVehicles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
+                };
+            };
+        };
+    };
+    getActiveVehicles: {
         parameters: {
             query?: never;
             header?: never;
@@ -3100,26 +4849,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": boolean;
-                };
-            };
-        };
-    };
-    getManagerOpinion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
                 };
             };
         };
@@ -3249,6 +4978,48 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["MyInfoResponseDto"];
+                };
+            };
+        };
+    };
+    showAllInspections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InspectionResponseDetailDto"][];
+                };
+            };
+        };
+    };
+    getInspectionIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                issueId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssueResponseDetailDto"];
                 };
             };
         };
@@ -3462,7 +5233,29 @@ export interface operations {
             };
         };
     };
-    getComplaintFeedback: {
+    getRecords: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntryRecordResponseDto"][];
+                };
+            };
+        };
+    };
+    getTodayStats: {
         parameters: {
             query?: never;
             header?: never;
@@ -3482,7 +5275,7 @@ export interface operations {
             };
         };
     };
-    getAllComplaint: {
+    getComplaintStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -3502,7 +5295,27 @@ export interface operations {
             };
         };
     };
-    getAllComplaint_1: {
+    getComplaintHandlingRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ComplaintHandlingRateResponseDto"];
+                };
+            };
+        };
+    };
+    getAllComplaintByManager: {
         parameters: {
             query?: never;
             header?: never;
@@ -3518,6 +5331,72 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    listBranch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommunityResponseDto"][];
+                };
+            };
+        };
+    };
+    getMessageList: {
+        parameters: {
+            query: {
+                arg0: components["schemas"]["SecurityUtil"];
+            };
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageDto"][];
+                };
+            };
+        };
+    };
+    getAllChatrooms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatroomDto"][];
                 };
             };
         };
@@ -3646,6 +5525,46 @@ export interface operations {
             };
         };
     };
+    me_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    adminCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     deleteVehicle: {
         parameters: {
             query?: never;
@@ -3677,36 +5596,37 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeleteUserRequestDto"];
+                "application/json": components["schemas"]["UserWithdrawRequestDto"];
             };
         };
         responses: {
             /** @description 회원 탈퇴 성공 */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "*/*": string;
-                };
+                content?: never;
             };
-            /** @description 비밀번호 불일치 */
+            /** @description 잘못된 요청 (비밀번호 불일치, 이미 탈퇴한 계정 등) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 인증 실패 (로그인 필요) */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "*/*": string;
-                };
+                content?: never;
             };
             /** @description 사용자를 찾을 수 없음 */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "*/*": string;
-                };
+                content?: never;
             };
         };
     };
@@ -3770,31 +5690,13 @@ export interface operations {
             };
         };
     };
-    deleteComplaintFeedback: {
+    delete: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
+            path: {
+                id: number;
             };
-        };
-    };
-    deleteComplaint: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -3804,13 +5706,31 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "*/*": Record<string, never>;
-                };
+                content?: never;
             };
         };
     };
     logout_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    adminLogout: {
         parameters: {
             query?: never;
             header?: never;
