@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import org.springframework.core.annotation.Order;
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
@@ -29,6 +29,7 @@ public class SecurityConfig {
     private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
     private final CustomOAuth2RequestResolver customOAuth2RequestResolver;
 
+    @Order(2)
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security) throws Exception {
         security
@@ -94,6 +95,31 @@ public class SecurityConfig {
 
         return security.build();
 
+    }
+
+    @Order(1)
+    @Bean
+    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity security) throws Exception {
+        security
+                .securityMatcher("/api/v1/admin/**")
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/admin").permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/api/v1/admin")
+                        .loginProcessingUrl("/api/v1/admin/login")
+                        .defaultSuccessUrl("/api/v1/admin/dashboard", true)
+                        .failureUrl("/api/v1/admin?error=true")
+                        .permitAll()
+                )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedPage("/api/v1/admin/access-denied")
+                )
+                .csrf(csrf -> csrf.disable());
+                
+        return security.build();
     }
 
 
