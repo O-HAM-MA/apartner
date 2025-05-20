@@ -1,21 +1,21 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Providers } from "./providers"
+import type React from "react";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "아파트 관리 시스템",
   description: "아파트 생활을 더 편리하게 만드는 디지털 솔루션",
-    generator: 'v0.dev'
-}
+  generator: "Apartner",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
@@ -23,5 +23,5 @@ export default function RootLayout({
         <Providers>{children}</Providers>
       </body>
     </html>
-  )
+  );
 }

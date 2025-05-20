@@ -55,16 +55,18 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // /udash 경로인지 확인
+  // admin 또는 udash 경로인지 확인
+  const isAdminPath = pathname.startsWith("/admin");
   const isUdashPath = pathname.startsWith("/udash");
+  const shouldUseCustomLayout = isAdminPath || isUdashPath;
 
   return (
     <LoginMemberContext value={loginMemberContextValue}>
-      {isUdashPath ? (
-        // /udash 경로면 children만 렌더링
+      {shouldUseCustomLayout ? (
+        // admin 또는 udash 경로면 children만 렌더링
         children
       ) : (
-        // 다른 경로면 Layout으로 감싸서 렌더링
+        // 일반 사용자 경로면 Layout으로 감싸서 렌더링
         <Layout>{children}</Layout>
       )}
     </LoginMemberContext>
