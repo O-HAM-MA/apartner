@@ -5,11 +5,14 @@ import com.ohammer.apartner.domain.community.dto.CommunityResponseDto;
 import com.ohammer.apartner.domain.community.service.CommunityService;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.security.utils.SecurityUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "아파트 입주민들 간의 커뮤니티 소통 관리 api")
 @RestController
 @RequestMapping("/api/v1/community")
 @RequiredArgsConstructor
@@ -17,6 +20,7 @@ public class CommunityController {
 
     private final CommunityService communityService;
 
+    @Operation(summary = "커뮤니티 소통 게시판에 글 등록")
     @PostMapping
     public CommunityResponseDto create(@RequestBody CommunityRequestDto dto) {
         User user = SecurityUtil.getCurrentUser();
@@ -24,6 +28,7 @@ public class CommunityController {
     }
 
 
+    @Operation(summary = "커뮤니티 소통 게시판 글 목록 조회")
     @GetMapping
     public List<CommunityResponseDto> list() {
         User user = SecurityUtil.getCurrentUser();
@@ -33,6 +38,7 @@ public class CommunityController {
         return communityService.listPosts(isAdmin);
     }
 
+    @Operation(summary = "해당 입주민이 작성한 글 수정")
     @PutMapping("/update/{id}")
     public CommunityResponseDto update(@PathVariable(value = "id") Long id,
                                        @RequestBody CommunityRequestDto dto
@@ -44,6 +50,7 @@ public class CommunityController {
         return communityService.update(id, dto, user);
     }
 
+    @Operation(summary = "해당 입주민이 작성한 글 삭제")
     @DeleteMapping("/delete/{id}")
     public void delete(@PathVariable(value = "id") Long id
                        ) {
@@ -54,6 +61,7 @@ public class CommunityController {
         communityService.delete(id, user);
     }
 
+    @Operation(summary = "글 고정시키기")
     @PostMapping("/{id}/pin")
     public CommunityResponseDto pin(@PathVariable(value = "id") Long id
                                     ) {
@@ -65,6 +73,8 @@ public class CommunityController {
         return communityService.pin(id);
     }
 
+
+    @Operation(summary = "특정 글에 달린 답글 목록 조회")
     @GetMapping("/{id}")
     public List<CommunityResponseDto> listBranch(@PathVariable(value = "id") Long id) {
         //User user = SecurityUtil.getCurrentUser();
