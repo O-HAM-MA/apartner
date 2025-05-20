@@ -24,6 +24,7 @@ public class InspectionV1UserController {
     //자가 점검
 
     //그런데 메니저의 그것고 차이는 뭐지?
+
     //일단 조회할때 자기 것만 나와야지
     @GetMapping("")
     @Operation(
@@ -76,8 +77,4 @@ public class InspectionV1UserController {
         inspectionUserService.deleteUserInspection(id);
         return ResponseEntity.ok().build();
     }
-    //그럼 누가 유저고, 매니저냐?
-    //구별법은
-        //시큐리티에서 role를 지정??
-        //
 }

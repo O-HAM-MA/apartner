@@ -11,7 +11,6 @@ import com.ohammer.apartner.domain.inspection.repository.InspectionTypeRepositor
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.global.Status;
-import com.ohammer.apartner.security.CustomUserDetailsService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +29,11 @@ public class InspectionService {
     private final InspectionTypeRepository inspectionTypeRepository;
     private final UserRepository userRepository;
     //대충 유저 리포지토리가 있다고 가정
+    public boolean itIsYou(Inspection inspection) {
+        Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
+
+        return userId.equals(inspection.getUser().getId());
+    }
 
     public Result findResult(String result) {
         switch (result) {
@@ -95,6 +98,9 @@ public class InspectionService {
     @Transactional
     public void updateInspection(Long id, InspectionUpdateDto dto) {
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
+        if (!itIsYou(inspection))
+            throw new RuntimeException("본인만 수정 가능합니다");
+
         inspection.setDetail(dto.getDetail());
         inspection.setStartAt(dto.getStartAt());
         inspection.setFinishAt(dto.getFinishAt());
@@ -112,9 +118,11 @@ public class InspectionService {
     @Transactional
     public void deleteInspection(Long id) {
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
+        if (!itIsYou(inspection))
+            throw new RuntimeException("본인만 삭제 가능합니다");
+
         inspection.setStatus(Status.WITHDRAWN);
         inspectionRepository.save(inspection);
-        //inspectionRepository.deleteById(id);
     }
 
 
@@ -143,6 +151,9 @@ public class InspectionService {
         if (!inspectionRepository.existsById(id))
             throw new RuntimeException("그거 없는댑쇼");
         Inspection inspection = inspectionRepository.findById(id).get();
+        if (!itIsYou(inspection))
+            throw new RuntimeException("본인만 완료 가능합니다");
+
         inspection.setResult(Result.CHECKED);
 
         inspectionRepository.save(inspection);
@@ -154,6 +165,8 @@ public class InspectionService {
         if (!inspectionRepository.existsById(id))
             throw new RuntimeException("그거 없는댑쇼");
         Inspection inspection = inspectionRepository.findById(id).get();
+        if (!itIsYou(inspection))
+            throw new RuntimeException("본인만 이슈 추가가 가능합니다");
         inspection.setResult(Result.ISSUE);
 
         inspectionRepository.save(inspection);
@@ -179,14 +192,18 @@ public class InspectionService {
         return inspectionTypeRepository.save(inspectionType);
     }
 
-    //수정
-    @Transactional
-    public void removeType(Long id) {
-        InspectionType type = inspectionTypeRepository.findById(id).orElseThrow();
-        inspectionTypeRepository.delete(type);
-    }
-
-
+//    //삭제
+//    @Transactional
+//    public void removeType(Long id) {
+//        InspectionType type = inspectionTypeRepository.findById(id).orElseThrow();
+//        inspectionTypeRepository.delete(type);
+//    }
+//
+//
+//    //수정
+//    @Transactional
+//    public void updateInspectionType(Long id, )
+//
 
 
 }

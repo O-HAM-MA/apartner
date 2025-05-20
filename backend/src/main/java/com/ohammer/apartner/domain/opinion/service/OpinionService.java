@@ -62,7 +62,7 @@ public class OpinionService {
         Set<Role> userRoles = user.getRoles();
 
         boolean hasRequiredRole = userRoles.stream()
-                .anyMatch(role -> role == Role.ADMIN || role == Role.MODERATOR);
+                .anyMatch(role -> role == Role.ADMIN || role == Role.MANAGER);
 
         if (!hasRequiredRole) {
             throw new AccessDeniedException("의견 목록을 조회할 권한이 없습니다.");
