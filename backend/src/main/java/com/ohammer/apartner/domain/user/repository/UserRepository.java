@@ -3,9 +3,7 @@ package com.ohammer.apartner.domain.user.repository;
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 
-
 import org.springframework.data.repository.query.Param;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -15,9 +13,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-import org.springframework.data.repository.query.Param;
-
 public interface UserRepository extends JpaRepository<User, Long> {
+
     @EntityGraph(attributePaths = "roles")
     Optional<User> findByUserName(String userName);
 
@@ -39,12 +36,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<User> findByIdWithRoles(@Param("id") Long id);
 
-
-
     @EntityGraph(attributePaths = "roles") // 🎯 roles 컬렉션을 함께 로딩
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmailWithRoles(@Param("email") String email);
-
 
     Optional<User> findByPhoneNum(String testPhone);
 
@@ -55,13 +49,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Override
     @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
     Optional<User> findById(Long id);
-    
+
     @EntityGraph(attributePaths = "roles")
     Optional<User> findByRefreshToken(String refreshToken);
 
     @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
     Optional<User> findBySocialProviderAndSocialId(String socialProvider, String socialId);
-
 
     @Query("SELECT u FROM User u JOIN FETCH u.building JOIN FETCH u.unit WHERE u.id = :id")
     Optional<User> findByIdWithBuildingAndUnit(@Param("id") Long id);
@@ -84,7 +77,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("bldgNum") String bldgNum,
             @Param("unitNum") String unitNum
     );
-
-
 
 }

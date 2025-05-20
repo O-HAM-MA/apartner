@@ -2,14 +2,21 @@ package com.ohammer.apartner.domain.image.entity;
 
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.entity.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Lob;
+import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
-@Entity
+@Entity(name = "images")
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
@@ -26,15 +33,15 @@ public class Image extends BaseEntity {
     private String tempId; // 임시 이미지 식별자
 
     @Column(nullable = false)
-    private Boolean isTemp;    // true면 임시 저장된 이미지
+    private Boolean isTemp;    // 현재 위치가 임시폴더인지 여부 - true면 임시 저장된 이미지
 
     @Column(nullable = false)
     private Boolean isDeleted; // soft-delete 여부
 
-    @Column(nullable = false)
+    @Column(name = "original_name", nullable = false)
     private String originalName;
 
-    @Column(nullable = false)
+    @Column(name = "stored_name", nullable = false)
     private String storedName;
 
     @Column(nullable = false)
@@ -43,16 +50,16 @@ public class Image extends BaseEntity {
     @Column(nullable = false)
     private Long size;
 
-    @Column(nullable = false)
+    @Column(name = "content_type", nullable = false)
     private String contentType;
 
     @Column(nullable = false)
-    private boolean isTemporary;
+    private Boolean isTemporary; // 실제로 사용자에게 보여질 수 있는지 여부
 
     @Column
     private LocalDateTime expiresAt;
 
-    @Column
+    @Column(name = "s3_key", nullable = false)
     private String s3Key;
 
     public Image(String originalName, String storedName, String path, Long size, String contentType,
