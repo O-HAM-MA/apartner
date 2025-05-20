@@ -107,7 +107,15 @@ public class NoticeServiceImpl implements NoticeService {
             throw new IllegalArgumentException("삭제되었거나 비활성화된 공지사항입니다.");
         }
 
-        notice.increaseViewCount(); // 조회수 증가
+        // 현재 사용자 ID 가져오기
+        Long currentUserId = SecurityUtil.getCurrentUser().getId();
+
+        // 작성자가 아닌 경우에만 조회수 증가
+        if (!notice.getUser().getId().equals(currentUserId)) {
+            notice.increaseViewCount();
+            notice.setModifiedAt(LocalDateTime.now());
+            noticeRepository.save(notice);
+        }
 
         List<String> imageUrls = notice.getImages().stream()
                 .map(noticeImage -> noticeImage.getImage().getFilePath())

@@ -12,10 +12,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,11 +41,15 @@ public class NoticeController {
             summary = "공지사항 게시글 등록",
             description = "게시글 작성사항: 제목, 내용, 파일"
     )
-    public ResponseEntity<String> createNotice(@RequestBody @Valid NoticeCreateRequestDto noticeCreateRequestDto) {
+    public ResponseEntity<?> createNotice(@RequestBody @Valid NoticeCreateRequestDto noticeCreateRequestDto) {
         User user = SecurityUtil.getCurrentUser();
         Long noticeId = noticeService.createNotice(noticeCreateRequestDto, user.getId());
 
-        return ResponseEntity.ok("게시글을 성공적으로 작성했습니다. NoticeId: " + noticeId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("noticeId", noticeId);
+        response.put("message", "게시글을 성공적으로 등록했습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{noticeId}")
@@ -50,7 +57,7 @@ public class NoticeController {
             summary = "공지사항 게시글 조회",
             description = "게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일"
     )
-    public ResponseEntity<?> readNotice(@PathVariable(name = "noticeId") Long noticeId) {
+    public ResponseEntity<NoticeReadResponseDto> readNotice(@PathVariable(name = "noticeId") Long noticeId) {
         NoticeReadResponseDto noticeReadResponseDto = noticeService.readNotice(noticeId);
 
         return ResponseEntity.ok(noticeReadResponseDto);
@@ -61,28 +68,36 @@ public class NoticeController {
             summary = "공지사항 게시글 수정",
             description = "게시글 수정 작성사항: 제목, 내용, 파일"
     )
-    public ResponseEntity<?> updateNotice(
+    public ResponseEntity<Map<String, Object>> updateNotice(
             @PathVariable(name = "noticeId") Long noticeId,
-            @RequestBody NoticeUpdateRequestDto noticeUpdateRequestDto
+            @Valid @RequestBody NoticeUpdateRequestDto noticeUpdateRequestDto
     ) {
         User user = SecurityUtil.getCurrentUser();
         noticeService.updateNotice(noticeId, noticeUpdateRequestDto, user.getId());
+        Map<String, Object> response = new HashMap<>();
 
-        return ResponseEntity.ok("게시글을 성공적으로 수정되었습니다. NoticeId: " + noticeId);
+        response.put("message", "게시글이 성공적으로 수정되었습니다.");
+        response.put("noticeId", noticeId);
+
+        return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{noticeId}/delete")
+    @DeleteMapping("/{noticeId}")
     @Operation(
             summary = "공지사항 게시글 삭제",
             description = "게시글 삭제(INACTIVE 상태)"
     )
-    public ResponseEntity<?> deleteNotice(
+    public ResponseEntity<Map<String, Object>> deleteNotice(
             @PathVariable(name = "noticeId") Long noticeId
     ) {
         User user = SecurityUtil.getCurrentUser();
         noticeService.deleteNotice(noticeId, user.getId());
 
-        return ResponseEntity.ok("게시글을 성공적으로 삭제되었습니다. NoticeId: " + noticeId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "게시글이 성공적으로 삭제되었습니다.");
+        response.put("noticeId", noticeId);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
