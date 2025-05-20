@@ -35,7 +35,7 @@ public class InspectionUserService {
     public List<InspectionResponseDetailDto>getAllInspectionWithUser() {
         Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
 
-        return  inspectionRepository.findByUserIdOrManager(userId, Role.MODERATOR).stream()
+        return  inspectionRepository.findByUserIdOrManager(userId, Role.MANAGER).stream()
                 .map( r-> new InspectionResponseDetailDto(
                         r.getId(),
                         r.getUser().getId(),

@@ -14,8 +14,19 @@ public interface InspectionRepository extends JpaRepository<Inspection, Long> {
 //    @Query("SELECT i FROM Inspection i " +
 //            "JOIN i.user u " +
 //            "WHERE u.id = :userId OR u.roles = 'MODERATOR'")
-    @Query("SELECT i FROM Inspection i " +
+//    @Query("SELECT i FROM Inspection i " +
+//            "JOIN i.user u " +
+//            "WHERE u.id = :userId OR :role MEMBER OF u.roles")
+    @Query("SELECT DISTINCT i FROM Inspection i " +
             "JOIN i.user u " +
-            "WHERE u.id = :userId OR :role MEMBER OF u.roles")
-    List<Inspection> findByUserIdOrManager(@Param("userId") Long userId, @Param("role")Role role);
+            "JOIN u.roles r " +
+            "WHERE u.id = :userId OR r = :role")
+    List<Inspection> findByUserIdOrManager(@Param("userId") Long userId, @Param("role") Role role);
+
+
+    @Query("SELECT i FROM Inspection i WHERE i.user.id = :userId")
+    List<Inspection> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT i FROM Inspection i JOIN i.user u JOIN u.roles r WHERE r = :role")
+    List<Inspection> findByRole(@Param("role") Role role);
 }

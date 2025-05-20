@@ -2,9 +2,11 @@ package com.ohammer.apartner.domain.inspection.controller;
 
 import com.ohammer.apartner.domain.inspection.dto.InspectionRequestDto;
 import com.ohammer.apartner.domain.inspection.dto.InspectionResponseDetailDto;
+import com.ohammer.apartner.domain.inspection.dto.InspectionUpdateDto;
 import com.ohammer.apartner.domain.inspection.service.InspectionService;
 import com.ohammer.apartner.domain.inspection.service.InspectionUserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/vi/inspection/user")
+@Tag(name = "점검 유저 api", description = "점검 유저 API")
 public class InspectionV1UserController {
     private final InspectionService inspectionService;
     private final InspectionUserService inspectionUserService;
@@ -47,17 +50,34 @@ public class InspectionV1UserController {
         }
     }
 
+    //수정
+    @PostMapping("/{id}")
+    @Operation(
+            summary = "점검 일정을 변경합니다",
+            description = "점검 일정 내용을 변경합니다"
+    )
+    public ResponseEntity<?> updateInspectionUserSchedule(@PathVariable("id") Long id, @RequestBody InspectionUpdateDto dto) {
+        try {
+            inspectionUserService.updateInspectionUser(id, dto);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
 
+        return ResponseEntity.ok().build();
+    }
+
+    //제거
+    @DeleteMapping("/{id}")
+    @Operation(
+            summary = "해당 점검 내용을 지우고 싶을때 사용합니다, 그런데 지울 일이 있을까요?",
+            description = "해당 점검 일정을 삭제합니다"
+    )
+    public ResponseEntity<?> deleteInspectionUserSchedule(@PathVariable("id") Long id) {
+        inspectionUserService.deleteUserInspection(id);
+        return ResponseEntity.ok().build();
+    }
     //그럼 누가 유저고, 매니저냐?
     //구별법은
         //시큐리티에서 role를 지정??
         //
-
-    //수정 삭제도 본인 아니면 나가리 시켜야 하니까 해줘야지
-    //수정도 해줘야지
-
-
-    //삭제도
-
-
 }
