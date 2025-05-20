@@ -21,7 +21,7 @@ public class OpinionService {
 
     private final OpinionRepository opinionRepository;
 
-    public Opinion createManagerOpinion(CreateManagerOpinionRequestDto opinion) throws AccessDeniedException {
+    public CreateManagerOpinionRequestDto createManagerOpinion(CreateManagerOpinionRequestDto opinion) throws AccessDeniedException {
 
 //        대충 유저 가져오는 로직
         User user = SecurityUtil.getCurrentUser();
@@ -36,23 +36,42 @@ public class OpinionService {
                 .anyMatch(role -> role == Role.ADMIN || role == Role.MANAGER);
 
         if (!hasRequiredRole) {
-            throw new AccessDeniedException("전체 민원 목록을 조회할 권한이 없습니다.");
+            throw new AccessDeniedException("의견을 생성할 권한이 없습니다.");
         }
 
         Opinion opinionEntity = Opinion.builder()
                 .content(opinion.getContent())
                 .user(user)
+                .title(opinion.getTitle())
                 .type(Opinion.Type.REPRESENTATIVE)
                 .build();
 
-        return opinionRepository.save(opinionEntity);
+        opinionRepository.save(opinionEntity);
+
+        return opinion;
     }
 
-    public List<AllManagerOpinionResponseDto> getAllManagerOpinion(){
+    public List<AllManagerOpinionResponseDto> getAllManagerOpinion() throws AccessDeniedException {
+
+        User user = SecurityUtil.getCurrentUser();
+
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
+        Set<Role> userRoles = user.getRoles();
+
+        boolean hasRequiredRole = userRoles.stream()
+                .anyMatch(role -> role == Role.ADMIN || role == Role.MODERATOR);
+
+        if (!hasRequiredRole) {
+            throw new AccessDeniedException("의견 목록을 조회할 권한이 없습니다.");
+        }
 
         List<Opinion> opinions = opinionRepository.findByType(Opinion.Type.REPRESENTATIVE);
 
         return opinions.stream().map(opinion -> AllManagerOpinionResponseDto.builder()
+                        .id(opinion.getId())
                         .title(opinion.getTitle())
                         .userName(opinion.getUser().getUserName())
                         .build())

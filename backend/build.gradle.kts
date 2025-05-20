@@ -78,6 +78,14 @@ dependencies {
 
     // Kotlin 지원
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    // STOMP
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    
 }
 
 // Docker Compose 설정 (정상 작동되는 버전)

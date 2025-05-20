@@ -163,7 +163,7 @@ public class ApiV1AuthController {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비활성화된 계정입니다. 관리자에게 문의하세요.");
                 case PENDING:
                     log.warn("[/login] PENDING user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정이 일시 중지되었습니다. 관리자에게 문의하세요.");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정이 정지되었습니다. 관리자에게 문의하세요.");
                 case WITHDRAWN:
                     log.warn("[/login] WITHDRAWN user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("이미 탈퇴한 계정입니다.");
