@@ -76,7 +76,7 @@ public class ComplaintController {
             @PathVariable(name = "complaintId")
             Long complainId) throws AccessDeniedException {
         complaintService.deleteComplaint(complainId);
-        return new ResponseEntity<>("민원이 삭제되었습니다.",HttpStatus.OK);
+        return new ResponseEntity<>("민원이 삭제되었습니다.",HttpStatus.NO_CONTENT);
     }
 
     @PostMapping("/status")
