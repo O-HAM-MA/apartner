@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.complaint.service;
 
 import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.CreateComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintStatusResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
@@ -69,7 +70,7 @@ public class ComplaintService {
         Set<Role> userRoles = user.getRoles();
 
         boolean hasRequiredRole = userRoles.stream()
-                .anyMatch(role -> role == Role.ADMIN || role == Role.MODERATOR);
+                .anyMatch(role -> role == Role.ADMIN || role == Role.MANAGER);
 
         if (!hasRequiredRole) {
             throw new AccessDeniedException("전체 민원 목록을 조회할 권한이 없습니다.");
@@ -105,7 +106,7 @@ public class ComplaintService {
         Set<Role> userRoles = user.getRoles();
 
         boolean hasRequiredRole = userRoles.stream()
-                .anyMatch(role -> role == Role.ADMIN || role == Role.MODERATOR);
+                .anyMatch(role -> role == Role.ADMIN || role == Role.MANAGER);
 
         if (!hasRequiredRole) {
             throw new AccessDeniedException("전체 민원 목록을 조회할 권한이 없습니다.");
@@ -132,7 +133,7 @@ public class ComplaintService {
     }
 
     // Create
-    public CreateComplaintRequestDto createComplaint(CreateComplaintRequestDto requestDto) {
+    public CreateComplaintResponseDto createComplaint(CreateComplaintRequestDto requestDto) {
 
         // 유저 찾는 로직
         User user = SecurityUtil.getCurrentUser();
@@ -149,12 +150,20 @@ public class ComplaintService {
 
         complaintRepository.save(complaint);
 
-        return requestDto;
+
+        return CreateComplaintResponseDto.builder()
+                .id(complaint.getId())
+                .title(complaint.getTitle())
+                .content(complaint.getContent())
+                .category(complaint.getCategory())
+                .userId(user.getId())
+                .createdAt(complaint.getCreatedAt())
+                .build();
     }
 
 
     // Update
-    public CreateComplaintRequestDto updateComplaint(CreateComplaintRequestDto requestDto, Long complaintId) throws AccessDeniedException {
+    public CreateComplaintResponseDto updateComplaint(CreateComplaintRequestDto requestDto, Long complaintId) throws AccessDeniedException {
 
         // 유저 찾기
         User user = SecurityUtil.getCurrentUser();
@@ -172,13 +181,20 @@ public class ComplaintService {
 
         complaintRepository.save(complaint);
 
-        return requestDto;
+        return CreateComplaintResponseDto.builder()
+                .id(complaint.getId())
+                .title(complaint.getTitle())
+                .content(complaint.getContent())
+                .category(complaint.getCategory())
+                .userId(user.getId())
+                .createdAt(complaint.getCreatedAt())
+                .build();
     }
 
     // Update
-    public UpdateComplaintStatusResponseDto updateStatus(Long comlaintId, Long status) throws Exception {
+    public UpdateComplaintStatusResponseDto updateStatus(Long complaintId, Long status) throws Exception {
 
-        Complaint complaint = complaintRepository.findById(comlaintId).orElseThrow(()->new Exception("컴플레인을 찾을 수 없습니다."));
+        Complaint complaint = complaintRepository.findById(complaintId).orElseThrow(()->new Exception("컴플레인을 찾을 수 없습니다."));
 
         User user = SecurityUtil.getCurrentUser();
 
@@ -207,13 +223,17 @@ public class ComplaintService {
     }
 
     // delete
-    public void deleteComplaint(Long complaintId) {
+    public void deleteComplaint(Long complaintId) throws AccessDeniedException {
 
         Optional<Complaint> complaint = complaintRepository.findById(complaintId);
         User user = SecurityUtil.getCurrentUser();
 
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
         // 예외 처리
-        if(!complaint.isPresent()) {
+        if(complaint.isEmpty()) {
             throw new RuntimeException("Complaint not found with id: " + complaintId);
         }
 

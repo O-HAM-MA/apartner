@@ -34,20 +34,29 @@ public class InspectionTypeV1Controller {
         return ResponseEntity.ok().body(inspectionService.showAllTypes());
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(
-            summary = "점검 항목을 삭제하기",
-            description = "삭제할 점검항목을 선택하여 삭제합니다"
-    )
-    public ResponseEntity<?> deleteType(@PathVariable(name = "id") Long id) {
-        try {
-            inspectionService.removeType(id);
-        }
-        catch (Exception e) {
-            return ResponseEntity.badRequest().body("삭제 실패했는뎁쇼");
-        }
-         return ResponseEntity.ok().build();
-    }
+    //일단은 보류
+//    @DeleteMapping("/{id}")
+//    @Operation(
+//            summary = "점검 항목을 삭제하기",
+//            description = "삭제할 점검항목을 선택하여 삭제합니다"
+//    )
+//    public ResponseEntity<?> deleteType(@PathVariable(name = "id") Long id) {
+//        try {
+//            inspectionService.removeType(id);
+//        }
+//        catch (Exception e) {
+//            return ResponseEntity.badRequest().body("삭제 실패했는뎁쇼");
+//        }
+//         return ResponseEntity.ok().build();
+//    }
+//
+//    @PostMapping("/{id}")
+//    @Operation(
+//            summary = "점검 항목을 수정하기",
+//            description = "점검항목을 선택하여 수정합니다, 그런데 쓸 일이 있을까요"
+//    ) public ResponseEntity<?> updateType(@PathVariable(name = "id") Long id) {
+//
+//    }
 
     @PostMapping("")
     @Operation(

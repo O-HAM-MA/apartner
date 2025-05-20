@@ -8,6 +8,7 @@ public enum Role {
     MODERATOR("moderator"),
     MANAGER("manager"); // 로컬에서 할 때 db에 manager로 되어있는 사람들 용
 
+
     private final String value;
 
     Role(String value) {

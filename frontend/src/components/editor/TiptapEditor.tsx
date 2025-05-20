@@ -1,0 +1,1402 @@
+'use client';
+
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Underline from '@tiptap/extension-underline';
+import type { Editor } from '@tiptap/react';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import { HTMLAttributes } from 'react';
+import { Plugin, PluginKey, NodeSelection } from 'prosemirror-state';
+import { BubbleMenu } from '@tiptap/react';
+import client from '@/lib/backend/client';
+import type { paths } from '@/lib/backend/apiV1/schema';
+
+type FileUploadResponse =
+  paths['/api/v1/notices/media/files/upload']['post']['responses']['200']['content']['*/*'];
+
+type ImageUploadResponse =
+  paths['/api/v1/notices/media/images/upload']['post']['responses']['200']['content']['*/*'];
+
+// --- 사용자 정의 이미지 속성 인터페이스 ---
+interface CustomImageAttributes extends HTMLAttributes<HTMLElement> {
+  'data-id'?: string | null;
+  'data-temp-id'?: string | null;
+  'data-align'?: 'left' | 'center' | 'right';
+}
+
+/* 리사이즈 핸들 CSS 스타일 */
+const resizeHandleStyles = {
+  position: 'absolute',
+  width: '12px',
+  height: '12px',
+  borderRadius: '50%',
+  backgroundColor: '#4263EB',
+  border: '2px solid white',
+  zIndex: 100,
+  cursor: 'nwse-resize',
+};
+
+/* 이미지 리사이즈 핸들을 렌더링하는 함수 - 전방향 핸들 추가 */
+const renderResizeHandle = () => {
+  // 새 구조에 맞게 이미지 리사이저 선택자 수정
+  const resizeHandles = document.querySelectorAll('.image-resizer');
+
+  resizeHandles.forEach((container) => {
+    // 이미 핸들이 있으면 제거 후 다시 추가
+    const existingHandles = container.querySelectorAll('.resize-trigger');
+    existingHandles.forEach((handle) => handle.remove());
+
+    // 8방향 핸들 생성 - 위치와 커서 스타일 다르게 적용
+    const handlePositions = [
+      {
+        className: 'nw',
+        style: { top: '-6px', left: '-6px', cursor: 'nw-resize' },
+      },
+      {
+        className: 'n',
+        style: {
+          top: '-6px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          cursor: 'n-resize',
+        },
+      },
+      {
+        className: 'ne',
+        style: { top: '-6px', right: '-6px', cursor: 'ne-resize' },
+      },
+      {
+        className: 'w',
+        style: {
+          top: '50%',
+          left: '-6px',
+          transform: 'translateY(-50%)',
+          cursor: 'w-resize',
+        },
+      },
+      {
+        className: 'e',
+        style: {
+          top: '50%',
+          right: '-6px',
+          transform: 'translateY(-50%)',
+          cursor: 'e-resize',
+        },
+      },
+      {
+        className: 'sw',
+        style: { bottom: '-6px', left: '-6px', cursor: 'sw-resize' },
+      },
+      {
+        className: 's',
+        style: {
+          bottom: '-6px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          cursor: 's-resize',
+        },
+      },
+      {
+        className: 'se',
+        style: { bottom: '-6px', right: '-6px', cursor: 'se-resize' },
+      },
+    ];
+
+    handlePositions.forEach(({ className, style }) => {
+      const handle = document.createElement('div');
+      handle.className = `resize-trigger resize-${className}`;
+
+      // 기본 스타일과 특정 위치 스타일 합치기
+      Object.assign(handle.style, resizeHandleStyles, style);
+
+      // 컨테이너에 핸들 추가
+      container.appendChild(handle);
+    });
+  });
+};
+
+// --- Custom Image Extension --- (기본 Image 확장)
+const CustomImage = Image.extend({
+  name: 'customImage',
+
+  // 커스텀 속성 추가
+  addAttributes() {
+    return {
+      // 기본 이미지 속성(src, alt, title 등) 상속
+      ...this.parent?.(),
+
+      // 추가: 너비 속성
+      width: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('width'),
+        renderHTML: (attributes: { width?: string | number | null }) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      // 추가: 높이 속성
+      height: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('height'),
+        renderHTML: (attributes: { height?: string | number | null }) => {
+          if (!attributes.height) return {};
+          return { height: attributes.height };
+        },
+      },
+
+      // 추가: 스타일 속성
+      style: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('style'),
+        renderHTML: (attributes: { style?: string | null }) => {
+          if (!attributes.style) return {};
+          return { style: attributes.style };
+        },
+      },
+
+      // 이미지 정렬 속성 추가
+      'data-align': {
+        default: 'center',
+        parseHTML: (element: HTMLElement) => {
+          // 상위 요소의 data-align 속성도 확인
+          if (element.parentElement?.parentElement) {
+            const wrapperAlign =
+              element.parentElement.parentElement.getAttribute('data-align');
+            if (wrapperAlign) return wrapperAlign;
+          }
+          return element.getAttribute('data-align');
+        },
+        renderHTML: (attributes: CustomImageAttributes) => {
+          if (!attributes['data-align']) {
+            return {};
+          }
+          return { 'data-align': attributes['data-align'] };
+        },
+      },
+
+      // 임시 이미지 식별용 ID
+      'data-id': {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-id'),
+        renderHTML: (attributes: CustomImageAttributes) => {
+          if (!attributes['data-id']) {
+            return {};
+          }
+          return { 'data-id': attributes['data-id'] };
+        },
+      },
+
+      // 백엔드 임시 저장 ID
+      'data-temp-id': {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute('data-temp-id'),
+        renderHTML: (attributes: CustomImageAttributes) => {
+          if (!attributes['data-temp-id']) {
+            return {};
+          }
+          return { 'data-temp-id': attributes['data-temp-id'] };
+        },
+      },
+    };
+  },
+
+  // 렌더링 HTML 수정 - 원래 구조로 돌아가기 (복잡한 구조는 오히려 문제를 일으킴)
+  renderHTML({ HTMLAttributes }) {
+    const attrs = { ...HTMLAttributes };
+    const alignClass = attrs['data-align']
+      ? `image-align-${attrs['data-align']}`
+      : '';
+
+    return [
+      'div',
+      {
+        class: `image-resizer ${alignClass}`,
+        'data-align': attrs['data-align'] || 'center',
+      },
+      ['img', attrs],
+    ];
+  },
+
+  addProseMirrorPlugins() {
+    const minWidth = 30; // 최소 이미지 너비
+
+    return [
+      new Plugin({
+        key: new PluginKey('customImageResize'),
+        props: {
+          handleDOMEvents: {
+            mousedown: (view, event) => {
+              const target = event.target as HTMLElement;
+
+              // 리사이즈 핸들 클릭 시
+              if (target.classList.contains('resize-trigger')) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const imgWrapper = target.closest(
+                  '.image-resizer'
+                ) as HTMLElement;
+                if (!imgWrapper) return false;
+
+                const img = imgWrapper.querySelector('img') as HTMLElement;
+                if (!img) return false;
+
+                const startX = event.pageX;
+                const startY = event.pageY;
+                const startWidth = img.offsetWidth;
+                const startHeight = img.offsetHeight;
+                const aspectRatio =
+                  startHeight > 0 ? startWidth / startHeight : 1;
+
+                // 리사이즈 방향 결정
+                const direction =
+                  Array.from(target.classList)
+                    .find(
+                      (cls) =>
+                        cls.startsWith('resize-') && cls !== 'resize-trigger'
+                    )
+                    ?.replace('resize-', '') || 'se';
+
+                // keepRatio: 가로세로 비율 유지 여부 (shift 키 누르고 있는지)
+                const keepRatio = event.shiftKey;
+
+                // ProseMirror 노드 위치 찾기 (개선된 방법)
+                let imgPos = -1;
+
+                // DOM에서 ProseMirror 위치 찾기 (개선된 접근 방식)
+                // 이미지 요소가 포함된 div.image-resizer 찾기
+                view.state.doc.descendants((node, pos) => {
+                  if (node.type.name === 'customImage') {
+                    // 하드코딩된 'customImage' 사용
+                    // 현재 노드의 DOM 요소 찾기
+                    const domAtPos = view.domAtPos(pos);
+                    const nodeDOM = domAtPos.node;
+
+                    // nodeDOM이 imgWrapper를 포함하거나 그 자체인지 확인
+                    if (
+                      nodeDOM &&
+                      (nodeDOM === imgWrapper ||
+                        nodeDOM.contains(imgWrapper) ||
+                        imgWrapper.contains(nodeDOM))
+                    ) {
+                      imgPos = pos;
+                      return false; // 찾으면 중단
+                    }
+                  }
+                  return true;
+                });
+
+                if (imgPos === -1) {
+                  // fallback 방법: 이미지 부모 요소에서 직접 위치 찾기 시도
+                  const domPos = view.posAtDOM(imgWrapper, 0);
+                  if (domPos && domPos >= 0) {
+                    imgPos = domPos;
+                  } else {
+                    console.error('Failed to find image node position.');
+                    return false;
+                  }
+                }
+
+                // 이미지 노드 선택
+                try {
+                  const selection = NodeSelection.create(
+                    view.state.doc,
+                    imgPos
+                  );
+                  const trSelect = view.state.tr.setSelection(selection);
+                  view.dispatch(trSelect);
+                } catch (e) {
+                  console.warn(
+                    'Could not select image node during resize start',
+                    e
+                  );
+                }
+
+                imgWrapper.classList.add('resizing');
+
+                const mousemove = (e: MouseEvent) => {
+                  // 마우스 이동 거리
+                  const deltaX = e.pageX - startX;
+                  const deltaY = e.pageY - startY;
+
+                  // 각 방향에 따라 너비와 높이 계산 로직
+                  let newWidth = startWidth;
+                  let newHeight = startHeight;
+
+                  // 방향에 따른 크기 조절
+                  switch (direction) {
+                    case 'se': // 오른쪽 아래
+                      newWidth = Math.max(minWidth, startWidth + deltaX);
+                      newHeight = keepRatio
+                        ? newWidth / aspectRatio
+                        : Math.max(minWidth, startHeight + deltaY);
+                      break;
+                    case 'sw': // 왼쪽 아래
+                      newWidth = Math.max(minWidth, startWidth - deltaX);
+                      newHeight = keepRatio
+                        ? newWidth / aspectRatio
+                        : Math.max(minWidth, startHeight + deltaY);
+                      break;
+                    case 'ne': // 오른쪽 위
+                      newWidth = Math.max(minWidth, startWidth + deltaX);
+                      newHeight = keepRatio
+                        ? newWidth / aspectRatio
+                        : Math.max(minWidth, startHeight - deltaY);
+                      break;
+                    case 'nw': // 왼쪽 위
+                      newWidth = Math.max(minWidth, startWidth - deltaX);
+                      newHeight = keepRatio
+                        ? newWidth / aspectRatio
+                        : Math.max(minWidth, startHeight - deltaY);
+                      break;
+                    case 'n': // 위
+                      newHeight = Math.max(minWidth, startHeight - deltaY);
+                      newWidth = keepRatio
+                        ? newHeight * aspectRatio
+                        : startWidth;
+                      break;
+                    case 's': // 아래
+                      newHeight = Math.max(minWidth, startHeight + deltaY);
+                      newWidth = keepRatio
+                        ? newHeight * aspectRatio
+                        : startWidth;
+                      break;
+                    case 'e': // 오른쪽
+                      newWidth = Math.max(minWidth, startWidth + deltaX);
+                      newHeight = keepRatio
+                        ? newWidth / aspectRatio
+                        : startHeight;
+                      break;
+                    case 'w': // 왼쪽
+                      newWidth = Math.max(minWidth, startWidth - deltaX);
+                      newHeight = keepRatio
+                        ? newWidth / aspectRatio
+                        : startHeight;
+                      break;
+                  }
+
+                  // 프로세미러 노드 가져오기
+                  const node = view.state.doc.nodeAt(imgPos);
+                  if (!node) return;
+
+                  // 트랜잭션 생성 및 디스패치
+                  const tr = view.state.tr.setNodeMarkup(imgPos, undefined, {
+                    ...node.attrs,
+                    width: Math.round(newWidth),
+                    height: Math.round(newHeight),
+                    style: `width: ${Math.round(
+                      newWidth
+                    )}px; height: ${Math.round(newHeight)}px;`,
+                  });
+                  view.dispatch(tr);
+                };
+
+                const mouseup = () => {
+                  document.removeEventListener('mousemove', mousemove);
+                  document.removeEventListener('mouseup', mouseup);
+                  imgWrapper.classList.remove('resizing');
+                };
+
+                document.addEventListener('mousemove', mousemove);
+                document.addEventListener('mouseup', mouseup);
+
+                return true;
+              }
+              return false;
+            },
+          },
+        },
+      }),
+    ];
+  },
+});
+
+interface TiptapEditorProps {
+  content?: string;
+  onChange?: (content: string) => void;
+  onImageUploadSuccess?: (imageId: number) => void;
+  onImageDelete?: (imageId: number) => void;
+  onFileUploadSuccess?: (fileId: number) => void;
+  onFileDelete?: (fileId: number) => void;
+  noticeId?: number;
+}
+
+const TiptapEditor = ({
+  content = '',
+  onChange,
+  onImageUploadSuccess,
+  onImageDelete,
+  onFileUploadSuccess,
+  onFileDelete,
+  noticeId,
+}: TiptapEditorProps) => {
+  const [isMounted, setIsMounted] = useState(false);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const linkButtonRef = useRef<HTMLButtonElement>(null);
+  const linkModalRef = useRef<HTMLDivElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const prevTempIdsRef = useRef<Set<string>>(new Set());
+  const prevFileIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // 모달 외부 클릭 감지를 위한 이벤트 핸들러
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showLinkModal &&
+        linkModalRef.current &&
+        !linkModalRef.current.contains(event.target as Node) &&
+        linkButtonRef.current &&
+        !linkButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowLinkModal(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showLinkModal]);
+
+  // 이미지 제거 감지 및 부모 컴포넌트에 알림
+  const handleImageNodeChanges = useCallback(
+    (editorInstance: Editor) => {
+      if (!editorInstance) return;
+
+      const currentTempIds = new Set<string>();
+      editorInstance.state.doc.descendants((node: ProseMirrorNode) => {
+        if (node.type.name === 'customImage') {
+          // data-temp-id 속성에 저장된 실제 tempId 사용
+          const tempId = node.attrs['data-temp-id'];
+          if (tempId && typeof tempId === 'string') {
+            currentTempIds.add(tempId);
+          }
+        }
+        return true;
+      });
+
+      const prevSet = prevTempIdsRef.current;
+
+      // 제거된 이미지 찾기: 이전 목록에는 있었지만 현재 목록에는 없는 ID
+      prevSet.forEach((prevId) => {
+        if (!currentTempIds.has(prevId)) {
+          onImageDelete?.(Number(prevId)); // 부모 컴포넌트에 삭제 알림
+        }
+      });
+
+      // 현재 이미지 목록으로 업데이트
+      prevTempIdsRef.current = new Set(currentTempIds);
+    },
+    [onImageDelete] // onImageDelete가 변경될 때만 함수 재생성
+  );
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        // StarterKit에는 기본적인 익스텐션만 포함 (Image 설정 제거)
+      }),
+      // CustomImage 확장 설정
+      CustomImage.configure({
+        inline: true,
+        allowBase64: true,
+      }),
+      Link.configure({
+        openOnClick: true,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'text-blue-500 hover:text-blue-600 underline',
+        },
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph', 'image'],
+        defaultAlignment: 'left',
+      }),
+      Underline,
+      Placeholder.configure({
+        placeholder: '당신의 이야기를 적어보세요...',
+        emptyEditorClass: 'is-editor-empty',
+        emptyNodeClass: 'is-empty',
+        showOnlyCurrent: true,
+        includeChildren: false,
+      }),
+    ],
+    content,
+    onUpdate: ({ editor }) => {
+      onChange?.(editor.getHTML());
+      handleImageNodeChanges(editor);
+    },
+    immediatelyRender: false,
+  });
+
+  // Prop으로 받은 content가 변경될 때 에디터 내용 업데이트
+  useEffect(() => {
+    // 에디터 인스턴스가 있고, 외부 content와 내부 HTML이 다를 때만 업데이트
+    if (editor && content !== editor.getHTML()) {
+      // false 인자는 onUpdate 콜백 반복 호출 방지
+      editor.commands.setContent(content, false);
+    }
+    // editor나 content가 변경될 때마다 이 effect 실행
+  }, [content, editor]);
+
+  // 에디터 초기 로드시 기존 이미지 추출 (editor 선언 후)
+  useEffect(() => {
+    if (!editor) return;
+    // 에디터가 로드될 때 초기 이미지 상태 설정
+    handleImageNodeChanges(editor);
+  }, [editor, handleImageNodeChanges]);
+
+  // 이미지 렌더링 후 리사이즈 핸들 추가를 위한 useEffect
+  useEffect(() => {
+    if (!editor) return;
+
+    // 에디터 업데이트 시 리사이즈 핸들 렌더링 (필요 시)
+    const handleUpdate = () => {
+      // DOM 업데이트 후 핸들 렌더링 보장
+      requestAnimationFrame(() => {
+        renderResizeHandle();
+      });
+    };
+
+    editor.on('update', handleUpdate);
+
+    // 초기 로딩 시에도 핸들 렌더링
+    handleUpdate();
+
+    return () => {
+      editor.off('update', handleUpdate);
+    };
+    // renderResizeHandle 함수 자체는 의존성이 아님
+  }, [editor]);
+
+  const handleImageUpload = useCallback(
+    async (files: FileList | null) => {
+      if (files === null || !editor || isUploading) return;
+
+      const file = files[0];
+      if (!file) return;
+
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`이미지 크기가 너무 큽니다. 5MB 이하의 이미지를 사용해주세요.`);
+        return;
+      }
+
+      const tempId = crypto.randomUUID();
+      let insertPos: number | null = null;
+
+      try {
+        setIsUploading(true);
+
+        // 이미지 업로드 중임을 표시하는 텍스트 노드 삽입
+        const loadingText = editor.schema.nodes.paragraph.create({}, [
+          editor.schema.text('이미지 업로드 중...'),
+        ]);
+        const tr = editor.state.tr;
+        insertPos = tr.selection.from;
+        tr.replaceSelectionWith(loadingText);
+        editor.view.dispatch(tr);
+
+        // FormData 생성
+        const formData = new FormData();
+        formData.append('files', file);
+
+        const response = await fetch('/api/v1/notices/media/images/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('이미지 업로드에 실패했습니다.');
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error('이미지 업로드 응답이 유효하지 않습니다.');
+        }
+
+        const imageId = data[0];
+        const imageUrl = `/api/v1/notices/media/images/${imageId}`;
+
+        // 로딩 텍스트를 이미지로 교체
+        if (insertPos !== null) {
+          const updateTr = editor.state.tr;
+          updateTr.delete(insertPos, insertPos + 1); // 로딩 텍스트 삭제
+          updateTr.insert(
+            insertPos,
+            editor.schema.nodes.customImage.create({
+              src: imageUrl,
+              'data-id': String(imageId),
+              'data-temp-id': tempId,
+              'data-align': 'center',
+            })
+          );
+          editor.view.dispatch(updateTr);
+          onImageUploadSuccess?.(imageId);
+        }
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error);
+        if (error instanceof Error) {
+          alert(error.message);
+        } else {
+          alert('이미지 업로드에 실패했습니다.');
+        }
+
+        // 로딩 텍스트 제거
+        if (insertPos !== null) {
+          const tr = editor.state.tr;
+          tr.delete(insertPos, insertPos + 1);
+          editor.view.dispatch(tr);
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [editor, isUploading, onImageUploadSuccess]
+  );
+
+  const addImage = useCallback(() => {
+    if (!isMounted || !editor) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      e.preventDefault(); // 이벤트 전파 방지
+      handleImageUpload((e.target as HTMLInputElement).files);
+      input.value = '';
+    };
+    input.click();
+  }, [editor, handleImageUpload, isMounted]);
+
+  const addLink = useCallback(() => {
+    if (!editor) return;
+
+    // 모달 열기
+    setLinkUrl('');
+    setShowLinkModal(true);
+  }, [editor]);
+
+  // 링크 모달에서 취소 버튼 클릭 시 처리하는 함수
+  const handleLinkCancel = useCallback(() => {
+    setShowLinkModal(false);
+    setLinkUrl('');
+  }, []);
+
+  // 링크 모달에서 확인 버튼 클릭 시 처리하는 함수
+  const handleLinkConfirm = useCallback(() => {
+    if (!editor || !linkUrl.trim()) return;
+
+    // HTML 앵커 태그로 감싸서 삽입
+    const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkUrl}</a>`;
+    editor.chain().focus().insertContent(linkHtml).run();
+
+    // 모달 닫기
+    setShowLinkModal(false);
+    setLinkUrl('');
+  }, [editor, linkUrl]);
+
+  // 이미지 정렬 함수
+  const alignImage = useCallback(
+    (align: 'left' | 'center' | 'right') => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus()
+        .updateAttributes('customImage', { 'data-align': align })
+        .run();
+    },
+    [editor]
+  );
+
+  const handleFileUpload = useCallback(
+    async (files: FileList | null) => {
+      if (files === null || !editor || isUploading) return;
+
+      const file = files[0];
+      if (!file) return;
+
+      const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`파일 크기가 너무 큽니다. 50MB 이하의 파일을 사용해주세요.`);
+        return;
+      }
+
+      try {
+        setIsUploading(true);
+
+        // FormData 생성
+        const formData = new FormData();
+        formData.append('files', file);
+
+        const response = await fetch('/api/v1/notices/media/files/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('파일 업로드에 실패했습니다.');
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error('파일 업로드 응답이 유효하지 않습니다.');
+        }
+
+        const fileId = data[0];
+        const fileUrl = `/api/v1/notices/media/files/${fileId}`;
+
+        // 파일 링크 삽입
+        const fileLink = `<a href="${fileUrl}" 
+          class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg my-2" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          data-file-id="${fileId}">
+          <span class="material-icons mr-2" style="font-size: 20px;">description</span>
+          <span class="text-sm">${file.name}</span>
+        </a>`;
+
+        editor.chain().focus().insertContent(fileLink).run();
+        onFileUploadSuccess?.(fileId);
+      } catch (error) {
+        console.error('파일 업로드 실패:', error);
+        if (error instanceof Error) {
+          alert(error.message);
+        } else {
+          alert('파일 업로드에 실패했습니다.');
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [editor, isUploading, onFileUploadSuccess]
+  );
+
+  const addFile = useCallback(() => {
+    if (!isMounted || !editor) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.hwp,.txt,.xlsx,.pptx'; // 허용할 파일 형식 지정
+    input.onchange = (e) => {
+      handleFileUpload((e.target as HTMLInputElement).files);
+      input.value = '';
+    };
+    input.click();
+  }, [editor, handleFileUpload, isMounted]);
+
+  if (!editor || !isMounted) return null;
+
+  return (
+    <div className="prose max-w-none codemirror-like-editor">
+      <div className="flex items-center flex-wrap p-[12px] border-b w-full bg-[#ffffff]">
+        <div className="flex mr-2">
+          <button
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 1 }).run()
+            }
+            className={`p-2 hover:bg-gray-300 border-none outline-none ${
+              editor.isActive('heading', { level: 1 })
+                ? 'bg-gray-300 text-black'
+                : 'text-gray-600 bg-transparent'
+            }`}
+            title="제목 1"
+          >
+            <span className="text-lg font-semibold">H1</span>
+          </button>
+          <button
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 2 }).run()
+            }
+            className={`p-2 hover:bg-gray-300 border-none outline-none ${
+              editor.isActive('heading', { level: 2 })
+                ? 'bg-gray-300 text-black'
+                : 'text-gray-600 bg-transparent'
+            }`}
+            title="제목 2"
+          >
+            <span className="text-lg font-semibold">H2</span>
+          </button>
+          <button
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 3 }).run()
+            }
+            className={`p-2 hover:bg-gray-300 border-none outline-none ${
+              editor.isActive('heading', { level: 3 })
+                ? 'bg-gray-300 text-black'
+                : 'text-gray-600 bg-transparent'
+            }`}
+            title="제목 3"
+          >
+            <span className="text-lg font-semibold">H3</span>
+          </button>
+        </div>
+
+        <div className="flex items-center mx-2 text-gray-400">
+          <span>|</span>
+        </div>
+
+        <button
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('bold') ? 'bg-gray-300' : ''
+          }`}
+          title="굵게"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            format_bold
+          </span>
+        </button>
+
+        <button
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('italic') ? 'bg-gray-300' : ''
+          }`}
+          title="기울임"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            format_italic
+          </span>
+        </button>
+
+        <button
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('underline') ? 'bg-gray-300' : ''
+          }`}
+          title="밑줄"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            format_underlined
+          </span>
+        </button>
+
+        <div className="flex items-center mx-2 text-gray-400">
+          <span>|</span>
+        </div>
+
+        <div className="flex mx-1">
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            className={`p-2 hover:bg-gray-300 border-none outline-none bg-transparent ${
+              editor.isActive({ textAlign: 'left' }) ? 'bg-gray-300' : ''
+            }`}
+            title="왼쪽 정렬"
+          >
+            <span className="material-icons" style={{ fontSize: '20px' }}>
+              format_align_left
+            </span>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            className={`p-2 hover:bg-gray-300 border-none outline-none bg-transparent ${
+              editor.isActive({ textAlign: 'center' }) ? 'bg-gray-300' : ''
+            }`}
+            title="가운데 정렬"
+          >
+            <span className="material-icons" style={{ fontSize: '20px' }}>
+              format_align_center
+            </span>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            className={`p-2 hover:bg-gray-300 border-none outline-none bg-transparent ${
+              editor.isActive({ textAlign: 'right' }) ? 'bg-gray-300' : ''
+            }`}
+            title="오른쪽 정렬"
+          >
+            <span className="material-icons" style={{ fontSize: '20px' }}>
+              format_align_right
+            </span>
+          </button>
+        </div>
+
+        <div className="flex items-center mx-2 text-gray-400">
+          <span>|</span>
+        </div>
+
+        <button
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('blockquote') ? 'bg-gray-300' : ''
+          }`}
+          title="인용구"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            format_quote
+          </span>
+        </button>
+
+        <button
+          onClick={addLink}
+          ref={linkButtonRef}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('link') ? 'bg-gray-300' : ''
+          }`}
+          title="링크"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            link
+          </span>
+        </button>
+
+        <button
+          onClick={addImage}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            isUploading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          title="이미지"
+          disabled={isUploading}
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            {isUploading ? 'hourglass_empty' : 'image'}
+          </span>
+        </button>
+
+        <button
+          onClick={addFile}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            isUploading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          title="파일"
+          disabled={isUploading}
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            {isUploading ? 'hourglass_empty' : 'attach_file'}
+          </span>
+        </button>
+
+        <div className="flex items-center mx-2 text-gray-400">
+          <span>|</span>
+        </div>
+
+        <button
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('codeBlock') ? 'bg-gray-300' : ''
+          }`}
+          title="코드 블록"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            code
+          </span>
+        </button>
+
+        <button
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('bulletList') ? 'bg-gray-300' : ''
+          }`}
+          title="글머리 기호"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            format_list_bulleted
+          </span>
+        </button>
+
+        <button
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
+            editor.isActive('orderedList') ? 'bg-gray-300' : ''
+          }`}
+          title="번호 매기기"
+        >
+          <span className="material-icons" style={{ fontSize: '20px' }}>
+            format_list_numbered
+          </span>
+        </button>
+      </div>
+
+      <div className="CodeMirror-scroll" ref={editorContainerRef}>
+        <div className="CodeMirror-sizer">
+          <div style={{ position: 'relative', top: '0px' }}>
+            <div className="CodeMirror-lines" role="presentation">
+              <div
+                role="presentation"
+                style={{ position: 'relative', outline: 'none' }}
+              >
+                <div className="tiptap-content-wrapper">
+                  <EditorContent className="h-full" editor={editor} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 이미지를 위한 버블 메뉴 추가 */}
+      {editor && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 100 }}
+          shouldShow={({ editor }) => editor.isActive('customImage')}
+        >
+          <div className="flex bg-white shadow-lg rounded-lg p-2">
+            <button
+              onClick={() => alignImage('left')}
+              className={`p-1 mx-1 hover:bg-gray-200 rounded ${
+                editor.isActive('customImage', { 'data-align': 'left' })
+                  ? 'bg-gray-300'
+                  : ''
+              }`}
+            >
+              <span className="material-icons" style={{ fontSize: '20px' }}>
+                format_align_left
+              </span>
+            </button>
+            <button
+              onClick={() => alignImage('center')}
+              className={`p-1 mx-1 hover:bg-gray-200 rounded ${
+                editor.isActive('customImage', { 'data-align': 'center' })
+                  ? 'bg-gray-300'
+                  : ''
+              }`}
+            >
+              <span className="material-icons" style={{ fontSize: '20px' }}>
+                format_align_center
+              </span>
+            </button>
+            <button
+              onClick={() => alignImage('right')}
+              className={`p-1 mx-1 hover:bg-gray-200 rounded ${
+                editor.isActive('customImage', { 'data-align': 'right' })
+                  ? 'bg-gray-300'
+                  : ''
+              }`}
+            >
+              <span className="material-icons" style={{ fontSize: '20px' }}>
+                format_align_right
+              </span>
+            </button>
+          </div>
+        </BubbleMenu>
+      )}
+
+      {/* 링크 삽입 모달 */}
+      {showLinkModal && (
+        <div
+          className="absolute z-50"
+          style={{
+            top: linkButtonRef.current
+              ? linkButtonRef.current.offsetTop +
+                linkButtonRef.current.offsetHeight +
+                5
+              : 0,
+            left: linkButtonRef.current ? linkButtonRef.current.offsetLeft : 0,
+          }}
+          ref={linkModalRef}
+        >
+          <div
+            className="bg-[#ffffff] p-4 rounded-lg shadow-lg border border-gray-200"
+            style={{ width: '320px' }}
+          >
+            <h3 className="text-base font-medium mb-3 m-[10px]">링크 삽입</h3>
+            <input
+              type="text"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="URL 입력"
+              className="w-full px-3 py-2 border border-gray-300 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-[#980ffa] m-[10px]"
+              style={{ width: '270px' }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleLinkConfirm();
+                }
+              }}
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleLinkCancel}
+                className="px-3 py-1 bg-gray-200 text-[#000000] rounded hover:bg-gray-300 m-[10px] border-none rounded-[10px] p-[5px]"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleLinkConfirm}
+                className="px-3 py-1 bg-[#980ffa] text-[#ffffff] rounded hover:bg-[#8e44ad] m-[10px] border-none  rounded-[10px] p-[5px]"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+        .codemirror-like-editor {
+          font-family: monospace;
+          height: 100%;
+          font-size: 14px;
+          position: relative;
+        }
+
+        .CodeMirror-scroll {
+          min-height: 300px;
+          border: 1px solid #f9fafb;
+          border-radius: 4px;
+          overflow: auto;
+          position: relative;
+          background: #ffffff;
+          padding: 16px;
+        }
+
+        .is-editor-empty:first-child::before {
+          content: attr(data-placeholder);
+          float: left;
+          color: #aaa;
+          pointer-events: none;
+          height: 0;
+        }
+
+        .ProseMirror {
+          outline: none;
+          padding: 8px;
+          caret-color: #000;
+          min-height: calc(100% - 16px);
+          background: #ffffff;
+        }
+
+        .ProseMirror p.is-empty:first-child::before {
+          content: attr(data-placeholder);
+          float: left;
+          color: #aaa;
+          pointer-events: none;
+          height: 0;
+        }
+
+        .tiptap-content-wrapper {
+          background: #ffffff;
+          border-radius: 15px;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .tiptap-content-wrapper .ProseMirror {
+          outline: none;
+          height: auto;
+          overflow-y: auto;
+          min-height: 300px;
+          padding: 16px 20px;
+          background: #ffffff;
+        }
+
+        .ProseMirror p.is-empty:first-child::before {
+          color: #9ca3af;
+          content: '당신의 이야기를 적어보세요...';
+        }
+
+        .tiptap-content-wrapper .ProseMirror {
+          outline: none;
+        }
+
+        .tiptap-content-wrapper img {
+          max-width: 100%;
+          margin: 0 auto;
+          display: block;
+        }
+
+        /* 전역 정렬 스타일 추가 */
+        [data-text-align='center'] {
+          text-align: center !important;
+        }
+
+        [data-text-align='right'] {
+          text-align: right !important;
+        }
+
+        [data-text-align='left'] {
+          text-align: left !important;
+        }
+
+        /* 이미지 정렬 관련 스타일 - .image-resizer에 직접 적용 */
+        .image-resizer.image-align-left {
+          margin-left: 0 !important;
+          margin-right: auto !important;
+        }
+
+        .image-resizer.image-align-center {
+          margin-left: auto !important;
+          margin-right: auto !important;
+        }
+
+        .image-resizer.image-align-right {
+          margin-left: auto !important;
+          margin-right: 0 !important;
+        }
+
+        /* 이미지 리사이저 스타일 - display: table 로 변경 */
+        .image-resizer {
+          /* display: block; */
+          display: table; /* 변경: 너비를 콘텐츠(이미지)에 맞춤 */
+          position: relative;
+          /* margin-top/bottom 제거 - 필요 시 img에 적용 */
+          /* margin-top: 0.5em; */
+          /* margin-bottom: 0.5em; */
+          max-width: 100%;
+          /* box-shadow 제거 - 선택 시에만 표시 */
+          /* box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); */
+          border-radius: 2px;
+          overflow: visible;
+          line-height: 0; /* 이미지 아래 여백 제거 */
+        }
+
+        /* 이미지 자체의 스타일 */
+        .image-resizer img {
+          display: block; /* 유지 */
+          max-width: 100%;
+          border-radius: 2px;
+          /* 필요 시 여기에 마진 추가 */
+          margin-top: 0.5em;
+          margin-bottom: 0.5em;
+        }
+
+        /* 리사이징 중인 이미지에 강조 표시 */
+        .image-resizer.resizing {
+          outline: 2px solid #4263eb;
+          box-shadow: 0 0 8px rgba(66, 99, 235, 0.5);
+        }
+
+        /* 전방향 리사이즈 핸들 스타일 */
+        .image-resizer .resize-trigger {
+          position: absolute !important;
+          width: 12px !important;
+          height: 12px !important;
+          border-radius: 50% !important;
+          background-color: #4263eb !important;
+          border: 2px solid white !important;
+          z-index: 9999 !important;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.5) !important;
+          pointer-events: auto !important;
+        }
+
+        .image-resizer:hover .resize-trigger {
+          opacity: 1 !important;
+        }
+
+        /* 드래그 중에는 항상 표시 */
+        .image-resizer:active .resize-trigger {
+          opacity: 1 !important;
+        }
+
+        /* ProseMirror 선택 노드일 때 항상 표시 */
+        .ProseMirror-selectednode .resize-trigger {
+          opacity: 1 !important;
+        }
+
+        /* 이미지가 선택됐을 때 하이라이트 효과 - .image-resizer에 적용 */
+        .image-resizer.ProseMirror-selectednode {
+          outline: 2px solid #4263eb;
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); /* 선택 시 그림자 추가 */
+          border-radius: 2px;
+        }
+
+        /* --- 헤딩 스타일 정리 시작 --- */
+        .ProseMirror h1,
+        .ProseMirror h2,
+        .ProseMirror h3,
+        .ProseMirror h4,
+        .ProseMirror h5,
+        .ProseMirror h6 {
+          font-weight: bold;
+          margin-bottom: 0.5em;
+          color: #000000; /* 헤딩 색상 기본값 */
+        }
+
+        .ProseMirror h1 {
+          font-size: 28px;
+          line-height: 1.2;
+          margin-top: 0.8em;
+        }
+
+        .ProseMirror h2 {
+          font-size: 24px;
+          line-height: 1.3;
+          margin-top: 0.7em;
+        }
+
+        .ProseMirror h3 {
+          font-size: 20px;
+          line-height: 1.4;
+          margin-top: 0.6em;
+        }
+        /* --- 헤딩 스타일 정리 끝 --- */
+
+        .ProseMirror blockquote {
+          border-left: 3px solid #000000;
+          padding-left: 1em;
+          margin-left: 0;
+          color: #000000; /* blockquote 색상 추가 */
+        }
+
+        .ProseMirror pre {
+          background-color: #f5f5f5;
+          padding: 0.5em;
+          border-radius: 4px;
+          font-family: 'Courier New', Courier, monospace;
+          border: 1px solid #f9fafb;
+        }
+
+        .ProseMirror ul,
+        .ProseMirror ol {
+          padding-left: 1em;
+          color: #000000; /* 리스트 전체 색상 */
+        }
+
+        /* 리스트 마커 스타일 */
+        .ProseMirror ul {
+          list-style-type: disc;
+        }
+        .ProseMirror ol {
+          list-style-type: decimal;
+        }
+        .ProseMirror ul li::marker,
+        .ProseMirror ol li::marker {
+          color: #000000; /* 마커 색상 명시 */
+        }
+
+        /* 기존에 있던 색상 강제 적용 부분에서 헤딩 제거 */
+        .ProseMirror blockquote,
+        .ProseMirror ul li::marker,
+        .ProseMirror ol li::marker {
+          /* color: #000000 !important; <- 이 규칙은 각 요소 스타일에 포함시켰으므로 제거 */
+        }
+
+        /* 기존 tiptap-content-wrapper 관련 헤딩 스타일 제거 */
+        /*
+        .tiptap-content-wrapper h1 { ... }
+        .tiptap-content-wrapper h2 { ... }
+        .tiptap-content-wrapper h3 { ... }
+        */
+
+        /* 이미지 내부 img 태그 스타일 */
+        .image-resizer img {
+          display: block;
+          max-width: 100%;
+          border-radius: 2px;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default TiptapEditor;

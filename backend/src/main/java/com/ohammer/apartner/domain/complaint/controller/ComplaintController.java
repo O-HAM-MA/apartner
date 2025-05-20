@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.complaint.controller;
 
 import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintRequestDto;
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.CreateComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintStatusResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.service.ComplaintService;
@@ -47,22 +48,22 @@ public class ComplaintController {
     @Operation(summary = "민원 등록", description = "새로운 민원을 등록합니다")
     public ResponseEntity<?> createComplaint(@RequestBody CreateComplaintRequestDto requestDto) {
 
-        CreateComplaintRequestDto response = complaintService.createComplaint(requestDto);
+        CreateComplaintResponseDto response = complaintService.createComplaint(requestDto);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{complaintId}")
     @Operation(summary = "민원 수정", description = "민원 ID로 기존 민원을 수정합니다")
     public ResponseEntity<?> updateComplaint(@PathVariable(name = "complaintId") Long complaintId, @RequestBody CreateComplaintRequestDto requestDto) throws AccessDeniedException {
-        CreateComplaintRequestDto response = complaintService.updateComplaint(requestDto,complaintId);
+        CreateComplaintResponseDto response = complaintService.updateComplaint(requestDto,complaintId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     // status를 뭐로 받을지는 생각해봐야할듯 숫자 or 문자열
     @PatchMapping("/{complaintId}/status")
     @Operation(summary = "민원 상태 변경", description = "민원의 상태(PENDING, IN_PROGRESS 등)를 변경합니다")
-    public ResponseEntity<?> updateComplaintStatus(@PathVariable(name = "complainId") Long complainId, @RequestParam(name = "status") Long status) throws Exception {
+    public ResponseEntity<?> updateComplaintStatus(@PathVariable(name = "complaintId") Long complainId, @RequestParam(name = "status") Long status) throws Exception {
 
         UpdateComplaintStatusResponseDto response = complaintService.updateStatus(complainId, status);
 
@@ -72,10 +73,10 @@ public class ComplaintController {
     @DeleteMapping("/{complaintId}")
     @Operation(summary = "민원 삭제", description = "민원 ID를 이용해 민원을 삭제합니다")
     public ResponseEntity<?> deleteComplaint(
-            @PathVariable(name = "complainId")
-            Long complainId){
+            @PathVariable(name = "complaintId")
+            Long complainId) throws AccessDeniedException {
         complaintService.deleteComplaint(complainId);
-        return new ResponseEntity<>("민원이 삭제되었습니다.",HttpStatus.OK);
+        return new ResponseEntity<>("민원이 삭제되었습니다.",HttpStatus.NO_CONTENT);
     }
 
     @PostMapping("/status")

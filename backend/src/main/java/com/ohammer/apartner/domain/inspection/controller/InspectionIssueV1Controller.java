@@ -4,6 +4,7 @@ import com.ohammer.apartner.domain.inspection.dto.InspectionIssueDto;
 import com.ohammer.apartner.domain.inspection.dto.IssueResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
 import com.ohammer.apartner.domain.inspection.service.InspectionIssueService;
+import com.ohammer.apartner.domain.inspection.service.InspectionService;
 import com.ohammer.apartner.security.CustomUserDetailsService;
 import com.ohammer.apartner.security.OAuth.CustomRequest;
 import com.ohammer.apartner.security.jwt.JwtTokenizer;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "점검 이슈 api", description = "점검 이슈 API")
 public class InspectionIssueV1Controller {
     private final InspectionIssueService inspectionIssueService;
+    private final InspectionService inspectionService;
 
     //이슈 생성
     @PostMapping("{id}/create")
@@ -31,9 +33,8 @@ public class InspectionIssueV1Controller {
     public ResponseEntity<?> makeInspectionIssue(@PathVariable(name = "id")Long id,
                                                  @RequestBody InspectionIssueDto dto) {
         try {
-
-
             inspectionIssueService.makeInspectionIssue(id, dto.getDescription());
+            inspectionService.IssueInspection(id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("이슈 생성 실패");

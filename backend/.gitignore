@@ -40,6 +40,10 @@ src/test/generated_tests
 ### VS Code ###
 .vscode/
 
+### Custom ###
 **/application-secret.yml
 application-secret.yml
 **/.cursor/rules
+
+### OpenAPI Swagger ###
+apiV1.json

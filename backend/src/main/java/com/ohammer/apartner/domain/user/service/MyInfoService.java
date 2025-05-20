@@ -31,9 +31,8 @@ public class MyInfoService {
     private final ApartmentRepository apartmentRepository;
     private final BuildingRepository buildingRepository;
     private final UnitRepository unitRepository;
-    private final PasswordEncoder passwordEncoder; // PasswordEncoder 주입
+    private final PasswordEncoder passwordEncoder; 
 
-    //사용자 정보 가져오기
     public MyInfoResponseDto getMyInfo(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
@@ -69,15 +68,11 @@ public class MyInfoService {
         }
 
         if (requestDto.getEmail() != null && !requestDto.getEmail().isEmpty() && !requestDto.getEmail().equals(user.getEmail())) {
-            // TODO: 이메일 변경 시 인증 절차 필요 (별도 기능으로 분리 권장)
             log.warn("이메일 변경 요청됨: {} -> {}. 인증 절차 필요.", user.getEmail(), requestDto.getEmail());
-            // user.setEmail(requestDto.getEmail());
         }
         
         if (requestDto.getPhoneNum() != null && !requestDto.getPhoneNum().isEmpty()) {
-            // TODO: 휴대폰 번호 변경 시 인증 절차 필요 (별도 기능으로 분리 권장)
              log.warn("휴대폰 번호 변경 요청됨: {} -> {}. 인증 절차 필요.", user.getPhoneNum(), requestDto.getPhoneNum());
-            // user.setPhoneNum(requestDto.getPhoneNum());
         }
 
         if (requestDto.getApartmentId() != null) {
@@ -102,7 +97,6 @@ public class MyInfoService {
         userRepository.save(user);
     }
 
-    // 비밀번호 변경
     @Transactional
     public void changePassword(String userEmail, ResetPasswordRequest request) {
         User user = userRepository.findByEmail(userEmail)
@@ -115,7 +109,7 @@ public class MyInfoService {
             throw new UserException(UserErrorCode.CURRENT_PASSWORD_NOT_MATCH);
         }
         if (user.getPassword() == null && request.getCurrentPassword() != null && !request.getCurrentPassword().isEmpty()) {
-             throw new UserException(UserErrorCode.CURRENT_PASSWORD_NOT_MATCH); // 혹은 다른 적절한 에러 코드
+             throw new UserException(UserErrorCode.CURRENT_PASSWORD_NOT_MATCH); 
         }
 
         if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {

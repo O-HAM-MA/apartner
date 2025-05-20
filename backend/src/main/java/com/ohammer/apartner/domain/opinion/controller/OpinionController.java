@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.opinion.controller;
 
 import com.ohammer.apartner.domain.opinion.dto.request.CreateManagerOpinionRequestDto;
 import com.ohammer.apartner.domain.opinion.dto.response.AllManagerOpinionResponseDto;
+import com.ohammer.apartner.domain.opinion.dto.response.CreateManagerOpinionResponseDto;
 import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.opinion.service.OpinionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,9 +27,9 @@ public class OpinionController {
     @Operation(summary = "동 대표 의견 생성", description = "권한이 매니저인 유저의 의견 생성")
     public ResponseEntity<?> addManagerOpinion(@RequestBody CreateManagerOpinionRequestDto requestDto) throws AccessDeniedException {
 
-        CreateManagerOpinionRequestDto response = opinionService.createManagerOpinion(requestDto);
+        CreateManagerOpinionResponseDto response = opinionService.createManagerOpinion(requestDto);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/manager")

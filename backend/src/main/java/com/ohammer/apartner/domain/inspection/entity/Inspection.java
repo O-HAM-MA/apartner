@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.inspection.entity;
 
 import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -40,5 +41,9 @@ public class Inspection extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "result")
     private Result result;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private Status status;
 
 } 
