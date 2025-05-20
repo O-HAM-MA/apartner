@@ -31,11 +31,11 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 소통 게시판 글 목록 조회")
     @GetMapping
     public List<CommunityResponseDto> list() {
-        User user = SecurityUtil.getCurrentUser();
+
         //boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
         boolean isAdmin = false;
 
-        return communityService.listPosts(isAdmin);
+        return communityService.listPosts();
     }
 
     @Operation(summary = "해당 입주민이 작성한 글 수정")
