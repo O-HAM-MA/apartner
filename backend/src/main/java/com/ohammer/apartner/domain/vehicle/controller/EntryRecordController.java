@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "출입 기록 관리 api")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/entry-records")

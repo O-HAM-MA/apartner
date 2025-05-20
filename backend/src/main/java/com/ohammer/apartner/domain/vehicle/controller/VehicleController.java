@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "차량 관리 api")
 @RestController
 @RequestMapping("/api/v1/vehicles")
 @RequiredArgsConstructor
