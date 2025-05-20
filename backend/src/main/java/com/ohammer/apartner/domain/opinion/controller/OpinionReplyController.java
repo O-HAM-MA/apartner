@@ -1,9 +1,10 @@
 package com.ohammer.apartner.domain.opinion.controller;
 
 import com.ohammer.apartner.domain.opinion.dto.request.CreateOpinionReplyRequestDto;
-import com.ohammer.apartner.domain.opinion.dto.request.UpdateOpinionRequestDto;
+import com.ohammer.apartner.domain.opinion.dto.request.UpdateOpinionReplyRequestDto;
+import com.ohammer.apartner.domain.opinion.dto.response.CreateOpinionReplyResponseDto;
 import com.ohammer.apartner.domain.opinion.dto.response.OpinionReplyResponseDto;
-import com.ohammer.apartner.domain.opinion.entity.OpinionReply;
+import com.ohammer.apartner.domain.opinion.dto.response.UpdateOpinionReplyResponseDto;
 import com.ohammer.apartner.domain.opinion.service.OpinionReplyService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -33,15 +34,15 @@ public class OpinionReplyController {
     @PostMapping("/{opinionId}")
     public ResponseEntity<?> createOpinionReply(@PathVariable Long opinionId, @RequestBody CreateOpinionReplyRequestDto requestDto) throws AccessDeniedException {
 
-        CreateOpinionReplyRequestDto response = opinionReplyService.saveOpinionReply(opinionId, requestDto);
+        CreateOpinionReplyResponseDto response = opinionReplyService.saveOpinionReply(opinionId, requestDto);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{replyId}")
-    public ResponseEntity<?> updateOpinionReply(@PathVariable Long replyId, @RequestBody UpdateOpinionRequestDto requestDto) throws Exception {
+    public ResponseEntity<?> updateOpinionReply(@PathVariable Long replyId, @RequestBody UpdateOpinionReplyRequestDto requestDto) throws Exception {
 
-        UpdateOpinionRequestDto response = opinionReplyService.updateOpinionReply(replyId, requestDto);
+        UpdateOpinionReplyResponseDto response = opinionReplyService.updateOpinionReply(replyId, requestDto);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
