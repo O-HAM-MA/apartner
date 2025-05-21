@@ -27,13 +27,13 @@ public class StompChatController {
     private final ChatService chatService; // 채팅 메시지 저장 및 조회 서비스
     private final SimpMessagingTemplate simpMessagingTemplate; // 메시지 전송 템플릿 : 서버에서 클라이언트로 메시지를 보낼 때 사용하는 경로
     private final UserRepository userRepository; // 임시 방편으로 사용자 ID를 직접 찾기 위해 추가
+    private final SecurityUtil securityUtil; // 현재 인증된 사용자 정보
 
     @MessageMapping("/chats/{chatroomId}") // 클라이언트에서 메시지를 보낼 때 사용하는 경로
     @SendTo("/sub/chats/{chatroomId}") // 서버에서 클라이언트로 메시지를 보낼 때 사용하는 경로
     public ChatMessageDto handleChatMessage( // 채팅 메시지 수신 및 저장, 구독자에게 전달
-                                         SecurityUtil securityUtil, // 현재 인증된 사용자 정보
                                          @Payload Map<String, String> payload, // 클라이언트에서 보낸 메시지 데이터
-                                         @DestinationVariable Long chatroomId // 채팅방 ID
+                                         @DestinationVariable("chatroomId") Long chatroomId // 채팅방 ID
                                          ) {
         try {
             log.info("========== 메시지 처리 시작 - 채팅방: {} ==========", chatroomId);
@@ -72,6 +72,22 @@ public class StompChatController {
             log.info("[메시지 처리] 최종 사용자 ID: {}, 이름: {}", currentUser.getId(), currentUser.getUserName());
             log.info("[메시지 처리] 메시지 내용: {}", payload.get("message"));
             log.info("[메시지 처리] 채팅방 ID: {}", chatroomId);
+            
+            // 채팅방 참여 여부 확인 및 자동 참여 처리
+            try {
+                if (!chatService.isUserInChatroom(currentUser.getId(), chatroomId)) {
+                    log.info("[메시지 처리] 사용자가 채팅방에 참여하지 않았으므로 자동 참여 처리를 시도합니다. 사용자 ID: {}, 채팅방 ID: {}", 
+                            currentUser.getId(), chatroomId);
+                    chatService.joinChatroom(currentUser, chatroomId, null);
+                    log.info("[메시지 처리] 사용자의 채팅방 자동 참여 처리 완료");
+                } else {
+                    log.info("[메시지 처리] 사용자가 이미 채팅방에 참여 중입니다. 사용자 ID: {}, 채팅방 ID: {}", 
+                            currentUser.getId(), chatroomId);
+                }
+            } catch (Exception e) {
+                log.error("[메시지 처리] 채팅방 참여 여부 확인 또는 자동 참여 중 오류 발생: {}", e.getMessage(), e);
+                // 오류가 발생해도 메시지 처리는 계속 진행
+            }
             
             // 메시지 db에 저장
             Message message = chatService.saveMessage(currentUser, chatroomId, payload.get("message"));

@@ -36,6 +36,7 @@ import { format, isToday, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Spinner } from "@/components/ui/spinner";
 import type { ChatroomType, ChatMessageType } from "@/types/chat";
+import { getUserChatrooms } from "@/utils/api";
 
 // 메인 컴포넌트를 UserChatProvider로 감싸는 래퍼
 export default function UserChatPage() {
@@ -71,6 +72,30 @@ function UserChat() {
   const filteredChatrooms = chatrooms.filter((chatroom) =>
     chatroom.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // 디버깅용 Effect 추가: 직접 API 호출 시도
+  useEffect(() => {
+    async function fetchChatrooms() {
+      try {
+        console.log("[UserChat] API 직접 호출로 채팅방 목록 가져오기...");
+        const apiResponse: any = await getUserChatrooms();
+        console.log("[UserChat] API 직접 호출 결과:", apiResponse);
+        console.log(
+          "[UserChat] 채팅방 수 (직접 호출):",
+          Array.isArray(apiResponse)
+            ? apiResponse.length
+            : apiResponse?.data
+            ? apiResponse.data.length
+            : "데이터 없음"
+        );
+      } catch (error) {
+        console.error("[UserChat] API 직접 호출 오류:", error);
+      }
+    }
+
+    // 컴포넌트 마운트 시 한 번만 실행
+    fetchChatrooms();
+  }, []);
 
   useEffect(() => {
     if (messagesEndRef.current && autoScroll) {
@@ -108,6 +133,7 @@ function UserChat() {
           hasNewMessage: room.hasNewMessage,
         }))
       );
+      console.log("[UserChat] 현재 표시되는 채팅방 수:", chatrooms.length);
     }
   }, [chatrooms]);
 
