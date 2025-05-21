@@ -484,7 +484,7 @@ export async function joinUserChatroom<T = any>(
   currentChatroomId?: number
 ): Promise<T> {
   return await post<T>(
-    `/api/v1/chats/${chatroomId}/join`,
+    `/api/v1/chats/${chatroomId}/users`,
     { currentChatroomId },
     {},
     true
@@ -498,7 +498,7 @@ export async function joinUserChatroom<T = any>(
 export async function leaveUserChatroom<T = any>(
   chatroomId: number
 ): Promise<T> {
-  return await post<T>(`/api/v1/chats/${chatroomId}/leave`, {}, {}, true);
+  return await del<T>(`/api/v1/chats/${chatroomId}/users`, {}, true);
 }
 
 /**
@@ -552,7 +552,7 @@ export async function joinAdminChatroom<T = any>(
   currentChatroomId?: number
 ): Promise<T> {
   return await post<T>(
-    `/api/v1/chats/${chatroomId}/join`,
+    `/api/v1/chats/${chatroomId}/users`,
     { currentChatroomId },
     {},
     true
@@ -566,7 +566,7 @@ export async function joinAdminChatroom<T = any>(
 export async function leaveAdminChatroom<T = any>(
   chatroomId: number
 ): Promise<T> {
-  return await post<T>(`/api/v1/chats/${chatroomId}/leave`, {}, {}, true);
+  return await del<T>(`/api/v1/chats/${chatroomId}/users`, {}, true);
 }
 
 /**
@@ -616,7 +616,7 @@ export async function joinChatroom<T = any>(
   currentChatroomId?: number
 ): Promise<T> {
   return await post<T>(
-    `/api/v1/chats/${chatroomId}/join`,
+    `/api/v1/chats/${chatroomId}/users`,
     { currentChatroomId },
     {},
     true
@@ -628,5 +628,5 @@ export async function joinChatroom<T = any>(
  * @param chatroomId 나갈 채팅방 ID
  */
 export async function leaveChatroom<T = any>(chatroomId: number): Promise<T> {
-  return await post<T>(`/api/v1/chats/${chatroomId}/leave`, {}, {}, true);
+  return await del<T>(`/api/v1/chats/${chatroomId}/users`, {}, true);
 }

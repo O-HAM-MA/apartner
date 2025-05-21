@@ -218,4 +218,13 @@ public ChatroomDto getChatroomById(Long chatroomId){
         chatroom.getCreatedAt()
     );
 }
+
+// 사용자가 채팅방에 참여했는지 확인
+@Transactional(readOnly = true)
+public boolean isUserInChatroom(Long userId, Long chatroomId) {
+    if (userId == null || chatroomId == null) {
+        return false;
+    }
+    return userChatroomMappingRepository.existsByUserIdAndChatroomId(userId, chatroomId);
+}
 }

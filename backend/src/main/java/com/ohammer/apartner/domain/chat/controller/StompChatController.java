@@ -73,6 +73,22 @@ public class StompChatController {
             log.info("[메시지 처리] 메시지 내용: {}", payload.get("message"));
             log.info("[메시지 처리] 채팅방 ID: {}", chatroomId);
             
+            // 채팅방 참여 여부 확인 및 자동 참여 처리
+            try {
+                if (!chatService.isUserInChatroom(currentUser.getId(), chatroomId)) {
+                    log.info("[메시지 처리] 사용자가 채팅방에 참여하지 않았으므로 자동 참여 처리를 시도합니다. 사용자 ID: {}, 채팅방 ID: {}", 
+                            currentUser.getId(), chatroomId);
+                    chatService.joinChatroom(currentUser, chatroomId, null);
+                    log.info("[메시지 처리] 사용자의 채팅방 자동 참여 처리 완료");
+                } else {
+                    log.info("[메시지 처리] 사용자가 이미 채팅방에 참여 중입니다. 사용자 ID: {}, 채팅방 ID: {}", 
+                            currentUser.getId(), chatroomId);
+                }
+            } catch (Exception e) {
+                log.error("[메시지 처리] 채팅방 참여 여부 확인 또는 자동 참여 중 오류 발생: {}", e.getMessage(), e);
+                // 오류가 발생해도 메시지 처리는 계속 진행
+            }
+            
             // 메시지 db에 저장
             Message message = chatService.saveMessage(currentUser, chatroomId, payload.get("message"));
             log.info("[메시지 처리] 메시지 DB 저장 완료, 메시지 ID: {}", message.getId());
