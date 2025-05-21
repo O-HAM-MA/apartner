@@ -2354,7 +2354,6 @@ export interface components {
             complaintId?: number;
             content?: string;
         };
-        SecurityUtil: Record<string, never>;
         ApiResponseChatroomDto: {
             /** Format: int32 */
             status?: number;
@@ -2611,10 +2610,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2623,9 +2622,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
@@ -2707,10 +2706,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2719,9 +2718,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -3071,10 +3070,10 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3083,9 +3082,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ComplaintHandlingRateResponseDto: {
@@ -3642,7 +3641,6 @@ export interface operations {
         };
         requestBody?: {
             content: {
-
                 "multipart/form-data": {
                     files: string[];
                 };
@@ -3669,7 +3667,6 @@ export interface operations {
         };
         requestBody?: {
             content: {
-
                 "multipart/form-data": {
                     files: string[];
                 };
@@ -4234,11 +4231,7 @@ export interface operations {
     };
     getChatroomList: {
         parameters: {
-            query: {
-                securityUtil: components["schemas"]["SecurityUtil"];
-
-
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -4259,8 +4252,6 @@ export interface operations {
     createChatroom: {
         parameters: {
             query: {
-                securityUtil: components["schemas"]["SecurityUtil"];
-
                 title: string;
             };
             header?: never;
@@ -4282,8 +4273,7 @@ export interface operations {
     };
     joinChatroom: {
         parameters: {
-            query: {
-                securityUtil: components["schemas"]["SecurityUtil"];
+            query?: {
                 currentChatroomId?: number;
             };
             header?: never;
@@ -4307,9 +4297,7 @@ export interface operations {
     };
     leaveChatroom: {
         parameters: {
-            query: {
-                securityUtil: components["schemas"]["SecurityUtil"];
-            };
+            query?: never;
             header?: never;
             path: {
                 chatroomId: number;
