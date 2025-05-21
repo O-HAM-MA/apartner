@@ -12,15 +12,21 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
+        source: '/api/:path*',
         destination:
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090/api/:path*",
+          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090/api/:path*',
       },
     ];
   },
   env: {
     NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090/api",
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090/api',
+  },
+  experimental: {
+    optimizeCss: true,
+    appDir: true,
+    scrollRestoration: true,
+    serverActions: true,
   },
 };
 
