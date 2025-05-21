@@ -21,14 +21,14 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class Message extends BaseEntity {
 
-    @Column(nullable = false,  columnDefinition = "TEXT")
-    private String content; // 메시지 내용
+    @Column(nullable = false, length = 1000, columnDefinition = "TEXT")
+    private String content; 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chatroom_id")
-    private Chatroom chatroom; // 채팅방
+    private Chatroom chatroom; 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user; // 메시지 보낸 사람
+    private User user;
 }

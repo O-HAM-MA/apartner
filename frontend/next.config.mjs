@@ -9,6 +9,25 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination:
+          process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090/api/:path*',
+      },
+    ];
+  },
+  env: {
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090/api',
+  },
+  experimental: {
+    optimizeCss: true,
+    appDir: true,
+    scrollRestoration: true,
+    serverActions: true,
+  },
+};
 
-export default nextConfig
+export default nextConfig;

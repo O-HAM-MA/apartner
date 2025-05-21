@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
+import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.*;
@@ -9,16 +10,15 @@ import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
 import com.ohammer.apartner.security.utils.SecurityUtil;
+import com.ohammer.apartner.security.utils.checkRoleUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.nio.file.AccessDeniedException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -138,6 +138,25 @@ public class VehicleService {
 
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getVehicleRegistrationInfo(Boolean isForeign) {
+
+        // 현재 로그인한 사용자 가져오기
+//        User currentUser = SecurityUtil.getCurrentUser();
+//        if (currentUser == null) {
+//            throw new IllegalArgumentException("로그인이 필요합니다.");
+//        }
+//
+//        Set<Role> roles = currentUser.getRoles();
+//
+//        // Role 검사: MANAGER 또는 MODERATOR만 허용
+//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
+//                role == Role.MANAGER || role == Role.MODERATOR);
+//
+//        if (!isManagerOrModerator) {
+//            throw new RuntimeException("관리자만 조회할 수 있습니다.");
+//        }
+
+        checkRoleUtils.validateAdminAccess();
+
         List<EntryRecord> entryRecords;
 
         if (isForeign == null) {
@@ -301,6 +320,8 @@ public class VehicleService {
     public List<VehicleRegistrationInfoDto> getInvitedApprovedVehicles() {
         List<EntryRecord> approvedRecords = entryRecordRepository.findByStatus(EntryRecord.Status.INVITER_AGREE);
 
+        checkRoleUtils.validateAdminAccess();
+
         return approvedRecords.stream()
                 .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
                 .collect(Collectors.toList());
@@ -308,6 +329,27 @@ public class VehicleService {
 
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getActiveVehicles() {
+
+//        // 현재 로그인한 사용자 가져오기
+//        User currentUser = SecurityUtil.getCurrentUser();
+//        if (currentUser == null) {
+//            throw new IllegalArgumentException("로그인이 필요합니다.");
+//        }
+//
+//        Set<Role> roles = currentUser.getRoles();
+//
+//        // Role 검사: MANAGER 또는 MODERATOR만 허용
+//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
+//                role == Role.MANAGER || role == Role.MODERATOR);
+//
+//        if (!isManagerOrModerator) {
+//            throw new RuntimeException("관리자만 조회할 수 있습니다.");
+//        }
+
+        checkRoleUtils.validateAdminAccess();
+
+
+
         // 1) ACTIVE 차량 엔티티 조회
         List<Vehicle> activeVehicles = vehicleRepository.findAllByStatus(Vehicle.Status.ACTIVE);
 

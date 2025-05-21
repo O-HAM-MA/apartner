@@ -61,12 +61,18 @@ public class SecurityConfig {
 
 
                                 //암시로 넣어야징
-                                "/api/v1/inspection/**"
-                
-                        ).permitAll()
-                        // 관리자 전용 API -> adminSecurityFilterChain에서 처리하므로 이 부분은 제거됨
-                        // .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
+                                "/api/v1/inspection/**",
+                                
+                                // WebSocket 엔드포인트 추가
+                                "/stomp/**",
+                                "/stomp/chats/**",
+                                "/sub/**",
+                                "/pub/**"
+
+                        ).permitAll()
+                        // 채팅 API는 제거 (adminSecurityFilterChain에서 처리)
+                        // .requestMatchers("/api/v1/chats/**").authenticated()
                         // 나머지는 모두 인증 필요
                         .anyRequest().authenticated()
                 )
@@ -104,7 +110,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity security) throws Exception {
         security
-                .securityMatcher("/api/v1/admin/**")
+                .securityMatcher("/api/v1/admin/**", "/api/v1/chats/**") // 채팅 API 다시 추가
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
@@ -113,10 +119,12 @@ public class SecurityConfig {
                                 "/api/v1/admin/check"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // 채팅 관련 API는 인증된 사용자도 접근 가능하도록 설정
+                        .requestMatchers("/api/v1/chats/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // STATELESS에서 IF_REQUIRED로 변경
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {

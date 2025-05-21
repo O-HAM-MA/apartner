@@ -25,15 +25,15 @@ public class UserChatroomMapping extends BaseEntity {
 
     @JoinColumn(name = "user_id")
     @ManyToOne
-    User user; // 채팅방 참여자
+    User user; 
 
 
     @JoinColumn(name = "chatroom_id")
     @ManyToOne
-    Chatroom chatroom; // 채팅방
+    Chatroom chatroom; 
 
     @Column(name = "last_check_at")
-    LocalDateTime lastCheckAt; // 채팅방 조회 시간
+    LocalDateTime lastCheckAt; 
 
     public void updateLastCheckAt(LocalDateTime lastCheckAt){
         this.lastCheckAt = lastCheckAt;

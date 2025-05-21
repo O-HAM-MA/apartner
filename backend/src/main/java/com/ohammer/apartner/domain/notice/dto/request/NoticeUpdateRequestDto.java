@@ -22,9 +22,9 @@ public class NoticeUpdateRequestDto {
     @Schema(description = "게시글 내용", example = "점검일시: 2025년 5월 15일 14시 ~ 16시")
     private String content;
 
-    @Schema(description = "tiptap에 삽입된 이미지 ID들")
+    @Schema(description = "tiptap에 삽입된 이미지 ID들", example = "[ ]")
     private List<Long> imageIds; // optional
 
-    @Schema(description = "tiptap에 삽입된 첨부파일 ID들")
+    @Schema(description = "tiptap에 삽입된 첨부파일 ID들", example = "[ ]")
     private List<Long> fileIds; // optional
 }

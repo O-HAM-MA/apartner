@@ -1,53 +1,78 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, Users, MessageSquare, AlertTriangle } from "lucide-react"
+"use client";
+
+import { useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Activity, Users, MessageSquare, AlertTriangle } from "lucide-react";
+import { useGlobalAdminMember } from "@/auth/adminMember";
+import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
+  const { adminMember, isAdminLogin } = useGlobalAdminMember();
+  const router = useRouter();
+
+  // 관리자 로그인 상태 확인
+  useEffect(() => {
+    if (!isAdminLogin) {
+      router.replace("/admin");
+    }
+  }, [isAdminLogin, router]);
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to the Apartner admin dashboard.</p>
+        <h1 className="text-3xl font-bold tracking-tight">관리자 대시보드</h1>
+        <p className="text-muted-foreground">
+          {adminMember.userName
+            ? `안녕하세요, ${adminMember.userName}님!`
+            : "Apartner 관리자 페이지에 오신 것을 환영합니다."}
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">전체 사용자</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,248</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <p className="text-xs text-muted-foreground">지난달 대비 +12%</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium">활성 세션</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">324</div>
-            <p className="text-xs text-muted-foreground">+7% from last hour</p>
+            <p className="text-xs text-muted-foreground">지난 시간 대비 +7%</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Support Tickets</CardTitle>
+            <CardTitle className="text-sm font-medium">고객 문의</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground">-8% from yesterday</p>
+            <p className="text-xs text-muted-foreground">어제 대비 -8%</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Alerts</CardTitle>
+            <CardTitle className="text-sm font-medium">시스템 알림</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">7</div>
-            <p className="text-xs text-muted-foreground">+2 new since yesterday</p>
+            <p className="text-xs text-muted-foreground">어제 대비 +2건 증가</p>
           </CardContent>
         </Card>
       </div>
@@ -55,8 +80,8 @@ export default function AdminDashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest actions across the platform</CardDescription>
+            <CardTitle>최근 활동</CardTitle>
+            <CardDescription>플랫폼 전체의 최근 활동 내역</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -66,8 +91,12 @@ export default function AdminDashboard() {
                     <activity.icon className="h-4 w-4" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">{activity.description}</p>
-                    <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                    <p className="text-sm font-medium leading-none">
+                      {activity.description}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.timestamp}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -76,18 +105,24 @@ export default function AdminDashboard() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>System Status</CardTitle>
-            <CardDescription>Current system performance metrics</CardDescription>
+            <CardTitle>시스템 상태</CardTitle>
+            <CardDescription>현재 시스템 성능 지표</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {systemStatus.map((status, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">{status.name}</p>
-                    <p className="text-xs text-muted-foreground">{status.description}</p>
+                    <p className="text-sm font-medium leading-none">
+                      {status.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {status.description}
+                    </p>
                   </div>
-                  <div className={`h-2 w-2 rounded-full ${status.statusColor}`} />
+                  <div
+                    className={`h-2 w-2 rounded-full ${status.statusColor}`}
+                  />
                 </div>
               ))}
             </div>
@@ -95,51 +130,51 @@ export default function AdminDashboard() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
 
 const recentActivity = [
   {
     icon: Users,
-    description: "New user registered: Sarah Johnson",
-    timestamp: "2 minutes ago",
+    description: "새 사용자 등록: 김지수",
+    timestamp: "2분 전",
   },
   {
     icon: MessageSquare,
-    description: "New support ticket: Issue with payment system",
-    timestamp: "15 minutes ago",
+    description: "새로운 고객 문의: 결제 시스템 관련 문제",
+    timestamp: "15분 전",
   },
   {
     icon: AlertTriangle,
-    description: "System alert: Database backup completed",
-    timestamp: "1 hour ago",
+    description: "시스템 알림: 데이터베이스 백업 완료",
+    timestamp: "1시간 전",
   },
   {
     icon: Activity,
-    description: "User login: Admin account from new location",
-    timestamp: "3 hours ago",
+    description: "사용자 로그인: 관리자 계정이 새 위치에서 로그인",
+    timestamp: "3시간 전",
   },
-]
+];
 
 const systemStatus = [
   {
-    name: "API Services",
-    description: "All endpoints operational",
+    name: "API 서비스",
+    description: "모든 엔드포인트 정상 작동 중",
     statusColor: "bg-green-500",
   },
   {
-    name: "Database",
-    description: "Optimal performance",
+    name: "데이터베이스",
+    description: "최적의 성능 상태",
     statusColor: "bg-green-500",
   },
   {
-    name: "Storage",
-    description: "85% capacity",
+    name: "스토리지",
+    description: "용량 85% 사용 중",
     statusColor: "bg-yellow-500",
   },
   {
-    name: "Authentication",
-    description: "Fully operational",
+    name: "인증 시스템",
+    description: "완전히 작동 중",
     statusColor: "bg-green-500",
   },
-]
+];

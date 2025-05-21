@@ -19,6 +19,14 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Lock, AlertCircle } from "lucide-react";
+import { post, get } from "@/utils/api";
+import { useAdminMember } from "@/auth/adminMember";
+
+// 백엔드 응답 타입 정의 (토큰은 쿠키로 전송됨)
+type AdminLoginResponse = {
+  userId: number;
+  userName: string;
+};
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -26,26 +34,49 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { setAdminMember } = useAdminMember();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    // Simulate login - replace with actual authentication
     try {
-      // Mock authentication
-      if (email === "admin@apartner.com" && password === "password") {
-        // Successful login
+      // 실제 API 호출 (토큰은 쿠키에 자동 저장됨)
+      const response = await post<AdminLoginResponse>(
+        "/api/v1/admin/login",
+        { username: email, password },
+        {},
+        true // 401 리다이렉트 방지
+      );
+
+      // 로그인 성공 시 관리자 정보 조회 (쿠키의 토큰 사용)
+      try {
+        const adminData = await get<any>("/api/v1/admin/me", {}, true);
+        setAdminMember(adminData);
+        // 관리자 대시보드로 리다이렉션
+        router.replace("/admin/addash");
+
+        // 직접 경로 이동 (백업 메서드)
         setTimeout(() => {
-          router.push("/admin");
-        }, 1000);
-      } else {
-        setError("Invalid email or password");
+          window.location.href = "/admin/addash";
+        }, 100);
+      } catch (meError) {
+        console.error("관리자 정보 조회 실패:", meError);
+        setError("로그인은 성공했으나 관리자 정보를 불러오는데 실패했습니다.");
         setIsLoading(false);
       }
-    } catch (err) {
-      setError("An error occurred during login");
+    } catch (err: any) {
+      // 에러 메시지 처리
+      if (err.message.includes("401")) {
+        setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+      } else if (err.message.includes("403")) {
+        setError("관리자 권한이 없는 계정입니다.");
+      } else if (err.message.includes("404")) {
+        setError("존재하지 않는 계정입니다.");
+      } else {
+        setError("로그인 중 오류가 발생했습니다. 다시 시도해주세요.");
+      }
       setIsLoading(false);
     }
   };
@@ -61,9 +92,9 @@ export default function AdminLogin() {
           <div className="flex items-center justify-center mb-6">
             <Lock className="h-10 w-10 text-apartner-600 dark:text-apartner-400" />
           </div>
-          <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
+          <CardTitle className="text-2xl text-center">관리자 로그인</CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access the admin dashboard
+            관리자 계정 정보를 입력하여 로그인하세요
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,7 +107,7 @@ export default function AdminLogin() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">이메일</Label>
               <Input
                 id="email"
                 type="email"
@@ -88,12 +119,12 @@ export default function AdminLogin() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">비밀번호</Label>
                 <Link
                   href="/admin/forgot-password"
                   className="text-xs text-apartner-600 dark:text-apartner-400 hover:underline"
                 >
-                  Forgot password?
+                  비밀번호 찾기
                 </Link>
               </div>
               <Input
@@ -105,7 +136,7 @@ export default function AdminLogin() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? "로그인 중..." : "로그인"}
             </Button>
           </form>
         </CardContent>
@@ -114,7 +145,7 @@ export default function AdminLogin() {
             href="/"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            Return to main site
+            메인 사이트로 돌아가기
           </Link>
         </CardFooter>
       </Card>
