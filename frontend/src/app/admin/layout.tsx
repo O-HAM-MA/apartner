@@ -39,7 +39,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       try {
         console.log(
           "[AdminLayout] 관리자 인증 확인 시작:",
-          new Date().toISOString()
+          new Date().toISOString(),
+          "현재 로그인 상태:",
+          isAdminLogin
         );
         const data = await checkAdminAuth();
         console.log(
@@ -50,6 +52,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         // 인증 성공 시 adminMember 설정
         setAdminMember(data);
 
+        // 로그인 페이지에 있고 인증이 성공했으면 대시보드로 리디렉션
+        if (isLoginPage && data.id !== 0) {
+          console.log(
+            "[AdminLayout] 로그인 페이지에서 인증 성공, 대시보드로 이동"
+          );
+          window.location.href = "/admin/addash";
+        }
+
         // 인증 확인 완료 상태로 설정
         setInitialAuthCheckDone(true);
       } catch (error) {
@@ -58,7 +68,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         // 로그인 페이지가 아닌 경우에만 리다이렉트
         if (!isLoginPage) {
           setNoAdminMember();
-          router.push("/admin");
+          console.log("[AdminLayout] 인증 실패, 로그인 페이지로 이동");
+          window.location.href = "/admin";
         }
 
         // 인증 확인 완료 상태로 설정 (실패했더라도 확인은 수행됨)
@@ -69,13 +80,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       }
     };
 
-    // 로그인 페이지가 아니거나, 이미 로그인된 경우에만 인증 확인
-    if (!isLoginPage || isAdminLogin) {
-      checkAuth();
-    } else {
-      // 로그인 페이지에서는 인증 확인이 필요 없음
-      setInitialAuthCheckDone(true);
-    }
+    // 로그인 페이지이거나 어드민 대시보드 페이지일 때 인증 확인
+    checkAuth();
   }, [isLoginPage, router, setAdminMember, setNoAdminMember, isAdminLogin]);
 
   // 에러 상태 관리

@@ -1,4 +1,4 @@
-import { createContext, useState, use } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/utils/api";
 
@@ -58,17 +58,36 @@ export function useAdminMember() {
   const router = useRouter();
 
   const [isAdminMemberPending, setAdminMemberPending] = useState(true);
-  const [adminMember, _setAdminMember] = useState<AdminMember>(
-    createEmptyAdminMember()
-  );
+  const [adminMember, _setAdminMember] = useState<AdminMember>(() => {
+    // 브라우저 환경에서만 실행
+    if (typeof window !== "undefined") {
+      const savedAdmin = localStorage.getItem("adminMember");
+      if (savedAdmin) {
+        try {
+          return JSON.parse(savedAdmin);
+        } catch (e) {
+          console.error("[AdminMember] localStorage 파싱 오류:", e);
+          return createEmptyAdminMember();
+        }
+      }
+    }
+    return createEmptyAdminMember();
+  });
 
   const removeAdminMember = () => {
     _setAdminMember(createEmptyAdminMember());
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("adminMember");
+    }
   };
 
   const setAdminMember = (member: AdminMember) => {
+    console.log("[AdminMember] 관리자 정보 설정:", member);
     _setAdminMember(member);
     setAdminMemberPending(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("adminMember", JSON.stringify(member));
+    }
   };
 
   const setNoAdminMember = () => {
@@ -81,6 +100,12 @@ export function useAdminMember() {
   };
 
   const isAdminLogin = adminMember.id !== 0;
+  console.log(
+    "[AdminMember] 로그인 상태 확인:",
+    isAdminLogin,
+    "ID:",
+    adminMember.id
+  );
 
   const adminLogout = (callback: () => void) => {
     fetchApi("/api/v1/admin/logout", { method: "DELETE" })
@@ -118,5 +143,5 @@ export function useAdminMember() {
 }
 
 export function useGlobalAdminMember() {
-  return use(AdminMemberContext);
+  return useContext(AdminMemberContext);
 }
