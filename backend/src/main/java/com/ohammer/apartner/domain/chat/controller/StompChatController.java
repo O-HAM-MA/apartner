@@ -27,13 +27,13 @@ public class StompChatController {
     private final ChatService chatService; // 채팅 메시지 저장 및 조회 서비스
     private final SimpMessagingTemplate simpMessagingTemplate; // 메시지 전송 템플릿 : 서버에서 클라이언트로 메시지를 보낼 때 사용하는 경로
     private final UserRepository userRepository; // 임시 방편으로 사용자 ID를 직접 찾기 위해 추가
+    private final SecurityUtil securityUtil; // 현재 인증된 사용자 정보
 
     @MessageMapping("/chats/{chatroomId}") // 클라이언트에서 메시지를 보낼 때 사용하는 경로
     @SendTo("/sub/chats/{chatroomId}") // 서버에서 클라이언트로 메시지를 보낼 때 사용하는 경로
     public ChatMessageDto handleChatMessage( // 채팅 메시지 수신 및 저장, 구독자에게 전달
-                                         SecurityUtil securityUtil, // 현재 인증된 사용자 정보
                                          @Payload Map<String, String> payload, // 클라이언트에서 보낸 메시지 데이터
-                                         @DestinationVariable Long chatroomId // 채팅방 ID
+                                         @DestinationVariable("chatroomId") Long chatroomId // 채팅방 ID
                                          ) {
         try {
             log.info("========== 메시지 처리 시작 - 채팅방: {} ==========", chatroomId);

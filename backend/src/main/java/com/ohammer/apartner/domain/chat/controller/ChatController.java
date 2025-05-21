@@ -31,9 +31,13 @@ public class ChatController {
 
     // 채팅방 생성
     @PostMapping
-    public ResponseEntity<ApiResponse<ChatroomDto>> createChatroom(SecurityUtil securityUtil,
+    public ResponseEntity<ApiResponse<ChatroomDto>> createChatroom(
             @RequestParam(name = "title") String title) {
-        User currentUser = securityUtil.getCurrentUser();
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증 정보가 유효하지 않습니다."));
+        }
 
         ChatroomDto chatroom = chatService.createChatRoom(currentUser, title);
 
@@ -43,28 +47,43 @@ public class ChatController {
 
     // 채팅방 참여
     @PostMapping("/{chatroomId}/users")
-    public ResponseEntity<ApiResponse<Boolean>> joinChatroom(SecurityUtil securityUtil,
+    public ResponseEntity<ApiResponse<Boolean>> joinChatroom(
             @PathVariable(name = "chatroomId") Long chatroomId,
             @RequestParam(name = "currentChatroomId", required = false) Long currentChatroomId) {
-        User currentUser = securityUtil.getCurrentUser();
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증 정보가 유효하지 않습니다."));
+        }
+        
         Boolean result = chatService.joinChatroom(currentUser, chatroomId, currentChatroomId);
         return ResponseEntity.ok(ApiResponse.success(result, "채팅방에 성공적으로 참여했습니다."));
     }
 
     // 채팅방 나가기
     @DeleteMapping("/{chatroomId}/users")
-    public ResponseEntity<ApiResponse<Boolean>> leaveChatroom(SecurityUtil securityUtil,
+    public ResponseEntity<ApiResponse<Boolean>> leaveChatroom(
             @PathVariable(name = "chatroomId") Long chatroomId) {
-        User currentUser = securityUtil.getCurrentUser();
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증 정보가 유효하지 않습니다."));
+        }
+        
         Boolean result = chatService.leaveChatroom(currentUser, chatroomId);
         return ResponseEntity.ok(ApiResponse.success(result, "채팅방에서 성공적으로 나갔습니다."));
     }
 
     // User가 참여한 채팅방 목록 조회     
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ChatroomDto>>> getChatroomList(SecurityUtil securityUtil) {
+    public ResponseEntity<ApiResponse<List<ChatroomDto>>> getChatroomList() {
         try {
-            User currentUser = securityUtil.getCurrentUser();
+            User currentUser = SecurityUtil.getCurrentUser();
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증 정보가 유효하지 않습니다."));
+            }
+            
             List<ChatroomDto> chatroomList = chatService.getChatroomList(currentUser);
             return ResponseEntity.ok(ApiResponse.success(chatroomList, "채팅방 목록을 성공적으로 조회했습니다."));
         } catch (Exception e) {
@@ -85,6 +104,7 @@ public class ChatController {
     // 모든 채팅방 조회
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<ChatroomDto>>> getAllChatrooms() {
+        // 인증 확인 없이 모든 채팅방 목록 반환
         List<ChatroomDto> allChatrooms = chatService.getAllChatrooms();
         return ResponseEntity.ok(ApiResponse.success(allChatrooms, "모든 채팅방 목록을 성공적으로 조회했습니다."));
     }

@@ -411,10 +411,35 @@ export async function checkAuth<T = any>(isAdminPath: boolean): Promise<T> {
 /**
  * [사용자] 채팅방 목록 조회
  */
-export async function getUserChatrooms<T = any>(): Promise<T> {
-  const response = await get<any>("/api/v1/chats", {}, true);
-  // API 응답에서 data 속성 반환
-  return response.data;
+export async function getUserChatrooms<T = any[]>(): Promise<T> {
+  try {
+    // 모든 채팅방 목록 API 직접 사용
+    console.log("[getUserChatrooms] 전체 채팅방 목록 API 조회 시도");
+    const allChatroomsResponse = await get<any>("/api/v1/chats/all", {}, true);
+
+    // ApiResponse 형태로 응답이 왔는지 확인
+    if (allChatroomsResponse && allChatroomsResponse.data) {
+      console.log(
+        "[getUserChatrooms] 전체 채팅방 목록:",
+        allChatroomsResponse.data
+      );
+      return allChatroomsResponse.data as T;
+    }
+
+    // 응답 자체가 배열인 경우
+    if (Array.isArray(allChatroomsResponse)) {
+      console.log(
+        "[getUserChatrooms] 전체 채팅방 배열 응답:",
+        allChatroomsResponse
+      );
+      return allChatroomsResponse as T;
+    }
+
+    return [] as unknown as T;
+  } catch (error) {
+    console.error("[getUserChatrooms] 채팅방 목록 조회 중 오류:", error);
+    return [] as unknown as T;
+  }
 }
 
 /**
