@@ -116,7 +116,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/admin/login",
-                                "/api/v1/admin/check"
+                                "/api/v1/admin/check",
+                                "/api/v1/chats/all" // 모든 채팅방 목록 조회 API 인증 없이 허용
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // 채팅 관련 API는 인증된 사용자도 접근 가능하도록 설정

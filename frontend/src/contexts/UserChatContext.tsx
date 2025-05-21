@@ -116,10 +116,32 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
     console.log("사용자 채팅방 목록 가져오기 시작:", new Date().toISOString());
     try {
       // 새로운 authApi 함수 사용
-      const apiChatrooms = await getUserChatrooms();
+      const apiResponse = await getUserChatrooms<any>();
+      console.log("사용자 채팅방 API 응답:", apiResponse);
+
+      let apiChatrooms: any = apiResponse;
+
+      // apiResponse가 ApiResponse<T> 형식인지 확인 (data 필드 포함)
+      if (
+        apiResponse &&
+        typeof apiResponse === "object" &&
+        "data" in apiResponse
+      ) {
+        apiChatrooms = apiResponse.data;
+        console.log("ApiResponse 형식 감지, data 필드 추출:", apiChatrooms);
+      }
+
+      // apiChatrooms가 배열인지 확인
+      if (!Array.isArray(apiChatrooms)) {
+        console.warn("채팅방 목록이 배열이 아닙니다:", apiChatrooms);
+        apiChatrooms = [];
+      }
+
       console.log(
         "사용자 채팅방 목록 가져오기 성공:",
-        new Date().toISOString()
+        new Date().toISOString(),
+        "채팅방 수:",
+        apiChatrooms.length
       );
 
       // 타입 변환
@@ -133,6 +155,7 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
         })
       );
 
+      console.log("변환된 채팅방 목록:", formattedChatrooms);
       setChatrooms(formattedChatrooms);
       return formattedChatrooms;
     } catch (error) {
@@ -140,7 +163,7 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
       setChatrooms([]);
       return [];
     }
-  }, []); // 의존성 배열은 비워둠 (setChatrooms가 변경되지 않는다고 가정)
+  }, []);
 
   // 초기 데이터 로드
   useEffect(() => {
