@@ -652,9 +652,16 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
       return;
     }
 
+    // 사용자 정보를 더 풍부하게 포함시킨 메시지 데이터 구성
     const messageData = {
       message: trimmedMessage,
       userId: currentUser.id,
+      userName: currentUser.userName,
+      profileImageUrl: currentUser.profileImageUrl || "",
+      apartmentName: currentUser.apartmentName || "",
+      buildingName: currentUser.buildingName || "",
+      unitNumber: currentUser.unitNumber || "",
+      email: currentUser.email || "",
     };
 
     console.log(`[UserChatContext] 채팅방 ${chatroomId}로 메시지 전송:`, {
@@ -662,6 +669,7 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
         trimmedMessage.substring(0, 20) +
         (trimmedMessage.length > 20 ? "..." : ""),
       userId: currentUser.id,
+      userName: currentUser.userName,
       destination: `/pub/chats/${chatroomId}`,
     });
 
