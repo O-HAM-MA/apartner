@@ -785,6 +785,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/facilities/new": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 공용시설 등록 */
+        post: operations["createFacility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/update/{vehicleId}": {
         parameters: {
             query?: never;
@@ -842,26 +859,6 @@ export interface paths {
         patch: operations["cancelReservation"];
         trace?: never;
     };
-    "/api/v1/facilities/manager/reservations/{facilityReservationId}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * 유저들의 예약 상태 변경
-         * @description 유저들의 예약 상태 pending/agree/reject로 변경하기
-         */
-        patch: operations["changeReservationStatus"];
-        trace?: never;
-    };
     "/api/v1/entry-records/{entryRecordId}/status": {
         parameters: {
             query?: never;
@@ -897,6 +894,26 @@ export interface paths {
          * @description 민원의 상태(PENDING, IN_PROGRESS 등)를 변경합니다
          */
         patch: operations["updateComplaintStatus"];
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/reservations/{facilityReservationId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * 유저들의 예약 상태 변경
+         * @description 유저들의 예약 상태 pending/agree/reject로 변경하기
+         */
+        patch: operations["changeReservationStatus"];
         trace?: never;
     };
     "/api/v1/vehicles/visitors/pending": {
@@ -1250,146 +1267,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/statistics/user-usage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 사용자별 이용 횟수 통계
-         * @description 사용자 기준으로 이용 횟수를 집계하여 순위별로 제공합니다.
-         */
-        get: operations["getUserUsageCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/time-period": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 시간대별 이용 통계
-         * @description 시간대(오전/오후/저녁/야간) 기준으로 이용 건수를 분석합니다. 시간대 기준::: 오전: 05~12시, 오후: 12~17시, 저녁: 17~23시, 야간: 23~05시
-         */
-        get: operations["getTimePeriodCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/reservation-status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 예약 상태별 현황
-         * @description AGREE, REJECT, CANCEL, PENDING 상태별 예약 건수를 조회합니다.
-         */
-        get: operations["getReservationStatusCounts"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/facility-usage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 시설별 이용 횟수 통계
-         * @description 가장 많이 이용된 시설부터 순위대로 반환합니다.
-         */
-        get: operations["getFacilityUsageCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/day-of-week": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 요일별 이용 통계
-         * @description 요일 기준으로 이용 건수를 분석합니다.
-         */
-        get: operations["getDayOfWeekCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/cancellation-ratio": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 예약 취소율
-         * @description status=CANCEL / 전체 예약 (%)
-         */
-        get: operations["getCancellationRatio"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/building-usage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 동별 이용 횟수 통계
-         * @description 동(건물번호) 기준으로 이용 횟수를 집계하여 제공합니다.
-         */
-        get: operations["getBuildingUsageCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/facilities/reservations": {
         parameters: {
             query?: never;
@@ -1402,26 +1279,6 @@ export interface paths {
          * @description 유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)
          */
         get: operations["getUserReservations"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/manager/reservations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 유저들의 예약 목록 조회
-         * @description 유저들의 예약 목록 조희 - 전체보기, 시설별, 예약상태별, 날짜별
-         */
-        get: operations["getReservations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1732,6 +1589,166 @@ export interface paths {
          * @description 현재 로그인된 관리자의 프로필 정보를 조회합니다.
          */
         get: operations["me_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/user-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 사용자별 이용 횟수 통계
+         * @description 사용자 기준으로 이용 횟수를 집계하여 순위별로 제공합니다.
+         */
+        get: operations["getUserUsageCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/time-period": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 시간대별 이용 통계
+         * @description 시간대(오전/오후/저녁/야간) 기준으로 이용 건수를 분석합니다. 시간대 기준::: 오전: 05~12시, 오후: 12~17시, 저녁: 17~23시, 야간: 23~05시
+         */
+        get: operations["getTimePeriodCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/reservation-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 예약 상태별 현황
+         * @description AGREE, REJECT, CANCEL, PENDING 상태별 예약 건수를 조회합니다.
+         */
+        get: operations["getReservationStatusCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/facility-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 시설별 이용 횟수 통계
+         * @description 가장 많이 이용된 시설부터 순위대로 반환합니다.
+         */
+        get: operations["getFacilityUsageCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/day-of-week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 요일별 이용 통계
+         * @description 요일 기준으로 이용 건수를 분석합니다.
+         */
+        get: operations["getDayOfWeekCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/cancellation-ratio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 예약 취소율
+         * @description status=CANCEL / 전체 예약 (%)
+         */
+        get: operations["getCancellationRatio"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/building-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 동별 이용 횟수 통계
+         * @description 동(건물번호) 기준으로 이용 횟수를 집계하여 제공합니다.
+         */
+        get: operations["getBuildingUsageCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 유저들의 예약 목록 조회
+         * @description 유저들의 예약 목록 조희 - 전체보기, 시설별, 예약상태별, 날짜별
+         */
+        get: operations["getReservations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2502,6 +2519,25 @@ export interface components {
              */
             password?: string;
         };
+        /** @description 공용시설 등록 요청 DTO */
+        FacilityCreateRequestDto: {
+            /**
+             * @description 등록할 공용시설 이름
+             * @example 헬스장
+             */
+            name?: string;
+            /**
+             * @description 공용시설 설명
+             * @example 24시간 이용가능한 피트니스 센터
+             */
+            description?: string;
+            /**
+             * Format: int64
+             * @description 공용시설이 등록될 아파트
+             * @example 1
+             */
+            apartmentId?: number;
+        };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;
             type?: string;
@@ -2631,17 +2667,17 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -2885,6 +2921,123 @@ export interface components {
              */
             description?: string;
         };
+        /** @description 공용시설 예약 조회 [사용자] 응답 DTO */
+        FacilityReservationSummaryDto: {
+            /**
+             * @description 예약한 공용시설 이름
+             * @example 헬스장
+             */
+            facilityName?: string;
+            /**
+             * @description 예약 일시
+             * @example 2025-05-15 09:00-11:00
+             */
+            reservationTime?: string;
+            /**
+             * @description 신청 일시
+             * @example 2025-05-13 10:10
+             */
+            createdAt?: string;
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             */
+            status?: string;
+        };
+        ComplaintHandlingRateResponseDto: {
+            /** Format: int64 */
+            totalCount?: number;
+            /** Format: int64 */
+            handledCount?: number;
+            /** Format: double */
+            handlingRate?: number;
+        };
+        ApiResponseListChatroomDto: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["ChatroomDto"][];
+        };
+        ApiResponseListChatMessageDto: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["ChatMessageDto"][];
+        };
+        ChatMessageDto: {
+            /** Format: int64 */
+            userId?: number;
+            message?: string;
+            userName?: string;
+            profileImageUrl?: string;
+            apartmentName?: string;
+            buildingName?: string;
+            unitNumber?: string;
+            timestamp?: string;
+            /** Format: int64 */
+            messageId?: number;
+        };
+        /** @description 아파트 정보 응답 DTO */
+        ApartmentResponseDto: {
+            /**
+             * Format: int64
+             * @description 아파트 ID
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description 아파트 이름
+             * @example 현대아파트
+             */
+            name?: string;
+            /**
+             * @description 아파트 주소
+             * @example 서울특별시 강남구 역삼동 123
+             */
+            address?: string;
+        };
+        /** @description 건물(동) 정보 응답 DTO */
+        BuildingResponseDto: {
+            /**
+             * Format: int64
+             * @description 건물 ID
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description 건물 번호(동)
+             * @example 101동
+             */
+            buildingNumber?: string;
+            /**
+             * Format: int64
+             * @description 아파트 ID
+             * @example 1
+             */
+            apartmentId?: number;
+        };
+        /** @description 호수 정보 응답 DTO */
+        UnitResponseDto: {
+            /**
+             * Format: int64
+             * @description 호수 ID
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description 호수
+             * @example 101호
+             */
+            unitNumber?: string;
+            /**
+             * Format: int64
+             * @description 건물 ID
+             * @example 1
+             */
+            buildingId?: number;
+        };
         /** @description 공용시설 사용자별 이용 횟수 DTO */
         UserUsageCountDto: {
             /**
@@ -3001,29 +3154,6 @@ export interface components {
              */
             reservationCount?: number;
         };
-        /** @description 공용시설 예약 조회 [사용자] 응답 DTO */
-        FacilityReservationSummaryDto: {
-            /**
-             * @description 예약한 공용시설 이름
-             * @example 헬스장
-             */
-            facilityName?: string;
-            /**
-             * @description 예약 일시
-             * @example 2025-05-15 09:00-11:00
-             */
-            reservationTime?: string;
-            /**
-             * @description 신청 일시
-             * @example 2025-05-13 10:10
-             */
-            createdAt?: string;
-            /**
-             * @description 예약 상태
-             * @example PENDING
-             */
-            status?: string;
-        };
         Pageable: {
             /** Format: int32 */
             page?: number;
@@ -3086,100 +3216,6 @@ export interface components {
             /** Format: int32 */
             numberOfElements?: number;
             empty?: boolean;
-        };
-        ComplaintHandlingRateResponseDto: {
-            /** Format: int64 */
-            totalCount?: number;
-            /** Format: int64 */
-            handledCount?: number;
-            /** Format: double */
-            handlingRate?: number;
-        };
-        ApiResponseListChatroomDto: {
-            /** Format: int32 */
-            status?: number;
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["ChatroomDto"][];
-        };
-        ApiResponseListChatMessageDto: {
-            /** Format: int32 */
-            status?: number;
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["ChatMessageDto"][];
-        };
-        ChatMessageDto: {
-            /** Format: int64 */
-            userId?: number;
-            message?: string;
-            userName?: string;
-            profileImageUrl?: string;
-            apartmentName?: string;
-            buildingName?: string;
-            unitNumber?: string;
-            timestamp?: string;
-            /** Format: int64 */
-            messageId?: number;
-        };
-        /** @description 아파트 정보 응답 DTO */
-        ApartmentResponseDto: {
-            /**
-             * Format: int64
-             * @description 아파트 ID
-             * @example 1
-             */
-            id?: number;
-            /**
-             * @description 아파트 이름
-             * @example 현대아파트
-             */
-            name?: string;
-            /**
-             * @description 아파트 주소
-             * @example 서울특별시 강남구 역삼동 123
-             */
-            address?: string;
-        };
-        /** @description 건물(동) 정보 응답 DTO */
-        BuildingResponseDto: {
-            /**
-             * Format: int64
-             * @description 건물 ID
-             * @example 1
-             */
-            id?: number;
-            /**
-             * @description 건물 번호(동)
-             * @example 101동
-             */
-            buildingNumber?: string;
-            /**
-             * Format: int64
-             * @description 아파트 ID
-             * @example 1
-             */
-            apartmentId?: number;
-        };
-        /** @description 호수 정보 응답 DTO */
-        UnitResponseDto: {
-            /**
-             * Format: int64
-             * @description 호수 ID
-             * @example 1
-             */
-            id?: number;
-            /**
-             * @description 호수
-             * @example 101호
-             */
-            unitNumber?: string;
-            /**
-             * Format: int64
-             * @description 건물 ID
-             * @example 1
-             */
-            buildingId?: number;
         };
         /** @description 회원 탈퇴 요청 DTO */
         UserWithdrawRequestDto: {
@@ -4477,6 +4513,30 @@ export interface operations {
             };
         };
     };
+    createFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityCreateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": number;
+                };
+            };
+        };
+    };
     updateVehicle: {
         parameters: {
             query?: never;
@@ -4569,30 +4629,6 @@ export interface operations {
             };
         };
     };
-    changeReservationStatus: {
-        parameters: {
-            query: {
-                status: string;
-            };
-            header?: never;
-            path: {
-                facilityReservationId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-        };
-    };
     updateEntryStatus: {
         parameters: {
             query: {
@@ -4637,6 +4673,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    changeReservationStatus: {
+        parameters: {
+            query: {
+                status: string;
+            };
+            header?: never;
+            path: {
+                facilityReservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
@@ -5120,146 +5180,6 @@ export interface operations {
             };
         };
     };
-    getUserUsageCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UserUsageCountDto"][];
-                };
-            };
-        };
-    };
-    getTimePeriodCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["TimePeriodUsageDto"][];
-                };
-            };
-        };
-    };
-    getReservationStatusCounts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ReservationStatusCountDto"][];
-                };
-            };
-        };
-    };
-    getFacilityUsageCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FacilityUsageCountDto"][];
-                };
-            };
-        };
-    };
-    getDayOfWeekCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["DayOfWeekUsageDto"][];
-                };
-            };
-        };
-    };
-    getCancellationRatio: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CancellationRatioDto"];
-                };
-            };
-        };
-    };
-    getBuildingUsageCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["BuildingUsageCountDto"][];
-                };
-            };
-        };
-    };
     getUserReservations: {
         parameters: {
             query?: {
@@ -5280,31 +5200,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["FacilityReservationSummaryDto"][];
-                };
-            };
-        };
-    };
-    getReservations: {
-        parameters: {
-            query: {
-                date?: string;
-                facilityId?: number;
-                status?: string;
-                arg3: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PageFacilityReservationManagerDto"];
                 };
             };
         };
@@ -5659,6 +5554,171 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    getUserUsageCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserUsageCountDto"][];
+                };
+            };
+        };
+    };
+    getTimePeriodCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TimePeriodUsageDto"][];
+                };
+            };
+        };
+    };
+    getReservationStatusCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReservationStatusCountDto"][];
+                };
+            };
+        };
+    };
+    getFacilityUsageCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityUsageCountDto"][];
+                };
+            };
+        };
+    };
+    getDayOfWeekCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DayOfWeekUsageDto"][];
+                };
+            };
+        };
+    };
+    getCancellationRatio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CancellationRatioDto"];
+                };
+            };
+        };
+    };
+    getBuildingUsageCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BuildingUsageCountDto"][];
+                };
+            };
+        };
+    };
+    getReservations: {
+        parameters: {
+            query: {
+                date?: string;
+                facilityId?: number;
+                status?: string;
+                arg3: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageFacilityReservationManagerDto"];
                 };
             };
         };

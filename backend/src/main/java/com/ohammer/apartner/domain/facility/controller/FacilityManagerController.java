@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.facility.controller;
 
+import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.service.FacilityManagerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class FacilityManagerController {
 
     private final FacilityManagerService facilityManagerService;
+
+    // 공용시설 등록
+    @PostMapping("/new")
+    @Operation(summary = "공용시설 등록")
+    public ResponseEntity<Long> createFacility(@RequestBody FacilityCreateRequestDto facilityCreateRequestDto) {
+        Long id = facilityManagerService.createFacility(facilityCreateRequestDto);
+        return ResponseEntity.ok(id);
+    }
 
     // 예약 목록 조회
     @GetMapping("/reservations")

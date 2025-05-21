@@ -1,8 +1,14 @@
 package com.ohammer.apartner.domain.facility.service;
 
+import com.ohammer.apartner.domain.apartment.entity.Apartment;
+import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
+import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
+import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
+import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
+import com.ohammer.apartner.global.Status;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +22,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class FacilityManagerService {
 
+    private final ApartmentRepository apartmentRepository;
+    private final FacilityRepository facilityRepository;
     private final FacilityReservationRepository facilityReservationRepository;
+
+    // 공용시설 등록
+    @Transactional
+    public Long createFacility(FacilityCreateRequestDto facilityCreateRequestDto) {
+        Apartment apartment = apartmentRepository.findById(facilityCreateRequestDto.getApartmentId())
+                .orElseThrow(() -> new EntityNotFoundException("아파트를 찾을 수 없습니다."));
+
+        Facility facility = Facility.builder()
+                .name(facilityCreateRequestDto.getName())
+                .description(facilityCreateRequestDto.getDescription())
+                .apartment(apartment)
+                .status(Status.ACTIVE) // 등록 시 ACTIVE
+                .build();
+
+        facilityRepository.save(facility);
+        return facility.getId();
+    }
 
     // 예약 목록 조회
     public Page<FacilityReservationManagerDto> getReservations(
