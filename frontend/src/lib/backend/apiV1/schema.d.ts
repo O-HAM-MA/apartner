@@ -2610,10 +2610,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2622,26 +2622,26 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -2706,10 +2706,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2718,9 +2718,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -3070,10 +3070,10 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3082,9 +3082,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ComplaintHandlingRateResponseDto: {
@@ -3207,9 +3207,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                replyId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -3233,9 +3231,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                replyId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -3544,9 +3540,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                opinionId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -3566,9 +3560,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                opinionId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -5298,7 +5290,7 @@ export interface operations {
                 date?: string;
                 facilityId?: number;
                 status?: string;
-                pageable: components["schemas"]["Pageable"];
+                arg3: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;

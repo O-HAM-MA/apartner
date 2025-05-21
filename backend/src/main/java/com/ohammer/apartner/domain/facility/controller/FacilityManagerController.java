@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/facilities/manager")
+@RequestMapping("/api/v1/admin/facilities")
 @Tag(name = "공용시설 예약 - 관리자")
 public class FacilityManagerController {
 
