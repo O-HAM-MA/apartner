@@ -508,7 +508,13 @@ export async function getAdminChatroom<T = any>(
  * @param title 채팅방 제목
  */
 export async function createAdminChatroom<T = any>(title: string): Promise<T> {
-  return await post<T>("/api/v1/chats", { title }, {}, true);
+  // title을 요청 본문 대신 쿼리 파라미터로 전송
+  return await post<T>(
+    `/api/v1/chats?title=${encodeURIComponent(title)}`,
+    {},
+    {},
+    true
+  );
 }
 
 /**
@@ -566,7 +572,13 @@ export async function getChatroom<T = any>(chatroomId: number): Promise<T> {
  * @param title 채팅방 제목
  */
 export async function createChatroom<T = any>(title: string): Promise<T> {
-  return await post<T>("/api/v1/chats", { title }, {}, true);
+  // title을 요청 본문 대신 쿼리 파라미터로 전송
+  return await post<T>(
+    `/api/v1/chats?title=${encodeURIComponent(title)}`,
+    {},
+    {},
+    true
+  );
 }
 
 /**
