@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.notice.service;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.ohammer.apartner.domain.apartment.entity.Building;
 import com.ohammer.apartner.domain.apartment.repository.BuildingRepository;
 import com.ohammer.apartner.domain.image.entity.Image;
@@ -8,6 +9,7 @@ import com.ohammer.apartner.domain.notice.dto.request.NoticeCreateRequestDto;
 import com.ohammer.apartner.domain.notice.dto.request.NoticeUpdateRequestDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto.NoticeFileDto;
+import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto.NoticeImageDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeSummaryResponseDto;
 import com.ohammer.apartner.domain.notice.dto.response.UserNoticeSummaryResponseDto;
 import com.ohammer.apartner.domain.notice.entity.Notice;
@@ -22,9 +24,12 @@ import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +42,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class NoticeServiceImpl implements NoticeService {
 
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
+    private final AmazonS3 amazonS3;
     private final UserRepository userRepository;
     private final BuildingRepository buildingRepository;
     private final ImageRepository imageRepository;
@@ -73,8 +82,15 @@ public class NoticeServiceImpl implements NoticeService {
             List<Image> images = imageRepository.findAllById(noticeCreateRequestDto.getImageIds());
 
             for (Image image : images) {
+                // ✅ S3 경로 이동
+                String newPath = "notice/" + notice.getId() + "/images/" + image.getStoredName();
+                amazonS3.copyObject(bucket, image.getS3Key(), bucket, newPath);
+                amazonS3.deleteObject(bucket, image.getS3Key());
+                image.setS3Key(newPath);
+                image.setPath(newPath);
                 image.setIsTemporary(false); // 게시글에 연결되었으므로 확정됨
                 image.setIsTemp(false);      // 이제 임시폴더에 있지 않음 (또는 temp 상태 아님)
+
                 noticeImageRepository.save(
                         NoticeImage.builder()
                                 .notice(notice)
@@ -89,7 +105,13 @@ public class NoticeServiceImpl implements NoticeService {
             List<NoticeFile> files = noticeFileRepository.findAllById(noticeCreateRequestDto.getFileIds());
 
             for (NoticeFile file : files) {
-                file.setNotice(notice); // 연결
+                // ✅ S3 경로 이동
+                String newPath = "notice/" + notice.getId() + "/files/" + file.getStoredName();
+                amazonS3.copyObject(bucket, file.getS3Key(), bucket, newPath);
+                amazonS3.deleteObject(bucket, file.getS3Key());
+                file.setS3Key(newPath);
+                file.setPath(newPath);
+                file.setNotice(notice);
             }
         }
 
@@ -116,14 +138,23 @@ public class NoticeServiceImpl implements NoticeService {
             noticeRepository.save(notice);
         }
 
-        List<String> imageUrls = notice.getImages().stream()
-                .map(noticeImage -> noticeImage.getImage().getFilePath())
+        List<NoticeImageDto> noticeImageDtos = notice.getImages().stream()
+                .map(noticeImage -> {
+                    Image image = noticeImage.getImage();
+                    return NoticeImageDto.builder()
+                            .id(image.getId())
+                            .downloadUrl(amazonS3.getUrl(bucket, image.getS3Key()).toString())
+                            .originalName(image.getOriginalName())
+                            .size(image.getSize())
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         List<NoticeFileDto> noticeFileDtos = notice.getFiles().stream()
                 .map(file -> NoticeFileDto.builder()
+                        .id(file.getId())
                         .originalName(file.getOriginalName())
-                        .downloadUrl(file.getPath()) // 혹은 presigned URL 생성 로직
+                        .downloadUrl(amazonS3.getUrl(bucket, file.getS3Key()).toString())
                         .size(file.getSize())
                         .build())
                 .collect(Collectors.toList());
@@ -132,10 +163,10 @@ public class NoticeServiceImpl implements NoticeService {
                 .noticeId(notice.getId())
                 .title(notice.getTitle())
                 .content(notice.getContent())
-                .authorName(notice.getUser().getUserName()) // or username
+                .authorName(notice.getUser().getUserName())
                 .createdAt(notice.getCreatedAt())
                 .viewCount(notice.getViewCount())
-                .imageUrls(imageUrls)
+                .imageUrls(noticeImageDtos)
                 .fileUrls(noticeFileDtos)
                 .build();
     }
@@ -164,11 +195,28 @@ public class NoticeServiceImpl implements NoticeService {
             notice.setModifiedAt(LocalDateTime.now());
         }
 
-        // 새 이미지 연결
-        if (noticeUpdateRequestDto.getImageIds() != null && !noticeUpdateRequestDto.getImageIds().isEmpty()) {
-            noticeImageRepository.deleteAllByNotice(notice);
-            List<Image> images = imageRepository.findAllById(noticeUpdateRequestDto.getImageIds());
-            for (Image image : images) {
+        // 이미지
+        if (noticeUpdateRequestDto.getImageIds() != null) {
+            // 1. 기존 notice에 연결된 이미지 id 목록
+            Set<Long> existingImageIds = notice.getImages().stream()
+                    .map(ni -> ni.getImage().getId())
+                    .collect(Collectors.toSet());
+
+            // 2. 요청받은(수정 후 남길) 이미지 id 리스트
+            List<Long> requestedImageIds = noticeUpdateRequestDto.getImageIds();
+
+            // 3. 기존에 연결된 이미지 중 요청에 없는 것들은 연결 해제(삭제)
+            for (NoticeImage noticeImage : new ArrayList<>(notice.getImages())) {
+                if (!requestedImageIds.contains(noticeImage.getImage().getId())) {
+                    noticeImageRepository.delete(noticeImage);
+                }
+            }
+
+            // 4. 요청 id 중 기존에 없는 이미지는 새로 연결
+            List<Image> imagesToAdd = imageRepository.findAllById(requestedImageIds).stream()
+                    .filter(img -> !existingImageIds.contains(img.getId()))
+                    .collect(Collectors.toList());
+            for (Image image : imagesToAdd) {
                 image.setIsTemporary(false);
                 image.setModifiedAt(LocalDateTime.now());
                 noticeImageRepository.save(
@@ -180,12 +228,27 @@ public class NoticeServiceImpl implements NoticeService {
             }
         }
 
-        // 새 파일 연결
-        if (noticeUpdateRequestDto.getFileIds() != null && !noticeUpdateRequestDto.getFileIds().isEmpty()) {
-            noticeFileRepository.deleteAllByNotice(notice);
-            List<NoticeFile> files = noticeFileRepository.findAllById(noticeUpdateRequestDto.getFileIds());
-            for (NoticeFile file : files) {
-                file.setNotice(notice); // 파일에 notice 연결
+        // 파일
+        if (noticeUpdateRequestDto.getFileIds() != null) {
+            Set<Long> existingFileIds = notice.getFiles().stream()
+                    .map(NoticeFile::getId)
+                    .collect(Collectors.toSet());
+
+            List<Long> requestedFileIds = noticeUpdateRequestDto.getFileIds();
+
+            // 기존 연결된 파일 중 요청에 없는 것은 삭제(연결 해제)
+            for (NoticeFile noticeFile : new ArrayList<>(notice.getFiles())) {
+                if (!requestedFileIds.contains(noticeFile.getId())) {
+                    noticeFileRepository.delete(noticeFile);
+                }
+            }
+
+            // 요청 id 중 기존에 없는 파일은 새로 연결
+            List<NoticeFile> filesToAdd = noticeFileRepository.findAllById(requestedFileIds).stream()
+                    .filter(f -> !existingFileIds.contains(f.getId()))
+                    .collect(Collectors.toList());
+            for (NoticeFile file : filesToAdd) {
+                file.setNotice(notice);
                 file.setModifiedAt(LocalDateTime.now());
             }
         }

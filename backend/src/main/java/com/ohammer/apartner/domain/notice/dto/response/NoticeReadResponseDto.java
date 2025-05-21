@@ -34,7 +34,7 @@ public class NoticeReadResponseDto {
     private Long viewCount;
 
     @Schema(description = "게시글 첨부 이미지", example = "엘레베이터.jpg")
-    private List<String> imageUrls;
+    private List<NoticeImageDto> imageUrls;
 
     @Schema(description = "게시글 첨부 파일", example = "엘레베이터_점검_안내문.pdf")
     private List<NoticeFileDto> fileUrls;
@@ -42,6 +42,16 @@ public class NoticeReadResponseDto {
     @Getter
     @Builder
     public static class NoticeFileDto {
+        private Long id;
+        private String originalName;
+        private String downloadUrl;
+        private Long size;
+    }
+
+    @Getter
+    @Builder
+    public static class NoticeImageDto {
+        private Long id;
         private String originalName;
         private String downloadUrl;
         private Long size;

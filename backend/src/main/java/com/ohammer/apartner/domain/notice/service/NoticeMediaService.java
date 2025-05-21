@@ -6,9 +6,12 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.ohammer.apartner.domain.image.entity.Image;
 import com.ohammer.apartner.domain.image.repository.ImageRepository;
 import com.ohammer.apartner.domain.image.util.FileUtils;
+import com.ohammer.apartner.domain.notice.dto.response.MediaInfoResponseDto;
+import com.ohammer.apartner.domain.notice.dto.response.MediaUploadResponseDto;
 import com.ohammer.apartner.domain.notice.entity.NoticeFile;
 import com.ohammer.apartner.domain.notice.repository.NoticeFileRepository;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,15 +33,16 @@ public class NoticeMediaService {
     private final ImageRepository imageRepository;
     private final NoticeFileRepository noticeFileRepository;
 
-    public List<Long> uploadImages(Long noticeId, List<MultipartFile> files) {
-        List<Long> ids = new ArrayList<>();
+    @Transactional
+    public List<MediaUploadResponseDto> uploadImages(List<MultipartFile> files) {
+        List<MediaUploadResponseDto> responses = new ArrayList<>();
 
         for (MultipartFile file : files) {
             String originalName = file.getOriginalFilename();
             String storedName = FileUtils.createFileName(originalName);
             String extension = FileUtils.extractFileExtension(originalName);
             String contentType = FileUtils.determineContentType(extension);
-            String path = "notice/" + noticeId + "/images/" + storedName;
+            String path = "notice/temp/images/" + storedName; // temp 경로 사용
 
             // S3 업로드
             ObjectMetadata metadata = new ObjectMetadata();
@@ -58,35 +62,40 @@ public class NoticeMediaService {
                     .size(file.getSize())
                     .contentType(contentType)
                     .s3Key(path)
+                    .isTemp(true)
                     .isTemporary(true)
                     .isDeleted(false)
-                    .isTemp(true)
                     .expiresAt(LocalDateTime.now().plusHours(24))
                     .build();
 
-            ids.add(imageRepository.save(image).getId());
+            Image savedImage = imageRepository.save(image);
+            String imageUrl = amazonS3.getUrl(bucket, path).toString();
+
+            responses.add(new MediaUploadResponseDto(savedImage.getId(), imageUrl, originalName));
         }
 
-        return ids;
+        return responses;
     }
 
-    public List<Long> uploadFiles(Long noticeId, List<MultipartFile> files) {
-        List<Long> ids = new ArrayList<>();
+    @Transactional
+    public List<MediaUploadResponseDto> uploadFiles(List<MultipartFile> files) {
+        List<MediaUploadResponseDto> responses = new ArrayList<>();
 
         for (MultipartFile file : files) {
+
             String originalName = file.getOriginalFilename();
             String storedName = FileUtils.createFileName(originalName);
             String extension = FileUtils.extractFileExtension(originalName);
             String contentType = FileUtils.determineContentType(extension);
-            String path = "notice/" + noticeId + "/files/" + storedName;
+            String path = "notice/temp/files/" + storedName; // temp 경로 사용
 
             // S3 업로드
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
             metadata.setContentType(contentType);
 
-            try {
-                amazonS3.putObject(new PutObjectRequest(bucket, path, file.getInputStream(), metadata));
+            try (InputStream is = file.getInputStream()) {
+                amazonS3.putObject(new PutObjectRequest(bucket, path, is, metadata));
             } catch (IOException e) {
                 throw new RuntimeException("파일 업로드 실패", e);
             }
@@ -100,24 +109,43 @@ public class NoticeMediaService {
                     .s3Key(path)
                     .build();
 
-            ids.add(noticeFileRepository.save(noticeFile).getId());
-        }
+            NoticeFile savedFile = noticeFileRepository.save(noticeFile);
+            String fileUrl = amazonS3.getUrl(bucket, path).toString();
 
-        return ids;
+            responses.add(new MediaUploadResponseDto(savedFile.getId(), fileUrl, originalName));
+        }
+        return responses;
     }
 
+    public MediaInfoResponseDto getImageInfo(Long noticeImageId) {
+        Image image = imageRepository.findById(noticeImageId)
+                .orElseThrow(() -> new IllegalArgumentException("이미지 없음"));
+        String url = amazonS3.getUrl(bucket, image.getS3Key()).toString();
+
+        return new MediaInfoResponseDto(image.getId(), url, image.getOriginalName(), image.getIsTemp(),
+                image.getExpiresAt());
+    }
+
+    public MediaInfoResponseDto getFileInfo(Long noticeFileId) {
+        NoticeFile file = noticeFileRepository.findById(noticeFileId)
+                .orElseThrow(() -> new IllegalArgumentException("파일 없음"));
+        String url = amazonS3.getUrl(bucket, file.getS3Key()).toString();
+
+        return new MediaInfoResponseDto(file.getId(), url, file.getOriginalName(), false, null);
+    }
+
+    @Transactional
     public void deleteImage(Long noticeImageId) {
         Image image = imageRepository.findById(noticeImageId)
                 .orElseThrow(() -> new IllegalArgumentException("이미지를 찾을 수 없습니다."));
-
         amazonS3.deleteObject(bucket, image.getS3Key());
         imageRepository.delete(image);
     }
 
-    public void deleteFile(Long fileId) {
-        NoticeFile file = noticeFileRepository.findById(fileId)
+    @Transactional
+    public void deleteFile(Long noticeFileId) {
+        NoticeFile file = noticeFileRepository.findById(noticeFileId)
                 .orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
-
         amazonS3.deleteObject(bucket, file.getS3Key());
         noticeFileRepository.delete(file);
     }

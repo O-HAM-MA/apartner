@@ -25,9 +25,9 @@ public class NoticeCreateRequestDto {
     @Schema(description = "게시글 대상: 전체/동별 선택 - buildingId", example = "101동 / null일 경우 전체 공지")
     private Long buildingId;
 
-    @Schema(description = "tiptap에 삽입된 이미지 ID들")
+    @Schema(description = "tiptap에 삽입된 이미지 ID들", example = "[ ]")
     private List<Long> imageIds; // optional
 
-    @Schema(description = "tiptap에 삽입된 첨부파일 ID들")
+    @Schema(description = "tiptap에 삽입된 첨부파일 ID들", example = "[ ]")
     private List<Long> fileIds; // optional
 }
