@@ -115,3 +115,5 @@ __pycache__/
 application-secret.yml
 
 **/.cursor/rules
+
+schema.d.ts

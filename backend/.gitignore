@@ -47,3 +47,6 @@ application-secret.yml
 
 ### OpenAPI Swagger ###
 apiV1.json
+
+
+schema.d.ts
