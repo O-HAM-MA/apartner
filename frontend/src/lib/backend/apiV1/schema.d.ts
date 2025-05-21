@@ -3208,7 +3208,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                replyId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -3232,7 +3234,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                replyId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -3541,7 +3545,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                opinionId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -3561,7 +3567,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                opinionId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -3634,6 +3642,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
+
                 "multipart/form-data": {
                     files: string[];
                 };
@@ -3660,6 +3669,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
+
                 "multipart/form-data": {
                     files: string[];
                 };
@@ -4225,7 +4235,9 @@ export interface operations {
     getChatroomList: {
         parameters: {
             query: {
-                arg0: components["schemas"]["SecurityUtil"];
+                securityUtil: components["schemas"]["SecurityUtil"];
+
+
             };
             header?: never;
             path?: never;
@@ -4247,7 +4259,8 @@ export interface operations {
     createChatroom: {
         parameters: {
             query: {
-                arg0: components["schemas"]["SecurityUtil"];
+                securityUtil: components["schemas"]["SecurityUtil"];
+
                 title: string;
             };
             header?: never;
@@ -4270,7 +4283,7 @@ export interface operations {
     joinChatroom: {
         parameters: {
             query: {
-                arg0: components["schemas"]["SecurityUtil"];
+                securityUtil: components["schemas"]["SecurityUtil"];
                 currentChatroomId?: number;
             };
             header?: never;
@@ -4295,7 +4308,7 @@ export interface operations {
     leaveChatroom: {
         parameters: {
             query: {
-                arg0: components["schemas"]["SecurityUtil"];
+                securityUtil: components["schemas"]["SecurityUtil"];
             };
             header?: never;
             path: {
@@ -5297,7 +5310,7 @@ export interface operations {
                 date?: string;
                 facilityId?: number;
                 status?: string;
-                arg3: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;

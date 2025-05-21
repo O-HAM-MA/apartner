@@ -43,21 +43,36 @@ export default function AdminLogin() {
 
     try {
       // 실제 API 호출 (토큰은 쿠키에 자동 저장됨)
+      console.log("[AdminLogin] 로그인 시도:", email);
       const response = await post<AdminLoginResponse>(
         "/api/v1/admin/login",
         { username: email, password },
         {},
         true // 401 리다이렉트 방지
       );
+      console.log("[AdminLogin] 로그인 응답:", response);
 
       // 로그인 성공 시 관리자 정보 조회 (쿠키의 토큰 사용)
       try {
         const adminData = await get<any>("/api/v1/admin/me", {}, true);
-        setAdminMember(adminData);
-        // 관리자 대시보드로 리다이렉션
-        router.replace("/admin/addash");
+        console.log("[AdminLogin] 관리자 정보 로드 성공:", adminData);
 
-        // 직접 경로 이동 (백업 메서드)
+        // 관리자 정보가 유효한지 확인
+        if (!adminData || !adminData.id) {
+          console.error(
+            "[AdminLogin] 관리자 데이터가 유효하지 않음:",
+            adminData
+          );
+          setError("관리자 정보가 유효하지 않습니다.");
+          setIsLoading(false);
+          return;
+        }
+
+        // 상태 업데이트 후 대시보드로 이동
+        setAdminMember(adminData);
+        console.log("[AdminLogin] 대시보드로 이동 시도");
+
+        // 약간의 지연 후 이동
         setTimeout(() => {
           window.location.href = "/admin/addash";
         }, 100);

@@ -1,4 +1,4 @@
-import { createContext, useState, use, useCallback } from "react";
+import { createContext, useState, useContext, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/utils/api";
 
@@ -116,5 +116,5 @@ export function useLoginMember() {
 }
 
 export function useGlobalLoginMember() {
-  return use(LoginMemberContext);
+  return useContext(LoginMemberContext);
 }

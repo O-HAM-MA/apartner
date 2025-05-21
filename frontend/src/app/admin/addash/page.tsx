@@ -18,10 +18,30 @@ export default function AdminDashboard() {
 
   // 관리자 로그인 상태 확인
   useEffect(() => {
-    if (!isAdminLogin) {
-      router.replace("/admin");
+    console.log(
+      "[AdminDashboard] 관리자 로그인 상태:",
+      isAdminLogin,
+      "관리자 정보:",
+      adminMember
+    );
+
+    // localStorage에서 관리자 정보 확인
+    const savedAdmin = localStorage.getItem("adminMember");
+    console.log("[AdminDashboard] localStorage 관리자 정보:", savedAdmin);
+
+    // 로그인 상태 확인 기준 강화
+    const isLoggedIn =
+      isAdminLogin ||
+      (adminMember && adminMember.id !== 0) ||
+      (savedAdmin && JSON.parse(savedAdmin).id !== 0);
+
+    if (!isLoggedIn) {
+      console.log(
+        "[AdminDashboard] 로그인 상태가 아니므로 로그인 페이지로 이동"
+      );
+      window.location.href = "/admin";
     }
-  }, [isAdminLogin, router]);
+  }, [isAdminLogin, adminMember]);
 
   return (
     <div className="space-y-6">
