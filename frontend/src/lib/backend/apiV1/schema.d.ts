@@ -40,22 +40,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entry-records/update-status/{vehicleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["updateLatestPendingStatus"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/complaints/{complaintId}": {
         parameters: {
             query?: never;
@@ -112,6 +96,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** 해당 입주민이 작성한 글 수정 */
         put: operations["update"];
         post?: never;
         delete?: never;
@@ -129,6 +114,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** 입주민이 주차장에 주차하러 차량 등록 */
         post: operations["registerResidentVehicle"];
         delete?: never;
         options?: never;
@@ -145,6 +131,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** 외부 손님이 주차장에 주차하러 차량 등록 */
         post: operations["registerForeignVehicle"];
         delete?: never;
         options?: never;
@@ -489,6 +476,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** 이미 등록한 차량이 다시 주차장에 들어가려 등록하는 동작 */
         post: operations["requestEntryRecord"];
         delete?: never;
         options?: never;
@@ -505,6 +493,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** 주차장에서 차 빼서 나가는 동작 */
         post: operations["exit"];
         delete?: never;
         options?: never;
@@ -521,6 +510,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** 차 몰고 주차장으로 들어가는 동작 */
         post: operations["enter"];
         delete?: never;
         options?: never;
@@ -579,11 +569,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 민원에 대한 피드백 목록 조회
-         * @description 해당 민원 ID로 모든 피드백을 조회합니다
-         */
-        get: operations["getComplaintFeedback"];
+        get?: never;
         put?: never;
         /**
          * 민원 피드백 생성
@@ -603,8 +589,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 커뮤니티 소통 게시판 글 목록 조회 */
         get: operations["list"];
         put?: never;
+        /** 커뮤니티 소통 게시판에 글 등록 */
         post: operations["create"];
         delete?: never;
         options?: never;
@@ -621,6 +609,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** 글 고정시키기 */
         post: operations["pin"];
         delete?: never;
         options?: never;
@@ -635,7 +624,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getChatroomList"];
         put?: never;
         post: operations["createChatroom"];
         delete?: never;
@@ -651,7 +640,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["getChatroomList"];
+        get?: never;
         put?: never;
         post: operations["joinChatroom"];
         delete: operations["leaveChatroom"];
@@ -809,6 +798,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** 등록된 차량을 수정 */
         patch: operations["updateVehicle"];
         trace?: never;
     };
@@ -885,6 +875,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** 주차 요청 승인/미승인 결정하는 동작 */
         patch: operations["updateEntryStatus"];
         trace?: never;
     };
@@ -915,6 +906,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 주차 승인을 받지 못해 대기하고 있는 외부 차량 리스트 조회 */
         get: operations["getMyRequests"];
         put?: never;
         post?: never;
@@ -931,39 +923,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 주차랑 수용 공간과 현재 주차된 차량 수, 그리고 남은 주차 공간 */
         get: operations["getParkingStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/vehicles/resident": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getResidentVehicles"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/vehicles/registrations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getVehicleRegistrations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -979,6 +940,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 등록된 모든 차량 조회 */
         get: operations["getRegistrations"];
         put?: never;
         post?: never;
@@ -995,6 +957,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 입주민이 자신 앞으로 등록된 차량 리스트 조회 */
         get: operations["getMyVehicles"];
         put?: never;
         post?: never;
@@ -1011,23 +974,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 입주민의 허가는 받았지만 관리자의 최종 승인은 받지 못해 대기하는 외부 차량 리스트 조회 */
         get: operations["getInvitedApprovedVehicles"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/vehicles/foreign": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getForeignVehicles"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1043,6 +991,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 주차 권한을 가진 차량들만 조회 */
         get: operations["getApprovedVehicles"];
         put?: never;
         post?: never;
@@ -1059,6 +1008,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 현재 주차 중인 차량 리스트 조회 */
         get: operations["getActiveVehicles"];
         put?: never;
         post?: never;
@@ -1439,6 +1389,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 차량의 출입 기록들 최신순 조회 */
         get: operations["getRecords"];
         put?: never;
         post?: never;
@@ -1528,6 +1479,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/complaint-feedbacks/{complaintId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 민원에 대한 피드백 목록 조회
+         * @description 해당 민원 ID로 모든 피드백을 조회합니다
+         */
+        get: operations["getComplaintFeedback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/community/{id}": {
         parameters: {
             query?: never;
@@ -1535,7 +1506,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** 특정 글에 달린 답글 목록 조회 */
         get: operations["listBranch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chats/{chatroomId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChatroomById"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1734,6 +1722,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** 등록된 차량을 삭제 */
         delete: operations["deleteVehicle"];
         options?: never;
         head?: never;
@@ -1830,6 +1819,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** 해당 입주민이 작성한 글 삭제 */
         delete: operations["delete"];
         options?: never;
         head?: never;
@@ -1876,7 +1866,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        UpdateOpinionRequestDto: {
+        UpdateOpinionReplyRequestDto: {
             reply?: string;
         };
         /** @description 공지사항 게시글 수정 요청 DTO */
@@ -1895,11 +1885,6 @@ export interface components {
             imageIds?: number[];
             /** @description tiptap에 삽입된 첨부파일 ID들 */
             fileIds?: number[];
-        };
-        EntryRecordStatusDto: {
-            /** Format: int64 */
-            id?: number;
-            status?: string;
         };
         CreateComplaintRequestDto: {
             title?: string;
@@ -2261,7 +2246,7 @@ export interface components {
             gradeId?: number;
             socialProvider?: string;
             socialId?: string;
-            roles?: ("ADMIN" | "USER" | "MANAGER")[];
+            roles?: ("ADMIN" | "USER" | "MODERATOR" | "MANAGER")[];
             password?: string;
             email?: string;
             phoneNum?: string;
@@ -2331,6 +2316,13 @@ export interface components {
             content?: string;
         };
         SecurityUtil: Record<string, never>;
+        ApiResponseChatroomDto: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["ChatroomDto"];
+        };
         ChatroomDto: {
             /** Format: int64 */
             id?: number;
@@ -2340,6 +2332,13 @@ export interface components {
             userCount?: number;
             /** Format: date-time */
             createdAt?: string;
+        };
+        ApiResponseBoolean: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: boolean;
         };
         /** @description 인증번호 확인 요청 DTO */
         VerifyCodeRequestDto: {
@@ -2505,6 +2504,11 @@ export interface components {
              */
             unitId?: number;
         };
+        EntryRecordStatusDto: {
+            /** Format: int64 */
+            id?: number;
+            status?: string;
+        };
         VehicleRegistrationInfoDto: {
             /** Format: int64 */
             id?: number;
@@ -2568,10 +2572,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2580,9 +2584,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
@@ -2654,10 +2658,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2666,9 +2670,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -2988,10 +2992,10 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3000,9 +3004,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ComplaintHandlingRateResponseDto: {
@@ -3013,10 +3017,32 @@ export interface components {
             /** Format: double */
             handlingRate?: number;
         };
+        ApiResponseListChatroomDto: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["ChatroomDto"][];
+        };
+        ApiResponseListChatMessageDto: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["ChatMessageDto"][];
+        };
         ChatMessageDto: {
             /** Format: int64 */
             userId?: number;
             message?: string;
+            userName?: string;
+            profileImageUrl?: string;
+            apartmentName?: string;
+            buildingName?: string;
+            unitNumber?: string;
+            timestamp?: string;
+            /** Format: int64 */
+            messageId?: number;
         };
         /** @description 아파트 정보 응답 DTO */
         ApartmentResponseDto: {
@@ -3103,12 +3129,14 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                replyId: number;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateOpinionRequestDto"];
+                "application/json": components["schemas"]["UpdateOpinionReplyRequestDto"];
             };
         };
         responses: {
@@ -3127,7 +3155,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                replyId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -3167,30 +3197,6 @@ export interface operations {
                     "*/*": {
                         [key: string]: Record<string, never>;
                     };
-                };
-            };
-        };
-    };
-    updateLatestPendingStatus: {
-        parameters: {
-            query: {
-                arg1: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
-            };
-            header?: never;
-            path: {
-                vehicleId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntryRecordStatusDto"];
                 };
             };
         };
@@ -3460,7 +3466,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                opinionId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -3480,7 +3488,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                opinionId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -3554,7 +3564,7 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": {
-                    arg1: string[];
+                    files: string[];
                 };
             };
         };
@@ -3580,7 +3590,7 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": {
-                    arg1: string[];
+                    files: string[];
                 };
             };
         };
@@ -4051,26 +4061,6 @@ export interface operations {
             };
         };
     };
-    getComplaintFeedback: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
     saveComplaintFeedback: {
         parameters: {
             query?: never;
@@ -4161,10 +4151,32 @@ export interface operations {
             };
         };
     };
+    getChatroomList: {
+        parameters: {
+            query: {
+                securityUtil: components["schemas"]["SecurityUtil"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListChatroomDto"];
+                };
+            };
+        };
+    };
     createChatroom: {
         parameters: {
             query: {
-                arg0: components["schemas"]["SecurityUtil"];
+                securityUtil: components["schemas"]["SecurityUtil"];
                 title: string;
             };
             header?: never;
@@ -4179,29 +4191,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChatroomDto"];
-                };
-            };
-        };
-    };
-    getChatroomList: {
-        parameters: {
-            query: {
-                arg0: components["schemas"]["SecurityUtil"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ChatroomDto"][];
+                    "*/*": components["schemas"]["ApiResponseChatroomDto"];
                 };
             };
         };
@@ -4209,7 +4199,7 @@ export interface operations {
     joinChatroom: {
         parameters: {
             query: {
-                arg0: components["schemas"]["SecurityUtil"];
+                securityUtil: components["schemas"]["SecurityUtil"];
                 currentChatroomId?: number;
             };
             header?: never;
@@ -4226,7 +4216,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": boolean;
+                    "*/*": components["schemas"]["ApiResponseBoolean"];
                 };
             };
         };
@@ -4234,7 +4224,7 @@ export interface operations {
     leaveChatroom: {
         parameters: {
             query: {
-                arg0: components["schemas"]["SecurityUtil"];
+                securityUtil: components["schemas"]["SecurityUtil"];
             };
             header?: never;
             path: {
@@ -4250,7 +4240,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": boolean;
+                    "*/*": components["schemas"]["ApiResponseBoolean"];
                 };
             };
         };
@@ -4627,48 +4617,6 @@ export interface operations {
             };
         };
     };
-    getResidentVehicles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["VehicleResponseDto"][];
-                };
-            };
-        };
-    };
-    getVehicleRegistrations: {
-        parameters: {
-            query?: {
-                isForeign?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
-                };
-            };
-        };
-    };
     getRegistrations: {
         parameters: {
             query?: {
@@ -4727,26 +4675,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
-                };
-            };
-        };
-    };
-    getForeignVehicles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["VehicleResponseDto"][];
                 };
             };
         };
@@ -5214,7 +5142,7 @@ export interface operations {
                 date?: string;
                 facilityId?: number;
                 status?: string;
-                arg3: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -5335,6 +5263,28 @@ export interface operations {
             };
         };
     };
+    getComplaintFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                complaintId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     listBranch: {
         parameters: {
             query?: never;
@@ -5357,11 +5307,9 @@ export interface operations {
             };
         };
     };
-    getMessageList: {
+    getChatroomById: {
         parameters: {
-            query: {
-                arg0: components["schemas"]["SecurityUtil"];
-            };
+            query?: never;
             header?: never;
             path: {
                 chatroomId: number;
@@ -5376,7 +5324,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChatMessageDto"][];
+                    "*/*": components["schemas"]["ApiResponseChatroomDto"];
+                };
+            };
+        };
+    };
+    getMessageList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListChatMessageDto"];
                 };
             };
         };
@@ -5396,7 +5366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ChatroomDto"][];
+                    "*/*": components["schemas"]["ApiResponseListChatroomDto"];
                 };
             };
         };

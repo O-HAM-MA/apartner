@@ -1,4 +1,4 @@
-import { createContext, useState, use } from "react";
+import { createContext, useState, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/utils/api";
 
@@ -118,5 +118,5 @@ export function useAdminMember() {
 }
 
 export function useGlobalAdminMember() {
-  return use(AdminMemberContext);
+  return useContext(AdminMemberContext);
 }
