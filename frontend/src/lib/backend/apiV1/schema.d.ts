@@ -1122,6 +1122,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notices/media/images/{noticeImageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 이미지 정보 조회
+         * @description 게시글에 첨부된 이미지를 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getImageInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 이미지 삭제
+         * @description 사용자가 업로드한 임시 이미지를 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/media/files/{noticeFileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 파일 정보 조회
+         * @description 게시글에 첨부된 파일을 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getFileInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 파일 삭제
+         * @description 사용자가 업로드한 임시 파일을 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteFile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/myInfos": {
         parameters: {
             query?: never;
@@ -1769,46 +1817,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/notices/media/images/{noticeImageId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * 임시 이미지 삭제
-         * @description 사용자가 업로드한 임시 이미지를 삭제합니다.
-         */
-        delete: operations["deleteImage"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/media/files/{noticeFileId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * 임시 파일 삭제
-         * @description 사용자가 업로드한 임시 파일을 삭제합니다.
-         */
-        delete: operations["deleteFile"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/community/delete/{id}": {
         parameters: {
             query?: never;
@@ -1881,9 +1889,15 @@ export interface components {
              * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
              */
             content?: string;
-            /** @description tiptap에 삽입된 이미지 ID들 */
+            /**
+             * @description tiptap에 삽입된 이미지 ID들
+             * @example []
+             */
             imageIds?: number[];
-            /** @description tiptap에 삽입된 첨부파일 ID들 */
+            /**
+             * @description tiptap에 삽입된 첨부파일 ID들
+             * @example []
+             */
             fileIds?: number[];
         };
         CreateComplaintRequestDto: {
@@ -2002,6 +2016,25 @@ export interface components {
             title?: string;
             content?: string;
         };
+        /** @description 공지사항 게시글 첨부파일 업로드 응답 DTO */
+        MediaUploadResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
+        };
         /** @description 공지사항 게시글 등록 요청 DTO */
         NoticeCreateRequestDto: {
             /**
@@ -2020,9 +2053,15 @@ export interface components {
              * @example 101동 / null일 경우 전체 공지
              */
             buildingId?: number;
-            /** @description tiptap에 삽입된 이미지 ID들 */
+            /**
+             * @description tiptap에 삽입된 이미지 ID들
+             * @example []
+             */
             imageIds?: number[];
-            /** @description tiptap에 삽입된 첨부파일 ID들 */
+            /**
+             * @description tiptap에 삽입된 첨부파일 ID들
+             * @example []
+             */
             fileIds?: number[];
         };
         /** @description 비밀번호 재설정 요청 DTO */
@@ -2593,19 +2632,29 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         NoticeFileDto: {
+            /** Format: int64 */
+            id?: number;
+            originalName?: string;
+            downloadUrl?: string;
+            /** Format: int64 */
+            size?: number;
+        };
+        NoticeImageDto: {
+            /** Format: int64 */
+            id?: number;
             originalName?: string;
             downloadUrl?: string;
             /** Format: int64 */
@@ -2650,7 +2699,7 @@ export interface components {
              * @description 게시글 첨부 이미지
              * @example 엘레베이터.jpg
              */
-            imageUrls?: string[];
+            imageUrls?: components["schemas"]["NoticeImageDto"][];
             /**
              * @description 게시글 첨부 파일
              * @example 엘레베이터_점검_안내문.pdf
@@ -2705,6 +2754,36 @@ export interface components {
              * @example 0
              */
             viewCount?: number;
+        };
+        /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
+        MediaInfoResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
+            /**
+             * @description 임시 파일 여부
+             * @example false
+             */
+            isTemp?: boolean;
+            /**
+             * Format: date-time
+             * @description 임시 파일 만료일시
+             * @example 2025-05-23T09:00:00
+             */
+            expiresAt?: string;
         };
         /** @description 사용자 정보 응답 DTO */
         MyInfoResponseDto: {
@@ -3563,7 +3642,8 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+
+                "multipart/form-data": {
                     files: string[];
                 };
             };
@@ -3575,7 +3655,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": number[];
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
                 };
             };
         };
@@ -3589,7 +3669,8 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+
+                "multipart/form-data": {
                     files: string[];
                 };
             };
@@ -3601,7 +3682,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": number[];
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
                 };
             };
         };
@@ -4155,6 +4236,8 @@ export interface operations {
         parameters: {
             query: {
                 securityUtil: components["schemas"]["SecurityUtil"];
+
+
             };
             header?: never;
             path?: never;
@@ -4177,6 +4260,7 @@ export interface operations {
         parameters: {
             query: {
                 securityUtil: components["schemas"]["SecurityUtil"];
+
                 title: string;
             };
             header?: never;
@@ -4878,6 +4962,90 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["PageUserNoticeSummaryResponseDto"];
                 };
+            };
+        };
+    };
+    getImageInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getFileInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -5617,46 +5785,6 @@ export interface operations {
                 content: {
                     "*/*": string;
                 };
-            };
-        };
-    };
-    deleteImage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeImageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    deleteFile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeFileId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

@@ -22,6 +22,8 @@ export default function EditNoticePage({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentImageIds, setCurrentImageIds] = useState<number[]>([]);
+  const [currentFileIds, setCurrentFileIds] = useState<number[]>([]);
 
   // 기존 공지사항 데이터 불러오기
   useEffect(() => {
@@ -33,6 +35,18 @@ export default function EditNoticePage({
         const notice = response.data as NoticeDetail;
         setTitle(notice.title || '');
         setContent(notice.content || '');
+
+        // 기존 이미지와 파일 ID 설정 - undefined 필터링
+        setCurrentImageIds(
+          notice.imageUrls
+            ?.map((img) => img.id)
+            .filter((id): id is number => id !== undefined) || []
+        );
+        setCurrentFileIds(
+          notice.fileUrls
+            ?.map((file) => file.id)
+            .filter((id): id is number => id !== undefined) || []
+        );
       } catch (error) {
         setError('공지사항을 불러오는 중 오류가 발생했습니다.');
       } finally {
@@ -51,8 +65,8 @@ export default function EditNoticePage({
       const updateData: NoticeUpdateRequestDto = {
         title,
         content,
-        imageIds: [], // 이미지 ID 배열
-        fileIds: [], // 파일 ID 배열
+        imageIds: currentImageIds,
+        fileIds: currentFileIds,
       };
 
       await client.PUT('/api/v1/notices/{noticeId}/update', {
@@ -67,6 +81,12 @@ export default function EditNoticePage({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // 미디어 ID 변경 핸들러
+  const handleMediaIdsChange = (imageIds: number[], fileIds: number[]) => {
+    setCurrentImageIds(imageIds);
+    setCurrentFileIds(fileIds);
   };
 
   if (isLoading) {
@@ -119,7 +139,12 @@ export default function EditNoticePage({
             >
               내용
             </label>
-            <TiptapEditor content={content} onChange={setContent} />
+            <TiptapEditor
+              content={content}
+              onChange={setContent}
+              onMediaIdsChange={handleMediaIdsChange}
+              noticeId={Number(noticeId)}
+            />
           </div>
 
           <div className="flex justify-end space-x-4">

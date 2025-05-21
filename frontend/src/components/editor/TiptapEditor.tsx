@@ -15,12 +15,14 @@ import { Plugin, PluginKey, NodeSelection } from 'prosemirror-state';
 import { BubbleMenu } from '@tiptap/react';
 import client from '@/lib/backend/client';
 import type { paths } from '@/lib/backend/apiV1/schema';
+import { fetchApi } from '@/utils/api';
 
-type FileUploadResponse =
-  paths['/api/v1/notices/media/files/upload']['post']['responses']['200']['content']['*/*'];
-
-type ImageUploadResponse =
-  paths['/api/v1/notices/media/images/upload']['post']['responses']['200']['content']['*/*'];
+// MediaUploadResponseDto 타입 추가
+type MediaUploadResponseDto = {
+  id: number;
+  url: string;
+  originalName?: string;
+};
 
 // --- 사용자 정의 이미지 속성 인터페이스 ---
 interface CustomImageAttributes extends HTMLAttributes<HTMLElement> {
@@ -417,6 +419,13 @@ const CustomImage = Image.extend({
   },
 });
 
+// 파일 정보 인터페이스 추가
+interface FileInfo {
+  id: string;
+  name: string;
+  url: string;
+}
+
 interface TiptapEditorProps {
   content?: string;
   onChange?: (content: string) => void;
@@ -424,6 +433,7 @@ interface TiptapEditorProps {
   onImageDelete?: (imageId: number) => void;
   onFileUploadSuccess?: (fileId: number) => void;
   onFileDelete?: (fileId: number) => void;
+  onMediaIdsChange?: (imageIds: number[], fileIds: number[]) => void;
   noticeId?: number;
 }
 
@@ -434,6 +444,7 @@ const TiptapEditor = ({
   onImageDelete,
   onFileUploadSuccess,
   onFileDelete,
+  onMediaIdsChange,
   noticeId,
 }: TiptapEditorProps) => {
   const [isMounted, setIsMounted] = useState(false);
@@ -441,14 +452,84 @@ const TiptapEditor = ({
   const linkButtonRef = useRef<HTMLButtonElement>(null);
   const linkModalRef = useRef<HTMLDivElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadingFileName, setUploadingFileName] = useState<string>('');
   const [linkUrl, setLinkUrl] = useState('');
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<FileInfo[]>([]);
+  const [currentImageIds, setCurrentImageIds] = useState<number[]>([]);
+
+  // refs for tracking previous state
+  const prevImageIdsRef = useRef<number[]>([]);
+  const prevFileIdsRef = useRef<number[]>([]);
   const prevTempIdsRef = useRef<Set<string>>(new Set());
-  const prevFileIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // 초기 이미지와 파일 로드
+  useEffect(() => {
+    if (!noticeId) return;
+
+    const loadInitialMedia = async () => {
+      try {
+        interface NoticeImage {
+          id: number;
+          originalName?: string;
+          downloadUrl: string;
+        }
+
+        interface NoticeFile {
+          id: number;
+          originalName?: string;
+          downloadUrl: string;
+        }
+
+        interface NoticeResponse {
+          imageUrls: NoticeImage[];
+          fileUrls: NoticeFile[];
+        }
+
+        const response = await client.GET('/api/v1/notices/{noticeId}', {
+          params: { path: { noticeId } },
+        });
+
+        const notice = response.data as NoticeResponse;
+
+        if (notice?.imageUrls && Array.isArray(notice.imageUrls)) {
+          const imageIds = notice.imageUrls
+            .filter(
+              (img): img is NoticeImage =>
+                typeof img?.id === 'number' &&
+                typeof img?.downloadUrl === 'string'
+            )
+            .map((img) => img.id);
+          setCurrentImageIds(imageIds);
+          prevImageIdsRef.current = imageIds;
+        }
+
+        if (notice?.fileUrls && Array.isArray(notice.fileUrls)) {
+          const files = notice.fileUrls
+            .filter(
+              (file): file is NoticeFile =>
+                typeof file?.id === 'number' &&
+                typeof file?.downloadUrl === 'string'
+            )
+            .map((file) => ({
+              id: String(file.id),
+              name: file.originalName || '파일',
+              url: file.downloadUrl,
+            }));
+          setUploadedFiles(files);
+          prevFileIdsRef.current = files.map((file) => Number(file.id));
+        }
+      } catch (error) {
+        console.error('미디어 로드 실패:', error);
+      }
+    };
+
+    loadInitialMedia();
+  }, [noticeId]);
 
   // 모달 외부 클릭 감지를 위한 이벤트 핸들러
   useEffect(() => {
@@ -470,15 +551,59 @@ const TiptapEditor = ({
     };
   }, [showLinkModal]);
 
-  // 이미지 제거 감지 및 부모 컴포넌트에 알림
+  // 현재 에디터에 있는 이미지 ID 추출
+  const extractImageIds = useCallback((editorInstance: Editor) => {
+    if (!editorInstance) return [];
+
+    const imageIds: number[] = [];
+    editorInstance.state.doc.descendants((node: ProseMirrorNode) => {
+      if (node.type.name === 'customImage') {
+        const tempId = node.attrs['data-temp-id'];
+        if (tempId && typeof tempId === 'string') {
+          const numId = Number(tempId);
+          if (!isNaN(numId)) {
+            imageIds.push(numId);
+          }
+        }
+      }
+      return true;
+    });
+    return imageIds;
+  }, []);
+
+  // 현재 파일 ID 추출
+  const extractFileIds = useCallback(() => {
+    return uploadedFiles.map((file) => Number(file.id));
+  }, [uploadedFiles]);
+
+  // 미디어 ID 변경 감지 및 부모 컴포넌트에 알림
+  const handleMediaChange = useCallback(
+    (imageIds: number[], fileIds: number[]) => {
+      const currentImageIdsString = JSON.stringify(imageIds.sort());
+      const currentFileIdsString = JSON.stringify(fileIds.sort());
+
+      if (
+        JSON.stringify(prevImageIdsRef.current.sort()) !==
+          currentImageIdsString ||
+        JSON.stringify(prevFileIdsRef.current.sort()) !== currentFileIdsString
+      ) {
+        prevImageIdsRef.current = imageIds;
+        prevFileIdsRef.current = fileIds;
+        setCurrentImageIds(imageIds);
+        onMediaIdsChange?.(imageIds, fileIds);
+      }
+    },
+    [onMediaIdsChange]
+  );
+
+  // 이미지 노드 변경 핸들러
   const handleImageNodeChanges = useCallback(
-    (editorInstance: Editor) => {
+    async (editorInstance: Editor) => {
       if (!editorInstance) return;
 
       const currentTempIds = new Set<string>();
       editorInstance.state.doc.descendants((node: ProseMirrorNode) => {
         if (node.type.name === 'customImage') {
-          // data-temp-id 속성에 저장된 실제 tempId 사용
           const tempId = node.attrs['data-temp-id'];
           if (tempId && typeof tempId === 'string') {
             currentTempIds.add(tempId);
@@ -489,25 +614,44 @@ const TiptapEditor = ({
 
       const prevSet = prevTempIdsRef.current;
 
-      // 제거된 이미지 찾기: 이전 목록에는 있었지만 현재 목록에는 없는 ID
-      prevSet.forEach((prevId) => {
+      // 제거된 이미지 찾기
+      for (const prevId of prevSet) {
         if (!currentTempIds.has(prevId)) {
-          onImageDelete?.(Number(prevId)); // 부모 컴포넌트에 삭제 알림
+          try {
+            const { error } = await client.DELETE(
+              '/api/v1/notices/media/images/{noticeImageId}',
+              {
+                params: { path: { noticeImageId: Number(prevId) } },
+              }
+            );
+            if (error) {
+              console.error('이미지 삭제 실패:', error);
+              return;
+            }
+            onImageDelete?.(Number(prevId));
+          } catch (error) {
+            console.error('이미지 삭제 실패:', error);
+          }
         }
-      });
+      }
 
       // 현재 이미지 목록으로 업데이트
-      prevTempIdsRef.current = new Set(currentTempIds);
+      prevTempIdsRef.current = currentTempIds;
+
+      // 현재 이미지와 파일 ID 추출
+      const imageIds = extractImageIds(editorInstance);
+      const fileIds = extractFileIds();
+
+      handleMediaChange(imageIds, fileIds);
     },
-    [onImageDelete] // onImageDelete가 변경될 때만 함수 재생성
+    [extractImageIds, extractFileIds, onImageDelete, handleMediaChange]
   );
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // StarterKit에는 기본적인 익스텐션만 포함 (Image 설정 제거)
+        // StarterKit에는 기본적인 익스텐션만 포함
       }),
-      // CustomImage 확장 설정
       CustomImage.configure({
         inline: true,
         allowBase64: true,
@@ -541,125 +685,262 @@ const TiptapEditor = ({
     immediatelyRender: false,
   });
 
-  // Prop으로 받은 content가 변경될 때 에디터 내용 업데이트
-  useEffect(() => {
-    // 에디터 인스턴스가 있고, 외부 content와 내부 HTML이 다를 때만 업데이트
-    if (editor && content !== editor.getHTML()) {
-      // false 인자는 onUpdate 콜백 반복 호출 방지
-      editor.commands.setContent(content, false);
-    }
-    // editor나 content가 변경될 때마다 이 effect 실행
-  }, [content, editor]);
+  // 파일 삭제 처리
+  const handleFileDelete = useCallback(
+    (fileId: string) => {
+      client
+        .DELETE('/api/v1/notices/media/files/{noticeFileId}', {
+          params: { path: { noticeFileId: Number(fileId) } },
+        })
+        .then(() => {
+          setUploadedFiles((prev) => {
+            const newFiles = prev.filter((file) => file.id !== fileId);
+            const fileIds = newFiles.map((file) => Number(file.id));
+            const imageIds = editor ? extractImageIds(editor) : [];
+            handleMediaChange(imageIds, fileIds);
+            return newFiles;
+          });
+          onFileDelete?.(Number(fileId));
+        })
+        .catch((error) => {
+          console.error('파일 삭제 실패:', error);
+          alert('파일 삭제에 실패했습니다.');
+        });
+    },
+    [editor, onFileDelete, extractImageIds, handleMediaChange]
+  );
 
-  // 에디터 초기 로드시 기존 이미지 추출 (editor 선언 후)
+  // 파일 업로드 성공 시 목록 업데이트
+  const handleFileUploadSuccess = useCallback(
+    (fileId: number, fileName: string, fileUrl: string) => {
+      setUploadedFiles((prev) => {
+        const newFiles = [
+          ...prev,
+          { id: String(fileId), name: fileName, url: fileUrl },
+        ];
+        const fileIds = newFiles.map((file) => Number(file.id));
+        const imageIds = editor ? extractImageIds(editor) : [];
+        if (onMediaIdsChange) {
+          onMediaIdsChange(imageIds, fileIds);
+        }
+        return newFiles;
+      });
+      if (onFileUploadSuccess) {
+        onFileUploadSuccess(fileId);
+      }
+    },
+    [editor, onFileUploadSuccess, extractImageIds, onMediaIdsChange]
+  );
+
+  // 초기 이미지 ID 동기화
   useEffect(() => {
     if (!editor) return;
-    // 에디터가 로드될 때 초기 이미지 상태 설정
-    handleImageNodeChanges(editor);
-  }, [editor, handleImageNodeChanges]);
 
-  // 이미지 렌더링 후 리사이즈 핸들 추가를 위한 useEffect
+    const imageIds = extractImageIds(editor);
+    const fileIds = extractFileIds();
+    handleMediaChange(imageIds, fileIds);
+  }, [editor, extractImageIds, extractFileIds, handleMediaChange]);
+
+  // 이미지 렌더링 후 리사이즈 핸들 추가
   useEffect(() => {
     if (!editor) return;
 
-    // 에디터 업데이트 시 리사이즈 핸들 렌더링 (필요 시)
     const handleUpdate = () => {
-      // DOM 업데이트 후 핸들 렌더링 보장
       requestAnimationFrame(() => {
         renderResizeHandle();
       });
     };
 
     editor.on('update', handleUpdate);
-
-    // 초기 로딩 시에도 핸들 렌더링
     handleUpdate();
 
     return () => {
       editor.off('update', handleUpdate);
     };
-    // renderResizeHandle 함수 자체는 의존성이 아님
   }, [editor]);
 
-  const handleImageUpload = useCallback(
+  // content prop이 변경될 때 에디터 내용 업데이트
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content, false);
+    }
+  }, [content, editor]);
+
+  // 파일 업로드 핸들러 추가
+  const handleFileUpload = useCallback(
     async (files: FileList | null) => {
-      if (files === null || !editor || isUploading) return;
+      if (!files || isUploading) return;
 
-      const file = files[0];
-      if (!file) return;
-
-      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-      if (file.size > MAX_FILE_SIZE) {
-        alert(`이미지 크기가 너무 큽니다. 5MB 이하의 이미지를 사용해주세요.`);
-        return;
-      }
-
-      const tempId = crypto.randomUUID();
-      let insertPos: number | null = null;
+      setIsUploading(true);
 
       try {
-        setIsUploading(true);
+        for (const file of Array.from(files)) {
+          const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+          if (file.size > MAX_FILE_SIZE) {
+            alert(
+              `파일 크기가 너무 큽니다. 50MB 이하만 업로드해주세요: ${file.name}`
+            );
+            continue;
+          }
 
-        // 이미지 업로드 중임을 표시하는 텍스트 노드 삽입
-        const loadingText = editor.schema.nodes.paragraph.create({}, [
-          editor.schema.text('이미지 업로드 중...'),
-        ]);
-        const tr = editor.state.tr;
-        insertPos = tr.selection.from;
-        tr.replaceSelectionWith(loadingText);
-        editor.view.dispatch(tr);
+          setUploadingFileName(file.name);
+          const formData = new FormData();
+          formData.append('files', file);
 
-        // FormData 생성
-        const formData = new FormData();
-        formData.append('files', file);
+          try {
+            const res = await fetchApi('/api/v1/notices/media/files/upload', {
+              method: 'POST',
+              body: formData,
+            });
 
-        const response = await fetch('/api/v1/notices/media/images/upload', {
-          method: 'POST',
-          body: formData,
-        });
+            if (!res.ok) {
+              throw new Error(`서버 응답 오류 (status: ${res.status})`);
+            }
 
-        if (!response.ok) {
-          throw new Error('이미지 업로드에 실패했습니다.');
+            const data = await res.json();
+            if (!data || !Array.isArray(data) || data.length === 0) {
+              throw new Error('서버 응답 데이터가 유효하지 않습니다');
+            }
+
+            const uploadedFile = data[0];
+            handleFileUploadSuccess(
+              uploadedFile.id,
+              file.name,
+              uploadedFile.url
+            );
+          } catch (error) {
+            console.error('파일 업로드 실패:', error);
+            alert(
+              `파일 업로드 실패 (${file.name}): ${
+                error instanceof Error ? error.message : '알 수 없는 오류'
+              }`
+            );
+          }
         }
+      } finally {
+        setIsUploading(false);
+        setUploadingFileName('');
+      }
+    },
+    [isUploading, handleFileUploadSuccess]
+  );
 
-        const data = await response.json();
+  // 파일 추가 버튼 클릭 핸들러
+  const addFile = useCallback(() => {
+    if (!isMounted) return;
 
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error('이미지 업로드 응답이 유효하지 않습니다.');
-        }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.onchange = (e) => {
+      e.preventDefault();
+      handleFileUpload((e.target as HTMLInputElement).files);
+      input.value = '';
+    };
+    input.click();
+  }, [handleFileUpload, isMounted]);
 
-        const imageId = data[0];
-        const imageUrl = `/api/v1/notices/media/images/${imageId}`;
+  // 이미지 렌더링 후 리사이즈 핸들 추가
+  useEffect(() => {
+    if (!editor) return;
 
-        // 로딩 텍스트를 이미지로 교체
-        if (insertPos !== null) {
-          const updateTr = editor.state.tr;
-          updateTr.delete(insertPos, insertPos + 1); // 로딩 텍스트 삭제
-          updateTr.insert(
-            insertPos,
-            editor.schema.nodes.customImage.create({
-              src: imageUrl,
-              'data-id': String(imageId),
-              'data-temp-id': tempId,
-              'data-align': 'center',
-            })
-          );
-          editor.view.dispatch(updateTr);
-          onImageUploadSuccess?.(imageId);
-        }
-      } catch (error) {
-        console.error('이미지 업로드 실패:', error);
-        if (error instanceof Error) {
-          alert(error.message);
-        } else {
-          alert('이미지 업로드에 실패했습니다.');
-        }
+    const handleUpdate = () => {
+      requestAnimationFrame(() => {
+        renderResizeHandle();
+      });
+    };
 
-        // 로딩 텍스트 제거
-        if (insertPos !== null) {
-          const tr = editor.state.tr;
-          tr.delete(insertPos, insertPos + 1);
-          editor.view.dispatch(tr);
+    editor.on('update', handleUpdate);
+    handleUpdate();
+
+    return () => {
+      editor.off('update', handleUpdate);
+    };
+  }, [editor]);
+
+  // content prop이 변경될 때 에디터 내용 업데이트
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content, false);
+    }
+  }, [content, editor]);
+
+  // 이미지 업로드 핸들러 수정
+  const handleImageUpload = useCallback(
+    async (files: FileList | null) => {
+      if (!files || !editor || isUploading) return;
+
+      setIsUploading(true);
+
+      try {
+        for (const file of Array.from(files)) {
+          const MAX_FILE_SIZE = 5 * 1024 * 1024;
+          if (file.size > MAX_FILE_SIZE) {
+            alert(
+              `이미지 크기가 너무 큽니다. 5MB 이하만 업로드해주세요: ${file.name}`
+            );
+            continue;
+          }
+
+          if (!file.type.startsWith('image/')) {
+            alert(`이미지 파일만 업로드 가능합니다: ${file.name}`);
+            continue;
+          }
+
+          const tempId = crypto.randomUUID();
+
+          try {
+            setUploadingFileName(file.name);
+            const formData = new FormData();
+            formData.append('files', file);
+
+            const res = await fetchApi('/api/v1/notices/media/images/upload', {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!res.ok) {
+              throw new Error(`서버 응답 오류 (status: ${res.status})`);
+            }
+
+            const data = await res.json();
+            if (!data || !Array.isArray(data) || data.length === 0) {
+              throw new Error('서버 응답 데이터가 유효하지 않습니다');
+            }
+
+            const uploadedImage = data[0];
+            const { id: noticeImageId, url: imageUrl } = uploadedImage;
+
+            // 이미지 삽입 - customImage 노드 사용
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: 'customImage',
+                attrs: {
+                  src: imageUrl,
+                  'data-id': String(noticeImageId),
+                  'data-temp-id': tempId,
+                  'data-align': 'center',
+                  width: null,
+                  height: null,
+                  style: null,
+                },
+              })
+              .run();
+
+            console.log('이미지 삽입 완료:', imageUrl);
+            onImageUploadSuccess?.(noticeImageId);
+          } catch (error) {
+            console.error('이미지 업로드 실패:', error);
+            alert(
+              `이미지 업로드 실패 (${file.name}): ${
+                error instanceof Error ? error.message : '알 수 없는 오류'
+              }`
+            );
+          } finally {
+            setUploadingFileName('');
+          }
         }
       } finally {
         setIsUploading(false);
@@ -668,179 +949,81 @@ const TiptapEditor = ({
     [editor, isUploading, onImageUploadSuccess]
   );
 
+  // 이미지 업로드 버튼 클릭 핸들러
   const addImage = useCallback(() => {
     if (!isMounted || !editor) return;
 
     const input = document.createElement('input');
     input.type = 'file';
+    input.multiple = true;
     input.accept = 'image/*';
     input.onchange = (e) => {
-      e.preventDefault(); // 이벤트 전파 방지
+      e.preventDefault();
       handleImageUpload((e.target as HTMLInputElement).files);
       input.value = '';
     };
     input.click();
   }, [editor, handleImageUpload, isMounted]);
 
-  const addLink = useCallback(() => {
-    if (!editor) return;
-
-    // 모달 열기
-    setLinkUrl('');
-    setShowLinkModal(true);
-  }, [editor]);
-
-  // 링크 모달에서 취소 버튼 클릭 시 처리하는 함수
-  const handleLinkCancel = useCallback(() => {
-    setShowLinkModal(false);
-    setLinkUrl('');
-  }, []);
-
-  // 링크 모달에서 확인 버튼 클릭 시 처리하는 함수
-  const handleLinkConfirm = useCallback(() => {
-    if (!editor || !linkUrl.trim()) return;
-
-    // HTML 앵커 태그로 감싸서 삽입
-    const linkHtml = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkUrl}</a>`;
-    editor.chain().focus().insertContent(linkHtml).run();
-
-    // 모달 닫기
-    setShowLinkModal(false);
-    setLinkUrl('');
-  }, [editor, linkUrl]);
-
-  // 이미지 정렬 함수
-  const alignImage = useCallback(
-    (align: 'left' | 'center' | 'right') => {
-      if (!editor) return;
-      editor
-        .chain()
-        .focus()
-        .updateAttributes('customImage', { 'data-align': align })
-        .run();
-    },
-    [editor]
-  );
-
-  const handleFileUpload = useCallback(
-    async (files: FileList | null) => {
-      if (files === null || !editor || isUploading) return;
-
-      const file = files[0];
-      if (!file) return;
-
-      const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-      if (file.size > MAX_FILE_SIZE) {
-        alert(`파일 크기가 너무 큽니다. 50MB 이하의 파일을 사용해주세요.`);
-        return;
-      }
-
-      try {
-        setIsUploading(true);
-
-        // FormData 생성
-        const formData = new FormData();
-        formData.append('files', file);
-
-        const response = await fetch('/api/v1/notices/media/files/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('파일 업로드에 실패했습니다.');
-        }
-
-        const data = await response.json();
-
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error('파일 업로드 응답이 유효하지 않습니다.');
-        }
-
-        const fileId = data[0];
-        const fileUrl = `/api/v1/notices/media/files/${fileId}`;
-
-        // 파일 링크 삽입
-        const fileLink = `<a href="${fileUrl}" 
-          class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg my-2" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          data-file-id="${fileId}">
-          <span class="material-icons mr-2" style="font-size: 20px;">description</span>
-          <span class="text-sm">${file.name}</span>
-        </a>`;
-
-        editor.chain().focus().insertContent(fileLink).run();
-        onFileUploadSuccess?.(fileId);
-      } catch (error) {
-        console.error('파일 업로드 실패:', error);
-        if (error instanceof Error) {
-          alert(error.message);
-        } else {
-          alert('파일 업로드에 실패했습니다.');
-        }
-      } finally {
-        setIsUploading(false);
-      }
-    },
-    [editor, isUploading, onFileUploadSuccess]
-  );
-
-  const addFile = useCallback(() => {
-    if (!isMounted || !editor) return;
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.doc,.docx,.hwp,.txt,.xlsx,.pptx'; // 허용할 파일 형식 지정
-    input.onchange = (e) => {
-      handleFileUpload((e.target as HTMLInputElement).files);
-      input.value = '';
-    };
-    input.click();
-  }, [editor, handleFileUpload, isMounted]);
+  // 스타일 추가
+  const additionalStyles = `
+    .hidden-file-info {
+      display: none;
+    }
+  `;
 
   if (!editor || !isMounted) return null;
 
   return (
-    <div className="prose max-w-none codemirror-like-editor">
-      <div className="flex items-center flex-wrap p-[12px] border-b w-full bg-[#ffffff]">
+    <div className="flex flex-col h-full">
+      {/* 에디터 툴바 */}
+      <div className="flex flex-wrap items-center bg-gray-100 p-2 rounded-t-lg relative">
         <div className="flex mr-2">
           <button
-            onClick={() =>
-              editor.chain().focus().toggleHeading({ level: 1 }).run()
-            }
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.chain().focus().toggleHeading({ level: 1 }).run();
+            }}
             className={`p-2 hover:bg-gray-300 border-none outline-none ${
               editor.isActive('heading', { level: 1 })
                 ? 'bg-gray-300 text-black'
                 : 'text-gray-600 bg-transparent'
             }`}
             title="제목 1"
+            type="button"
           >
             <span className="text-lg font-semibold">H1</span>
           </button>
           <button
-            onClick={() =>
-              editor.chain().focus().toggleHeading({ level: 2 }).run()
-            }
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.chain().focus().toggleHeading({ level: 2 }).run();
+            }}
             className={`p-2 hover:bg-gray-300 border-none outline-none ${
               editor.isActive('heading', { level: 2 })
                 ? 'bg-gray-300 text-black'
                 : 'text-gray-600 bg-transparent'
             }`}
             title="제목 2"
+            type="button"
           >
             <span className="text-lg font-semibold">H2</span>
           </button>
           <button
-            onClick={() =>
-              editor.chain().focus().toggleHeading({ level: 3 }).run()
-            }
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.chain().focus().toggleHeading({ level: 3 }).run();
+            }}
             className={`p-2 hover:bg-gray-300 border-none outline-none ${
               editor.isActive('heading', { level: 3 })
                 ? 'bg-gray-300 text-black'
                 : 'text-gray-600 bg-transparent'
             }`}
             title="제목 3"
+            type="button"
           >
             <span className="text-lg font-semibold">H3</span>
           </button>
@@ -851,11 +1034,16 @@ const TiptapEditor = ({
         </div>
 
         <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().focus().toggleBold().run();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             editor.isActive('bold') ? 'bg-gray-300' : ''
           }`}
           title="굵게"
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             format_bold
@@ -863,11 +1051,16 @@ const TiptapEditor = ({
         </button>
 
         <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().focus().toggleItalic().run();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             editor.isActive('italic') ? 'bg-gray-300' : ''
           }`}
           title="기울임"
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             format_italic
@@ -875,11 +1068,16 @@ const TiptapEditor = ({
         </button>
 
         <button
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().focus().toggleUnderline().run();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             editor.isActive('underline') ? 'bg-gray-300' : ''
           }`}
           title="밑줄"
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             format_underlined
@@ -892,33 +1090,48 @@ const TiptapEditor = ({
 
         <div className="flex mx-1">
           <button
-            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.chain().focus().setTextAlign('left').run();
+            }}
             className={`p-2 hover:bg-gray-300 border-none outline-none bg-transparent ${
               editor.isActive({ textAlign: 'left' }) ? 'bg-gray-300' : ''
             }`}
             title="왼쪽 정렬"
+            type="button"
           >
             <span className="material-icons" style={{ fontSize: '20px' }}>
               format_align_left
             </span>
           </button>
           <button
-            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.chain().focus().setTextAlign('center').run();
+            }}
             className={`p-2 hover:bg-gray-300 border-none outline-none bg-transparent ${
               editor.isActive({ textAlign: 'center' }) ? 'bg-gray-300' : ''
             }`}
             title="가운데 정렬"
+            type="button"
           >
             <span className="material-icons" style={{ fontSize: '20px' }}>
               format_align_center
             </span>
           </button>
           <button
-            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.chain().focus().setTextAlign('right').run();
+            }}
             className={`p-2 hover:bg-gray-300 border-none outline-none bg-transparent ${
               editor.isActive({ textAlign: 'right' }) ? 'bg-gray-300' : ''
             }`}
             title="오른쪽 정렬"
+            type="button"
           >
             <span className="material-icons" style={{ fontSize: '20px' }}>
               format_align_right
@@ -931,11 +1144,16 @@ const TiptapEditor = ({
         </div>
 
         <button
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().focus().toggleBlockquote().run();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             editor.isActive('blockquote') ? 'bg-gray-300' : ''
           }`}
           title="인용구"
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             format_quote
@@ -943,41 +1161,20 @@ const TiptapEditor = ({
         </button>
 
         <button
-          onClick={addLink}
-          ref={linkButtonRef}
-          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
-            editor.isActive('link') ? 'bg-gray-300' : ''
-          }`}
-          title="링크"
-        >
-          <span className="material-icons" style={{ fontSize: '20px' }}>
-            link
-          </span>
-        </button>
-
-        <button
-          onClick={addImage}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            addImage();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             isUploading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
-          title="이미지"
+          title={isUploading ? `업로드 중: ${uploadingFileName}` : '이미지'}
           disabled={isUploading}
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             {isUploading ? 'hourglass_empty' : 'image'}
-          </span>
-        </button>
-
-        <button
-          onClick={addFile}
-          className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
-            isUploading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          title="파일"
-          disabled={isUploading}
-        >
-          <span className="material-icons" style={{ fontSize: '20px' }}>
-            {isUploading ? 'hourglass_empty' : 'attach_file'}
           </span>
         </button>
 
@@ -986,11 +1183,16 @@ const TiptapEditor = ({
         </div>
 
         <button
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().focus().toggleCodeBlock().run();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             editor.isActive('codeBlock') ? 'bg-gray-300' : ''
           }`}
           title="코드 블록"
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             code
@@ -998,11 +1200,16 @@ const TiptapEditor = ({
         </button>
 
         <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().focus().toggleBulletList().run();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             editor.isActive('bulletList') ? 'bg-gray-300' : ''
           }`}
           title="글머리 기호"
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             format_list_bulleted
@@ -1010,11 +1217,16 @@ const TiptapEditor = ({
         </button>
 
         <button
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.chain().focus().toggleOrderedList().run();
+          }}
           className={`p-2 mx-1 hover:bg-gray-300 border-none outline-none bg-transparent ${
             editor.isActive('orderedList') ? 'bg-gray-300' : ''
           }`}
           title="번호 매기기"
+          type="button"
         >
           <span className="material-icons" style={{ fontSize: '20px' }}>
             format_list_numbered
@@ -1022,20 +1234,84 @@ const TiptapEditor = ({
         </button>
       </div>
 
-      <div className="CodeMirror-scroll" ref={editorContainerRef}>
-        <div className="CodeMirror-sizer">
-          <div style={{ position: 'relative', top: '0px' }}>
-            <div className="CodeMirror-lines" role="presentation">
-              <div
-                role="presentation"
-                style={{ position: 'relative', outline: 'none' }}
-              >
-                <div className="tiptap-content-wrapper">
-                  <EditorContent className="h-full" editor={editor} />
+      {/* 에디터 본문 */}
+      <div className="flex-grow overflow-auto">
+        <div className="CodeMirror-scroll" ref={editorContainerRef}>
+          <div className="CodeMirror-sizer">
+            <div style={{ position: 'relative', top: '0px' }}>
+              <div className="CodeMirror-lines" role="presentation">
+                <div
+                  role="presentation"
+                  style={{ position: 'relative', outline: 'none' }}
+                >
+                  <div className="tiptap-content-wrapper">
+                    <EditorContent className="h-full" editor={editor} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 파일 첨부 섹션 - 하단에 고정 */}
+      <div className="mt-4 border-t pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-medium">첨부파일</h3>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              addFile();
+            }}
+            className={`px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center ${
+              isUploading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            disabled={isUploading}
+            type="button"
+          >
+            <span className="material-icons mr-2" style={{ fontSize: '20px' }}>
+              {isUploading ? 'hourglass_empty' : 'attach_file'}
+            </span>
+            파일 추가
+          </button>
+        </div>
+
+        {/* 업로드된 파일 목록 */}
+        <div className="space-y-2">
+          {uploadedFiles.map((file) => (
+            <div
+              key={file.id}
+              className="flex items-center justify-between bg-gray-50 p-2 rounded"
+            >
+              <div className="flex items-center">
+                <span className="material-icons mr-2 text-gray-500">
+                  description
+                </span>
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  {file.name}
+                </a>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleFileDelete(file.id);
+                }}
+                className="text-red-500 hover:text-red-700"
+                type="button"
+              >
+                <span className="material-icons" style={{ fontSize: '20px' }}>
+                  delete
+                </span>
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1048,36 +1324,63 @@ const TiptapEditor = ({
         >
           <div className="flex bg-white shadow-lg rounded-lg p-2">
             <button
-              onClick={() => alignImage('left')}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor
+                  .chain()
+                  .focus()
+                  .updateAttributes('customImage', { 'data-align': 'left' })
+                  .run();
+              }}
               className={`p-1 mx-1 hover:bg-gray-200 rounded ${
                 editor.isActive('customImage', { 'data-align': 'left' })
                   ? 'bg-gray-300'
                   : ''
               }`}
+              type="button"
             >
               <span className="material-icons" style={{ fontSize: '20px' }}>
                 format_align_left
               </span>
             </button>
             <button
-              onClick={() => alignImage('center')}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor
+                  .chain()
+                  .focus()
+                  .updateAttributes('customImage', { 'data-align': 'center' })
+                  .run();
+              }}
               className={`p-1 mx-1 hover:bg-gray-200 rounded ${
                 editor.isActive('customImage', { 'data-align': 'center' })
                   ? 'bg-gray-300'
                   : ''
               }`}
+              type="button"
             >
               <span className="material-icons" style={{ fontSize: '20px' }}>
                 format_align_center
               </span>
             </button>
             <button
-              onClick={() => alignImage('right')}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor
+                  .chain()
+                  .focus()
+                  .updateAttributes('customImage', { 'data-align': 'right' })
+                  .run();
+              }}
               className={`p-1 mx-1 hover:bg-gray-200 rounded ${
                 editor.isActive('customImage', { 'data-align': 'right' })
                   ? 'bg-gray-300'
                   : ''
               }`}
+              type="button"
             >
               <span className="material-icons" style={{ fontSize: '20px' }}>
                 format_align_right
@@ -1115,23 +1418,25 @@ const TiptapEditor = ({
               style={{ width: '270px' }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  handleLinkConfirm();
+                  editor
+                    .chain()
+                    .focus()
+                    .insertContent(
+                      `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${linkUrl}</a>`
+                    )
+                    .run();
+                  setShowLinkModal(false);
+                  setLinkUrl('');
                 }
               }}
               autoFocus
             />
             <div className="flex justify-end space-x-2">
               <button
-                onClick={handleLinkCancel}
+                onClick={() => setShowLinkModal(false)}
                 className="px-3 py-1 bg-gray-200 text-[#000000] rounded hover:bg-gray-300 m-[10px] border-none rounded-[10px] p-[5px]"
               >
                 취소
-              </button>
-              <button
-                onClick={handleLinkConfirm}
-                className="px-3 py-1 bg-[#980ffa] text-[#ffffff] rounded hover:bg-[#8e44ad] m-[10px] border-none  rounded-[10px] p-[5px]"
-              >
-                확인
               </button>
             </div>
           </div>
@@ -1394,6 +1699,8 @@ const TiptapEditor = ({
           max-width: 100%;
           border-radius: 2px;
         }
+
+        ${additionalStyles}
       `}</style>
     </div>
   );

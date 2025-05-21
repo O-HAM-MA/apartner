@@ -15,6 +15,8 @@ export default function CreateNoticePage() {
   const [buildingNumber, setBuildingNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageIds, setImageIds] = useState<number[]>([]);
+  const [fileIds, setFileIds] = useState<number[]>([]);
 
   useEffect(() => {
     const createPost = async () => {
@@ -25,8 +27,8 @@ export default function CreateNoticePage() {
           title,
           content,
           buildingId: buildingNumber ? Number(buildingNumber) : undefined,
-          imageIds: [], // 이미지 ID 배열
-          fileIds: [], // 파일 ID 배열
+          imageIds,
+          fileIds,
         };
 
         const { data, error } = await client.POST('/api/v1/notices/create', {
@@ -54,11 +56,35 @@ export default function CreateNoticePage() {
     };
 
     createPost();
-  }, [isSubmitting, title, content, buildingNumber, router]);
+  }, [isSubmitting, title, content, buildingNumber, router, imageIds, fileIds]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) {
+      alert('제목을 입력해주세요.');
+      return;
+    }
+    if (!content.trim()) {
+      alert('내용을 입력해주세요.');
+      return;
+    }
     setIsSubmitting(true);
+  };
+
+  const handleImageUploadSuccess = (imageId: number) => {
+    setImageIds((prev) => [...prev, imageId]);
+  };
+
+  const handleFileUploadSuccess = (fileId: number) => {
+    setFileIds((prev) => [...prev, fileId]);
+  };
+
+  const handleImageDelete = (imageId: number) => {
+    setImageIds((prev) => prev.filter((id) => id !== imageId));
+  };
+
+  const handleFileDelete = (fileId: number) => {
+    setFileIds((prev) => prev.filter((id) => id !== fileId));
   };
 
   if (isLoading) {
@@ -70,6 +96,7 @@ export default function CreateNoticePage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">공지사항 작성</h1>
         <button
+          type="button"
           onClick={() => router.back()}
           className="text-gray-600 hover:text-gray-800"
         >
@@ -124,7 +151,14 @@ export default function CreateNoticePage() {
           >
             내용
           </label>
-          <TiptapEditor content={content} onChange={setContent} />
+          <TiptapEditor
+            content={content}
+            onChange={setContent}
+            onImageUploadSuccess={handleImageUploadSuccess}
+            onFileUploadSuccess={handleFileUploadSuccess}
+            onImageDelete={handleImageDelete}
+            onFileDelete={handleFileDelete}
+          />
         </div>
 
         <div className="flex justify-end space-x-4">
@@ -138,8 +172,9 @@ export default function CreateNoticePage() {
           <button
             type="submit"
             className="px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600"
+            disabled={isSubmitting}
           >
-            등록
+            {isSubmitting ? '등록 중...' : '등록'}
           </button>
         </div>
       </form>
