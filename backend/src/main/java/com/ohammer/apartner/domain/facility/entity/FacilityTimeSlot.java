@@ -42,6 +42,6 @@ public class FacilityTimeSlot extends BaseEntity {
     private LocalTime endTime; // 10:30
 
     @Column(name = "max_capacity", nullable = false)
-    private Integer maxCapacity; // 슬롯별 최대 예약인원
+    private Long maxCapacity; // 슬롯별 최대 예약인원
 
 }

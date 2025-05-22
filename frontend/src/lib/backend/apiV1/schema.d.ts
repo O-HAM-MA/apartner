@@ -2563,12 +2563,12 @@ export interface components {
         FacilityCreateRequestDto: {
             /**
              * @description 등록할 공용시설 이름
-             * @example 헬스장
+             * @example 수영장
              */
             name?: string;
             /**
              * @description 공용시설 설명
-             * @example 24시간 이용가능한 피트니스 센터
+             * @example 반드시 수영모를 씁시다
              */
             description?: string;
             /**
@@ -2578,9 +2578,56 @@ export interface components {
             openTime: string;
             /**
              * @description 공용시설 운영 종료 시간
-             * @example 23:00
+             * @example 22:00
              */
             closeTime: string;
+            /**
+             * @description 자유 이용시간 리스트
+             * @example []
+             */
+            freeUseTimes?: components["schemas"]["FreeUseTime"][];
+            /**
+             * Format: int64
+             * @description 자유 이용 한 타임당 수용 인원
+             * @example 30
+             */
+            freeUseCapacity?: number;
+            /**
+             * Format: int64
+             * @description 예약 단위(분)
+             * @example 60
+             */
+            freeUseUnitMinutes?: number;
+            /**
+             * @description 강사 리스트
+             * @example a강사
+             */
+            instructors?: components["schemas"]["InstructorInfo"][];
+        };
+        FreeUseTime: {
+            /** @enum {string} */
+            dayOfWeek?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+            /** @example 14:30:00 */
+            startTime?: string;
+            /** @example 14:30:00 */
+            endTime?: string;
+        };
+        InstructorInfo: {
+            name?: string;
+            description?: string;
+            schedules?: components["schemas"]["InstructorSchedule"][];
+        };
+        InstructorSchedule: {
+            /** @enum {string} */
+            dayOfWeek?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+            /** @example 14:30:00 */
+            startTime?: string;
+            /** @example 14:30:00 */
+            endTime?: string;
+            /** Format: int64 */
+            capacity?: number;
+            /** Format: int64 */
+            unitMinutes?: number;
         };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;

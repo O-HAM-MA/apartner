@@ -39,8 +39,8 @@ public class FacilityManagerController {
     public ResponseEntity<Long> createFacility(@RequestBody @Valid FacilityCreateRequestDto facilityCreateRequestDto) {
         User user = SecurityUtil.getCurrentUser();
         Long apartmentId = user.getApartment().getId();
-        Long id = facilityManagerService.createFacility(facilityCreateRequestDto, apartmentId);
-        return ResponseEntity.ok(id);
+        Long facilityId = facilityManagerService.createFacility(facilityCreateRequestDto, apartmentId);
+        return ResponseEntity.ok(facilityId);
     }
 
     // 공용시설 수정
