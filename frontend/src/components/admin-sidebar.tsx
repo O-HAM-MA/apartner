@@ -62,6 +62,11 @@ export default function AdminSidebar() {
       href: "/admin/notifications",
       icon: Bell,
     },
+    {
+      title: "Complaints",
+      href: "/admin/complaints",
+      icon: Bell,
+    },
   ];
 
   return (

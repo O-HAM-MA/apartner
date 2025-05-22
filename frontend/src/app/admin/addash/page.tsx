@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,10 +11,46 @@ import {
 import { Activity, Users, MessageSquare, AlertTriangle } from "lucide-react";
 import { useGlobalAdminMember } from "@/auth/adminMember";
 import { useRouter } from "next/navigation";
+import client from "@/lib/backend/client";
 
 export default function AdminDashboard() {
   const { adminMember, isAdminLogin } = useGlobalAdminMember();
+  const [complaintsCount, setComplaintsCount] = useState(0);
+  const [complaintsIncrease, setComplaintsIncrease] = useState(0);
   const router = useRouter();
+
+  // 오늘 접수된 민원 수 조회
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data } = await client.GET(
+          "/api/v1/complaints/statistics/today",
+          {}
+        );
+        setComplaintsCount(data);
+      } catch (error) {
+        console.error("오늘의 통계 데이터를 불러오는 데 실패했습니다:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const fetchComplaintsIncrease = async () => {
+      try {
+        const { data } = await client.GET(
+          "/api/v1/complaints/statistics/today-rate",
+          {}
+        );
+        setComplaintsIncrease(data);
+      } catch (error) {
+        console.error("오늘의 통계 데이터를 불러오는 데 실패했습니다:", error);
+      }
+    };
+
+    fetchComplaintsIncrease();
+  }, []);
 
   // 관리자 로그인 상태 확인
   useEffect(() => {
@@ -77,12 +113,16 @@ export default function AdminDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">고객 문의</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              오늘 접수된 민원 수
+            </CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground">어제 대비 -8%</p>
+            <div className="text-2xl font-bold">{complaintsCount}</div>
+            <p className="text-xs text-muted-foreground">
+              어제 대비 {complaintsIncrease.increaseRate}%
+            </p>
           </CardContent>
         </Card>
         <Card>
