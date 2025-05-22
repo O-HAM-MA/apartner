@@ -12,6 +12,7 @@ import com.ohammer.apartner.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,10 +49,15 @@ public class FacilityUserService {
         LocalDateTime startDateTime = LocalDateTime.of(request.getDate(), request.getStartTime());
         LocalDateTime endDateTime = LocalDateTime.of(request.getDate(), request.getEndTime());
 
-        if (!startDateTime.isBefore(endDateTime)) {
-            throw new IllegalArgumentException("시작 시간은 종료 시간보다 이전이어야 합니다.");
+        // "시작 > 종료"면 익일로 간주하여 endDateTime을 +1일
+        if (!request.getStartTime().isBefore(request.getEndTime())) {
+            endDateTime = endDateTime.plusDays(1);
         }
 
+        // 운영시간 내 예약인지 체크 (분리한 메서드 사용!)
+        validateReservationTime(facility, request.getStartTime(), request.getEndTime());
+
+        // 중복 예약 체크 (동일 시설, 시간 겹치는지)
         List<FacilityReservation> overlaps = facilityReservationRepository.findOverlappingReservations(
                 facility.getId(), request.getDate(), startDateTime, endDateTime
         );
@@ -69,6 +75,30 @@ public class FacilityUserService {
                 .build();
 
         return facilityReservationRepository.save(reservation);
+    }
+
+    private void validateReservationTime(Facility facility, LocalTime startTime, LocalTime endTime) {
+        LocalTime openTime = facility.getOpenTime();
+        LocalTime closeTime = facility.getCloseTime();
+        boolean isOvernight = openTime.isAfter(closeTime);
+
+        if (startTime.equals(endTime)) {
+            throw new IllegalArgumentException("시작 시간과 종료 시간은 달라야 합니다.");
+        }
+
+        boolean valid;
+        if (!isOvernight) { // 예: 08:00~22:00
+            valid = !startTime.isBefore(openTime) && !endTime.isAfter(closeTime);
+        } else { // 예: 22:00~03:00 (익일)
+            // 예약시간이 22:00~24:00 또는 00:00~03:00에 걸쳐있으면 OK
+            valid = (
+                    (!startTime.isBefore(openTime) && startTime.isBefore(LocalTime.MAX)) // 22:00~23:59
+                            || (!endTime.isAfter(closeTime)) // 00:00~03:00
+            );
+        }
+        if (!valid) {
+            throw new IllegalArgumentException("예약 시간이 시설 운영 시간 내에 있어야 합니다.");
+        }
     }
 
     // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)
@@ -112,7 +142,7 @@ public class FacilityUserService {
         if (!facilityReservation.getUser().getId().equals(userId)) {
             throw new SecurityException("본인의 예약만 취소할 수 있습니다.");
         }
-        
+
         if (facilityReservation.getStatus() == FacilityReservation.Status.CANCEL) {
             throw new IllegalStateException("이미 취소된 예약입니다.");
         }

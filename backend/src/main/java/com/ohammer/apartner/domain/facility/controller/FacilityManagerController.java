@@ -4,8 +4,11 @@ import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto
 import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.service.FacilityManagerService;
+import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.security.utils.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,8 +36,10 @@ public class FacilityManagerController {
     // 공용시설 등록
     @PostMapping("/new")
     @Operation(summary = "공용시설 등록")
-    public ResponseEntity<Long> createFacility(@RequestBody FacilityCreateRequestDto facilityCreateRequestDto) {
-        Long id = facilityManagerService.createFacility(facilityCreateRequestDto);
+    public ResponseEntity<Long> createFacility(@RequestBody @Valid FacilityCreateRequestDto facilityCreateRequestDto) {
+        User user = SecurityUtil.getCurrentUser();
+        Long apartmentId = user.getApartment().getId();
+        Long id = facilityManagerService.createFacility(facilityCreateRequestDto, apartmentId);
         return ResponseEntity.ok(id);
     }
 
@@ -42,8 +47,10 @@ public class FacilityManagerController {
     @PutMapping("/{facilityId}")
     @Operation(summary = "공용시설 수정")
     public ResponseEntity<Void> updateFacility(@PathVariable(name = "facilityId") Long facilityId,
-                                               @RequestBody FacilityUpdateRequestDto facilityUpdateRequestDto) {
-        facilityManagerService.updateFacility(facilityId, facilityUpdateRequestDto);
+                                               @RequestBody @Valid FacilityUpdateRequestDto facilityUpdateRequestDto) {
+        User user = SecurityUtil.getCurrentUser();
+        Long apartmentId = user.getApartment().getId();
+        facilityManagerService.updateFacility(facilityId, facilityUpdateRequestDto, apartmentId);
         return ResponseEntity.ok().build();
     }
 

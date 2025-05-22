@@ -1969,7 +1969,7 @@ export interface components {
         /** @description 공용시설 수정 요청 DTO */
         FacilityUpdateRequestDto: {
             /**
-             * @description 등록할 공용시설 이름
+             * @description 공용시설 이름
              * @example 헬스장
              */
             name?: string;
@@ -1978,6 +1978,16 @@ export interface components {
              * @example 24시간 이용가능한 피트니스 센터
              */
             description?: string;
+            /**
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
+             */
+            openTime: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 23:00
+             */
+            closeTime: string;
         };
         ResidentVehicleRequestDto: {
             vehicleNum?: string;
@@ -2562,11 +2572,15 @@ export interface components {
              */
             description?: string;
             /**
-             * Format: int64
-             * @description 공용시설이 등록될 아파트
-             * @example 1
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
              */
-            apartmentId?: number;
+            openTime: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 23:00
+             */
+            closeTime: string;
         };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;

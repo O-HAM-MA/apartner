@@ -29,13 +29,31 @@ public class FacilityManagerService {
 
     // 공용시설 등록
     @Transactional
-    public Long createFacility(FacilityCreateRequestDto facilityCreateRequestDto) {
-        Apartment apartment = apartmentRepository.findById(facilityCreateRequestDto.getApartmentId())
+    public Long createFacility(FacilityCreateRequestDto facilityCreateRequestDto, Long apartmentId) {
+        Apartment apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new EntityNotFoundException("아파트를 찾을 수 없습니다."));
+
+        if (facilityRepository.existsByApartmentIdAndName(apartmentId, facilityCreateRequestDto.getName())) {
+            throw new IllegalArgumentException("이미 존재하는 시설 이름입니다.");
+        }
+        if (facilityCreateRequestDto.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("시설명에 공백을 입력할 수 없습니다.");
+        }
+        if (facilityCreateRequestDto.getDescription().trim().isEmpty()) {
+            throw new IllegalArgumentException("시설 설명에 공백을 입력할 수 없습니다.");
+        }
+
+        if (facilityCreateRequestDto.getOpenTime().equals(facilityCreateRequestDto.getCloseTime())) {
+            throw new IllegalArgumentException("시작 시간과 종료 시간이 같을 수 없습니다.");
+            // openTime > closeTime은 "익일 운영"으로 허용
+            // openTime < closeTime은 "당일 운영"으로 허용
+        }
 
         Facility facility = Facility.builder()
                 .name(facilityCreateRequestDto.getName())
                 .description(facilityCreateRequestDto.getDescription())
+                .openTime(facilityCreateRequestDto.getOpenTime())
+                .closeTime(facilityCreateRequestDto.getCloseTime())
                 .apartment(apartment)
                 .status(Status.ACTIVE) // 등록 시 ACTIVE
                 .build();
@@ -46,11 +64,21 @@ public class FacilityManagerService {
 
     // 공용시설 수정
     @Transactional
-    public void updateFacility(Long facilityId, FacilityUpdateRequestDto facilityUpdateRequestDto) {
+    public void updateFacility(Long facilityId, FacilityUpdateRequestDto facilityUpdateRequestDto, Long apartmentId) {
         Facility facility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new EntityNotFoundException("공용시설을 찾을 수 없습니다."));
 
-        facility.update(facilityUpdateRequestDto.getName(), facilityUpdateRequestDto.getDescription());
+        if (facilityRepository.existsByApartmentIdAndNameAndIdNot(apartmentId, facilityUpdateRequestDto.getName(),
+                facilityId)) {
+            throw new IllegalArgumentException("이미 존재하는 시설 이름입니다.");
+        }
+
+        facility.update(
+                facilityUpdateRequestDto.getName(),
+                facilityUpdateRequestDto.getDescription(),
+                facilityUpdateRequestDto.getOpenTime(),
+                facilityUpdateRequestDto.getCloseTime()
+        );
     }
 
     // 예약 목록 조회

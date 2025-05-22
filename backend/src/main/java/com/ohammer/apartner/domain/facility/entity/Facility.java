@@ -11,6 +11,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +20,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "facilities")
+@Table(name = "facilities",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"apartment_id", "name"})
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,11 +32,17 @@ import lombok.Setter;
 @Builder
 public class Facility extends BaseEntity {
 
-    @Column(name = "name", length = 50)
+    @Column(name = "name", length = 50, unique = true, nullable = false)
     private String name;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String description;
+
+    @Column(name = "open_time", nullable = false)
+    private LocalTime openTime;
+
+    @Column(name = "close_time", nullable = false)
+    private LocalTime closeTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id")
@@ -40,9 +52,11 @@ public class Facility extends BaseEntity {
     @Column(name = "status", length = 20, nullable = false)
     private Status status;
 
-    public void update(String name, String description) {
+    public void update(String name, String description, LocalTime openTime, LocalTime closeTime) {
         this.name = name;
         this.description = description;
+        this.openTime = openTime;
+        this.closeTime = closeTime;
     }
 
     public void setInactive() {
