@@ -3,12 +3,13 @@ import {
   Home,
   Settings,
   Bell,
-  BarChart,
   Users,
   MessageSquare,
   UserCircle,
   Building,
 } from "lucide-react";
+import type React from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGlobalLoginMember } from "@/auth/loginMember";
@@ -46,6 +47,15 @@ const Sidebar = () => {
   const pathname = usePathname();
   const { loginMember, isLogin } = useGlobalLoginMember();
 
+  // 시설 점검 경로 확인 함수 - 상세 페이지도 포함하도록 수정
+  const isInspectionPath = (path: string) => {
+    return (
+      path === "/udash/inspections" ||
+      path.startsWith("/udash/inspections/") ||
+      path === "/inspection-detail"
+    );
+  };
+
   const navItems = [
     { href: "/udash", icon: Home, label: "대시보드" },
     {
@@ -57,7 +67,8 @@ const Sidebar = () => {
     {
       href: "/udash/inspections",
       icon: Settings,
-      label: "점검 (소방/가스/전기/수도)",
+      label: "시설 점검",
+      isActive: isInspectionPath(pathname),
     },
     { href: "/udash/complaints", icon: Users, label: "민원 관리" },
     { href: "/udash/notices", icon: Bell, label: "공지사항" },
@@ -101,7 +112,11 @@ const Sidebar = () => {
                 href={item.href}
                 icon={item.icon}
                 label={item.label}
-                isActive={pathname === item.href}
+                isActive={
+                  item.isActive !== undefined
+                    ? item.isActive
+                    : pathname === item.href
+                }
               />
             </li>
           ))}
