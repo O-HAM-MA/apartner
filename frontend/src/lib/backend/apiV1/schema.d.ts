@@ -112,11 +112,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** 공용시설 상세 조회 [관리자] */
+        get: operations["getFacilityDetail"];
         /** 공용시설 수정 */
         put: operations["updateFacility"];
         post?: never;
-        delete?: never;
+        /** 시설 삭제(비활성화) */
+        delete: operations["deleteFacility"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1614,6 +1616,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 공용시설 목록 조회 [관리자] */
+        get: operations["getFacilityList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/facilities/statistics/user-usage": {
         parameters: {
             query?: never;
@@ -1975,19 +1994,19 @@ export interface components {
             name?: string;
             /**
              * @description 공용시설 설명
-             * @example 24시간 이용가능한 피트니스 센터
+             * @example 강습도 가능한 아주 좋은 피트니스 센터
              */
             description?: string;
             /**
              * @description 공용시설 운영 시작 시간
              * @example 06:00
              */
-            openTime: string;
+            openTime?: string;
             /**
              * @description 공용시설 운영 종료 시간
              * @example 23:00
              */
-            closeTime: string;
+            closeTime?: string;
         };
         ResidentVehicleRequestDto: {
             vehicleNum?: string;
@@ -2581,53 +2600,6 @@ export interface components {
              * @example 22:00
              */
             closeTime: string;
-            /**
-             * @description 자유 이용시간 리스트
-             * @example []
-             */
-            freeUseTimes?: components["schemas"]["FreeUseTime"][];
-            /**
-             * Format: int64
-             * @description 자유 이용 한 타임당 수용 인원
-             * @example 30
-             */
-            freeUseCapacity?: number;
-            /**
-             * Format: int64
-             * @description 예약 단위(분)
-             * @example 60
-             */
-            freeUseUnitMinutes?: number;
-            /**
-             * @description 강사 리스트
-             * @example a강사
-             */
-            instructors?: components["schemas"]["InstructorInfo"][];
-        };
-        FreeUseTime: {
-            /** @enum {string} */
-            dayOfWeek?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
-            /** @example 14:30:00 */
-            startTime?: string;
-            /** @example 14:30:00 */
-            endTime?: string;
-        };
-        InstructorInfo: {
-            name?: string;
-            description?: string;
-            schedules?: components["schemas"]["InstructorSchedule"][];
-        };
-        InstructorSchedule: {
-            /** @enum {string} */
-            dayOfWeek?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
-            /** @example 14:30:00 */
-            startTime?: string;
-            /** @example 14:30:00 */
-            endTime?: string;
-            /** Format: int64 */
-            capacity?: number;
-            /** Format: int64 */
-            unitMinutes?: number;
         };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;
@@ -2758,17 +2730,17 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -3000,7 +2972,7 @@ export interface components {
             modifiedAt?: string;
         };
         /** @description 공용시설 목록 응답 DTO */
-        FacilityResponseDto: {
+        FacilityUserSimpleResponseDto: {
             /**
              * @description 공용시설 이름
              * @example 헬스장
@@ -3013,7 +2985,7 @@ export interface components {
             description?: string;
         };
         /** @description 공용시설 예약 조회 [사용자] 응답 DTO */
-        FacilityReservationSummaryDto: {
+        FacilityReservationUserDto: {
             /**
              * @description 예약한 공용시설 이름
              * @example 헬스장
@@ -3128,6 +3100,59 @@ export interface components {
              * @example 1
              */
             buildingId?: number;
+        };
+        /** @description 공용시설 목록 조회 [관리자] 응답 DTO */
+        FacilityManagerSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 공용시설 id
+             * @example 1
+             */
+            facilityId?: number;
+            /**
+             * @description 공용시설 이름
+             * @example 헬스장
+             */
+            facilityName?: string;
+            /**
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
+             */
+            openTime?: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 22:00
+             */
+            closeTime?: string;
+        };
+        /** @description 공용시설 상세 조회 [관리자] 응답 DTO */
+        FacilityManagerDetailResponseDto: {
+            /**
+             * Format: int64
+             * @description 공용시설 id
+             * @example 1
+             */
+            facilityId?: number;
+            /**
+             * @description 공용시설 이름
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 공용시설 설명
+             * @example 반드시 수영모를 씁시다
+             */
+            description?: string;
+            /**
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
+             */
+            openTime?: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 22:00
+             */
+            closeTime?: string;
         };
         /** @description 공용시설 사용자별 이용 횟수 DTO */
         UserUsageCountDto: {
@@ -3524,6 +3549,26 @@ export interface operations {
             };
         };
     };
+    getFacilityDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityManagerDetailResponseDto"];
+                };
+            };
+        };
+    };
     updateFacility: {
         parameters: {
             query?: never;
@@ -3538,6 +3583,26 @@ export interface operations {
                 "application/json": components["schemas"]["FacilityUpdateRequestDto"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -5290,7 +5355,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FacilityResponseDto"][];
+                    "*/*": components["schemas"]["FacilityUserSimpleResponseDto"][];
                 };
             };
         };
@@ -5314,7 +5379,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FacilityReservationSummaryDto"][];
+                    "*/*": components["schemas"]["FacilityReservationUserDto"][];
                 };
             };
         };
@@ -5669,6 +5734,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    getFacilityList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityManagerSimpleResponseDto"][];
                 };
             };
         };

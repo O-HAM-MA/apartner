@@ -9,7 +9,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Schema(description = "공용시설 예약 조회 [사용자] 응답 DTO")
-public class FacilityReservationSummaryDto {
+public class FacilityReservationUserDto {
 
     @Schema(description = "예약한 공용시설 이름", example = "헬스장")
     private String facilityName;

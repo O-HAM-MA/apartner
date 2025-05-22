@@ -1,8 +1,8 @@
 package com.ohammer.apartner.domain.facility.service;
 
 import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationRequestDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSummaryDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityResponseDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationUserDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityUserSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
@@ -30,9 +30,9 @@ public class FacilityUserService {
     private final FacilityReservationRepository facilityReservationRepository;
 
     // 시설 목록 보기
-    public List<FacilityResponseDto> getAllFacilities() {
+    public List<FacilityUserSimpleResponseDto> getAllFacilities() {
         return facilityRepository.findAll().stream()
-                .map(FacilityResponseDto::fromEntity)
+                .map(FacilityUserSimpleResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -102,7 +102,7 @@ public class FacilityUserService {
     }
 
     // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)
-    public List<FacilityReservationSummaryDto> getUserReservationsWithFilter(
+    public List<FacilityReservationUserDto> getUserReservationsWithFilter(
             Long userId,
             LocalDate date,
             Long facilityId,
@@ -113,7 +113,7 @@ public class FacilityUserService {
 
         return facilityReservationRepository.findByUserWithFilter(userId, date, facilityId, status)
                 .stream()
-                .map(reservation -> FacilityReservationSummaryDto.builder()
+                .map(reservation -> FacilityReservationUserDto.builder()
                         .facilityName(reservation.getFacility().getName())
                         .reservationTime(formatReservationTime(reservation))
                         .createdAt(reservation.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))

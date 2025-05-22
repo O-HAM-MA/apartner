@@ -4,12 +4,11 @@ import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerDetailResponseDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
-import com.ohammer.apartner.domain.facility.entity.FacilityInstructor;
-import com.ohammer.apartner.domain.facility.entity.FacilityInstructorSchedule;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
-import com.ohammer.apartner.domain.facility.entity.FacilityTimeSlot;
 import com.ohammer.apartner.domain.facility.repository.FacilityInstructorRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityInstructorScheduleRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
@@ -18,7 +17,8 @@ import com.ohammer.apartner.domain.facility.repository.FacilityTimeSlotRepositor
 import com.ohammer.apartner.global.Status;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,7 +59,6 @@ public class FacilityManagerService {
             // openTime < closeTime은 "당일 운영"으로 허용
         }
 
-        // 시설 생성
         Facility facility = Facility.builder()
                 .name(facilityCreateRequestDto.getName())
                 .description(facilityCreateRequestDto.getDescription())
@@ -69,75 +68,6 @@ public class FacilityManagerService {
                 .status(Status.ACTIVE) // 등록 시 ACTIVE
                 .build();
         facilityRepository.save(facility);
-
-        // 2. 자유 이용 Slot 생성
-        if (facilityCreateRequestDto.getFreeUseTimes() != null) {
-            for (FacilityCreateRequestDto.FreeUseTime freeTime : facilityCreateRequestDto.getFreeUseTimes()) {
-                // 반복적으로, 예를 들어 1시간 단위로 Slot 생성
-                LocalTime time = freeTime.getStartTime();
-                while (time.isBefore(freeTime.getEndTime())) {
-                    LocalTime slotEnd = time.plusMinutes(facilityCreateRequestDto.getFreeUseUnitMinutes());
-                    if (slotEnd.isAfter(freeTime.getEndTime())) {
-                        break;
-                    }
-                    FacilityTimeSlot slot = FacilityTimeSlot.builder()
-                            .facility(facility)
-                            .instructor(null)
-                            // date는 요일로 미리 지정하기 어려우니, Slot 등록이 아닌 템플릿 등록
-                            .date(null)
-                            .startTime(time)
-                            .endTime(slotEnd)
-                            .maxCapacity(facilityCreateRequestDto.getFreeUseCapacity())
-                            .build();
-                    facilityTimeSlotRepository.save(slot);
-                    time = slotEnd;
-                }
-            }
-        }
-
-        // 강사 및 강사 시간표/슬롯 생성
-        if (facilityCreateRequestDto.getInstructors() != null) {
-            for (FacilityCreateRequestDto.InstructorInfo instructorDto : facilityCreateRequestDto.getInstructors()) {
-                FacilityInstructor instructor = FacilityInstructor.builder()
-                        .name(instructorDto.getName())
-                        .description(instructorDto.getDescription())
-                        .facility(facility)
-                        .status(FacilityInstructor.Status.ACTIVE)
-                        .build();
-                facilityInstructorRepository.save(instructor);
-
-                for (FacilityCreateRequestDto.InstructorSchedule scheduleDto : instructorDto.getSchedules()) {
-                    FacilityInstructorSchedule schedule = FacilityInstructorSchedule.builder()
-                            .instructor(instructor)
-                            .dayOfWeek(scheduleDto.getDayOfWeek())
-                            .startTime(scheduleDto.getStartTime())
-                            .endTime(scheduleDto.getEndTime())
-                            .capacity(scheduleDto.getCapacity())
-                            .isDayOff(false)
-                            .build();
-                    facilityInstructorScheduleRepository.save(schedule);
-
-                    // Slot 생성 (여기도 unitMinutes 단위로 쪼개기)
-                    LocalTime time = scheduleDto.getStartTime();
-                    while (time.isBefore(scheduleDto.getEndTime())) {
-                        LocalTime slotEnd = time.plusMinutes(scheduleDto.getUnitMinutes());
-                        if (slotEnd.isAfter(scheduleDto.getEndTime())) {
-                            break;
-                        }
-                        FacilityTimeSlot slot = FacilityTimeSlot.builder()
-                                .facility(facility)
-                                .instructor(instructor)
-                                .date(null) // 등록 시점에는 null, 실제 예약 시 date 지정
-                                .startTime(time)
-                                .endTime(slotEnd)
-                                .maxCapacity(scheduleDto.getCapacity())
-                                .build();
-                        facilityTimeSlotRepository.save(slot);
-                        time = slotEnd;
-                    }
-                }
-            }
-        }
 
         return facility.getId();
     }
@@ -153,12 +83,61 @@ public class FacilityManagerService {
             throw new IllegalArgumentException("이미 존재하는 시설 이름입니다.");
         }
 
+        if (facilityUpdateRequestDto.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("시설명에 공백을 입력할 수 없습니다.");
+        }
+        if (facilityUpdateRequestDto.getDescription().trim().isEmpty()) {
+            throw new IllegalArgumentException("시설 설명에 공백을 입력할 수 없습니다.");
+        }
+        if (facilityUpdateRequestDto.getOpenTime().equals(facilityUpdateRequestDto.getCloseTime())) {
+            throw new IllegalArgumentException("시작 시간과 종료 시간이 같을 수 없습니다.");
+        }
+
         facility.update(
                 facilityUpdateRequestDto.getName(),
                 facilityUpdateRequestDto.getDescription(),
                 facilityUpdateRequestDto.getOpenTime(),
                 facilityUpdateRequestDto.getCloseTime()
         );
+    }
+
+    // 공용시설 삭제 (비활성화)
+    @Transactional
+    public void deleteFacility(Long facilityId) {
+        Facility facility = facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new EntityNotFoundException("시설을 찾을 수 없습니다."));
+
+        if (facility.getStatus() == Status.INACTIVE) {
+            throw new IllegalStateException("이미 비활성화된 시설입니다.");
+        }
+        facility.setInactive();
+    }
+
+    // 시설 목록 조회
+    public List<FacilityManagerSimpleResponseDto> getFacilityList(Long apartmentId) {
+        List<Facility> facilities = facilityRepository.findByApartmentId(apartmentId);
+        return facilities.stream()
+                .map(f -> FacilityManagerSimpleResponseDto.builder()
+                        .facilityId(f.getId())
+                        .facilityName(f.getName())
+                        .openTime(f.getOpenTime())
+                        .closeTime(f.getCloseTime())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // 시설 상세 조회
+    public FacilityManagerDetailResponseDto getFacilityDetail(Long facilityId) {
+        Facility facility = facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new EntityNotFoundException("시설을 찾을 수 없습니다."));
+
+        return FacilityManagerDetailResponseDto.builder()
+                .facilityId(facility.getId())
+                .facilityName(facility.getName())
+                .description(facility.getDescription())
+                .openTime(facility.getOpenTime())
+                .closeTime(facility.getCloseTime())
+                .build();
     }
 
     // 예약 목록 조회

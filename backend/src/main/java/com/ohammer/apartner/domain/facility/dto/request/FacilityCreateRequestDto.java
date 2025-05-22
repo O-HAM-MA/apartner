@@ -4,13 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.DayOfWeek;
 import java.time.LocalTime;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
@@ -35,51 +30,4 @@ public class FacilityCreateRequestDto {
     @NotNull(message = "운영 종료 시간은 필수입니다.")
     private LocalTime closeTime;
 
-    @Schema(description = "자유 이용시간 리스트", example = "[]")
-    private List<FreeUseTime> freeUseTimes;
-
-    @Schema(description = "자유 이용 한 타임당 수용 인원", example = "30")
-    private Long freeUseCapacity;
-
-    @Schema(description = "예약 단위(분)", example = "60")
-    private Long freeUseUnitMinutes;
-
-    @Schema(description = "강사 리스트", example = "a강사")
-    private List<InstructorInfo> instructors;
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class FreeUseTime {
-        private DayOfWeek dayOfWeek;      // 요일 (월,화,수 등)
-        private LocalTime startTime;
-        private LocalTime endTime;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class InstructorInfo {
-        private String name;                  // 강사명
-        private String description;           // 강사소개/설명
-
-        private List<InstructorSchedule> schedules;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class InstructorSchedule {
-        private DayOfWeek dayOfWeek;          // 예: MONDAY
-        private LocalTime startTime;          // 예: 10:00
-        private LocalTime endTime;            // 예: 12:00
-        private Long capacity;             // 수용 인원
-        private Long unitMinutes;          // 한 타임 단위(분), 예: 60
-    }
 }

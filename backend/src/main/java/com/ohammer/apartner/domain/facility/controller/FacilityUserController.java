@@ -1,8 +1,8 @@
 package com.ohammer.apartner.domain.facility.controller;
 
 import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationRequestDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSummaryDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityResponseDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationUserDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityUserSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import com.ohammer.apartner.domain.facility.service.FacilityUserService;
 import com.ohammer.apartner.domain.user.entity.User;
@@ -38,8 +38,8 @@ public class FacilityUserController {
             summary = "공용시설 목록 조회",
             description = "등록된 공용시설 목록 조희"
     )
-    public ResponseEntity<List<FacilityResponseDto>> getAllFacilities() {
-        List<FacilityResponseDto> facilities = facilityUserService.getAllFacilities();
+    public ResponseEntity<List<FacilityUserSimpleResponseDto>> getAllFacilities() {
+        List<FacilityUserSimpleResponseDto> facilities = facilityUserService.getAllFacilities();
         return ResponseEntity.ok(facilities);
     }
 
@@ -65,13 +65,13 @@ public class FacilityUserController {
             summary = "유저 예약 조회",
             description = "유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)"
     )
-    public ResponseEntity<List<FacilityReservationSummaryDto>> getUserReservations(
+    public ResponseEntity<List<FacilityReservationUserDto>> getUserReservations(
             @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(name = "facilityId", required = false) Long facilityId,
             @RequestParam(name = "status", required = false) FacilityReservation.Status status
     ) {
         User user = SecurityUtil.getCurrentUser();
-        List<FacilityReservationSummaryDto> reservations =
+        List<FacilityReservationUserDto> reservations =
                 facilityUserService.getUserReservationsWithFilter(user.getId(), date, facilityId, status);
         return ResponseEntity.ok(reservations);
     }

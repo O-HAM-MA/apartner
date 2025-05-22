@@ -2,6 +2,8 @@ package com.ohammer.apartner.domain.facility.controller;
 
 import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerDetailResponseDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.service.FacilityManagerService;
 import com.ohammer.apartner.domain.user.entity.User;
@@ -10,11 +12,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,6 +56,30 @@ public class FacilityManagerController {
         Long apartmentId = user.getApartment().getId();
         facilityManagerService.updateFacility(facilityId, facilityUpdateRequestDto, apartmentId);
         return ResponseEntity.ok().build();
+    }
+
+    // 공용시설 삭제 (비활성화)
+    @DeleteMapping("/{facilityId}")
+    @Operation(summary = "시설 삭제(비활성화)")
+    public ResponseEntity<Void> deleteFacility(@PathVariable(name = "facilityId") Long facilityId) {
+        facilityManagerService.deleteFacility(facilityId);
+        return ResponseEntity.ok().build();
+    }
+
+    // 공용시설 목록 조회
+    @GetMapping
+    @Operation(summary = "공용시설 목록 조회 [관리자]")
+    public ResponseEntity<List<FacilityManagerSimpleResponseDto>> getFacilityList() {
+        User user = SecurityUtil.getCurrentUser();
+        Long apartmentId = user.getApartment().getId();
+        return ResponseEntity.ok(facilityManagerService.getFacilityList(apartmentId));
+    }
+
+    // 상세 조회
+    @GetMapping("/{facilityId}")
+    @Operation(summary = "공용시설 상세 조회 [관리자]")
+    public ResponseEntity<FacilityManagerDetailResponseDto> getFacilityDetail(@PathVariable Long facilityId) {
+        return ResponseEntity.ok(facilityManagerService.getFacilityDetail(facilityId));
     }
 
     // 예약 목록 조회
