@@ -1,4 +1,4 @@
-package com.ohammer.apartner.domain.facility.dto.request;
+package com.ohammer.apartner.domain.facility.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -12,8 +12,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Schema(description = "공용시설 강사 등록 요청 DTO")
-public class InstructorCreateRequestDto {
+@Schema(description = "공용시설 강사 목록 조회 응답 DTO")
+public class InstructorSimpleResponseDto {
+
+    @Schema(description = "강사 이름", example = "박태환")
+    private Long instructorId;
 
     @Schema(description = "강사 이름", example = "박태환")
     private String name;

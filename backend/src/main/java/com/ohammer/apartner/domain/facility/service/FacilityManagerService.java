@@ -4,16 +4,12 @@ import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerDetailResponseDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
-import com.ohammer.apartner.domain.facility.repository.FacilityInstructorRepository;
-import com.ohammer.apartner.domain.facility.repository.FacilityInstructorScheduleRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
-import com.ohammer.apartner.domain.facility.repository.FacilityTimeSlotRepository;
 import com.ohammer.apartner.global.Status;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
@@ -34,9 +30,6 @@ public class FacilityManagerService {
     private final ApartmentRepository apartmentRepository;
     private final FacilityRepository facilityRepository;
     private final FacilityReservationRepository facilityReservationRepository;
-    private final FacilityTimeSlotRepository facilityTimeSlotRepository;
-    private final FacilityInstructorRepository facilityInstructorRepository;
-    private final FacilityInstructorScheduleRepository facilityInstructorScheduleRepository;
 
     // 공용시설 등록
     @Transactional
@@ -44,14 +37,9 @@ public class FacilityManagerService {
         Apartment apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new EntityNotFoundException("아파트를 찾을 수 없습니다."));
 
-        if (facilityRepository.existsByApartmentIdAndName(apartmentId, facilityCreateRequestDto.getName())) {
-            throw new IllegalArgumentException("이미 존재하는 시설 이름입니다.");
-        }
-        if (facilityCreateRequestDto.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("시설명에 공백을 입력할 수 없습니다.");
-        }
-        if (facilityCreateRequestDto.getDescription().trim().isEmpty()) {
-            throw new IllegalArgumentException("시설 설명에 공백을 입력할 수 없습니다.");
+        if (facilityRepository.existsByApartmentIdAndNameAndStatus(
+                apartmentId, facilityCreateRequestDto.getName(), Status.ACTIVE)) {
+            throw new IllegalArgumentException("이미 운영 중인 시설 이름입니다.");
         }
 
         if (facilityCreateRequestDto.getOpenTime().equals(facilityCreateRequestDto.getCloseTime())) {
@@ -84,12 +72,6 @@ public class FacilityManagerService {
             throw new IllegalArgumentException("이미 존재하는 시설 이름입니다.");
         }
 
-        if (facilityUpdateRequestDto.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("시설명에 공백을 입력할 수 없습니다.");
-        }
-        if (facilityUpdateRequestDto.getDescription().trim().isEmpty()) {
-            throw new IllegalArgumentException("시설 설명에 공백을 입력할 수 없습니다.");
-        }
         if (facilityUpdateRequestDto.getOpenTime().equals(facilityUpdateRequestDto.getCloseTime())) {
             throw new IllegalArgumentException("시작 시간과 종료 시간이 같을 수 없습니다.");
         }
@@ -119,32 +101,16 @@ public class FacilityManagerService {
     // 시설 목록 조회
     public List<FacilityManagerSimpleResponseDto> getFacilityList(Long apartmentId) {
         List<Facility> facilities = facilityRepository.findByApartmentIdAndStatus(apartmentId, Status.ACTIVE);
+
         return facilities.stream()
                 .map(f -> FacilityManagerSimpleResponseDto.builder()
                         .facilityId(f.getId())
                         .facilityName(f.getName())
+                        .description(f.getDescription())
                         .openTime(f.getOpenTime())
                         .closeTime(f.getCloseTime())
                         .build())
                 .collect(Collectors.toList());
-    }
-
-    // 시설 상세 조회
-    public FacilityManagerDetailResponseDto getFacilityDetail(Long facilityId, Long userApartmentId) {
-        Facility facility = facilityRepository.findByIdAndStatus(facilityId, Status.ACTIVE)
-                .orElseThrow(() -> new EntityNotFoundException("운영 중인 시설을 찾을 수 없습니다."));
-
-        if (!facility.getApartment().getId().equals(userApartmentId)) {
-            throw new IllegalArgumentException("해당 아파트에 소속된 시설만 조회할 수 있습니다.");
-        }
-
-        return FacilityManagerDetailResponseDto.builder()
-                .facilityId(facility.getId())
-                .facilityName(facility.getName())
-                .description(facility.getDescription())
-                .openTime(facility.getOpenTime())
-                .closeTime(facility.getCloseTime())
-                .build();
     }
 
     // 예약 목록 조회

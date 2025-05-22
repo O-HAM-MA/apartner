@@ -15,8 +15,11 @@ public class FacilityManagerSimpleResponseDto {
     @Schema(description = "공용시설 id", example = "1")
     private Long facilityId;
 
-    @Schema(description = "공용시설 이름", example = "헬스장")
+    @Schema(description = "공용시설 이름", example = "수영장")
     private String facilityName;
+
+    @Schema(description = "공용시설 설명", example = "반드시 수영모를 씁시다")
+    private String description;
 
     @Schema(description = "공용시설 운영 시작 시간", example = "06:00")
     private LocalTime openTime;

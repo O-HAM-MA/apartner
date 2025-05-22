@@ -12,8 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Schema(description = "공용시설 강사 등록 요청 DTO")
-public class InstructorCreateRequestDto {
+@Schema(description = "공용시설 강사 수정 요청 DTO")
+public class InstructorUpdateRequestDto {
 
     @Schema(description = "강사 이름", example = "박태환")
     private String name;

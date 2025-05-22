@@ -124,6 +124,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** 강사 정보 수정 */
+        put: operations["updateInstructor"];
+        post?: never;
+        /** 강사 삭제 (비활성화) */
+        delete: operations["deleteInstructor"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/residents": {
         parameters: {
             query?: never;
@@ -804,7 +822,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/facilities/new": {
+    "/api/v1/admin/facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 공용시설 목록 조회 [관리자] */
+        get: operations["getFacilityList"];
+        put?: never;
+        /** 공용시설 등록 */
+        post: operations["createFacility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/{facilityId}/instructors": {
         parameters: {
             query?: never;
             header?: never;
@@ -813,8 +849,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 공용시설 등록 */
-        post: operations["createFacility"];
+        /** 강사 등록 */
+        post: operations["createInstructor"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1616,23 +1652,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/facilities": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 공용시설 목록 조회 [관리자] */
-        get: operations["getFacilityList"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/facilities/statistics/user-usage": {
         parameters: {
             query?: never;
@@ -2007,6 +2026,19 @@ export interface components {
              * @example 23:00
              */
             closeTime?: string;
+        };
+        /** @description 공용시설 강사 수정 요청 DTO */
+        InstructorUpdateRequestDto: {
+            /**
+             * @description 강사 이름
+             * @example 박태환
+             */
+            name?: string;
+            /**
+             * @description 강사 소개/설명
+             * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
+             */
+            description?: string;
         };
         ResidentVehicleRequestDto: {
             vehicleNum?: string;
@@ -2584,12 +2616,12 @@ export interface components {
              * @description 등록할 공용시설 이름
              * @example 수영장
              */
-            name?: string;
+            name: string;
             /**
              * @description 공용시설 설명
              * @example 반드시 수영모를 씁시다
              */
-            description?: string;
+            description: string;
             /**
              * @description 공용시설 운영 시작 시간
              * @example 06:00
@@ -2600,6 +2632,19 @@ export interface components {
              * @example 22:00
              */
             closeTime: string;
+        };
+        /** @description 공용시설 강사 등록 요청 DTO */
+        InstructorCreateRequestDto: {
+            /**
+             * @description 강사 이름
+             * @example 박태환
+             */
+            name?: string;
+            /**
+             * @description 강사 소개/설명
+             * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
+             */
+            description?: string;
         };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;
@@ -3601,6 +3646,52 @@ export interface operations {
             header?: never;
             path: {
                 facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstructorUpdateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
             };
             cookie?: never;
         };
@@ -4695,6 +4786,26 @@ export interface operations {
             };
         };
     };
+    getFacilityList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityManagerSimpleResponseDto"][];
+                };
+            };
+        };
+    };
     createFacility: {
         parameters: {
             query?: never;
@@ -4705,6 +4816,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["FacilityCreateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": number;
+                };
+            };
+        };
+    };
+    createInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstructorCreateRequestDto"];
             };
         };
         responses: {
@@ -5736,26 +5873,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
-    getFacilityList: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FacilityManagerSimpleResponseDto"][];
                 };
             };
         };

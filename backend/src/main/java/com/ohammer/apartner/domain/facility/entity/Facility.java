@@ -11,7 +11,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,11 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "facilities",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"apartment_id", "name"})
-        }
-)
+@Table(name = "facilities")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,7 +27,7 @@ import lombok.Setter;
 @Builder
 public class Facility extends BaseEntity {
 
-    @Column(name = "name", length = 50, unique = true, nullable = false)
+    @Column(name = "name", length = 50, nullable = false)
     private String name;
 
     @Column(name = "description", columnDefinition = "TEXT", nullable = false)

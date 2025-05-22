@@ -1,7 +1,6 @@
 package com.ohammer.apartner.domain.facility.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalTime;
@@ -14,12 +13,12 @@ import lombok.Setter;
 public class FacilityCreateRequestDto {
 
     @Schema(description = "등록할 공용시설 이름", example = "수영장")
-    @NotBlank(message = "시설명은 필수 입력값입니다.")
+    @NotNull(message = "시설명은 필수 입력값입니다.")
     @Size(max = 50, message = "시설명은 50자 이하여야 합니다.")
     private String name;
 
     @Schema(description = "공용시설 설명", example = "반드시 수영모를 씁시다")
-    @NotBlank(message = "시설 설명은 필수 입력값입니다.")
+    @NotNull(message = "시설 설명은 필수 입력값입니다.")
     private String description;
 
     @Schema(description = "공용시설 운영 시작 시간", example = "06:00")

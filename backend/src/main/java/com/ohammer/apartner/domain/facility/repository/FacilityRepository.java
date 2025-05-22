@@ -7,8 +7,8 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FacilityRepository extends JpaRepository<Facility, Long> {
-
-    boolean existsByApartmentIdAndName(Long apartmentId, String name);
+    
+    boolean existsByApartmentIdAndNameAndStatus(Long apartmentId, String name, Status status);
 
     // 시설명 중복 체크(수정 시 자기 자신 제외)
     boolean existsByApartmentIdAndNameAndIdNot(Long apartmentId, String name, Long facilityId);
