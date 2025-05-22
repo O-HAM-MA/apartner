@@ -45,7 +45,7 @@ public class Facility extends BaseEntity {
     private LocalTime closeTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "apartment_id")
+    @JoinColumn(name = "apartment_id", nullable = false)
     private Apartment apartment;
 
     @Enumerated(EnumType.STRING)

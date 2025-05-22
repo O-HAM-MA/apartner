@@ -1,17 +1,14 @@
 package com.ohammer.apartner.domain.facility.entity;
 
-import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,42 +16,32 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "facility_reservations")
+@Table(name = "facility_time_slots")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FacilityReservation extends BaseEntity {
+public class FacilityTimeSlot extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "facility_id", nullable = false)
     private Facility facility;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "instructor_id") // 강사 없는 Slot도 가능
+    private FacilityInstructor instructor;
 
     @Column(name = "date", nullable = false)
-    private LocalDate date;
+    private LocalDate date; // 2025-05-26
 
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private LocalTime startTime; // 10:00
 
     @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    private LocalTime endTime; // 10:30
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private Status status;
+    @Column(name = "max_capacity", nullable = false)
+    private Integer maxCapacity; // 슬롯별 최대 예약인원
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "facility_time_slot_id")
-    private FacilityTimeSlot timeSlot;
-
-    // Enum for status
-    public enum Status {
-        AGREE, PENDING, REJECT, CANCEL
-        // 승인 완료, 승인 대기, 승인 거절, 예약 취소
-    }
-} 
+}
