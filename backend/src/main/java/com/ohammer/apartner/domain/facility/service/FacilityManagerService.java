@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.facility.service;
 import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
+import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
@@ -41,6 +42,15 @@ public class FacilityManagerService {
 
         facilityRepository.save(facility);
         return facility.getId();
+    }
+
+    // 공용시설 수정
+    @Transactional
+    public void updateFacility(Long facilityId, FacilityUpdateRequestDto facilityUpdateRequestDto) {
+        Facility facility = facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new EntityNotFoundException("공용시설을 찾을 수 없습니다."));
+
+        facility.update(facilityUpdateRequestDto.getName(), facilityUpdateRequestDto.getDescription());
     }
 
     // 예약 목록 조회
