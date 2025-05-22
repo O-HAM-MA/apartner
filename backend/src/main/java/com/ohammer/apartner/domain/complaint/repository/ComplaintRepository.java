@@ -23,6 +23,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             @Param("end") LocalDateTime end
     );
 
+    Long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
     List<Complaint> findByStatus(Complaint.Status status);
 
     @Query("SELECT c.status, COUNT(c) FROM Complaint c GROUP BY c.status")
