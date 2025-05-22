@@ -78,8 +78,11 @@ public class FacilityManagerController {
     // 상세 조회
     @GetMapping("/{facilityId}")
     @Operation(summary = "공용시설 상세 조회 [관리자]")
-    public ResponseEntity<FacilityManagerDetailResponseDto> getFacilityDetail(@PathVariable Long facilityId) {
-        return ResponseEntity.ok(facilityManagerService.getFacilityDetail(facilityId));
+    public ResponseEntity<FacilityManagerDetailResponseDto> getFacilityDetail(
+            @PathVariable(name = "facilityId") Long facilityId) {
+        User user = SecurityUtil.getCurrentUser();
+        Long apartmentId = user.getApartment().getId();
+        return ResponseEntity.ok(facilityManagerService.getFacilityDetail(facilityId, apartmentId));
     }
 
     // 예약 목록 조회

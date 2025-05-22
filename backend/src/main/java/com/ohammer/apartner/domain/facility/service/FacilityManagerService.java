@@ -17,6 +17,7 @@ import com.ohammer.apartner.domain.facility.repository.FacilityTimeSlotRepositor
 import com.ohammer.apartner.global.Status;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -99,6 +100,7 @@ public class FacilityManagerService {
                 facilityUpdateRequestDto.getOpenTime(),
                 facilityUpdateRequestDto.getCloseTime()
         );
+        facility.setModifiedAt(LocalDateTime.now());
     }
 
     // 공용시설 삭제 (비활성화)
@@ -111,11 +113,12 @@ public class FacilityManagerService {
             throw new IllegalStateException("이미 비활성화된 시설입니다.");
         }
         facility.setInactive();
+        facility.setModifiedAt(LocalDateTime.now());
     }
 
     // 시설 목록 조회
     public List<FacilityManagerSimpleResponseDto> getFacilityList(Long apartmentId) {
-        List<Facility> facilities = facilityRepository.findByApartmentId(apartmentId);
+        List<Facility> facilities = facilityRepository.findByApartmentIdAndStatus(apartmentId, Status.ACTIVE);
         return facilities.stream()
                 .map(f -> FacilityManagerSimpleResponseDto.builder()
                         .facilityId(f.getId())
@@ -127,9 +130,13 @@ public class FacilityManagerService {
     }
 
     // 시설 상세 조회
-    public FacilityManagerDetailResponseDto getFacilityDetail(Long facilityId) {
-        Facility facility = facilityRepository.findById(facilityId)
-                .orElseThrow(() -> new EntityNotFoundException("시설을 찾을 수 없습니다."));
+    public FacilityManagerDetailResponseDto getFacilityDetail(Long facilityId, Long userApartmentId) {
+        Facility facility = facilityRepository.findByIdAndStatus(facilityId, Status.ACTIVE)
+                .orElseThrow(() -> new EntityNotFoundException("운영 중인 시설을 찾을 수 없습니다."));
+
+        if (!facility.getApartment().getId().equals(userApartmentId)) {
+            throw new IllegalArgumentException("해당 아파트에 소속된 시설만 조회할 수 있습니다.");
+        }
 
         return FacilityManagerDetailResponseDto.builder()
                 .facilityId(facility.getId())

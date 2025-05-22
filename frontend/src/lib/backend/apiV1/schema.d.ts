@@ -3553,7 +3553,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                facilityId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
