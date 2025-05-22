@@ -42,7 +42,4 @@ public class FacilityInstructorSchedule extends BaseEntity {
 
     @Column(name = "capacity", nullable = false)
     private Long capacity; // 해당 시간 수강 가능 인원
-
-    @Column(name = "is_day_off", nullable = false)
-    private boolean isDayOff; // true면 "휴무"
 }
