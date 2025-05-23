@@ -212,15 +212,6 @@ export default function InspectionDetail() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 pt-3 border-t border-zinc-200">
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50 hover:text-pink-700"
-                  >
-                    <FileText size={16} />
-                    <span>전체 이력 보기</span>
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
