@@ -148,7 +148,7 @@ export default function InspectionForm({
 
           {/* Back Button */}
           <div className="mb-6">
-            <Link href="/admin-dashboard">
+            <Link href="/udash/inspections">
               <Button
                 variant="outline"
                 className="flex items-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:text-pink-400 dark:border-pink-900/30 dark:hover:bg-pink-950/30 dark:hover:text-pink-300"

@@ -65,7 +65,7 @@ export default function AdminDashboard() {
                   className="w-full rounded-md border border-border bg-card pl-9 md:w-[240px] text-foreground"
                 />
               </div>
-              <Link href="/inspection-register">
+              <Link href="/udash/inspections/new">
                 <Button className="bg-pink-500 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 dark:text-white">
                   <Plus className="mr-1 h-4 w-4" />
                   점검 추가
