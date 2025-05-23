@@ -105,6 +105,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/menu/menus/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMenuById"];
+        put: operations["updateMenu"];
+        post?: never;
+        delete: operations["deleteMenu"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/menu/grades/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGradeById"];
+        put: operations["updateGrade"];
+        post?: never;
+        delete: operations["deleteGrade"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/menu/grades/{id}/menus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMenuIdsByGradeId"];
+        put: operations["assignMenusToGrade"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/residents": {
         parameters: {
             query?: never;
@@ -759,6 +807,38 @@ export interface paths {
          * @description 새로운 관리자 계정을 등록합니다. (이메일, 사용자 이름, 비밀번호 필요)
          */
         post: operations["adminRegister"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/menu/menus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAllMenus"];
+        put?: never;
+        post: operations["createMenu"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/menu/grades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAllGrades"];
+        put?: never;
+        post: operations["createGrade"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1720,6 +1800,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/menu/menus/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAllMenusList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/menu/me/menus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyMenus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/me": {
         parameters: {
             query?: never;
@@ -1931,6 +2043,40 @@ export interface components {
             /** Format: int64 */
             id?: number;
             username?: string;
+        };
+        MenuDTO: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            url?: string;
+            description?: string;
+            icon?: string;
+        };
+        ApiResponseMenuDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["MenuDTO"];
+        };
+        AdminGradeDTO: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            level: number;
+            name?: string;
+            description?: string;
+            /** Format: int64 */
+            usersCount?: number;
+            menuIds?: number[];
+        };
+        ApiResponseAdminGradeDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["AdminGradeDTO"];
+        };
+        ApiResponseVoid: {
+            success?: boolean;
+            message?: string;
+            data?: Record<string, never>;
         };
         ResidentVehicleRequestDto: {
             vehicleNum?: string;
@@ -2610,10 +2756,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2622,9 +2768,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
@@ -2640,8 +2786,8 @@ export interface components {
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -2706,10 +2852,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -2718,9 +2864,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -3070,10 +3216,10 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3082,9 +3228,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ComplaintHandlingRateResponseDto: {
@@ -3181,6 +3327,44 @@ export interface components {
              */
             buildingId?: number;
         };
+        ApiResponsePageMenuDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageMenuDTO"];
+        };
+        PageMenuDTO: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["MenuDTO"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        ApiResponseListMenuDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["MenuDTO"][];
+        };
+        ApiResponseListAdminGradeDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["AdminGradeDTO"][];
+        };
+        ApiResponseListLong: {
+            success?: boolean;
+            message?: string;
+            data?: number[];
+        };
         /** @description 회원 탈퇴 요청 DTO */
         UserWithdrawRequestDto: {
             /**
@@ -3207,9 +3391,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                replyId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -3233,9 +3415,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                replyId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -3401,6 +3581,194 @@ export interface operations {
             };
         };
     };
+    getMenuById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMenuDTO"];
+                };
+            };
+        };
+    };
+    updateMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuDTO"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMenuDTO"];
+                };
+            };
+        };
+    };
+    deleteMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    getGradeById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminGradeDTO"];
+                };
+            };
+        };
+    };
+    updateGrade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminGradeDTO"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminGradeDTO"];
+                };
+            };
+        };
+    };
+    deleteGrade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    getMenuIdsByGradeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListLong"];
+                };
+            };
+        };
+    };
+    assignMenusToGrade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": number[];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
     registerResidentVehicle: {
         parameters: {
             query?: never;
@@ -3544,9 +3912,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                opinionId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -3566,9 +3932,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                opinionId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -4461,6 +4825,96 @@ export interface operations {
             };
         };
     };
+    getAllMenus: {
+        parameters: {
+            query: {
+                arg0: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageMenuDTO"];
+                };
+            };
+        };
+    };
+    createMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuDTO"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMenuDTO"];
+                };
+            };
+        };
+    };
+    getAllGrades: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListAdminGradeDTO"];
+                };
+            };
+        };
+    };
+    createGrade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminGradeDTO"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminGradeDTO"];
+                };
+            };
+        };
+    };
     adminLogin: {
         parameters: {
             query?: never;
@@ -5298,7 +5752,7 @@ export interface operations {
                 date?: string;
                 facilityId?: number;
                 status?: string;
-                pageable: components["schemas"]["Pageable"];
+                arg3: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -5647,6 +6101,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UnitResponseDto"][];
+                };
+            };
+        };
+    };
+    getAllMenusList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListMenuDTO"];
+                };
+            };
+        };
+    };
+    getMyMenus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListMenuDTO"];
                 };
             };
         };
