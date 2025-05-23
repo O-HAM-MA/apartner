@@ -144,7 +144,7 @@ public class AdminAuthController {
                                 .email(registrationRequest.getEmail())
                                 .password(passwordEncoder.encode(registrationRequest.getPassword()))
                                 .roles(java.util.Set.of(Role.ADMIN))
-                                .gradeId(2L)
+                                .gradeId(1L)
                                 .status(Status.ACTIVE)
                                 .build();
             userRepository.save(newAdmin);
