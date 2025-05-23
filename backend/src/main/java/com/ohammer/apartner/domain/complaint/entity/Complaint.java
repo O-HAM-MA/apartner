@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.complaint.entity;
 
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,11 +30,15 @@ public class Complaint extends BaseEntity {
     private String content;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "complaint_status")
+    private ComplaintStatus complaintStatus;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private Status status;
 
     // Enum for status
-    public enum Status {
+    public enum ComplaintStatus {
         PENDING, IN_PROGRESS, COMPLETED, REJECTED
     }
 } 
