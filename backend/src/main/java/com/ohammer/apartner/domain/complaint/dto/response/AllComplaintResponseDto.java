@@ -14,5 +14,6 @@ public class AllComplaintResponseDto {
     private String complaintStatus;
     private String status;
     private String userName;
+    private String content;
     private LocalDateTime createdAt;
 }
