@@ -32,6 +32,10 @@ public class FacilityTimeSlot extends BaseEntity {
     @JoinColumn(name = "instructor_id") // 강사 없는 Slot도 가능
     private FacilityInstructor instructor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private FacilityInstructorSchedule schedule;
+
     @Column(name = "date", nullable = false)
     private LocalDate date; // 2025-05-26
 

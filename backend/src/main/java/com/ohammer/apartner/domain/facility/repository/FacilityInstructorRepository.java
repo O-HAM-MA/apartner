@@ -15,5 +15,7 @@ public interface FacilityInstructorRepository extends JpaRepository<FacilityInst
             "AND i.status = com.ohammer.apartner.domain.facility.entity.FacilityInstructor.Status.ACTIVE")
     List<FacilityInstructor> findActiveInstructorsForActiveFacility(@Param("facilityId") Long facilityId,
                                                                     @Param("apartmentId") Long apartmentId);
-    
+
+    List<FacilityInstructor> findByFacilityId(Long facilityId);
+
 }

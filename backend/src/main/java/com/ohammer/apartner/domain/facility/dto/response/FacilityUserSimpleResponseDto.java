@@ -2,13 +2,18 @@ package com.ohammer.apartner.domain.facility.dto.response;
 
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-@Schema(description = "공용시설 목록 응답 DTO")
+@AllArgsConstructor
+@Schema(description = "공용시설 목록 조회 응답 DTO")
 public class FacilityUserSimpleResponseDto {
+
+    @Schema(description = "시설 ID", example = "1")
+    private Long facilityId;
 
     @Schema(description = "공용시설 이름", example = "헬스장")
     private String name;

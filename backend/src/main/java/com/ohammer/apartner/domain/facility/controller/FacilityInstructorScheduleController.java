@@ -5,6 +5,7 @@ import com.ohammer.apartner.domain.facility.service.FacilityInstructorScheduleSe
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,11 +30,15 @@ public class FacilityInstructorScheduleController {
     public ResponseEntity<Void> createSchedules(
             @PathVariable(name = "facilityId") Long facilityId,
             @PathVariable(name = "instructorId") Long instructorId,
-            @RequestBody List<InstructorScheduleCreateRequestDto> instructorScheduleCreateRequestDtos) {
+            @RequestBody List<InstructorScheduleCreateRequestDto> instructorScheduleCreateRequestDtos,
+            @RequestParam(name = "periodStart") String periodStart,
+            @RequestParam(name = "periodEnd") String periodEnd
+    ) {
         Long apartmentId = SecurityUtil.getCurrentUser().getApartment().getId();
-        facilityInstructorScheduleService.createSchedules(apartmentId, facilityId, instructorId,
-                instructorScheduleCreateRequestDtos);
-
+        facilityInstructorScheduleService.createSchedulesAndSlots(
+                apartmentId, facilityId, instructorId, instructorScheduleCreateRequestDtos,
+                LocalDate.parse(periodStart), LocalDate.parse(periodEnd)
+        );
         return ResponseEntity.ok().build();
     }
 

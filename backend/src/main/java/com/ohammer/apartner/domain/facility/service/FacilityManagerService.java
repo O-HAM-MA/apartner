@@ -7,7 +7,9 @@ import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto
 import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
+import com.ohammer.apartner.domain.facility.entity.FacilityInstructor;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
+import com.ohammer.apartner.domain.facility.repository.FacilityInstructorRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
 import com.ohammer.apartner.global.Status;
@@ -30,6 +32,7 @@ public class FacilityManagerService {
     private final ApartmentRepository apartmentRepository;
     private final FacilityRepository facilityRepository;
     private final FacilityReservationRepository facilityReservationRepository;
+    private final FacilityInstructorRepository facilityInstructorRepository;
 
     // 공용시설 등록
     @Transactional
@@ -96,6 +99,15 @@ public class FacilityManagerService {
         }
         facility.setInactive();
         facility.setModifiedAt(LocalDateTime.now());
+
+        // 해당 시설에 속한 모든 강사도 INACTIVE 처리
+        List<FacilityInstructor> instructors = facilityInstructorRepository.findByFacilityId(facilityId);
+        for (FacilityInstructor instructor : instructors) {
+            if (instructor.getStatus() == FacilityInstructor.Status.ACTIVE) {
+                instructor.setStatus(FacilityInstructor.Status.INACTIVE);
+                instructor.setModifiedAt(LocalDateTime.now());
+            }
+        }
     }
 
     // 시설 목록 조회

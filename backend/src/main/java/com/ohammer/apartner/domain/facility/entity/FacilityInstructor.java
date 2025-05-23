@@ -41,8 +41,4 @@ public class FacilityInstructor extends BaseEntity {
     public enum Status {
         ACTIVE, INACTIVE
     }
-
-    public void retire() {
-        this.status = Status.INACTIVE;
-    }
 }

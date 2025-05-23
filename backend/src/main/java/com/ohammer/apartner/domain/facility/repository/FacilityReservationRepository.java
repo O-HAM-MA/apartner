@@ -16,6 +16,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface FacilityReservationRepository extends JpaRepository<FacilityReservation, Long> {
 
+    Long countByTimeSlot_IdAndStatus(Long timeSlotId, FacilityReservation.Status status);
+
+    boolean existsByUser_IdAndTimeSlot_IdAndStatusIn(Long userId, Long timeSlotId,
+                                                     List<FacilityReservation.Status> statuses);
+
     // 특정 시설의 중복 예약 검사 (날짜 + 시간 겹침 여부)
     @Query("""
                 SELECT fr FROM FacilityReservation fr

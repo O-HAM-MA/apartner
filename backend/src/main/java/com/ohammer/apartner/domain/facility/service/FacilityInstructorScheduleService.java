@@ -10,7 +10,7 @@ import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.global.Status;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.DayOfWeek;
-import java.time.LocalTime;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,11 +24,18 @@ public class FacilityInstructorScheduleService {
     private final FacilityRepository facilityRepository;
     private final FacilityInstructorRepository facilityInstructorRepository;
     private final FacilityInstructorScheduleRepository facilityInstructorScheduleRepository;
+    private final FacilityTimeSlotService facilityTimeSlotService;
 
     // 스케쥴 등록
     @Transactional
-    public void createSchedules(Long apartmentId, Long facilityId, Long instructorId,
-                                List<InstructorScheduleCreateRequestDto> scheduleDtos) {
+    public void createSchedulesAndSlots(
+            Long apartmentId,
+            Long facilityId,
+            Long instructorId,
+            List<InstructorScheduleCreateRequestDto> scheduleDtos,
+            LocalDate periodStart,   // 예: 2025-06-01
+            LocalDate periodEnd      // 예: 2025-06-30
+    ) {
         Facility facility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new EntityNotFoundException("시설을 찾을 수 없습니다."));
 
@@ -53,19 +60,29 @@ public class FacilityInstructorScheduleService {
             if (dto.getCapacity() == null || dto.getCapacity() < 1) {
                 throw new IllegalArgumentException("수용 인원(capacity)은 1 이상이어야 합니다.");
             }
-            LocalTime current = dto.getStartTime();
-            while (!current.plusMinutes(dto.getSlotMinutes()).isAfter(dto.getEndTime())) {
-                FacilityInstructorSchedule schedule = FacilityInstructorSchedule.builder()
-                        .instructor(instructor)
-                        .dayOfWeek(DayOfWeek.valueOf(dto.getDayOfWeek()))
-                        .startTime(current)
-                        .endTime(current.plusMinutes(dto.getSlotMinutes()))
-                        .capacity(dto.getCapacity())
-                        .build();
+            // 패턴 저장
+            FacilityInstructorSchedule schedule = FacilityInstructorSchedule.builder()
+                    .instructor(instructor)
+                    .dayOfWeek(DayOfWeek.valueOf(dto.getDayOfWeek()))
+                    .startTime(dto.getStartTime())
+                    .endTime(dto.getEndTime())
+                    .capacity(dto.getCapacity())
+                    .build();
+            facilityInstructorScheduleRepository.save(schedule);
 
-                facilityInstructorScheduleRepository.save(schedule);
-                current = current.plusMinutes(dto.getSlotMinutes());
-            }
+            // 타임슬롯 row 자동 생성
+            facilityTimeSlotService.createTimeSlots(
+                    facility,
+                    instructor,
+                    schedule,
+                    dto.getDayOfWeek(),
+                    dto.getStartTime(),
+                    dto.getEndTime(),
+                    dto.getSlotMinutes(),
+                    dto.getCapacity(),
+                    periodStart,
+                    periodEnd
+            );
         }
     }
 
