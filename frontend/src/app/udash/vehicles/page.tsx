@@ -22,9 +22,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import client from "@/lib/backend/client";
-import type { components } from "@/lib/backend/apiV1/schema";
+import type {
+  components,
+  ResidentVehicleRequestDto,
+} from "@/lib/backend/apiV1/schema";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMember 훅 import
 
 type VehicleRegistrationInfoDto =
@@ -316,9 +319,28 @@ const SelectSeparator = React.forwardRef<
 ));
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
+// currentVehicle 타입 정의 추가
+type EditingVehicle = {
+  id: number;
+  vehicleNum: string;
+  type: string;
+};
+
 // 메인 페이지 컴포넌트
 export default function VehicleManagement() {
   const { isLogin } = useGlobalLoginMember();
+  const queryClient = useQueryClient();
+
+  // 상태 관리 수정
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({
+    vehicleNum: "",
+    type: "",
+  });
+  const [currentVehicle, setCurrentVehicle] = useState<EditingVehicle | null>(
+    null
+  );
 
   const {
     data: vehicles, // 여기서 data를 vehicles로 구조분해할당
@@ -334,71 +356,90 @@ export default function VehicleManagement() {
     enabled: isLogin,
   });
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentVehicle, setCurrentVehicle] = useState(null);
-  const [newVehicle, setNewVehicle] = useState({ number: "", type: "승용차" });
+  // 차량 등록 mutation
+  const addVehicleMutation = useMutation({
+    mutationFn: (newVehicle: ResidentVehicleRequestDto) =>
+      client.POST("/api/v1/vehicles/residents", { json: newVehicle }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+      setIsAddDialogOpen(false);
+      setNewVehicle({ vehicleNum: "", type: "승용차" });
+    },
+  });
+
+  // 차량 수정 mutation 수정
+  const updateVehicleMutation = useMutation({
+    mutationFn: ({
+      vehicleId,
+      data,
+    }: {
+      vehicleId: number;
+      data: ResidentVehicleRequestDto;
+    }) => {
+      // 로그 추가
+      console.log("Mutation 실행:", vehicleId, data);
+      return client.PATCH(`/api/v1/vehicles/update/${vehicleId}`, {
+        json: {
+          vehicleNum: data.vehicleNum,
+          type: data.type,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+      setIsEditDialogOpen(false);
+      setCurrentVehicle(null);
+      // 성공 알림 추가
+      alert("차량 정보가 수정되었습니다.");
+    },
+    onError: (error) => {
+      console.error("Update failed:", error);
+      alert("차량 정보 수정에 실패했습니다.");
+    },
+  });
+
+  // 차량 삭제 mutation
+  const deleteVehicleMutation = useMutation({
+    mutationFn: (vehicleId: number) =>
+      client.DELETE(`/api/v1/vehicles/delete/${vehicleId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+    },
+  });
 
   const handleAddVehicle = () => {
-    setVehicles([
-      ...vehicles,
-      {
-        id: vehicles.length + 1,
-        number: newVehicle.number,
-        type: newVehicle.type,
-        status: "출차",
-        entryTime: "",
-      },
-    ]);
-    setNewVehicle({ number: "", type: "승용차" });
-    setIsAddDialogOpen(false);
+    addVehicleMutation.mutate({
+      vehicleNum: newVehicle.vehicleNum,
+      type: newVehicle.type,
+    });
   };
 
-  const handleDeleteVehicle = (id) => {
-    setVehicles(vehicles.filter((vehicle) => vehicle.id !== id));
+  const handleDeleteVehicle = (id: number) => {
+    if (window.confirm("차량을 삭제하시겠습니까?")) {
+      deleteVehicleMutation.mutate(id);
+    }
   };
 
+  // 수정 핸들러 함수 수정
   const handleEditVehicle = () => {
-    setVehicles(
-      vehicles.map((vehicle) =>
-        vehicle.id === currentVehicle.id ? currentVehicle : vehicle
-      )
-    );
-    setIsEditDialogOpen(false);
-  };
+    if (!currentVehicle) {
+      console.error("현재 선택된 차량이 없습니다.");
+      return;
+    }
 
-  const handleEntryVehicle = (id) => {
-    setVehicles(
-      vehicles.map((vehicle) =>
-        vehicle.id === id
-          ? {
-              ...vehicle,
-              status: "주차중",
-              entryTime: new Date()
-                .toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-                .replace(/\. /g, "-")
-                .replace(/\./g, "")
-                .replace(/ /g, " "),
-            }
-          : vehicle
-      )
-    );
-  };
+    // 데이터 구조 명확하게 정의
+    const requestData = {
+      vehicleId: currentVehicle.id,
+      data: {
+        vehicleNum: currentVehicle.vehicleNum,
+        type: currentVehicle.type,
+      },
+    };
 
-  const handleExitVehicle = (id) => {
-    setVehicles(
-      vehicles.map((vehicle) =>
-        vehicle.id === id
-          ? { ...vehicle, status: "출차", entryTime: "" }
-          : vehicle
-      )
-    );
+    // 로그 추가
+    console.log("수정 요청 데이터:", requestData);
+
+    updateVehicleMutation.mutate(requestData);
   };
 
   // Add this useEffect to inject the styles
@@ -475,30 +516,28 @@ export default function VehicleManagement() {
                     <Input
                       id="vehicle-number"
                       placeholder="예: 12가 3456"
-                      value={newVehicle.number}
+                      value={newVehicle.vehicleNum}
                       onChange={(e) =>
-                        setNewVehicle({ ...newVehicle, number: e.target.value })
+                        setNewVehicle({
+                          ...newVehicle,
+                          vehicleNum: e.target.value,
+                        })
                       }
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="vehicle-type">차량 종류</Label>
-                    <Select
+                    <Input
+                      id="vehicle-type"
+                      placeholder="예: 승용차, SUV 등"
                       value={newVehicle.type}
-                      onValueChange={(value) =>
-                        setNewVehicle({ ...newVehicle, type: value })
+                      onChange={(e) =>
+                        setNewVehicle({
+                          ...newVehicle,
+                          type: e.target.value,
+                        })
                       }
-                    >
-                      <SelectTrigger id="vehicle-type">
-                        <SelectValue placeholder="차량 종류 선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="승용차">승용차</SelectItem>
-                        <SelectItem value="SUV">SUV</SelectItem>
-                        <SelectItem value="승합차">승합차</SelectItem>
-                        <SelectItem value="화물차">화물차</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -529,37 +568,33 @@ export default function VehicleManagement() {
                       <Label htmlFor="edit-vehicle-number">차량 번호</Label>
                       <Input
                         id="edit-vehicle-number"
-                        value={currentVehicle.number}
-                        onChange={(e) =>
+                        value={currentVehicle.vehicleNum}
+                        onChange={(e) => {
+                          console.log("차량 번호 변경:", e.target.value); // 로그 추가
                           setCurrentVehicle({
                             ...currentVehicle,
-                            number: e.target.value,
-                          })
-                        }
+                            vehicleNum: e.target.value,
+                          });
+                        }}
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="edit-vehicle-type">차량 종류</Label>
-                      <Select
+                      <Input
+                        id="edit-vehicle-type"
                         value={currentVehicle.type}
-                        onValueChange={(value) =>
-                          setCurrentVehicle({ ...currentVehicle, type: value })
-                        }
-                      >
-                        <SelectTrigger id="edit-vehicle-type">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="승용차">승용차</SelectItem>
-                          <SelectItem value="SUV">SUV</SelectItem>
-                          <SelectItem value="승합차">승합차</SelectItem>
-                          <SelectItem value="화물차">화물차</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        onChange={(e) => {
+                          console.log("차량 종류 변경:", e.target.value); // 로그 추가
+                          setCurrentVehicle({
+                            ...currentVehicle,
+                            type: e.target.value,
+                          });
+                        }}
+                      />
                     </div>
                   </div>
                 )}
-                <div className="flex justify-end gap-2">
+                <DialogFooter>
                   <Button
                     variant="outline"
                     onClick={() => setIsEditDialogOpen(false)}
@@ -568,11 +603,18 @@ export default function VehicleManagement() {
                   </Button>
                   <Button
                     className="bg-[#FF4081] hover:bg-[#E91E63]"
-                    onClick={handleEditVehicle}
+                    onClick={() => {
+                      console.log(
+                        "저장 버튼 클릭, 현재 데이터:",
+                        currentVehicle
+                      ); // 로그 추가
+                      handleEditVehicle();
+                    }}
+                    disabled={updateVehicleMutation.isPending}
                   >
-                    저장
+                    {updateVehicleMutation.isPending ? "수정 중..." : "저장"}
                   </Button>
-                </div>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
@@ -648,7 +690,13 @@ export default function VehicleManagement() {
                             variant="outline"
                             className="text-xs"
                             onClick={() => {
-                              setCurrentVehicle(vehicle);
+                              // 로그 추가
+                              console.log("수정 버튼 클릭:", vehicle);
+                              setCurrentVehicle({
+                                id: vehicle.id,
+                                vehicleNum: vehicle.vehicleNum,
+                                type: vehicle.type,
+                              });
                               setIsEditDialogOpen(true);
                             }}
                           >
