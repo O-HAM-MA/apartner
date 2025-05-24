@@ -24,15 +24,15 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import client from "@/lib/backend/client";
-import type {
-  components,
-  ResidentVehicleRequestDto,
-} from "@/lib/backend/apiV1/schema";
+import { components } from "@/lib/backend/apiV1/schema";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMember 훅 import
 
 type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
 
+type VehicleUpdateRequestDto = components["schemas"]["VehicleUpdateRequestDto"];
+type ResidentVehicleRequestDto =
+  components["schemas"]["ResidentVehicleRequestDto"];
 // Add this after the imports and before the component
 const globalStyles = `
   * {
@@ -361,10 +361,7 @@ export default function VehicleManagement() {
     mutationFn: (newVehicle: ResidentVehicleRequestDto) => {
       console.log("등록 요청 데이터:", newVehicle);
       return client.POST("/api/v1/vehicles/residents", {
-        json: {
-          vehicleNum: newVehicle.vehicleNum,
-          type: newVehicle.type,
-        },
+        body: newVehicle,
       });
     },
     onSuccess: () => {
@@ -386,13 +383,14 @@ export default function VehicleManagement() {
       data,
     }: {
       vehicleId: number;
-      data: ResidentVehicleRequestDto;
+      data: VehicleUpdateRequestDto;
     }) => {
-      return client.PATCH(`/api/v1/vehicles/update/${vehicleId}`, {
-        json: {
-          vehicleNum: data.vehicleNum,
-          type: data.type,
+      if (!currentVehicle) return;
+      return client.PATCH(`/api/v1/vehicles/update/{vehicleId}`, {
+        params: {
+          path: { vehicleId },
         },
+        body: currentVehicle,
       });
     },
     onSuccess: () => {
