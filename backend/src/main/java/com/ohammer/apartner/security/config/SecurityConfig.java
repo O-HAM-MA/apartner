@@ -117,9 +117,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/admin/login",
                                 "/api/v1/admin/check",
-                                "/api/v1/chats/all" // 모든 채팅방 목록 조회 API 인증 없이 허용
+                                "/api/v1/chats/all" // 모든 채팅방 목록 조회 API 인증 없이 허용 ( 임시 : 나중에 다시 수정 필요 )
                         ).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN","MANAGER") // 관리자 권한 확인 ( ADMIN, MANAGER 둘 중 하나만 있으면 접근 가능 )
                         // 채팅 관련 API는 인증된 사용자도 접근 가능하도록 설정
                         .requestMatchers("/api/v1/chats/**").authenticated()
                         .anyRequest().authenticated()

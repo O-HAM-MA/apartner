@@ -155,6 +155,10 @@ public class AuthService {
         // 2. 기존 이미지 삭제
         Image existingImage = userProfile.getProfileImage();
         if (existingImage != null) {
+            // 먼저 사용자와 이미지 간의 관계를 끊고 저장
+            userProfile.setProfileImage(null);
+            userRepository.saveAndFlush(userProfile);
+            
             // 기존 S3 이미지 삭제 시도 (실패해도 일단 진행)
             try {
                  deleteS3Image(existingImage.getFilePath());
@@ -162,7 +166,6 @@ public class AuthService {
                  log.warn("Failed to delete existing S3 image: {}", existingImage.getFilePath(), e);
             }
             imageRepository.delete(existingImage);
-            userProfile.setProfileImage(null);
         }
 
         // 3. S3 업로드 시도
@@ -208,16 +211,22 @@ public class AuthService {
             Image newImage = Image.builder()
                     .filePath(kakaoProfileImageUrl)
                     .isTemp(false)
+                    .isTemporary(false)  // null이 아닌 값 설정
                     .path(permanentS3Key)
                     .originalName(originalFileName)
                     .storedName(permanentS3Key)
                     .contentType(contentType)
                     .size(imageSize)
                     .isDeleted(false)
-                    .user(userProfile)
+                    .s3Key(permanentS3Key)  // s3_key 필드에 값 설정
                     .build();
-            imageRepository.save(newImage);
-            userProfile.setProfileImage(newImage);
+            
+            // 이미지 먼저 저장 (user 참조 없이)
+            Image savedImage = imageRepository.saveAndFlush(newImage);
+            
+            // 별도의 트랜잭션으로 사용자에 이미지 연결
+            updateUserProfileImage(userProfile.getId(), savedImage.getId());
+            
             log.info("Saved profile image metadata to DB for user: {}", user.getId());
             return kakaoProfileImageUrl;
         } else {
@@ -225,6 +234,21 @@ public class AuthService {
             log.warn("Profile image DB registration skipped for user: {} due to upload failure or empty file.", user.getId());
             return null; // 실패 시 null 반환
         }
+    }
+
+    @Transactional
+    public void updateUserProfileImage(Long userId, Long imageId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자 없음"));
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지 없음"));
+        
+        // 양방향 관계 설정
+        user.setProfileImage(image);
+        image.setUser(user);
+        
+        // 저장
+        userRepository.save(user);
     }
 
     private void deleteS3Image(String fileName) {
