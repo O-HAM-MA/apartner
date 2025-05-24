@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiEye, FiTrash2, FiEdit2 } from "react-icons/fi";
+import { FiEye, FiTrash2, FiEdit2, FiMessageSquare } from "react-icons/fi";
 import client from "@/lib/backend/client";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -40,6 +40,12 @@ interface Complaint {
   createdAt: string;
   complaintStatus: "pending" | "in_progress" | "completed" | "rejected";
   user: string;
+  feedbacks?: {
+    feedbackId: number;
+    userName: string;
+    content: string;
+    createAt: string;
+  }[];
 }
 
 const statusOptions = [
@@ -73,6 +79,8 @@ export default function ComplaintsPage() {
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [newFeedback, setNewFeedback] = useState("");
 
   // 삭제 버튼 로직 처리리
   const handleDeleteComplaint = async (id: number) => {
@@ -134,6 +142,23 @@ export default function ComplaintsPage() {
     setIsModalOpen(true);
   };
 
+  const handleViewFeedback = async (complaint: Complaint) => {
+    try {
+      const { data } = await client.GET(
+        `/api/v1/complaint-feedbacks/${complaint.id}`
+      );
+      setSelectedComplaint({
+        ...complaint,
+        feedbacks: data,
+      });
+      setIsFeedbackModalOpen(true);
+      console.log("피드백 : " + data);
+    } catch (error) {
+      console.error("피드백 조회 실패:", error);
+      alert("피드백 조회에 실패했습니다.");
+    }
+  };
+
   const [complaints, setComplaints] = useState<Complaint[]>([]);
 
   const handleSelectAll = (checked: boolean) => {
@@ -186,17 +211,43 @@ export default function ComplaintsPage() {
     }
   };
 
-  const handleBulkStatusChange = (status: string) => {
-    setComplaints(
-      complaints.map((complaint) =>
-        selectedComplaints.includes(complaint.id)
-          ? {
-              ...complaint,
-              complaintStatus: status as Complaint["complaintStatus"],
-            }
-          : complaint
-      )
-    );
+  const handleBulkStatusChange = async (status: string) => {
+    try {
+      const statusCode =
+        statusToCodeMap[status as Complaint["complaintStatus"]];
+      if (statusCode === undefined) {
+        console.warn("❌ 매핑 안 된 상태:", status);
+        return;
+      }
+
+      // 선택된 모든 민원에 대해 상태 변경 API 호출
+      await Promise.all(
+        selectedComplaints.map((id) =>
+          client.PATCH(
+            `/api/v1/complaints/${id}/status?status=${statusCode}`,
+            {}
+          )
+        )
+      );
+
+      // 성공 시 프론트엔드 상태 업데이트
+      setComplaints(
+        complaints.map((complaint) =>
+          selectedComplaints.includes(complaint.id)
+            ? {
+                ...complaint,
+                complaintStatus: status as Complaint["complaintStatus"],
+              }
+            : complaint
+        )
+      );
+
+      // 선택 초기화
+      setSelectedComplaints([]);
+    } catch (error) {
+      console.error("일괄 상태 변경 실패:", error);
+      alert("일부 민원의 상태 변경에 실패했습니다.");
+    }
   };
 
   const searchCategories = [
@@ -213,13 +264,48 @@ export default function ComplaintsPage() {
         case "title":
           return complaint.title.toLowerCase().includes(searchValue);
         case "status":
-          return complaint.complaintStatus.toLowerCase().includes(searchValue);
+          const statusLabel = getStatusLabel(
+            complaint.complaintStatus
+          ).toLowerCase();
+          return (
+            statusLabel.includes(searchValue) ||
+            complaint.complaintStatus.toLowerCase().includes(searchValue)
+          );
         case "user":
           return complaint.user.toLowerCase().includes(searchValue);
         default:
           return true;
       }
     });
+
+  const handleSubmitFeedback = async () => {
+    if (!selectedComplaint || !newFeedback.trim()) return;
+
+    try {
+      await client.POST(`/api/v1/complaint-feedbacks`, {
+        body: {
+          complaintId: selectedComplaint.id,
+          content: newFeedback,
+        },
+      });
+
+      // Refresh feedbacks after submission
+      const { data } = await client.GET(
+        `/api/v1/complaint-feedbacks/${selectedComplaint.id}`,
+        {}
+      );
+
+      setSelectedComplaint({
+        ...selectedComplaint,
+        feedbacks: data,
+      });
+
+      setNewFeedback(""); // Clear the input
+    } catch (error) {
+      console.error("피드백 작성 실패:", error);
+      alert("피드백 작성에 실패했습니다.");
+    }
+  };
 
   return (
     <div className="container mx-auto py-6">
@@ -337,6 +423,14 @@ export default function ComplaintsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
+                        onClick={() => handleViewFeedback(complaint)}
+                      >
+                        <FiMessageSquare className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => handleDeleteComplaint(complaint.id)}
                       >
                         <FiTrash2 className="h-4 w-4" />
@@ -378,6 +472,70 @@ export default function ComplaintsPage() {
                 <p className="whitespace-pre-wrap">
                   {selectedComplaint.content}
                 </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isFeedbackModalOpen} onOpenChange={setIsFeedbackModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>민원 피드백</DialogTitle>
+          </DialogHeader>
+          {selectedComplaint && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold">제목</h3>
+                <p>{selectedComplaint.title}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold">작성자</h3>
+                <p>{selectedComplaint.user}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold">피드백 작성</h3>
+                <div className="space-y-2">
+                  <textarea
+                    className="w-full min-h-[100px] p-2 border rounded-md"
+                    value={newFeedback}
+                    onChange={(e) => setNewFeedback(e.target.value)}
+                    placeholder="피드백을 입력하세요..."
+                  />
+                  <Button onClick={handleSubmitFeedback}>피드백 등록</Button>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold">피드백 목록</h3>
+                {selectedComplaint.feedbacks &&
+                selectedComplaint.feedbacks.length > 0 ? (
+                  <div className="space-y-4">
+                    {selectedComplaint.feedbacks.map((feedback) => (
+                      <div
+                        key={feedback.feedbackId}
+                        className="border p-4 rounded-lg"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-medium">
+                            {feedback.userName}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {format(
+                              new Date(feedback.createAt),
+                              "yyyy년 MM월 dd일 HH:mm",
+                              { locale: ko }
+                            )}
+                          </span>
+                        </div>
+                        <p className="whitespace-pre-wrap">
+                          {feedback.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>등록된 피드백이 없습니다.</p>
+                )}
               </div>
             </div>
           )}
