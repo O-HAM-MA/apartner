@@ -651,10 +651,13 @@ export default function VehicleManagement() {
                     차량 종류
                   </th>
                   <th className="px-4 py-3 text-sm font-medium text-gray-500">
+                    등록 유형
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-gray-500">
                     상태
                   </th>
                   <th className="px-4 py-3 text-sm font-medium text-gray-500">
-                    입차 시간
+                    방문 정보
                   </th>
                   <th className="px-4 py-3 text-sm font-medium text-gray-500">
                     관리
@@ -662,74 +665,94 @@ export default function VehicleManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {vehicles?.map(
-                  (
-                    vehicle // vehiclesData를 vehicles로 수정
-                  ) => (
-                    <tr key={vehicle.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 flex items-center gap-2">
-                        <Car size={18} className="text-[#FF4081]" />
-                        <span>{vehicle.vehicleNum}</span>
-                      </td>
-                      <td className="px-4 py-4">{vehicle.type}</td>
-                      <td className="px-4 py-4">
-                        <Badge
-                          className={
-                            vehicle.status === "주차중"
-                              ? "bg-green-100 text-green-800 hover:bg-green-100"
-                              : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                          }
-                        >
-                          {vehicle.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-500">
-                        {vehicle.entryTime || "-"}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          {vehicle.status === "출차" ? (
-                            <Button
-                              size="sm"
-                              className="bg-[#FF4081] hover:bg-[#E91E63] text-xs"
-                              onClick={() => handleEntryVehicle(vehicle.id)}
-                            >
-                              입차
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="bg-gray-500 hover:bg-gray-600 text-xs"
-                              onClick={() => handleExitVehicle(vehicle.id)}
-                            >
-                              출차
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs"
-                            onClick={() => handleEditClick(vehicle)}
-                          >
-                            수정
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
-                            onClick={() => handleDeleteVehicle(vehicle.id)}
-                          >
-                            삭제
-                          </Button>
+                {vehicles?.map((vehicle) => (
+                  <tr key={vehicle.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 flex items-center gap-2">
+                      <Car size={18} className="text-[#FF4081]" />
+                      <span>{vehicle.vehicleNum}</span>
+                    </td>
+                    <td className="px-4 py-4">{vehicle.type}</td>
+                    <td className="px-4 py-4">
+                      <Badge
+                        className={
+                          vehicle.registerType === "거주자"
+                            ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
+                            : "bg-orange-100 text-orange-800 hover:bg-orange-100"
+                        }
+                      >
+                        {vehicle.registerType}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Badge
+                        className={
+                          vehicle.status === "주차중"
+                            ? "bg-green-100 text-green-800 hover:bg-green-100"
+                            : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                        }
+                      >
+                        {vehicle.status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      {vehicle.registerType === "방문자" ? (
+                        <div className="space-y-1">
+                          <p className="text-gray-600">
+                            <span className="font-medium">방문 사유 : </span>{" "}
+                            {vehicle.reason || "-"}
+                          </p>
+                          <p className="text-gray-600">
+                            <span className="font-medium">연락처 : </span>{" "}
+                            {vehicle.userPhone || "-"}
+                          </p>
                         </div>
-                      </td>
-                    </tr>
-                  )
-                )}
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        {vehicle.status === "출차" ? (
+                          <Button
+                            size="sm"
+                            className="bg-[#FF4081] hover:bg-[#E91E63] text-xs"
+                            onClick={() => handleEntryVehicle(vehicle.id)}
+                          >
+                            입차
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="bg-gray-500 hover:bg-gray-600 text-xs"
+                            onClick={() => handleExitVehicle(vehicle.id)}
+                          >
+                            출차
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                          onClick={() => handleEditClick(vehicle)}
+                        >
+                          수정
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
+                          onClick={() => handleDeleteVehicle(vehicle.id)}
+                        >
+                          삭제
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
                 {vehicles.length === 0 && (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={7}
                       className="px-4 py-8 text-center text-gray-500"
                     >
                       등록된 차량이 없습니다. 차량을 등록해주세요.
