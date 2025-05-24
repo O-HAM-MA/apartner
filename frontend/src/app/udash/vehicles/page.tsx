@@ -356,14 +356,26 @@ export default function VehicleManagement() {
     enabled: isLogin,
   });
 
-  // 차량 등록 mutation
+  // 차량 등록 mutation 수정
   const addVehicleMutation = useMutation({
-    mutationFn: (newVehicle: ResidentVehicleRequestDto) =>
-      client.POST("/api/v1/vehicles/residents", { json: newVehicle }),
+    mutationFn: (newVehicle: ResidentVehicleRequestDto) => {
+      console.log("등록 요청 데이터:", newVehicle);
+      return client.POST("/api/v1/vehicles/residents", {
+        json: {
+          vehicleNum: newVehicle.vehicleNum,
+          type: newVehicle.type,
+        },
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
       setIsAddDialogOpen(false);
-      setNewVehicle({ vehicleNum: "", type: "승용차" });
+      setNewVehicle({ vehicleNum: "", type: "" });
+      alert("차량이 등록되었습니다.");
+    },
+    onError: (error) => {
+      console.error("등록 실패:", error);
+      alert("차량 등록에 실패했습니다.");
     },
   });
 
@@ -376,8 +388,6 @@ export default function VehicleManagement() {
       vehicleId: number;
       data: ResidentVehicleRequestDto;
     }) => {
-      // 로그 추가
-      console.log("Mutation 실행:", vehicleId, data);
       return client.PATCH(`/api/v1/vehicles/update/${vehicleId}`, {
         json: {
           vehicleNum: data.vehicleNum,
@@ -389,11 +399,10 @@ export default function VehicleManagement() {
       queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
       setIsEditDialogOpen(false);
       setCurrentVehicle(null);
-      // 성공 알림 추가
       alert("차량 정보가 수정되었습니다.");
     },
     onError: (error) => {
-      console.error("Update failed:", error);
+      console.error("수정 실패:", error);
       alert("차량 정보 수정에 실패했습니다.");
     },
   });
@@ -408,10 +417,18 @@ export default function VehicleManagement() {
   });
 
   const handleAddVehicle = () => {
-    addVehicleMutation.mutate({
-      vehicleNum: newVehicle.vehicleNum,
-      type: newVehicle.type,
-    });
+    if (!newVehicle.vehicleNum || !newVehicle.type) {
+      alert("차량 번호와 종류를 모두 입력해주세요.");
+      return;
+    }
+
+    const vehicleData = {
+      vehicleNum: newVehicle.vehicleNum.trim(),
+      type: newVehicle.type.trim(),
+    };
+
+    console.log("등록 시도:", vehicleData);
+    addVehicleMutation.mutate(vehicleData);
   };
 
   const handleDeleteVehicle = (id: number) => {
@@ -422,24 +439,30 @@ export default function VehicleManagement() {
 
   // 수정 핸들러 함수 수정
   const handleEditVehicle = () => {
-    if (!currentVehicle) {
-      console.error("현재 선택된 차량이 없습니다.");
-      return;
-    }
+    if (!currentVehicle) return;
 
-    // 데이터 구조 명확하게 정의
-    const requestData = {
+    updateVehicleMutation.mutate({
       vehicleId: currentVehicle.id,
       data: {
         vehicleNum: currentVehicle.vehicleNum,
         type: currentVehicle.type,
       },
-    };
+    });
+  };
 
-    // 로그 추가
-    console.log("수정 요청 데이터:", requestData);
+  // handleEditClick 함수 추가
+  const handleEditClick = (vehicle: VehicleRegistrationInfoDto) => {
+    if (!vehicle.id) return;
 
-    updateVehicleMutation.mutate(requestData);
+    console.log("수정할 차량 정보:", vehicle);
+
+    setCurrentVehicle({
+      id: vehicle.id,
+      vehicleNum: vehicle.vehicleNum || "",
+      type: vehicle.type || "",
+    });
+
+    setIsEditDialogOpen(true);
   };
 
   // Add this useEffect to inject the styles
@@ -509,13 +532,15 @@ export default function VehicleManagement() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>차량 등록</DialogTitle>
+                  <DialogDescription>
+                    등록할 차량 정보를 입력해주세요.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="vehicle-number">차량 번호</Label>
                     <Input
                       id="vehicle-number"
-                      placeholder="예: 12가 3456"
                       value={newVehicle.vehicleNum}
                       onChange={(e) =>
                         setNewVehicle({
@@ -523,13 +548,13 @@ export default function VehicleManagement() {
                           vehicleNum: e.target.value,
                         })
                       }
+                      placeholder="예: 12가 3456"
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="vehicle-type">차량 종류</Label>
                     <Input
                       id="vehicle-type"
-                      placeholder="예: 승용차, SUV 등"
                       value={newVehicle.type}
                       onChange={(e) =>
                         setNewVehicle({
@@ -537,10 +562,11 @@ export default function VehicleManagement() {
                           type: e.target.value,
                         })
                       }
+                      placeholder="예: 승용차"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
+                <DialogFooter>
                   <Button
                     variant="outline"
                     onClick={() => setIsAddDialogOpen(false)}
@@ -550,10 +576,11 @@ export default function VehicleManagement() {
                   <Button
                     className="bg-[#FF4081] hover:bg-[#E91E63]"
                     onClick={handleAddVehicle}
+                    disabled={addVehicleMutation.isPending}
                   >
-                    등록
+                    {addVehicleMutation.isPending ? "등록 중..." : "등록"}
                   </Button>
-                </div>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
 
@@ -561,6 +588,9 @@ export default function VehicleManagement() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>차량 정보 수정</DialogTitle>
+                  <DialogDescription>
+                    수정할 차량 정보를 입력해주세요.
+                  </DialogDescription>
                 </DialogHeader>
                 {currentVehicle && (
                   <div className="grid gap-4 py-4">
@@ -570,7 +600,6 @@ export default function VehicleManagement() {
                         id="edit-vehicle-number"
                         value={currentVehicle.vehicleNum}
                         onChange={(e) => {
-                          console.log("차량 번호 변경:", e.target.value); // 로그 추가
                           setCurrentVehicle({
                             ...currentVehicle,
                             vehicleNum: e.target.value,
@@ -584,7 +613,6 @@ export default function VehicleManagement() {
                         id="edit-vehicle-type"
                         value={currentVehicle.type}
                         onChange={(e) => {
-                          console.log("차량 종류 변경:", e.target.value); // 로그 추가
                           setCurrentVehicle({
                             ...currentVehicle,
                             type: e.target.value,
@@ -603,13 +631,7 @@ export default function VehicleManagement() {
                   </Button>
                   <Button
                     className="bg-[#FF4081] hover:bg-[#E91E63]"
-                    onClick={() => {
-                      console.log(
-                        "저장 버튼 클릭, 현재 데이터:",
-                        currentVehicle
-                      ); // 로그 추가
-                      handleEditVehicle();
-                    }}
+                    onClick={handleEditVehicle}
                     disabled={updateVehicleMutation.isPending}
                   >
                     {updateVehicleMutation.isPending ? "수정 중..." : "저장"}
@@ -689,16 +711,7 @@ export default function VehicleManagement() {
                             size="sm"
                             variant="outline"
                             className="text-xs"
-                            onClick={() => {
-                              // 로그 추가
-                              console.log("수정 버튼 클릭:", vehicle);
-                              setCurrentVehicle({
-                                id: vehicle.id,
-                                vehicleNum: vehicle.vehicleNum,
-                                type: vehicle.type,
-                              });
-                              setIsEditDialogOpen(true);
-                            }}
+                            onClick={() => handleEditClick(vehicle)}
                           >
                             수정
                           </Button>
