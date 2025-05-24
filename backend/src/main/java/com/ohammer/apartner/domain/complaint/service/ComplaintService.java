@@ -53,8 +53,9 @@ public class ComplaintService {
                         .id(complaint.getId())
                         .title(complaint.getTitle())
                         .category(complaint.getCategory())
-                        .status(complaint.getStatus().name())
                         .createdAt(complaint.getCreatedAt())
+                        .content(complaint.getContent())
+                        .complaintStatus(complaint.getComplaintStatus().name())
                         .build())
                 .collect(Collectors.toList());
     }
