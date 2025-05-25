@@ -419,19 +419,12 @@ export default function VehicleManagement() {
 
   // 차량 수정 mutation 수정
   const updateVehicleMutation = useMutation({
-    mutationFn: ({
-      vehicleId,
-      data,
-    }: {
-      vehicleId: number;
-      data: VehicleUpdateRequestDto;
-    }) => {
-      if (!currentVehicle) return;
-      return client.PATCH(`/api/v1/vehicles/update/{vehicleId}`, {
-        params: {
-          path: { vehicleId },
+    mutationFn: (data: EditingVehicle) => {
+      return client.PATCH(`/api/v1/vehicles/update/${data.id}`, {
+        body: {
+          vehicleNum: data.vehicleNum,
+          type: data.type,
         },
-        body: currentVehicle,
       });
     },
     onSuccess: () => {
@@ -439,6 +432,7 @@ export default function VehicleManagement() {
       setIsEditDialogOpen(false);
       setCurrentVehicle(null);
       alert("차량 정보가 수정되었습니다.");
+      window.location.reload();
     },
     onError: (error) => {
       console.error("수정 실패:", error);
@@ -592,13 +586,7 @@ export default function VehicleManagement() {
   const handleEditVehicle = () => {
     if (!currentVehicle) return;
 
-    updateVehicleMutation.mutate({
-      vehicleId: currentVehicle.id,
-      data: {
-        vehicleNum: currentVehicle.vehicleNum,
-        type: currentVehicle.type,
-      },
-    });
+    updateVehicleMutation.mutate(currentVehicle);
   };
 
   // handleEditClick 함수 추가
@@ -816,6 +804,66 @@ export default function VehicleManagement() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+
+              {/* 수정 다이얼로그 */}
+              <Dialog
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>차량 정보 수정</DialogTitle>
+                    <DialogDescription>
+                      수정할 차량 정보를 입력해주세요.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-vehicle-number">차량 번호</Label>
+                      <Input
+                        id="edit-vehicle-number"
+                        value={currentVehicle?.vehicleNum || ""}
+                        onChange={(e) =>
+                          setCurrentVehicle((prev) =>
+                            prev
+                              ? { ...prev, vehicleNum: e.target.value }
+                              : null
+                          )
+                        }
+                        placeholder="예: 12가 3456"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-vehicle-type">차량 종류</Label>
+                      <Input
+                        id="edit-vehicle-type"
+                        value={currentVehicle?.type || ""}
+                        onChange={(e) =>
+                          setCurrentVehicle((prev) =>
+                            prev ? { ...prev, type: e.target.value } : null
+                          )
+                        }
+                        placeholder="예: 승용차"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEditDialogOpen(false)}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      className="bg-[#FF4081] hover:bg-[#E91E63]"
+                      onClick={handleEditVehicle}
+                      disabled={updateVehicleMutation.isPending}
+                    >
+                      {updateVehicleMutation.isPending ? "수정 중..." : "수정"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -849,38 +897,48 @@ export default function VehicleManagement() {
                         [],
                       residentPaging
                     ).map((vehicle) => (
-                      <tr
-                        key={vehicle.id}
-                        className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => {
-                          window.location.href = `/udash/vehicles/${vehicle.id}`;
-                        }}
-                      >
-                        <td className="px-4 py-4 flex items-center gap-2">
-                          <Car size={18} className="text-[#FF4081]" />
-                          <span>{vehicle.vehicleNum}</span>
+                      <tr key={vehicle.id} className="hover:bg-gray-50">
+                        {/* 상세페이지로 이동하는 부분 */}
+                        <td
+                          className="px-4 py-4 cursor-pointer"
+                          onClick={() => {
+                            window.location.href = `/udash/vehicles/${vehicle.id}`;
+                          }}
+                          colSpan={3}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Car size={18} className="text-[#FF4081]" />
+                            <span>{vehicle.vehicleNum}</span>
+                          </div>
+                          <div className="flex items-center gap-4 mt-2">
+                            <span className="text-gray-600">
+                              {vehicle.type}
+                            </span>
+                            <Badge
+                              className={
+                                vehicle.vehicleStatus === "ACTIVE"
+                                  ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                  : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                              }
+                            >
+                              {vehicle.vehicleStatus === "ACTIVE"
+                                ? "주차됨"
+                                : "외부"}
+                            </Badge>
+                          </div>
                         </td>
-                        <td className="px-4 py-4">{vehicle.type}</td>
-                        <td className="px-4 py-4">
-                          <Badge
-                            className={
-                              vehicle.vehicleStatus === "ACTIVE"
-                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                            }
-                          >
-                            {vehicle.vehicleStatus === "ACTIVE"
-                              ? "주차됨"
-                              : "외부"}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-4">
+
+                        {/* 수정/삭제 버튼 부분 */}
+                        <td className="px-4 py-4 border-l">
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               className="text-xs"
-                              onClick={() => handleEditClick(vehicle)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditClick(vehicle);
+                              }}
                             >
                               수정
                             </Button>
@@ -888,7 +946,10 @@ export default function VehicleManagement() {
                               size="sm"
                               variant="outline"
                               className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
-                              onClick={() => handleDeleteVehicle(vehicle.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteVehicle(vehicle.id);
+                              }}
                             >
                               삭제
                             </Button>
