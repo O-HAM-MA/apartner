@@ -936,8 +936,7 @@ export default function VehicleManagement() {
             <Button
               size="lg"
               className="bg-[#FF4081] hover:bg-[#E91E63] px-12 py-6 text-lg"
-              onClick={handleEntry}
-              disabled={!selectedVehicleId}
+              onClick={() => enterVehicleMutation.mutate()}
             >
               <Car className="mr-2 h-6 w-6" />
               입차하기
