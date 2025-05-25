@@ -596,192 +596,139 @@ export default function VehicleManagement() {
       {/* 메인 콘텐츠 */}
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              {/* 주차장 현황 섹션 */}
-              <div className="mb-6 p-6 bg-white rounded-lg border border-gray-200 w-full">
-                <h2 className="text-lg font-semibold mb-4">주차장 현황</h2>
-                <div className="grid grid-cols-3 gap-10 max-w-[1200px] mx-auto">
-                  <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600 mb-2">전체 주차공간</p>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {parkingStatus?.totalCapacity || 0}
-                      <span className="text-base font-normal text-gray-600 ml-1">
-                        면
-                      </span>
-                    </p>
-                  </div>
-                  <div className="text-center p-6 bg-pink-50 rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600 mb-2">현재 주차</p>
-                    <p className="text-3xl font-bold text-[#FF4081]">
-                      {parkingStatus?.activeCount || 0}
-                      <span className="text-base font-normal text-gray-600 ml-1">
-                        대
-                      </span>
-                    </p>
-                  </div>
-                  <div className="text-center p-6 bg-green-50 rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600 mb-2">남은 공간</p>
-                    <p className="text-3xl font-bold text-green-600">
-                      {parkingStatus?.remainingSpace || 0}
-                      <span className="text-base font-normal text-gray-600 ml-1">
-                        면
-                      </span>
-                    </p>
-                  </div>
+          {/* 주차장 현황 섹션과 차량 관리 제목 부분 수정 */}
+          <div>
+            {/* 주차장 현황 섹션 */}
+            <div className="mb-6 p-6 bg-white rounded-lg border border-gray-200 w-full">
+              <h2 className="text-lg font-semibold mb-4">주차장 현황</h2>
+              <div className="grid grid-cols-3 gap-10 max-w-[1200px] mx-auto">
+                <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                  <p className="text-sm text-gray-600 mb-2">전체 주차공간</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {parkingStatus?.totalCapacity || 0}
+                    <span className="text-base font-normal text-gray-600 ml-1">
+                      면
+                    </span>
+                  </p>
                 </div>
-                {/* 주차장 사용률 프로그레스 바 */}
-                <div className="mt-8 max-w-[1200px] mx-auto">
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-[#FF4081] h-3 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${
-                          parkingStatus
-                            ? (parkingStatus.activeCount /
-                                parkingStatus.totalCapacity) *
-                              100
-                            : 0
-                        }%`,
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-3 text-center">
-                    주차장 사용률:{" "}
-                    {parkingStatus
-                      ? Math.round(
-                          (parkingStatus.activeCount /
-                            parkingStatus.totalCapacity) *
-                            100
-                        )
-                      : 0}
-                    %
+                <div className="text-center p-6 bg-pink-50 rounded-lg shadow-sm">
+                  <p className="text-sm text-gray-600 mb-2">현재 주차</p>
+                  <p className="text-3xl font-bold text-[#FF4081]">
+                    {parkingStatus?.activeCount || 0}
+                    <span className="text-base font-normal text-gray-600 ml-1">
+                      대
+                    </span>
+                  </p>
+                </div>
+                <div className="text-center p-6 bg-green-50 rounded-lg shadow-sm">
+                  <p className="text-sm text-gray-600 mb-2">남은 공간</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {parkingStatus?.remainingSpace || 0}
+                    <span className="text-base font-normal text-gray-600 ml-1">
+                      면
+                    </span>
                   </p>
                 </div>
               </div>
-
-              <h1 className="text-2xl font-bold">차량 관리</h1>
-
-              <p className="text-gray-500 text-sm mt-1">
-                내 차량 정보를 관리할 수 있습니다.
-              </p>
-            </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#FF4081] hover:bg-[#E91E63]">
-                  <Plus size={18} className="mr-1" /> 차량 등록하기
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>차량 등록</DialogTitle>
-                  <DialogDescription>
-                    등록할 차량 정보를 입력해주세요.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="vehicle-number">차량 번호</Label>
-                    <Input
-                      id="vehicle-number"
-                      value={newVehicle.vehicleNum}
-                      onChange={(e) =>
-                        setNewVehicle({
-                          ...newVehicle,
-                          vehicleNum: e.target.value,
-                        })
-                      }
-                      placeholder="예: 12가 3456"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="vehicle-type">차량 종류</Label>
-                    <Input
-                      id="vehicle-type"
-                      value={newVehicle.type}
-                      onChange={(e) =>
-                        setNewVehicle({
-                          ...newVehicle,
-                          type: e.target.value,
-                        })
-                      }
-                      placeholder="예: 승용차"
-                    />
-                  </div>
+              {/* 주차장 사용률 프로그레스 바 */}
+              <div className="mt-8 max-w-[1200px] mx-auto">
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className="bg-[#FF4081] h-3 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${
+                        parkingStatus
+                          ? (parkingStatus.activeCount /
+                              parkingStatus.totalCapacity) *
+                            100
+                          : 0
+                      }%`,
+                    }}
+                  ></div>
                 </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
-                    취소
-                  </Button>
-                  <Button
-                    className="bg-[#FF4081] hover:bg-[#E91E63]"
-                    onClick={handleAddVehicle}
-                    disabled={addVehicleMutation.isPending}
-                  >
-                    {addVehicleMutation.isPending ? "등록 중..." : "등록"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                <p className="text-sm text-gray-500 mt-3 text-center">
+                  주차장 사용률:{" "}
+                  {parkingStatus
+                    ? Math.round(
+                        (parkingStatus.activeCount /
+                          parkingStatus.totalCapacity) *
+                          100
+                      )
+                    : 0}
+                  %
+                </p>
+              </div>
+            </div>
 
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>차량 정보 수정</DialogTitle>
-                  <DialogDescription>
-                    수정할 차량 정보를 입력해주세요.
-                  </DialogDescription>
-                </DialogHeader>
-                {currentVehicle && (
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="text-2xl font-bold">차량 관리</h1>
+                <p className="text-gray-500 text-sm mt-1">
+                  내 차량 정보를 관리할 수 있습니다.
+                </p>
+              </div>
+
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#FF4081] hover:bg-[#E91E63]">
+                    <Plus size={18} className="mr-1" /> 차량 등록하기
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>차량 등록</DialogTitle>
+                    <DialogDescription>
+                      등록할 차량 정보를 입력해주세요.
+                    </DialogDescription>
+                  </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-vehicle-number">차량 번호</Label>
+                      <Label htmlFor="vehicle-number">차량 번호</Label>
                       <Input
-                        id="edit-vehicle-number"
-                        value={currentVehicle.vehicleNum}
-                        onChange={(e) => {
-                          setCurrentVehicle({
-                            ...currentVehicle,
+                        id="vehicle-number"
+                        value={newVehicle.vehicleNum}
+                        onChange={(e) =>
+                          setNewVehicle({
+                            ...newVehicle,
                             vehicleNum: e.target.value,
-                          });
-                        }}
+                          })
+                        }
+                        placeholder="예: 12가 3456"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="edit-vehicle-type">차량 종류</Label>
+                      <Label htmlFor="vehicle-type">차량 종류</Label>
                       <Input
-                        id="edit-vehicle-type"
-                        value={currentVehicle.type}
-                        onChange={(e) => {
-                          setCurrentVehicle({
-                            ...currentVehicle,
+                        id="vehicle-type"
+                        value={newVehicle.type}
+                        onChange={(e) =>
+                          setNewVehicle({
+                            ...newVehicle,
                             type: e.target.value,
-                          });
-                        }}
+                          })
+                        }
+                        placeholder="예: 승용차"
                       />
                     </div>
                   </div>
-                )}
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditDialogOpen(false)}
-                  >
-                    취소
-                  </Button>
-                  <Button
-                    className="bg-[#FF4081] hover:bg-[#E91E63]"
-                    onClick={handleEditVehicle}
-                    disabled={updateVehicleMutation.isPending}
-                  >
-                    {updateVehicleMutation.isPending ? "수정 중..." : "저장"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddDialogOpen(false)}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      className="bg-[#FF4081] hover:bg-[#E91E63]"
+                      onClick={handleAddVehicle}
+                      disabled={addVehicleMutation.isPending}
+                    >
+                      {addVehicleMutation.isPending ? "등록 중..." : "등록"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* 차량 목록 */}
@@ -830,20 +777,6 @@ export default function VehicleManagement() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                className="bg-[#FF4081] hover:bg-[#E91E63] text-xs"
-                                onClick={() => handleEntryVehicle(vehicle.id)}
-                              >
-                                입차
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="bg-gray-500 hover:bg-gray-600 text-xs"
-                                onClick={() => handleExitVehicle(vehicle.id)}
-                              >
-                                출차
-                              </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -942,30 +875,6 @@ export default function VehicleManagement() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-2">
-                              {vehicle.status === "출차" ? (
-                                <Button
-                                  size="sm"
-                                  className="bg-[#FF4081] hover:bg-[#E91E63] text-xs"
-                                  onClick={() => handleEntryVehicle(vehicle.id)}
-                                >
-                                  입차
-                                </Button>
-                              ) : (
-                                <div className="text-sm text-gray-600">
-                                  입차시간:{" "}
-                                  {vehicle.entryRecordId
-                                    ? new Date(
-                                        vehicle.entryTime
-                                      ).toLocaleString("ko-KR", {
-                                        year: "numeric",
-                                        month: "2-digit",
-                                        day: "2-digit",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })
-                                    : "기록 없음"}
-                                </div>
-                              )}
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1001,6 +910,26 @@ export default function VehicleManagement() {
                 </table>
               </div>
             </div>
+          </div>
+
+          {/* 입/출차 버튼 추가 */}
+          <div className="flex justify-center gap-4 my-8">
+            <Button
+              size="lg"
+              className="bg-[#FF4081] hover:bg-[#E91E63] px-12 py-6 text-lg"
+              onClick={() => handleEntryVehicle(/* TODO: 선택된 차량 ID */)}
+            >
+              <Car className="mr-2 h-6 w-6" />
+              입차하기
+            </Button>
+            <Button
+              size="lg"
+              className="bg-gray-500 hover:bg-gray-600 px-12 py-6 text-lg"
+              onClick={() => handleExitVehicle(/* TODO: 선택된 차량 ID */)}
+            >
+              <Car className="mr-2 h-6 w-6" />
+              출차하기
+            </Button>
           </div>
 
           {/* 안내 메시지 */}
