@@ -26,7 +26,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMember 훅 import
-
+import { EntryRecordStatusUpdateRequestDto } from "./lib/backend/apiV1/schema.d.ts";
 type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
 
@@ -34,6 +34,13 @@ type VehicleUpdateRequestDto = components["schemas"]["VehicleUpdateRequestDto"];
 type ResidentVehicleRequestDto =
   components["schemas"]["ResidentVehicleRequestDto"];
 // Add this after the imports and before the component
+// 예시
+const reqBody: EntryRecordStatusUpdateRequestDto = {
+  status: "AGREE", // 또는 'PENDING', 'INAGREE', 'INVITER_AGREE'
+};
+type EntryRecordStatusUpdateRequestDto = [
+  "schemas"
+]["EntryRecordStatusUpdateRequestDto"];
 const globalStyles = `
   * {
     margin: 0;
