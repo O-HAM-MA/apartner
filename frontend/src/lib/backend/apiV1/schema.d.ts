@@ -2569,6 +2569,7 @@ export interface components {
             reason?: string;
             userPhone?: string;
             status?: string;
+            vehicleStatus?: string;
         };
         ParkingStatusDto: {
             /** Format: int32 */
@@ -2620,7 +2621,6 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["NoticeSummaryResponseDto"][];
@@ -2631,23 +2631,24 @@ export interface components {
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            sort?: components["schemas"]["SortObject"];
             unpaged?: boolean;
             /** Format: int32 */
             pageSize?: number;
             /** Format: int32 */
             pageNumber?: number;
             paged?: boolean;
-            /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"];
         };
         SortObject: {
+            empty?: boolean;
             unsorted?: boolean;
             sorted?: boolean;
-            empty?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -2716,7 +2717,6 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["UserNoticeSummaryResponseDto"][];
@@ -2727,6 +2727,7 @@ export interface components {
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -3080,7 +3081,6 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["FacilityReservationManagerDto"][];
@@ -3091,6 +3091,7 @@ export interface components {
             last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ComplaintHandlingRateResponseDto: {

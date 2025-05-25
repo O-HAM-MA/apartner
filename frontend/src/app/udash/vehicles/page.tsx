@@ -333,6 +333,13 @@ type EditingVehicle = {
   type: string;
 };
 
+// 페이징 관련 타입 추가
+type PagingState = {
+  currentPage: number;
+  itemsPerPage: number;
+  totalPages: number;
+};
+
 // 메인 페이지 컴포넌트
 export default function VehicleManagement() {
   const { isLogin } = useGlobalLoginMember();
@@ -351,6 +358,19 @@ export default function VehicleManagement() {
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null
   ); // 입차할 차량 ID 상태 추가
+
+  // 페이징 상태 추가
+  const [residentPaging, setResidentPaging] = useState<PagingState>({
+    currentPage: 1,
+    itemsPerPage: 5,
+    totalPages: 1,
+  });
+
+  const [visitorPaging, setVisitorPaging] = useState<PagingState>({
+    currentPage: 1,
+    itemsPerPage: 5,
+    totalPages: 1,
+  });
 
   const {
     data: vehicles, // 여기서 data를 vehicles로 구조분해할당
@@ -527,6 +547,26 @@ export default function VehicleManagement() {
     },
   });
 
+  // mutation 추가
+  const requestParkingMutation = useMutation({
+    mutationFn: () => {
+      return client.POST("/api/v1/entry-records/request", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+      alert("주차 재신청이 완료되었습니다.");
+      window.location.reload();
+    },
+    onError: (error) => {
+      console.error("주차 재신청 실패:", error);
+      if (error.message.includes("현재 주차 중")) {
+        alert("현재 주차 중이므로 새 출입 신청이 불가합니다.");
+      } else {
+        alert("주차 재신청에 실패했습니다.");
+      }
+    },
+  });
+
   const handleAddVehicle = () => {
     if (!newVehicle.vehicleNum || !newVehicle.type) {
       alert("차량 번호와 종류를 모두 입력해주세요.");
@@ -574,6 +614,23 @@ export default function VehicleManagement() {
     });
 
     setIsEditDialogOpen(true);
+  };
+
+  // 페이징된 데이터를 얻기 위한 함수 수정
+  const getPaginatedData = (
+    data: VehicleRegistrationInfoDto[],
+    paging: PagingState
+  ) => {
+    // 전체 데이터를 먼저 역순으로 정렬 (최신순)
+    const sortedData = [...data].reverse();
+    const start = (paging.currentPage - 1) * paging.itemsPerPage;
+    const end = start + paging.itemsPerPage;
+    return sortedData.slice(start, end);
+  };
+
+  // 총 페이지 수 계산 함수
+  const calculateTotalPages = (totalItems: number, itemsPerPage: number) => {
+    return Math.ceil(totalItems / itemsPerPage);
   };
 
   // Add this useEffect to inject the styles
@@ -785,55 +842,60 @@ export default function VehicleManagement() {
                       </th>
                     </tr>
                   </thead>
+                  {/* 거주자 차량 테이블 */}
                   <tbody className="divide-y divide-gray-200">
-                    {vehicles
-                      ?.filter((v) => v.registerType === "거주자")
-                      .map((vehicle) => (
-                        <tr
-                          key={vehicle.id}
-                          className="hover:bg-gray-50 cursor-pointer"
-                          onClick={() => {
-                            window.location.href = `/udash/vehicles/${vehicle.id}`;
-                          }}
-                        >
-                          <td className="px-4 py-4 flex items-center gap-2">
-                            <Car size={18} className="text-[#FF4081]" />
-                            <span>{vehicle.vehicleNum}</span>
-                          </td>
-                          <td className="px-4 py-4">{vehicle.type}</td>
-                          <td className="px-4 py-4">
-                            <Badge
-                              className={
-                                vehicle.status === "주차중"
-                                  ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                  : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                              }
+                    {getPaginatedData(
+                      vehicles?.filter((v) => v.registerType === "거주자") ||
+                        [],
+                      residentPaging
+                    ).map((vehicle) => (
+                      <tr
+                        key={vehicle.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          window.location.href = `/udash/vehicles/${vehicle.id}`;
+                        }}
+                      >
+                        <td className="px-4 py-4 flex items-center gap-2">
+                          <Car size={18} className="text-[#FF4081]" />
+                          <span>{vehicle.vehicleNum}</span>
+                        </td>
+                        <td className="px-4 py-4">{vehicle.type}</td>
+                        <td className="px-4 py-4">
+                          <Badge
+                            className={
+                              vehicle.vehicleStatus === "ACTIVE"
+                                ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                            }
+                          >
+                            {vehicle.vehicleStatus === "ACTIVE"
+                              ? "주차됨"
+                              : "외부"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                              onClick={() => handleEditClick(vehicle)}
                             >
-                              {vehicle.status}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs"
-                                onClick={() => handleEditClick(vehicle)}
-                              >
-                                수정
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
-                                onClick={() => handleDeleteVehicle(vehicle.id)}
-                              >
-                                삭제
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                              수정
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
+                              onClick={() => handleDeleteVehicle(vehicle.id)}
+                            >
+                              삭제
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                     {vehicles?.filter((v) => v.registerType === "거주자")
                       .length === 0 && (
                       <tr>
@@ -847,6 +909,20 @@ export default function VehicleManagement() {
                     )}
                   </tbody>
                 </table>
+                <Pagination
+                  currentPage={residentPaging.currentPage}
+                  totalPages={calculateTotalPages(
+                    vehicles?.filter((v) => v.registerType === "거주자")
+                      .length || 0,
+                    residentPaging.itemsPerPage
+                  )}
+                  onPageChange={(page) =>
+                    setResidentPaging((prev) => ({
+                      ...prev,
+                      currentPage: page,
+                    }))
+                  }
+                />
               </div>
             </div>
 
@@ -868,6 +944,14 @@ export default function VehicleManagement() {
                 <Car className="mr-2 h-6 w-6" />
                 출차하기
               </Button>
+              <Button
+                size="lg"
+                className="bg-blue-500 hover:bg-blue-600 px-12 py-6 text-lg"
+                onClick={() => requestParkingMutation.mutate()}
+              >
+                <Car className="mr-2 h-6 w-6" />
+                주차 재신청
+              </Button>
             </div>
 
             {/* 방문자 차량 목록 */}
@@ -887,7 +971,7 @@ export default function VehicleManagement() {
                         차량 종류
                       </th>
                       <th className="px-4 py-3 text-sm font-medium text-gray-500">
-                        상태
+                        승인 여부
                       </th>
                       <th className="px-4 py-3 text-sm font-medium text-gray-500">
                         방문 정보
@@ -897,61 +981,64 @@ export default function VehicleManagement() {
                       </th>
                     </tr>
                   </thead>
+                  {/* 방문자 차량 테이블 */}
                   <tbody className="divide-y divide-gray-200">
-                    {vehicles
-                      ?.filter((v) => v.registerType === "방문자")
-                      .map((vehicle) => (
-                        <tr key={vehicle.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-4 flex items-center gap-2">
-                            <Car size={18} className="text-[#FF4081]" />
-                            <span>{vehicle.vehicleNum}</span>
-                          </td>
-                          <td className="px-4 py-4">{vehicle.type}</td>
-                          <td className="px-4 py-4">
-                            <Badge
-                              className={
-                                vehicle.status === "주차중"
-                                  ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                  : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                              }
+                    {getPaginatedData(
+                      vehicles?.filter((v) => v.registerType === "방문자") ||
+                        [],
+                      visitorPaging
+                    ).map((vehicle) => (
+                      <tr key={vehicle.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 flex items-center gap-2">
+                          <Car size={18} className="text-[#FF4081]" />
+                          <span>{vehicle.vehicleNum}</span>
+                        </td>
+                        <td className="px-4 py-4">{vehicle.type}</td>
+                        <td className="px-4 py-4">
+                          <Badge
+                            className={
+                              vehicle.status === "주차중"
+                                ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                            }
+                          >
+                            {vehicle.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4 text-sm">
+                          <div className="space-y-1">
+                            <p className="text-gray-600">
+                              <span className="font-medium">방문 사유:</span>{" "}
+                              {vehicle.reason || "-"}
+                            </p>
+                            <p className="text-gray-600">
+                              <span className="font-medium">연락처:</span>{" "}
+                              {vehicle.userPhone || "-"}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                              onClick={() => handleEditClick(vehicle)}
                             >
-                              {vehicle.status}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-4 text-sm">
-                            <div className="space-y-1">
-                              <p className="text-gray-600">
-                                <span className="font-medium">방문 사유:</span>{" "}
-                                {vehicle.reason || "-"}
-                              </p>
-                              <p className="text-gray-600">
-                                <span className="font-medium">연락처:</span>{" "}
-                                {vehicle.userPhone || "-"}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs"
-                                onClick={() => handleEditClick(vehicle)}
-                              >
-                                수정
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
-                                onClick={() => handleDeleteVehicle(vehicle.id)}
-                              >
-                                삭제
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                              수정
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
+                              onClick={() => handleDeleteVehicle(vehicle.id)}
+                            >
+                              삭제
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                     {vehicles?.filter((v) => v.registerType === "방문자")
                       .length === 0 && (
                       <tr>
@@ -965,6 +1052,17 @@ export default function VehicleManagement() {
                     )}
                   </tbody>
                 </table>
+                <Pagination
+                  currentPage={visitorPaging.currentPage}
+                  totalPages={calculateTotalPages(
+                    vehicles?.filter((v) => v.registerType === "방문자")
+                      .length || 0,
+                    visitorPaging.itemsPerPage
+                  )}
+                  onPageChange={(page) =>
+                    setVisitorPaging((prev) => ({ ...prev, currentPage: page }))
+                  }
+                />
               </div>
             </div>
           </div>
@@ -980,6 +1078,48 @@ export default function VehicleManagement() {
 
       {/* 푸터 */}
       <Footer />
+    </div>
+  );
+}
+
+// Pagination 컴포넌트 생성
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <div className="flex justify-center gap-2 mt-4">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        이전
+      </Button>
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <Button
+          key={page}
+          variant={currentPage === page ? "default" : "outline"}
+          size="sm"
+          onClick={() => onPageChange(page)}
+        >
+          {page}
+        </Button>
+      ))}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        다음
+      </Button>
     </div>
   );
 }
