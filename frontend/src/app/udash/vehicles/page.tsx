@@ -472,6 +472,24 @@ export default function VehicleManagement() {
     },
   });
 
+  // 출차 mutation 추가
+  const exitVehicleMutation = useMutation({
+    mutationFn: (vehicleId: number) => {
+      return client.POST("/api/v1/entry-records/exit", {
+        body: { vehicleId },
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+      alert("출차가 완료되었습니다.");
+      window.location.reload();
+    },
+    onError: (error) => {
+      console.error("출차 실패:", error);
+      alert("출차 처리에 실패했습니다.");
+    },
+  });
+
   // 입차 핸들러 추가
   const handleEntry = () => {
     if (!selectedVehicleId) {
@@ -773,10 +791,10 @@ export default function VehicleManagement() {
                       .map((vehicle) => (
                         <tr
                           key={vehicle.id}
-                          className={`hover:bg-gray-50 cursor-pointer ${
-                            selectedVehicleId === vehicle.id ? "bg-pink-50" : ""
-                          }`}
-                          onClick={() => handleVehicleSelect(vehicle.id)}
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            window.location.href = `/udash/vehicles/${vehicle.id}`;
+                          }}
                         >
                           <td className="px-4 py-4 flex items-center gap-2">
                             <Car size={18} className="text-[#FF4081]" />
@@ -830,6 +848,26 @@ export default function VehicleManagement() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* 입/출차 버튼 추가 */}
+            <div className="flex justify-center gap-4 my-8">
+              <Button
+                size="lg"
+                className="bg-[#FF4081] hover:bg-[#E91E63] px-12 py-6 text-lg"
+                onClick={() => enterVehicleMutation.mutate()}
+              >
+                <Car className="mr-2 h-6 w-6" />
+                입차하기
+              </Button>
+              <Button
+                size="lg"
+                className="bg-gray-500 hover:bg-gray-600 px-12 py-6 text-lg"
+                onClick={() => exitVehicleMutation.mutate()}
+              >
+                <Car className="mr-2 h-6 w-6" />
+                출차하기
+              </Button>
             </div>
 
             {/* 방문자 차량 목록 */}
@@ -929,26 +967,6 @@ export default function VehicleManagement() {
                 </table>
               </div>
             </div>
-          </div>
-
-          {/* 입/출차 버튼 추가 */}
-          <div className="flex justify-center gap-4 my-8">
-            <Button
-              size="lg"
-              className="bg-[#FF4081] hover:bg-[#E91E63] px-12 py-6 text-lg"
-              onClick={() => enterVehicleMutation.mutate()}
-            >
-              <Car className="mr-2 h-6 w-6" />
-              입차하기
-            </Button>
-            <Button
-              size="lg"
-              className="bg-gray-500 hover:bg-gray-600 px-12 py-6 text-lg"
-              onClick={() => handleExitVehicle(/* TODO: 선택된 차량 ID */)}
-            >
-              <Car className="mr-2 h-6 w-6" />
-              출차하기
-            </Button>
           </div>
 
           {/* 안내 메시지 */}
