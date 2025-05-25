@@ -348,6 +348,9 @@ export default function VehicleManagement() {
   const [currentVehicle, setCurrentVehicle] = useState<EditingVehicle | null>(
     null
   );
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
+    null
+  ); // 입차할 차량 ID 상태 추가
 
   const {
     data: vehicles, // 여기서 data를 vehicles로 구조분해할당
@@ -451,7 +454,7 @@ export default function VehicleManagement() {
     },
   });
 
-  // 입차 mutation 추가
+  // 입차 mutation 수정
   const enterVehicleMutation = useMutation({
     mutationFn: (vehicleId: number) => {
       return client.POST("/api/v1/entry-records/enter", {
@@ -459,7 +462,8 @@ export default function VehicleManagement() {
       });
     },
     onSuccess: (data) => {
-      console.log("입차 성공:", data);
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+      alert("입차가 완료되었습니다.");
       window.location.reload();
     },
     onError: (error) => {
@@ -468,9 +472,18 @@ export default function VehicleManagement() {
     },
   });
 
-  // 입차 핸들러 수정
-  const handleEntryVehicle = (vehicleId: number) => {
-    enterVehicleMutation.mutate(vehicleId);
+  // 입차 핸들러 추가
+  const handleEntry = () => {
+    if (!selectedVehicleId) {
+      alert("입차할 차량을 선택해주세요.");
+      return;
+    }
+    enterVehicleMutation.mutate(selectedVehicleId);
+  };
+
+  // 차량 선택 핸들러
+  const handleVehicleSelect = (vehicleId: number) => {
+    setSelectedVehicleId(vehicleId === selectedVehicleId ? null : vehicleId);
   };
 
   // 상태 변경 핸들러도 수정
@@ -758,7 +771,13 @@ export default function VehicleManagement() {
                     {vehicles
                       ?.filter((v) => v.registerType === "거주자")
                       .map((vehicle) => (
-                        <tr key={vehicle.id} className="hover:bg-gray-50">
+                        <tr
+                          key={vehicle.id}
+                          className={`hover:bg-gray-50 cursor-pointer ${
+                            selectedVehicleId === vehicle.id ? "bg-pink-50" : ""
+                          }`}
+                          onClick={() => handleVehicleSelect(vehicle.id)}
+                        >
                           <td className="px-4 py-4 flex items-center gap-2">
                             <Car size={18} className="text-[#FF4081]" />
                             <span>{vehicle.vehicleNum}</span>
@@ -917,7 +936,8 @@ export default function VehicleManagement() {
             <Button
               size="lg"
               className="bg-[#FF4081] hover:bg-[#E91E63] px-12 py-6 text-lg"
-              onClick={() => handleEntryVehicle(/* TODO: 선택된 차량 ID */)}
+              onClick={handleEntry}
+              disabled={!selectedVehicleId}
             >
               <Car className="mr-2 h-6 w-6" />
               입차하기
