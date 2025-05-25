@@ -26,7 +26,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMember 훅 import
-import { EntryRecordStatusUpdateRequestDto } from "./lib/backend/apiV1/schema.d.ts";
+
 type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
 
@@ -34,13 +34,13 @@ type VehicleUpdateRequestDto = components["schemas"]["VehicleUpdateRequestDto"];
 type ResidentVehicleRequestDto =
   components["schemas"]["ResidentVehicleRequestDto"];
 // Add this after the imports and before the component
-// 예시
-const reqBody: EntryRecordStatusUpdateRequestDto = {
-  status: "AGREE", // 또는 'PENDING', 'INAGREE', 'INVITER_AGREE'
-};
-type EntryRecordStatusUpdateRequestDto = [
-  "schemas"
-]["EntryRecordStatusUpdateRequestDto"];
+
+type EntryRecordStatusUpdateRequestDto =
+  components["schemas"]["EntryRecordStatusUpdateRequestDto"];
+
+// ParkingStatusDto 타입 추가 (이미 schema.d.ts에 정의되어 있음)
+type ParkingStatusDto = components["schemas"]["ParkingStatusDto"];
+
 const globalStyles = `
   * {
     margin: 0;
@@ -363,6 +363,17 @@ export default function VehicleManagement() {
     enabled: isLogin,
   });
 
+  // 주차장 현황 조회 쿼리 추가
+  const { data: parkingStatus } = useQuery<ParkingStatusDto>({
+    queryKey: ["parking", "status"],
+    queryFn: async () => {
+      const { data, error } = await client.GET("/api/v1/vehicles/status");
+      if (error) throw error;
+      return data;
+    },
+    enabled: isLogin,
+  });
+
   // 차량 등록 mutation 수정
   const addVehicleMutation = useMutation({
     mutationFn: (newVehicle: ResidentVehicleRequestDto) => {
@@ -411,6 +422,70 @@ export default function VehicleManagement() {
       alert("차량 정보 수정에 실패했습니다.");
     },
   });
+
+  // 차량 상태 수정 mutation 수정
+  const updateVehicleStatusMutation = useMutation({
+    mutationFn: ({
+      entryRecordId,
+      status,
+    }: {
+      entryRecordId: number;
+      status: EntryRecordStatusUpdateRequestDto["status"];
+    }) => {
+      console.log("API 호출 시도:", { entryRecordId, status });
+
+      // 템플릿 리터럴로 URL 생성
+      return client.PATCH(`/api/v1/entry-records/${entryRecordId}/status`, {
+        json: {
+          status: status,
+        },
+      });
+    },
+    onSuccess: () => {
+      alert("승인 상태가 수정되었습니다.");
+      window.location.reload();
+    },
+    onError: (error) => {
+      console.error("승인 상태 변경 실패:", error);
+      alert("승인 상태 수정에 실패했습니다.");
+    },
+  });
+
+  // 입차 mutation 추가
+  const enterVehicleMutation = useMutation({
+    mutationFn: (vehicleId: number) => {
+      return client.POST("/api/v1/entry-records/enter", {
+        body: { vehicleId },
+      });
+    },
+    onSuccess: (data) => {
+      console.log("입차 성공:", data);
+      window.location.reload();
+    },
+    onError: (error) => {
+      console.error("입차 실패:", error);
+      alert("입차 처리에 실패했습니다.");
+    },
+  });
+
+  // 입차 핸들러 수정
+  const handleEntryVehicle = (vehicleId: number) => {
+    enterVehicleMutation.mutate(vehicleId);
+  };
+
+  // 상태 변경 핸들러도 수정
+  const handleStatusChange = (
+    entryRecordId: number | undefined,
+    status: EntryRecordStatusUpdateRequestDto["status"]
+  ) => {
+    if (!entryRecordId) {
+      console.error("출입 기록 ID 누락");
+      return;
+    }
+
+    console.log("상태 변경 시도:", { entryRecordId, status });
+    updateVehicleStatusMutation.mutate({ entryRecordId, status });
+  };
 
   // 차량 삭제 mutation
   const deleteVehicleMutation = useMutation({
@@ -523,7 +598,70 @@ export default function VehicleManagement() {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
+              {/* 주차장 현황 섹션 */}
+              <div className="mb-6 p-6 bg-white rounded-lg border border-gray-200 w-full">
+                <h2 className="text-lg font-semibold mb-4">주차장 현황</h2>
+                <div className="grid grid-cols-3 gap-10 max-w-[1200px] mx-auto">
+                  <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600 mb-2">전체 주차공간</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {parkingStatus?.totalCapacity || 0}
+                      <span className="text-base font-normal text-gray-600 ml-1">
+                        면
+                      </span>
+                    </p>
+                  </div>
+                  <div className="text-center p-6 bg-pink-50 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600 mb-2">현재 주차</p>
+                    <p className="text-3xl font-bold text-[#FF4081]">
+                      {parkingStatus?.activeCount || 0}
+                      <span className="text-base font-normal text-gray-600 ml-1">
+                        대
+                      </span>
+                    </p>
+                  </div>
+                  <div className="text-center p-6 bg-green-50 rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600 mb-2">남은 공간</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      {parkingStatus?.remainingSpace || 0}
+                      <span className="text-base font-normal text-gray-600 ml-1">
+                        면
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                {/* 주차장 사용률 프로그레스 바 */}
+                <div className="mt-8 max-w-[1200px] mx-auto">
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-[#FF4081] h-3 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${
+                          parkingStatus
+                            ? (parkingStatus.activeCount /
+                                parkingStatus.totalCapacity) *
+                              100
+                            : 0
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-3 text-center">
+                    주차장 사용률:{" "}
+                    {parkingStatus
+                      ? Math.round(
+                          (parkingStatus.activeCount /
+                            parkingStatus.totalCapacity) *
+                            100
+                        )
+                      : 0}
+                    %
+                  </p>
+                </div>
+              </div>
+
               <h1 className="text-2xl font-bold">차량 관리</h1>
+
               <p className="text-gray-500 text-sm mt-1">
                 내 차량 정보를 관리할 수 있습니다.
               </p>
@@ -692,23 +830,20 @@ export default function VehicleManagement() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-2">
-                              {vehicle.status === "출차" ? (
-                                <Button
-                                  size="sm"
-                                  className="bg-[#FF4081] hover:bg-[#E91E63] text-xs"
-                                  onClick={() => handleEntryVehicle(vehicle.id)}
-                                >
-                                  입차
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  className="bg-gray-500 hover:bg-gray-600 text-xs"
-                                  onClick={() => handleExitVehicle(vehicle.id)}
-                                >
-                                  출차
-                                </Button>
-                              )}
+                              <Button
+                                size="sm"
+                                className="bg-[#FF4081] hover:bg-[#E91E63] text-xs"
+                                onClick={() => handleEntryVehicle(vehicle.id)}
+                              >
+                                입차
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="bg-gray-500 hover:bg-gray-600 text-xs"
+                                onClick={() => handleExitVehicle(vehicle.id)}
+                              >
+                                출차
+                              </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -816,13 +951,20 @@ export default function VehicleManagement() {
                                   입차
                                 </Button>
                               ) : (
-                                <Button
-                                  size="sm"
-                                  className="bg-gray-500 hover:bg-gray-600 text-xs"
-                                  onClick={() => handleExitVehicle(vehicle.id)}
-                                >
-                                  출차
-                                </Button>
+                                <div className="text-sm text-gray-600">
+                                  입차시간:{" "}
+                                  {vehicle.entryRecordId
+                                    ? new Date(
+                                        vehicle.entryTime
+                                      ).toLocaleString("ko-KR", {
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : "기록 없음"}
+                                </div>
                               )}
                               <Button
                                 size="sm"
