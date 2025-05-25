@@ -898,37 +898,50 @@ export default function VehicleManagement() {
                       residentPaging
                     ).map((vehicle) => (
                       <tr key={vehicle.id} className="hover:bg-gray-50">
-                        {/* 상세페이지로 이동하는 부분 */}
+                        {/* 차량 번호 열 */}
                         <td
                           className="px-4 py-4 cursor-pointer"
                           onClick={() => {
                             window.location.href = `/udash/vehicles/${vehicle.id}`;
                           }}
-                          colSpan={3}
                         >
                           <div className="flex items-center gap-2">
                             <Car size={18} className="text-[#FF4081]" />
                             <span>{vehicle.vehicleNum}</span>
                           </div>
-                          <div className="flex items-center gap-4 mt-2">
-                            <span className="text-gray-600">
-                              {vehicle.type}
-                            </span>
-                            <Badge
-                              className={
-                                vehicle.vehicleStatus === "ACTIVE"
-                                  ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                  : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                              }
-                            >
-                              {vehicle.vehicleStatus === "ACTIVE"
-                                ? "주차됨"
-                                : "외부"}
-                            </Badge>
-                          </div>
                         </td>
 
-                        {/* 수정/삭제 버튼 부분 */}
+                        {/* 차량 종류 열 */}
+                        <td
+                          className="px-4 py-4 cursor-pointer"
+                          onClick={() => {
+                            window.location.href = `/udash/vehicles/${vehicle.id}`;
+                          }}
+                        >
+                          <span className="text-gray-600">{vehicle.type}</span>
+                        </td>
+
+                        {/* 상태 열 */}
+                        <td
+                          className="px-4 py-4 cursor-pointer"
+                          onClick={() => {
+                            window.location.href = `/udash/vehicles/${vehicle.id}`;
+                          }}
+                        >
+                          <Badge
+                            className={
+                              vehicle.vehicleStatus === "ACTIVE"
+                                ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                            }
+                          >
+                            {vehicle.vehicleStatus === "ACTIVE"
+                              ? "주차됨"
+                              : "외부"}
+                          </Badge>
+                        </td>
+
+                        {/* 관리 버튼 열 */}
                         <td className="px-4 py-4 border-l">
                           <div className="flex items-center gap-2">
                             <Button
