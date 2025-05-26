@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiEye, FiEdit } from "react-icons/fi";
+import { FiEye, FiEdit, FiMessageSquare } from "react-icons/fi";
 import client from "@/lib/backend/client";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -30,6 +30,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Feedback {
+  feedbackId: number;
+  userName: string;
+  content: string;
+  createAt: string;
+}
+
 interface Complaint {
   id: number;
   title: string;
@@ -38,6 +45,12 @@ interface Complaint {
   complaintStatus: "pending" | "in_progress" | "completed" | "rejected";
   category: string;
   user: string;
+  feedbacks?: {
+    feedbackId: number;
+    userName: string;
+    content: string;
+    createAt: string;
+  }[];
 }
 
 const statusOptions = [
@@ -84,11 +97,13 @@ export default function ComplaintsPage() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editedComplaint, setEditedComplaint] = useState<Complaint | null>(
     null
   );
+  const [newFeedback, setNewFeedback] = useState("");
 
   // 모든 민원 불러오기
   useEffect(() => {
@@ -174,6 +189,52 @@ export default function ComplaintsPage() {
       setEditedComplaint(null);
     } catch (error) {
       console.error("민원 작성에 실패했습니다:", error);
+    }
+  };
+
+  const handleViewFeedback = async (complaint: Complaint) => {
+    try {
+      const { data } = await client.GET(
+        `/api/v1/complaint-feedbacks/${complaint.id}`
+      );
+      setSelectedComplaint({
+        ...complaint,
+        feedbacks: data,
+      });
+      setIsFeedbackModalOpen(true);
+      console.log("피드백 : " + data);
+    } catch (error) {
+      console.error("피드백 조회 실패:", error);
+      alert("피드백 조회에 실패했습니다.");
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!selectedComplaint || !newFeedback.trim()) return;
+
+    try {
+      await client.POST(`/api/v1/complaint-feedbacks`, {
+        body: {
+          complaintId: selectedComplaint.id,
+          content: newFeedback,
+        },
+      });
+
+      // Refresh feedbacks after submission
+      const { data } = await client.GET(
+        `/api/v1/complaint-feedbacks/${selectedComplaint.id}`,
+        {}
+      );
+
+      setSelectedComplaint({
+        ...selectedComplaint,
+        feedbacks: data,
+      });
+
+      setNewFeedback(""); // Clear the input
+    } catch (error) {
+      console.error("피드백 작성 실패:", error);
+      alert("피드백 작성에 실패했습니다.");
     }
   };
 
@@ -284,6 +345,14 @@ export default function ComplaintsPage() {
                         onClick={() => handleEdit(complaint)}
                       >
                         <FiEdit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleViewFeedback(complaint)}
+                      >
+                        <FiMessageSquare className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -489,6 +558,69 @@ export default function ComplaintsPage() {
               <Button onClick={handleCreate}>저장</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isFeedbackModalOpen} onOpenChange={setIsFeedbackModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>피드백</DialogTitle>
+          </DialogHeader>
+          {selectedComplaint && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="font-semibold">민원 내용</h3>
+                <p className="text-sm text-gray-500">
+                  {selectedComplaint.content}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-semibold">피드백 목록</h3>
+                <div className="space-y-4">
+                  {selectedComplaint.feedbacks?.map((feedback) => (
+                    <div
+                      key={`${feedback.feedbackId}-${feedback.createAt}`}
+                      className="p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-medium">{feedback.userName}</span>
+                        <span className="text-sm text-gray-500">
+                          {feedback.createAt
+                            ? format(
+                                new Date(feedback.createAt),
+                                "yyyy년 MM월 dd일 HH:mm",
+                                {
+                                  locale: ko,
+                                }
+                              )
+                            : "날짜 없음"}
+                        </span>
+                      </div>
+                      <p className="text-sm">{feedback.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-semibold">새 피드백 작성</h3>
+                <textarea
+                  className="w-full min-h-[100px] p-2 border rounded-md"
+                  value={newFeedback}
+                  onChange={(e) => setNewFeedback(e.target.value)}
+                  placeholder="피드백을 입력하세요"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsFeedbackModalOpen(false)}
+                  >
+                    닫기
+                  </Button>
+                  <Button onClick={handleSubmitFeedback}>작성</Button>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
