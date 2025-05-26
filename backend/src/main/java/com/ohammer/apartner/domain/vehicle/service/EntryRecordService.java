@@ -238,7 +238,7 @@ public class EntryRecordService {
 //            throw new IllegalArgumentException("해당 기능은 관리자만 접근할 수 있습니다.");
 //        }
 
-        checkRoleUtils.validateAdminAccess();
+        //checkRoleUtils.validateAdminAccess();
 
         return entryRecordRepository.findByVehicleIdOrderByEntryTimeDesc(vehicleId)
                 .stream()

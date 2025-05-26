@@ -3,6 +3,7 @@ package com.ohammer.apartner.domain.vehicle.controller;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordRequestDto;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordResponseDto;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordStatusDto;
+import com.ohammer.apartner.domain.vehicle.dto.EntryRecordStatusUpdateRequestDto;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
 import com.ohammer.apartner.domain.vehicle.service.EntryRecordService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,9 +26,9 @@ public class EntryRecordController {
     @PatchMapping("/{entryRecordId}/status")
     public ResponseEntity<EntryRecordStatusDto> updateEntryStatus(
             @PathVariable(value = "entryRecordId") Long entryRecordId,
-            @RequestParam(value = "status") EntryRecord.Status status) {
+            @RequestBody EntryRecordStatusUpdateRequestDto requestDto) {
 
-        EntryRecordStatusDto dto = entryRecordService.updateStatus(entryRecordId, status);
+        EntryRecordStatusDto dto = entryRecordService.updateStatus(entryRecordId, requestDto.getStatus());
         return ResponseEntity.ok(dto);
     }
 
