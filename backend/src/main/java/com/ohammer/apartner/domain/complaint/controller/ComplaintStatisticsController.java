@@ -50,6 +50,7 @@ public class ComplaintStatisticsController {
     }
 
     @GetMapping("/today-rate")
+    @Operation(summary = "어제자 민원 수 조회", description = "어제자 민원 수를 조회")
     public ResponseEntity<?> getComplaintTodayRate() throws AccessDeniedException {
         ComplaintIncreaseRateResponseDto response = complaintStatisticsService.getComplaintIncreaseRateFromYesterday();
         return new ResponseEntity<>(response, HttpStatus.OK);
