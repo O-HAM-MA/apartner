@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.menu.service.impl;
 
 import com.ohammer.apartner.domain.menu.dto.AdminGradeDTO;
+import com.ohammer.apartner.domain.menu.dto.MenuDTO;
 import com.ohammer.apartner.domain.menu.entity.AdminGrade;
 import com.ohammer.apartner.domain.menu.entity.GradeMenuAccess;
 import com.ohammer.apartner.domain.menu.entity.Menu;
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,13 +36,21 @@ public class AdminGradeServiceImpl implements AdminGradeService {
     @Transactional(readOnly = true)
     public List<AdminGradeDTO> getAllGrades() {
         List<AdminGrade> grades = adminGradeRepository.findAllGradesOrderByLevel();
-        List<AdminGradeDTO> gradeDTOs = AdminGradeDTO.fromEntities(grades);
-        
-        for (AdminGradeDTO gradeDTO : gradeDTOs) {
-            gradeDTO.setUsersCount(countUsersByGradeId(gradeDTO.getId()));
-            gradeDTO.setMenuIds(getMenuIdsByGradeId(gradeDTO.getId()));
+        List<AdminGradeDTO> gradeDTOs = new ArrayList<>();
+
+        for (AdminGrade grade : grades) {
+            AdminGradeDTO gradeDTO = AdminGradeDTO.fromEntity(grade);
+            gradeDTO.setUsersCount(countUsersByGradeId(grade.getId()));
+            
+            List<MenuDTO> menusWithOrder = getMenusWithSortOrderByGradeId(grade.getId());
+            gradeDTO.setMenuIds(menusWithOrder.stream().map(MenuDTO::getId).collect(Collectors.toList()));
+            gradeDTO.setMenuSortOrders(
+                menusWithOrder.stream()
+                    .filter(menu -> menu.getSortOrder() != null)
+                    .collect(Collectors.toMap(MenuDTO::getId, MenuDTO::getSortOrder))
+            );
+            gradeDTOs.add(gradeDTO);
         }
-        
         return gradeDTOs;
     }
     
@@ -51,7 +62,14 @@ public class AdminGradeServiceImpl implements AdminGradeService {
         
         AdminGradeDTO gradeDTO = AdminGradeDTO.fromEntity(grade);
         gradeDTO.setUsersCount(countUsersByGradeId(id));
-        gradeDTO.setMenuIds(getMenuIdsByGradeId(id));
+        
+        List<MenuDTO> menusWithOrder = getMenusWithSortOrderByGradeId(id);
+        gradeDTO.setMenuIds(menusWithOrder.stream().map(MenuDTO::getId).collect(Collectors.toList()));
+        gradeDTO.setMenuSortOrders(
+            menusWithOrder.stream()
+                .filter(menu -> menu.getSortOrder() != null)
+                .collect(Collectors.toMap(MenuDTO::getId, MenuDTO::getSortOrder))
+        );
         
         return gradeDTO;
     }
@@ -62,7 +80,7 @@ public class AdminGradeServiceImpl implements AdminGradeService {
             throw new DuplicateResourceException("이미 존재하는 등급 이름입니다: " + gradeDTO.getName());
         }
         
-        if (isGradeLevelDuplicate(gradeDTO.getLevel())) {
+        if (gradeDTO.getLevel() != null && isGradeLevelDuplicate(gradeDTO.getLevel())) {
             throw new DuplicateResourceException("이미 존재하는 등급 레벨입니다: " + gradeDTO.getLevel());
         }
         
@@ -70,14 +88,25 @@ public class AdminGradeServiceImpl implements AdminGradeService {
         AdminGrade savedGrade = adminGradeRepository.save(grade);
         log.info("새로운 등급이 생성되었습니다. ID: {}, 이름: {}", savedGrade.getId(), savedGrade.getName());
         
-        if (gradeDTO.getMenuIds() != null && !gradeDTO.getMenuIds().isEmpty()) {
-            assignMenusToGrade(savedGrade.getId(), gradeDTO.getMenuIds());
+        if (gradeDTO.getMenuSortOrders() != null && !gradeDTO.getMenuSortOrders().isEmpty()) {
+            assignMenusWithOrderToGrade(savedGrade.getId(), gradeDTO.getMenuSortOrders());
+        } else if (gradeDTO.getMenuIds() != null && !gradeDTO.getMenuIds().isEmpty()) {
+            Map<Long, Integer> menuSortOrdersFromMenuIds = new HashMap<>();
+            for (int i = 0; i < gradeDTO.getMenuIds().size(); i++) {
+                menuSortOrdersFromMenuIds.put(gradeDTO.getMenuIds().get(i), i);
+            }
+            assignMenusWithOrderToGrade(savedGrade.getId(), menuSortOrdersFromMenuIds);
         }
         
         AdminGradeDTO savedGradeDTO = AdminGradeDTO.fromEntity(savedGrade);
         savedGradeDTO.setUsersCount(0L); 
-        savedGradeDTO.setMenuIds(getMenuIdsByGradeId(savedGrade.getId()));
-        
+        List<MenuDTO> menusWithOrder = getMenusWithSortOrderByGradeId(savedGrade.getId());
+        savedGradeDTO.setMenuIds(menusWithOrder.stream().map(MenuDTO::getId).collect(Collectors.toList()));
+        savedGradeDTO.setMenuSortOrders(
+            menusWithOrder.stream()
+                .filter(menu -> menu.getSortOrder() != null)
+                .collect(Collectors.toMap(MenuDTO::getId, MenuDTO::getSortOrder))
+        );
         return savedGradeDTO;
     }
     
@@ -86,30 +115,51 @@ public class AdminGradeServiceImpl implements AdminGradeService {
         AdminGrade grade = adminGradeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("등급을 찾을 수 없습니다. ID: " + id));
         
-        //  이름이 다르고 다른 등급과 이름이 중복되는지 확인
         if (!grade.getName().equals(gradeDTO.getName()) && isGradeNameDuplicate(gradeDTO.getName())) {
             throw new DuplicateResourceException("이미 존재하는 등급 이름입니다: " + gradeDTO.getName());
         }
         
-        // 레벨이 다르고 다른 등급과 레벨이 중복되는지 확인
-        if (!grade.getLevel().equals(gradeDTO.getLevel()) && isGradeLevelDuplicate(gradeDTO.getLevel())) {
+        if (gradeDTO.getLevel() != null && !grade.getLevel().equals(gradeDTO.getLevel()) && isGradeLevelDuplicate(gradeDTO.getLevel())) {
             throw new DuplicateResourceException("등급이 중복되거나 이미 존재하는 등급 레벨입니다: " + gradeDTO.getLevel());
         }
         
         grade.setName(gradeDTO.getName());
         grade.setDescription(gradeDTO.getDescription());
+        if (gradeDTO.getLevel() != null) {
+            grade.setLevel(gradeDTO.getLevel());
+        }
 
         AdminGrade updatedGrade = adminGradeRepository.save(grade);
         log.info("등급이 업데이트되었습니다. ID: {}, 이름: {}", updatedGrade.getId(), updatedGrade.getName());
         
-        if (gradeDTO.getMenuIds() != null) {
-            assignMenusToGrade(updatedGrade.getId(), gradeDTO.getMenuIds());
+        if (gradeDTO.getMenuSortOrders() != null) {
+            Map<Long, Integer> filteredMenuSortOrders = gradeDTO.getMenuSortOrders().entrySet().stream()
+                .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            if (!filteredMenuSortOrders.isEmpty()) {
+                assignMenusWithOrderToGrade(updatedGrade.getId(), filteredMenuSortOrders);
+            }
+        } else if (gradeDTO.getMenuIds() != null) {
+            Map<Long, Integer> menuSortOrdersFromMenuIds = new HashMap<>();
+            for (int i = 0; i < gradeDTO.getMenuIds().size(); i++) {
+                if (gradeDTO.getMenuIds().get(i) != null) {
+                     menuSortOrdersFromMenuIds.put(gradeDTO.getMenuIds().get(i), i);
+                }
+            }
+            if (!menuSortOrdersFromMenuIds.isEmpty()) {
+                assignMenusWithOrderToGrade(updatedGrade.getId(), menuSortOrdersFromMenuIds);
+            }
         }
         
         AdminGradeDTO updatedGradeDTO = AdminGradeDTO.fromEntity(updatedGrade);
         updatedGradeDTO.setUsersCount(countUsersByGradeId(id));
-        updatedGradeDTO.setMenuIds(getMenuIdsByGradeId(id));
-        
+        List<MenuDTO> menusWithOrder = getMenusWithSortOrderByGradeId(id);
+        updatedGradeDTO.setMenuIds(menusWithOrder.stream().map(MenuDTO::getId).collect(Collectors.toList()));
+        updatedGradeDTO.setMenuSortOrders(
+            menusWithOrder.stream()
+                .filter(menu -> menu.getSortOrder() != null)
+                .collect(Collectors.toMap(MenuDTO::getId, MenuDTO::getSortOrder))
+        );
         return updatedGradeDTO;
     }
     
@@ -118,13 +168,11 @@ public class AdminGradeServiceImpl implements AdminGradeService {
         AdminGrade grade = adminGradeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("등급을 찾을 수 없습니다. ID: " + id));
         
-        // 사용자가 있는 등급은 삭제할 수 없음
         Long usersCount = countUsersByGradeId(id);
         if (usersCount > 0) {
             throw new IllegalStateException("해당 등급을 사용 중인 사용자가 " + usersCount + "명 있어 삭제할 수 없습니다.");
         }
         
-        // 등급 삭제 전 관련된 메뉴 접근 권한 삭제
         gradeMenuAccessRepository.deleteAllByGradeId(id);
         
         adminGradeRepository.delete(grade);
@@ -140,14 +188,15 @@ public class AdminGradeServiceImpl implements AdminGradeService {
         
         List<GradeMenuAccess> accessList = new ArrayList<>();
         
-        // 메뉴 권한 할당
-        for (Long menuId : menuIds) {
+        for (int i = 0; i < menuIds.size(); i++) {
+            Long menuId = menuIds.get(i);
             Menu menu = menuRepository.findById(menuId)
                     .orElseThrow(() -> new ResourceNotFoundException("메뉴를 찾을 수 없습니다. ID: " + menuId));
             
             GradeMenuAccess access = GradeMenuAccess.builder()
                     .grade(grade)
                     .menu(menu)
+                    .sortOrder(i)
                     .build();
             
             accessList.add(access);
@@ -180,5 +229,51 @@ public class AdminGradeServiceImpl implements AdminGradeService {
     @Transactional(readOnly = true)
     public Long countUsersByGradeId(Long gradeId) {
         return adminGradeRepository.countUsersByGradeId(gradeId);
+    }
+
+    @Override
+    public void assignMenusWithOrderToGrade(Long gradeId, Map<Long, Integer> menuSortOrders) {
+        AdminGrade grade = adminGradeRepository.findById(gradeId)
+                .orElseThrow(() -> new ResourceNotFoundException("등급을 찾을 수 없습니다. ID: " + gradeId));
+        
+        gradeMenuAccessRepository.deleteAllByGradeId(gradeId);
+        
+        List<GradeMenuAccess> accessList = new ArrayList<>();
+        
+        for (Map.Entry<Long, Integer> entry : menuSortOrders.entrySet()) {
+            Long menuId = entry.getKey();
+            Integer sortOrder = entry.getValue();
+            
+            Menu menu = menuRepository.findById(menuId)
+                    .orElseThrow(() -> new ResourceNotFoundException("메뉴를 찾을 수 없습니다. ID: " + menuId));
+            
+            GradeMenuAccess access = GradeMenuAccess.builder()
+                    .grade(grade)
+                    .menu(menu)
+                    .sortOrder(sortOrder)
+                    .build();
+            
+            accessList.add(access);
+        }
+        
+        gradeMenuAccessRepository.saveAll(accessList);
+        log.info("등급 ID {}에 {}개의 메뉴가 정렬 순서와 함께 할당되었습니다.", gradeId, menuSortOrders.size());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MenuDTO> getMenusWithSortOrderByGradeId(Long gradeId) {
+        List<GradeMenuAccess> accessList = gradeMenuAccessRepository.findByGradeIdOrderBySortOrder(gradeId);
+        List<MenuDTO> menuDTOs = new ArrayList<>();
+        
+        for (GradeMenuAccess access : accessList) {
+            if (access.getMenu() == null) continue;
+            Menu menu = access.getMenu();
+            MenuDTO menuDTO = MenuDTO.fromEntity(menu);
+            menuDTO.setSortOrder(access.getSortOrder());
+            menuDTOs.add(menuDTO);
+        }
+        
+        return menuDTOs;
     }
 } 

@@ -33,6 +33,9 @@ public class MenuDTO {
     @Size(max = 50, message = "아이콘 이름은 50자를 초과할 수 없습니다")
     private String icon;
     
+    // 메뉴의 정렬 순서 (특정 등급에서의 순서)
+    private Integer sortOrder;
+    
     public static MenuDTO fromEntity(Menu menu) {
         return MenuDTO.builder()
                 .id(menu.getId())
