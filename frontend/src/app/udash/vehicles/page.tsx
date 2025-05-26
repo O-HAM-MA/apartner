@@ -26,6 +26,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMember 훅 import
+import { Switch } from "@/components/ui/switch"; // shadcn/ui의 Switch 컴포넌트
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
@@ -333,6 +341,11 @@ type EditingVehicle = {
   type: string;
 };
 
+type EditingEntryRecordStatus = {
+  id: number;
+  status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+};
+
 // 페이징 관련 타입 추가
 type PagingState = {
   currentPage: number;
@@ -355,6 +368,9 @@ export default function VehicleManagement() {
   const [currentVehicle, setCurrentVehicle] = useState<EditingVehicle | null>(
     null
   );
+  const [currentEntryRecord, setCurrentEntryRecord] =
+    useState<EditingEntryRecordStatus | null>(null);
+
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null
   ); // 입차할 차량 ID 상태 추가
@@ -442,29 +458,23 @@ export default function VehicleManagement() {
 
   // 차량 상태 수정 mutation 수정
   const updateVehicleStatusMutation = useMutation({
-    mutationFn: ({
-      entryRecordId,
-      status,
-    }: {
-      entryRecordId: number;
-      status: EntryRecordStatusUpdateRequestDto["status"];
-    }) => {
-      console.log("API 호출 시도:", { entryRecordId, status });
-
-      // 템플릿 리터럴로 URL 생성
-      return client.PATCH(`/api/v1/entry-records/${entryRecordId}/status`, {
-        json: {
-          status: status,
+    mutationFn: (data: EditingEntryRecordStatus) => {
+      return client.PATCH(`/api/v1/entry-records/${data.id}/status`, {
+        body: {
+          // id: data.id,
+          type: data.status,
         },
       });
     },
     onSuccess: () => {
-      alert("승인 상태가 수정되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["entryRecords", "mine"] });
+      alert("방문자 차량 승인 상태가 변경되었습니다.");
+      setCurrentEntryRecord(null);
       window.location.reload();
     },
     onError: (error) => {
       console.error("승인 상태 변경 실패:", error);
-      alert("승인 상태 수정에 실패했습니다.");
+      alert("승인 상태 변경에 실패했습니다.");
     },
   });
 
@@ -640,6 +650,63 @@ export default function VehicleManagement() {
 
   if (isLoading) return <div>차량 정보를 불러오는 중...</div>;
   if (error) return <div>에러가 발생했습니다.</div>;
+
+  // vehicles 테이블 내부에 상태 변경 컴포넌트 추가
+  const StatusSelector = ({
+    entryRecordId,
+    currentStatus,
+  }: {
+    entryRecordId: number;
+    currentStatus: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+  }) => {
+    const queryClient = useQueryClient();
+
+    const updateStatusMutation = useMutation({
+      mutationFn: async ({
+        entryRecordId,
+        status,
+      }: {
+        entryRecordId: number;
+        status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+      }) => {
+        const { data, error } = await client.PATCH(
+          `/api/v1/entry-records/${entryRecordId}/status`,
+          {
+            body: { status },
+          }
+        );
+        if (error) throw error;
+        return data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+        alert("차량 승인 상태가 변경되었습니다.");
+      },
+      onError: (error) => {
+        console.error("상태 변경 실패:", error);
+        alert("상태 변경에 실패했습니다.");
+      },
+    });
+
+    return (
+      <Select
+        defaultValue={currentStatus}
+        onValueChange={(
+          value: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE"
+        ) => {
+          updateStatusMutation.mutate({ entryRecordId, status: value });
+        }}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="승인 상태 선택" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="INVITER_AGREE">입주민 승인</SelectItem>
+          <SelectItem value="INAGREE">미승인</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+  };
 
   return (
     <div
@@ -1093,24 +1160,37 @@ export default function VehicleManagement() {
                             </p>
                           </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs"
-                              onClick={() => handleEditClick(vehicle)}
-                            >
-                              수정
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
-                              onClick={() => handleDeleteVehicle(vehicle.id)}
-                            >
-                              삭제
-                            </Button>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-4">
+                            <div className="flex flex-col items-start gap-2">
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={vehicle.status === "INVITER_AGREE"}
+                                  onCheckedChange={(checked) => {
+                                    if (!vehicle.entryRecordId) {
+                                      alert("출입 기록 ID가 없습니다.");
+                                      return;
+                                    }
+                                    updateVehicleStatusMutation.mutate({
+                                      entryRecordId: vehicle.entryRecordId,
+                                      status: checked
+                                        ? "INVITER_AGREE"
+                                        : "INAGREE",
+                                    });
+                                  }}
+                                />
+                                <span className="text-sm">
+                                  {vehicle.status === "INVITER_AGREE"
+                                    ? "승인됨"
+                                    : "미승인"}
+                                </span>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {vehicle.status === "INVITER_AGREE"
+                                  ? "방문자 출입이 승인되었습니다"
+                                  : "방문자 출입을 승인하려면 켜세요"}
+                              </span>
+                            </div>
                           </div>
                         </td>
                       </tr>
