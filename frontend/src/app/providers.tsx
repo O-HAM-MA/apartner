@@ -1,4 +1,10 @@
-"use client"
+"use client";
+
+
+import type React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
+
 
 import React from "react"
 import { ConfigProvider } from "antd"
@@ -8,6 +14,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { NotificationProvider } from "@/contexts/notification-context"
 import { Toaster } from "@/components/ui/toaster"
 import { ClientLayout } from "@/auth/ClientLayout"
+
 
 // Ant Design React 19 호환성 문제 해결
 ConfigProvider.config({
@@ -19,23 +26,45 @@ ConfigProvider.config({
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <ConfigProvider
-      locale={koKR}
-      theme={{
-        token: {
-          colorPrimary: '#2563EB',
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            staleTime: 300000, // 5분
+            retry: 1,
+          },
         },
-      }}
-    >
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        <NotificationProvider>
-          <ClientLayout>
-            {children}
-            <Toaster />
-          </ClientLayout>
-        </NotificationProvider>
-      </ThemeProvider>
-    </ConfigProvider>
-  )
+      })
+  );
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ConfigProvider
+        locale={koKR}
+        theme={{
+          token: {
+            colorPrimary: '#2563EB',
+          },
+        }}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NotificationProvider>
+            <ClientLayout>
+              {children}
+              <Toaster />
+            </ClientLayout>
+          </NotificationProvider>
+        </ThemeProvider>
+      </ConfigProvider>
+    </QueryClientProvider>
+
+  );
+
 }
