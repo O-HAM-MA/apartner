@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
@@ -34,6 +35,9 @@ public class AdminGradeDTO {
     private Long usersCount;
     
     private List<Long> menuIds;
+    
+    // 메뉴 ID와 정렬 순서를 매핑하는 맵
+    private Map<Long, Integer> menuSortOrders;
     
     public static AdminGradeDTO fromEntity(AdminGrade grade) {
         return AdminGradeDTO.builder()

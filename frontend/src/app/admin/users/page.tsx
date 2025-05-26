@@ -1,218 +1,325 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Search, MoreHorizontal, UserPlus, Filter } from "lucide-react"
+import React, { useState, useEffect } from 'react';
+import { Table, Typography, Tag, Badge, Pagination, message } from 'antd';
+import { getAdminUserList, exportUsers } from '@/utils/userApi';
+import { UserListItem, UserStatus } from '@/types/user';
+import dayjs from 'dayjs';
+import UserDetailModal from '@/components/admin/user/UserDetailModal';
+import UserFilterPanel from '@/components/admin/user/UserFilterPanel';
+import { SorterResult } from 'antd/lib/table/interface';
+import { CheckCircleFilled, CloseCircleFilled, ExclamationCircleFilled, MinusCircleFilled } from '@ant-design/icons';
 
-export default function UsersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+const { Title } = Typography;
 
-  // Filter users based on search term
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+interface FilterParams {
+  searchTerm: string;
+  searchField: string;
+  role: string | undefined;
+  status: UserStatus | undefined;
+}
 
-  const handleDeleteClick = (user: User) => {
-    setSelectedUser(user)
-    setIsDeleteDialogOpen(true)
-  }
+export default function AdminUsersPage() {
+  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<UserListItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [filterParams, setFilterParams] = useState<FilterParams>({
+    searchTerm: '',
+    searchField: 'all',
+    role: undefined,
+    status: undefined
+  });
+  const [sortField, setSortField] = useState<string>('id');
+  const [sortOrder, setSortOrder] = useState<string>('desc'); // 기본값을 desc로 변경
+  const pageSize = 20;
 
-  const handleDeleteConfirm = () => {
-    // Handle delete logic here
-    console.log(`Deleting user: ${selectedUser?.id}`)
-    setIsDeleteDialogOpen(false)
-    setSelectedUser(null)
-  }
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, sortField, sortOrder]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const { searchTerm, searchField, role, status } = filterParams;
+      const sortParam = `${sortField},${sortOrder}`;
+      
+      console.log('필터 요청: ', { searchTerm, searchField, role, status });
+      
+      const response = await getAdminUserList(
+        searchTerm,
+        searchField, 
+        role, 
+        status, 
+        currentPage, 
+        pageSize, 
+        sortParam
+      );
+      
+      setUsers(response.content);
+      setTotal(response.totalElements);
+    } catch (error) {
+      console.error('사용자 목록 불러오기 중 오류 발생:', error);
+      message.error('사용자 목록을 불러오는 중 문제가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (searchTerm: string, role?: string, status?: UserStatus) => {
+    console.log('검색 요청:', searchTerm, role, status);
+  };
+
+  const handleFilterApply = (values: FilterParams) => {
+    console.log('필터 적용:', values);
+    
+    setFilterParams({
+      searchTerm: values.searchTerm || '',
+      searchField: values.searchField || 'all',
+      role: values.role,
+      status: values.status
+    });
+    
+    setCurrentPage(0);
+    
+    setTimeout(() => {
+      fetchUsers();
+    }, 100);
+  };
+
+  const handleReset = () => {
+    setSortField('id');
+    setSortOrder('desc'); // 기본값을 desc로 변경
+    setCurrentPage(0);
+    
+    setTimeout(() => {
+      fetchUsers();
+    }, 100);
+  };
+
+  const handleExport = (format: 'csv' | 'excel') => {
+    const { searchTerm, searchField, role, status } = filterParams;
+    const exportUrl = exportUsers(searchTerm, searchField, role, status, format);
+    
+    window.open(exportUrl, '_blank');
+  };
+
+  const handleTableChange = (
+    pagination: any, 
+    filters: any, 
+    sorter: SorterResult<UserListItem>
+  ) => {
+    if (sorter && sorter.field && sorter.order) {
+      const field = sorter.field as string;
+      const order = sorter.order === 'ascend' ? 'asc' : 'desc';
+      
+      setSortField(field);
+      setSortOrder(order);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page - 1);
+  };
+
+  const handleUserRowClick = (user: UserListItem) => {
+    setSelectedUserId(user.id);
+    setModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setSelectedUserId(null);
+  };
+
+  const handleUserUpdated = () => {
+    fetchUsers();
+  };
+
+  const getStatusText = (status: UserStatus): string => {
+    switch(status) {
+      case UserStatus.ACTIVE: return '활성';
+      case UserStatus.INACTIVE: return '비활성';
+      case UserStatus.SUSPENDED: return '정지';
+      case UserStatus.DELETED: return '탈퇴';
+      default: return status;
+    }
+  };
+
+  const getStatusBadge = (status: UserStatus) => {
+    switch(status) {
+      case UserStatus.ACTIVE:
+        return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <CheckCircleFilled style={{ color: 'green', fontSize: '16px' }} />
+            <span style={{ marginLeft: '5px' }}>{getStatusText(status)}</span>
+          </div>
+        );
+      case UserStatus.INACTIVE:
+        return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <MinusCircleFilled style={{ color: 'gray', fontSize: '16px' }} />
+            <span style={{ marginLeft: '5px' }}>{getStatusText(status)}</span>
+          </div>
+        );
+      case UserStatus.SUSPENDED:
+        return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <CloseCircleFilled style={{ color: 'red', fontSize: '16px' }} />
+            <span style={{ marginLeft: '5px' }}>{getStatusText(status)}</span>
+          </div>
+        );
+      case UserStatus.DELETED:
+        return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ExclamationCircleFilled style={{ color: 'orange', fontSize: '16px' }} />
+            <span style={{ marginLeft: '5px' }}>{getStatusText(status)}</span>
+          </div>
+        );
+      default:
+        return <span>{status}</span>;
+    }
+  };
+
+  const getRoleTags = (roles: string[]) => {
+    const roleColorMap: Record<string, string> = {
+      'ADMIN': 'red',
+      'MANAGER': 'orange',
+      'USER': 'blue'
+    };
+    
+    return (
+      <>
+        {roles.map(role => (
+          <Tag key={role} color={roleColorMap[role] || 'default'} style={{ marginRight: 4 }}>
+            {role}
+          </Tag>
+        ))}
+      </>
+    );
+  };
+
+  const columns = [
+    {
+      title: '번호',
+      key: 'index',
+      width: 80,
+      render: (_: any, __: any, index: number) => total - (currentPage * pageSize) - index, // 내림차순 번호 구현
+    },
+    {
+      title: '이름',
+      dataIndex: 'userName',
+      key: 'userName',
+      sorter: true,
+    },
+    {
+      title: '이메일',
+      dataIndex: 'email',
+      key: 'email',
+      sorter: true,
+    },
+    {
+      title: '핸드폰 번호',
+      dataIndex: 'phoneNum',
+      key: 'phoneNum',
+    },
+    {
+      title: '가입 방식',
+      dataIndex: 'socialProvider',
+      key: 'socialProvider',
+      render: (provider: string | null) => (provider ? `소셜 (${provider})` : '일반'),
+    },
+    {
+      title: '아파트',
+      dataIndex: 'apartmentName',
+      key: 'apartmentName',
+      render: (name: string | null) => name || '-',
+    },
+    {
+      title: '동/호수',
+      key: 'building',
+      render: (_, record: UserListItem) => {
+        if (record.buildingName && record.unitNumber) {
+          return `${record.buildingName}동 ${record.unitNumber}호`;
+        } else if (record.buildingName) {
+          return `${record.buildingName}동`;
+        } else {
+          return '-';
+        }
+      },
+    },
+    {
+      title: '권한',
+      dataIndex: 'roles',
+      key: 'roles',
+      render: (roles: string[]) => getRoleTags(roles),
+    },
+    {
+      title: '상태',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: UserStatus) => getStatusBadge(status),
+      sorter: true,
+    },
+    {
+      title: '탈퇴 일시',
+      dataIndex: 'deletedAt',
+      key: 'deletedAt',
+      render: (date: string | null) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
+    },
+    {
+      title: '최근 로그인',
+      dataIndex: 'lastLoginAt',
+      key: 'lastLoginAt',
+      render: (date: string | null) => (date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-'),
+      sorter: true,
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">Manage user accounts and permissions</p>
-        </div>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add New User
-        </Button>
+    <div className="p-6">
+      <Title level={2}>사용자 관리</Title>
+      
+      <UserFilterPanel 
+        onSearch={handleSearch} 
+        onExport={handleExport} 
+        onFilterApply={handleFilterApply}
+        onReset={handleReset}
+      />
+      
+      <Table
+        dataSource={users}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        pagination={false}
+        onChange={handleTableChange}
+        scroll={{ x: 1200 }}
+        onRow={(record) => ({
+          onClick: () => handleUserRowClick(record),
+          style: { cursor: 'pointer' }
+        })}
+      />
+      
+      <div className="mt-4 flex justify-center">
+        <Pagination
+          current={currentPage + 1}
+          total={total}
+          pageSize={pageSize}
+          onChange={handlePageChange}
+          showSizeChanger={false}
+          showTotal={(total) => `총 ${total}명`}
+        />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <CardDescription>A list of all users registered in the system.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search users..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
-            </Button>
-          </div>
-
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.role}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={user.status === "Active" ? "default" : "outline"}
-                          className={
-                            user.status === "Active" ? "bg-green-500 hover:bg-green-600" : "text-muted-foreground"
-                          }
-                        >
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>View details</DropdownMenuItem>
-                            <DropdownMenuItem>Edit user</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeleteClick(user)}
-                            >
-                              Delete user
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      No users found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete the user {selectedUser?.name}? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
+      <UserDetailModal
+        userId={selectedUserId}
+        open={modalVisible}
+        onClose={handleModalClose}
+        onUserUpdated={handleUserUpdated}
+      />
     </div>
-  )
+  );
 }
-
-// Mock data
-interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  status: "Active" | "Inactive"
-}
-
-const users: User[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    role: "Resident",
-    status: "Active",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    role: "Resident",
-    status: "Active",
-  },
-  {
-    id: "3",
-    name: "Robert Johnson",
-    email: "robert.johnson@example.com",
-    role: "Property Manager",
-    status: "Active",
-  },
-  {
-    id: "4",
-    name: "Emily Davis",
-    email: "emily.davis@example.com",
-    role: "Resident",
-    status: "Inactive",
-  },
-  {
-    id: "5",
-    name: "Michael Wilson",
-    email: "michael.wilson@example.com",
-    role: "Maintenance",
-    status: "Active",
-  },
-]
