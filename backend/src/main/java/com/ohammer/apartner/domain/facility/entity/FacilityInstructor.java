@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.facility.entity;
 
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,10 +36,7 @@ public class FacilityInstructor extends BaseEntity {
     private Facility facility;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private Status status; // ACTIVE, INACTIVE
+    @Column(name = "status", length = 20, nullable = false)
+    private Status status;  // ACTIVE, INACTIVE
 
-    public enum Status {
-        ACTIVE, INACTIVE
-    }
 }

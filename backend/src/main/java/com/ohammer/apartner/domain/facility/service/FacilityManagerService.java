@@ -103,8 +103,8 @@ public class FacilityManagerService {
         // 해당 시설에 속한 모든 강사도 INACTIVE 처리
         List<FacilityInstructor> instructors = facilityInstructorRepository.findByFacilityId(facilityId);
         for (FacilityInstructor instructor : instructors) {
-            if (instructor.getStatus() == FacilityInstructor.Status.ACTIVE) {
-                instructor.setStatus(FacilityInstructor.Status.INACTIVE);
+            if (instructor.getStatus() == Status.ACTIVE) {
+                instructor.setStatus(Status.INACTIVE);
                 instructor.setModifiedAt(LocalDateTime.now());
             }
         }

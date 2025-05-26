@@ -179,7 +179,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** 강사 단건 조회 */
+        get: operations["getInstructor"];
         /** 강사 정보 수정 */
         put: operations["updateInstructor"];
         post?: never;
@@ -945,7 +946,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** 강사 스케줄 목록 조회 */
+        get: operations["getScheduleList"];
         put?: never;
         /** 강사 스케줄(타임슬롯) 등록 */
         post: operations["createSchedules"];
@@ -1400,23 +1402,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/{facilityId}/timeslots": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 시설별 타임슬롯 목록 조회(날짜별) */
-        get: operations["getFacilityTimeSlots"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/facilities/reservations": {
         parameters: {
             query?: never;
@@ -1779,6 +1764,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules/timeslots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 스케쥴 타임슬롯 목록 조회 */
+        get: operations["getTimeSlots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/facilities/statistics/user-usage": {
         parameters: {
             query?: never;
@@ -2101,6 +2103,23 @@ export interface paths {
         post?: never;
         /** 공용시설 강사 스케줄 삭제 (한 건씩 삭제) */
         delete: operations["deleteSchedule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules/timeslots/{timeSlotId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 스케쥴 타임슬롯 목록 조회 */
+        delete: operations["deleteTimeSlot"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2837,6 +2856,11 @@ export interface components {
         /** @description 공용시설 강사 일정 등록 요청 DTO */
         InstructorScheduleCreateRequestDto: {
             /**
+             * @description 프로그램명
+             * @example 초보반
+             */
+            scheduleName?: string;
+            /**
              * @description 근무 요일
              * @example TUESDAY
              */
@@ -2863,6 +2887,18 @@ export interface components {
              * @example 20
              */
             capacity?: number;
+            /**
+             * Format: date
+             * @description 적용 시작일
+             * @example 2025-06-01
+             */
+            periodStart?: string;
+            /**
+             * Format: date
+             * @description 적용 종료일
+             * @example 2025-06-30
+             */
+            periodEnd?: string;
         };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;
@@ -3253,53 +3289,6 @@ export interface components {
              */
             description?: string;
         };
-        /** @description 타임슬롯 조회 응답 DTO */
-        TimeSlotResponseDto: {
-            /**
-             * Format: int64
-             * @description 타임슬롯 ID
-             * @example 123
-             */
-            timeSlotId?: number;
-            /**
-             * @description 강사 이름(없을 수 있음)
-             * @example 박태환
-             */
-            instructorName?: string;
-            /**
-             * Format: date
-             * @description 날짜
-             * @example 2025-06-10
-             */
-            date?: string;
-            /**
-             * @description 시작 시간
-             * @example 10:00
-             */
-            startTime?: string;
-            /**
-             * @description 종료 시간
-             * @example 11:00
-             */
-            endTime?: string;
-            /**
-             * Format: int64
-             * @description 최대 예약 가능 인원
-             * @example 10
-             */
-            maxCapacity?: number;
-            /**
-             * Format: int64
-             * @description 현재 예약 인원
-             * @example 4
-             */
-            reservedCount?: number;
-            /**
-             * @description 마감 여부
-             * @example false
-             */
-            isFull?: boolean;
-        };
         /** @description 공용시설 예약 조회 [사용자] 응답 DTO */
         FacilityReservationUserDto: {
             /**
@@ -3495,8 +3484,8 @@ export interface components {
         InstructorSimpleResponseDto: {
             /**
              * Format: int64
-             * @description 강사 이름
-             * @example 박태환
+             * @description 강사 ID
+             * @example 1
              */
             instructorId?: number;
             /**
@@ -3509,6 +3498,94 @@ export interface components {
              * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
              */
             description?: string;
+        };
+        /** @description 강사 스케줄 목록 조회 응답 DTO */
+        InstructorScheduleSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 스케쥴 ID
+             * @example 1
+             */
+            scheduleId?: number;
+            /**
+             * @description 프로그램명
+             * @example 초보반
+             */
+            scheduleName?: string;
+            /**
+             * @description 근무 요일
+             * @example TUESDAY
+             */
+            dayOfWeek?: string;
+            /**
+             * @description 근무 시작 시간
+             * @example 15:00
+             */
+            startTime?: string;
+            /**
+             * @description 근무 종료 시간
+             * @example 18:00
+             */
+            endTime?: string;
+            /**
+             * Format: int64
+             * @description 예약 단위(분)
+             * @example 60
+             */
+            slotMinutes?: number;
+            /**
+             * Format: int64
+             * @description 한 슬롯(타임)당 최대 수용 가능 인원
+             * @example 20
+             */
+            capacity?: number;
+        };
+        /** @description 타임슬롯 조회 응답 DTO */
+        TimeSlotSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 타임슬롯 ID
+             * @example 123
+             */
+            timeSlotId?: number;
+            /**
+             * @description 프로그램명
+             * @example 초보반
+             */
+            scheduleName?: string;
+            /**
+             * Format: date
+             * @description 날짜
+             * @example 2025-06-10
+             */
+            date?: string;
+            /**
+             * @description 시작 시간
+             * @example 10:00
+             */
+            startTime?: string;
+            /**
+             * @description 종료 시간
+             * @example 11:00
+             */
+            endTime?: string;
+            /**
+             * Format: int64
+             * @description 최대 예약 가능 인원
+             * @example 10
+             */
+            maxCapacity?: number;
+            /**
+             * Format: int64
+             * @description 현재 예약 인원
+             * @example 4
+             */
+            reservedCount?: number;
+            /**
+             * @description 마감 여부
+             * @example false
+             */
+            isFull?: boolean;
         };
         /** @description 공용시설 사용자별 이용 횟수 DTO */
         UserUsageCountDto: {
@@ -4149,6 +4226,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InstructorSimpleResponseDto"];
+                };
             };
         };
     };
@@ -5458,12 +5558,32 @@ export interface operations {
             };
         };
     };
+    getScheduleList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InstructorScheduleSimpleResponseDto"][];
+                };
+            };
+        };
+    };
     createSchedules: {
         parameters: {
-            query: {
-                periodStart: string;
-                periodEnd: string;
-            };
+            query?: never;
             header?: never;
             path: {
                 facilityId: number;
@@ -5473,7 +5593,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["InstructorScheduleCreateRequestDto"][];
+                "application/json": components["schemas"]["InstructorScheduleCreateRequestDto"];
             };
         };
         responses: {
@@ -5482,7 +5602,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "*/*": number;
+                };
             };
         };
     };
@@ -6109,30 +6231,6 @@ export interface operations {
             };
         };
     };
-    getFacilityTimeSlots: {
-        parameters: {
-            query?: {
-                date?: string;
-            };
-            header?: never;
-            path: {
-                facilityId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["TimeSlotResponseDto"][];
-                };
-            };
-        };
-    };
     getUserReservations: {
         parameters: {
             query?: {
@@ -6551,6 +6649,32 @@ export interface operations {
             };
         };
     };
+    getTimeSlots: {
+        parameters: {
+            query: {
+                startDate: string;
+                endDate: string;
+            };
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TimeSlotSimpleResponseDto"][];
+                };
+            };
+        };
+    };
     getUserUsageCount: {
         parameters: {
             query?: never;
@@ -6909,6 +7033,28 @@ export interface operations {
                 facilityId: number;
                 instructorId: number;
                 scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteTimeSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+                timeSlotId: number;
             };
             cookie?: never;
         };

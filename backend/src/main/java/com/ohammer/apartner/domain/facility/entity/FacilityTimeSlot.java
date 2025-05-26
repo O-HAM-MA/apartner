@@ -48,4 +48,6 @@ public class FacilityTimeSlot extends BaseEntity {
     @Column(name = "max_capacity", nullable = false)
     private Long maxCapacity; // 슬롯별 최대 예약인원
 
+    @Column(name = "reserved_count", nullable = false)
+    private Long reservedCount; // 예약된 인원
 }

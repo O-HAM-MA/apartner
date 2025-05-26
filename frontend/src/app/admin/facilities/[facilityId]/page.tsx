@@ -393,11 +393,16 @@ export default function FacilityDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">공용시설 관리</h2>
-          <p className="text-muted-foreground">
-            아파트 공용시설을 등록하고 관리하세요
-          </p>
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" onClick={handleGoBack} size="icon">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">공용시설 관리</h2>
+            <p className="text-muted-foreground">
+              아파트 공용시설을 등록하고 관리하세요
+            </p>
+          </div>
         </div>
       </div>
 
@@ -407,22 +412,15 @@ export default function FacilityDetailPage() {
             <CardTitle>시설 정보</CardTitle>
             <CardDescription>시설의 상세 정보를 확인합니다</CardDescription>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">메뉴 열기</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>작업</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsEditFacilityOpen(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                수정
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsEditFacilityOpen(true)}
+            className="hover:bg-red-100 active:bg-red-200"
+          >
+            <Edit className="h-4 w-4" />
+            <span className="sr-only">시설 정보 수정</span>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -490,7 +488,15 @@ export default function FacilityDetailPage() {
                       .includes(searchTerm.toLowerCase())
                   )
                   .map((instructor, index) => (
-                    <TableRow key={instructor.id}>
+                    <TableRow
+                      key={instructor.id}
+                      className="cursor-pointer hover:bg-red-100 active:bg-red-200"
+                      onClick={() =>
+                        router.push(
+                          `/admin/facilities/${facilityId}/instructors/${instructor.id}`
+                        )
+                      }
+                    >
                       <TableCell className="text-center">{index + 1}</TableCell>
                       <TableCell className="font-medium">
                         {instructor.name}
@@ -508,7 +514,8 @@ export default function FacilityDetailPage() {
                             <DropdownMenuLabel>작업</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedInstructor(instructor);
                                 setIsEditDialogOpen(true);
                               }}
@@ -519,7 +526,8 @@ export default function FacilityDetailPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedInstructor(instructor);
                                 setIsDeleteDialogOpen(true);
                               }}
@@ -537,13 +545,6 @@ export default function FacilityDetailPage() {
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-start">
-        <Button variant="ghost" onClick={handleGoBack}>
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          시설 목록으로 돌아가기
-        </Button>
-      </div>
 
       {/* 강사 등록 모달 */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

@@ -34,6 +34,9 @@ public class FacilityInstructorSchedule extends BaseEntity {
     @JoinColumn(name = "instructor_id")
     private FacilityInstructor instructor;
 
+    @Column(name = "schedule_name", length = 50, nullable = false)
+    private String scheduleName;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false, length = 10)
     private DayOfWeek dayOfWeek; // MONDAY, TUESDAY, ...
@@ -46,6 +49,9 @@ public class FacilityInstructorSchedule extends BaseEntity {
 
     @Column(name = "capacity", nullable = false)
     private Long capacity; // 해당 시간 수강 가능 인원
+
+    @Column(name = "slot_minutes", nullable = false)
+    private Long slotMinutes;
 
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<FacilityTimeSlot> timeSlots = new ArrayList<>();

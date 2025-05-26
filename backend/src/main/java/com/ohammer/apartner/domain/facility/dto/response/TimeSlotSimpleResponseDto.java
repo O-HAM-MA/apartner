@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.facility.dto.response;
 
+import com.ohammer.apartner.domain.facility.entity.FacilityTimeSlot;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -11,13 +12,13 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Schema(description = "타임슬롯 조회 응답 DTO")
-public class TimeSlotResponseDto {
+public class TimeSlotSimpleResponseDto {
 
     @Schema(description = "타임슬롯 ID", example = "123")
     private Long timeSlotId;
 
-    @Schema(description = "강사 이름(없을 수 있음)", example = "박태환")
-    private String instructorName;
+    @Schema(description = "프로그램명", example = "초보반")
+    private String scheduleName;
 
     @Schema(description = "날짜", example = "2025-06-10")
     private LocalDate date;
@@ -37,4 +38,18 @@ public class TimeSlotResponseDto {
     @Schema(description = "마감 여부", example = "false")
     private Boolean isFull;
 
+    public static TimeSlotSimpleResponseDto from(FacilityTimeSlot slot) {
+        boolean full = (slot.getReservedCount() != null) && (slot.getMaxCapacity() != null)
+                && (slot.getReservedCount() >= slot.getMaxCapacity());
+        return TimeSlotSimpleResponseDto.builder()
+                .timeSlotId(slot.getId())
+                .scheduleName(slot.getSchedule().getScheduleName())
+                .date(slot.getDate())
+                .startTime(slot.getStartTime())
+                .endTime(slot.getEndTime())
+                .maxCapacity(slot.getMaxCapacity())
+                .reservedCount(slot.getReservedCount())
+                .isFull(full)
+                .build();
+    }
 }

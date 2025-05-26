@@ -6,7 +6,6 @@ import com.ohammer.apartner.domain.facility.dto.statistics.ReservationStatusCoun
 import com.ohammer.apartner.domain.facility.dto.statistics.UserUsageCountDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,23 +19,6 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
 
     boolean existsByUser_IdAndTimeSlot_IdAndStatusIn(Long userId, Long timeSlotId,
                                                      List<FacilityReservation.Status> statuses);
-
-    // 특정 시설의 중복 예약 검사 (날짜 + 시간 겹침 여부)
-    @Query("""
-                SELECT fr FROM FacilityReservation fr
-                WHERE fr.facility.id = :facilityId
-                  AND fr.date = :date
-                  AND fr.status <> 'CANCEL'
-                  AND (
-                        (fr.startTime < :endTime AND fr.endTime > :startTime)
-                      )
-            """)
-    List<FacilityReservation> findOverlappingReservations(
-            @Param("facilityId") Long facilityId,
-            @Param("date") LocalDate date,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
-    );
 
     @Query("SELECT r FROM FacilityReservation r " +
             "WHERE r.user.id = :userId " +

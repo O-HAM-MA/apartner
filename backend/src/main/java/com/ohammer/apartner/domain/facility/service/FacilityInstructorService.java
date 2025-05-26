@@ -43,7 +43,7 @@ public class FacilityInstructorService {
                 .name(instructorCreateRequestDto.getName())
                 .description(instructorCreateRequestDto.getDescription())
                 .facility(facility)
-                .status(FacilityInstructor.Status.ACTIVE)
+                .status(Status.ACTIVE)
                 .build();
 
         facilityInstructorRepository.save(instructor);
@@ -68,7 +68,7 @@ public class FacilityInstructorService {
         if (facility.getStatus() != Status.ACTIVE) {
             throw new IllegalStateException("운영 중인 시설에만 강사 정보를 수정할 수 있습니다.");
         }
-        if (instructor.getStatus() != FacilityInstructor.Status.ACTIVE) {
+        if (instructor.getStatus() != Status.ACTIVE) {
             throw new IllegalStateException("재직 중인 강사만 수정할 수 있습니다.");
         }
 
@@ -90,19 +90,19 @@ public class FacilityInstructorService {
         if (!facility.getApartment().getId().equals(apartmentId)) {
             throw new IllegalArgumentException("본인 아파트의 시설에만 강사 삭제가 가능합니다.");
         }
-        if (instructor.getStatus() == FacilityInstructor.Status.INACTIVE) {
+        if (instructor.getStatus() == Status.INACTIVE) {
             throw new IllegalStateException("이미 비활성화된 강사입니다.");
         }
 
-        instructor.setStatus(FacilityInstructor.Status.INACTIVE);
+        instructor.setStatus(Status.INACTIVE);
         instructor.setModifiedAt(LocalDateTime.now());
     }
 
     // 강사 목록 조회
-    @Transactional(readOnly = true)
     public List<InstructorSimpleResponseDto> getInstructorList(Long facilityId, Long apartmentId) {
         List<FacilityInstructor> instructors =
-                facilityInstructorRepository.findActiveInstructorsForActiveFacility(facilityId, apartmentId);
+                facilityInstructorRepository.findActiveInstructorsForActiveFacility(
+                        facilityId, apartmentId, Status.ACTIVE, Status.ACTIVE);
 
         return instructors.stream()
                 .map(i -> InstructorSimpleResponseDto.builder()
@@ -111,6 +111,18 @@ public class FacilityInstructorService {
                         .description(i.getDescription())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    // 강사 단건 조회
+    public InstructorSimpleResponseDto getInstructor(Long facilityId, Long instructorId, Long apartmentId) {
+        Facility facility = facilityRepository.findByIdAndApartmentId(facilityId, apartmentId)
+                .orElseThrow(() -> new EntityNotFoundException("시설을 찾을 수 없습니다."));
+
+        FacilityInstructor instructor = facilityInstructorRepository
+                .findActiveInstructor(instructorId, facilityId, apartmentId, Status.ACTIVE, Status.ACTIVE)
+                .orElseThrow(() -> new EntityNotFoundException("해당 강사를 찾을 수 없습니다."));
+
+        return InstructorSimpleResponseDto.from(instructor);
     }
 
 }

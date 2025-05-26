@@ -355,7 +355,7 @@ export default function FacilitiesPage() {
                   .map((facility, index) => (
                     <TableRow
                       key={facility.id}
-                      className="cursor-pointer hover:bg-muted/50"
+                      className="cursor-pointer hover:bg-red-100 active:bg-red-200"
                       onClick={() => handleRowClick(facility.id)}
                     >
                       <TableCell className="text-center">{index + 1}</TableCell>
@@ -372,11 +372,7 @@ export default function FacilitiesPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => e.stopPropagation()} // 행 클릭 이벤트 전파 방지
-                            >
+                            <Button variant="ghost" size="icon">
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">메뉴 열기</span>
                             </Button>
@@ -385,10 +381,7 @@ export default function FacilitiesPage() {
                             <DropdownMenuLabel>작업</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditClick(facility);
-                              }}
+                              onClick={() => handleEditClick(facility)}
                             >
                               <Edit className="mr-2 h-4 w-4" />
                               수정

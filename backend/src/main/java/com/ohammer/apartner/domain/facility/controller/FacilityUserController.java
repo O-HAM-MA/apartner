@@ -3,7 +3,6 @@ package com.ohammer.apartner.domain.facility.controller;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationRequestDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationUserDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityUserSimpleResponseDto;
-import com.ohammer.apartner.domain.facility.dto.response.TimeSlotResponseDto;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import com.ohammer.apartner.domain.facility.service.FacilityUserService;
 import com.ohammer.apartner.domain.user.entity.User;
@@ -65,15 +64,15 @@ public class FacilityUserController {
         return ResponseEntity.ok(list);
     }
 
-    @GetMapping("/{facilityId}/timeslots")
-    @Operation(summary = "시설별 타임슬롯 목록 조회(날짜별)")
-    public ResponseEntity<List<TimeSlotResponseDto>> getFacilityTimeSlots(
-            @PathVariable(name = "facilityId") Long facilityId,
-            @RequestParam(name = "date", required = false) String date // "2025-06-10"
-    ) {
-        List<TimeSlotResponseDto> slots = facilityUserService.getTimeSlots(facilityId, date);
-        return ResponseEntity.ok(slots);
-    }
+//    @GetMapping("/{facilityId}/timeslots")
+//    @Operation(summary = "시설별 타임슬롯 목록 조회(날짜별)")
+//    public ResponseEntity<List<TimeSlotSimpleResponseDto>> getFacilityTimeSlots(
+//            @PathVariable(name = "facilityId") Long facilityId,
+//            @RequestParam(name = "date", required = false) String date // "2025-06-10"
+//    ) {
+//        List<TimeSlotSimpleResponseDto> slots = facilityUserService.getTimeSlots(facilityId, date);
+//        return ResponseEntity.ok(slots);
+//    }
 
     // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)
     @GetMapping("/reservations")

@@ -3,7 +3,6 @@ package com.ohammer.apartner.domain.facility.service;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationRequestDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationUserDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityUserSimpleResponseDto;
-import com.ohammer.apartner.domain.facility.dto.response.TimeSlotResponseDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import com.ohammer.apartner.domain.facility.entity.FacilityTimeSlot;
@@ -82,30 +81,6 @@ public class FacilityUserService {
                         .description(f.getDescription())
                         .build())
                 .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<TimeSlotResponseDto> getTimeSlots(Long facilityId, String dateStr) {
-        LocalDate date = (dateStr != null) ? LocalDate.parse(dateStr) : LocalDate.now();
-
-        List<FacilityTimeSlot> slots = facilityTimeSlotRepository.findByFacilityIdAndDate(facilityId, date);
-
-        return slots.stream().map(slot -> {
-            Long reservedCount = facilityReservationRepository.countByTimeSlot_IdAndStatus(
-                    slot.getId(), FacilityReservation.Status.AGREE
-            );
-            boolean isFull = reservedCount != null && reservedCount >= slot.getMaxCapacity();
-            return TimeSlotResponseDto.builder()
-                    .timeSlotId(slot.getId())
-                    .instructorName(slot.getInstructor() != null ? slot.getInstructor().getName() : null)
-                    .date(slot.getDate())
-                    .startTime(slot.getStartTime())
-                    .endTime(slot.getEndTime())
-                    .maxCapacity(slot.getMaxCapacity())
-                    .reservedCount(reservedCount)
-                    .isFull(isFull)
-                    .build();
-        }).toList();
     }
 
     // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)

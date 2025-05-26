@@ -68,7 +68,17 @@ public class FacilityInstructorController {
     public ResponseEntity<List<InstructorSimpleResponseDto>> getInstructorList(
             @PathVariable(name = "facilityId") Long facilityId) {
         Long apartmentId = SecurityUtil.getCurrentUser().getApartment().getId();
-        
+
         return ResponseEntity.ok(facilityInstructorService.getInstructorList(facilityId, apartmentId));
+    }
+
+    @GetMapping("/{instructorId}")
+    @Operation(summary = "강사 단건 조회")
+    public ResponseEntity<InstructorSimpleResponseDto> getInstructor(
+            @PathVariable(name = "facilityId") Long facilityId,
+            @PathVariable(name = "instructorId") Long instructorId
+    ) {
+        Long apartmentId = SecurityUtil.getCurrentUser().getApartment().getId();
+        return ResponseEntity.ok(facilityInstructorService.getInstructor(facilityId, instructorId, apartmentId));
     }
 }
