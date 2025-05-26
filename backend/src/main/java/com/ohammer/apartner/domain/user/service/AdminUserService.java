@@ -44,17 +44,42 @@ public class AdminUserService {
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
-    public Page<AdminUserListResponse> getUserList(String searchTerm, Role role, Status status, Pageable pageable) {
+    public Page<AdminUserListResponse> getUserList(String searchTerm, String userName, String email, String apartmentName, Role role, Status status, Pageable pageable) {
         Specification<User> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             
-            if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            // 개별 필드 검색 처리
+            if (userName != null && !userName.trim().isEmpty()) {
+                String pattern = "%" + userName.trim().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("userName")), pattern));
+            }
+            
+            if (email != null && !email.trim().isEmpty()) {
+                String pattern = "%" + email.trim().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), pattern));
+            }
+            
+            if (apartmentName != null && !apartmentName.trim().isEmpty()) {
+                String pattern = "%" + apartmentName.trim().toLowerCase() + "%";
+                try {
+                    predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.join("apartment").get("name")), pattern));
+                } catch (Exception e) {
+                    log.warn("Failed to join apartment for search: {}", e.getMessage());
+                }
+            }
+            
+            // 기존 통합 검색어 처리 (개별 필드 검색이 없는 경우에만)
+            if (searchTerm != null && !searchTerm.trim().isEmpty() 
+                && userName == null && email == null && apartmentName == null) {
+                
                 List<Predicate> searchPredicates = new ArrayList<>();
                 String searchPattern = "%" + searchTerm.trim().toLowerCase() + "%";
                 
                 searchPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("userName")), searchPattern));
                 searchPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), searchPattern));
-                searchPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("phoneNum")), searchPattern));
+               // searchPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("phoneNum")), searchPattern));
+                
                 
                 try {
                     searchPredicates.add(criteriaBuilder.like(

@@ -56,6 +56,10 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
     }
   }, [open, userId]);
 
+  useEffect(() => {
+    setActiveTab("1");
+  }, [userId]);
+
   const fetchUserDetail = async () => {
     if (!userId) return;
 
@@ -307,7 +311,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         width={800}
         footer={null}
         destroyOnHidden={true}
-        maskClosable={false}
+        maskClosable={true}
       >
         <Spin spinning={loading}>
           {userDetail ? (

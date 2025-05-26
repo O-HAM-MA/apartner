@@ -323,10 +323,7 @@ export default function AdminUsersPage() {
         onChange={handleTableChange}
         scroll={{ x: 1200 }}
         onRow={(record) => ({
-          onClick: (e) => {
-            e.preventDefault(); // 이벤트 기본 동작 방지
-            // wave 효과 이벤트 전파 방지
-            if (e.defaultPrevented) return;
+          onClick: () => {
             handleUserRowClick(record);
           },
           style: { cursor: "pointer" },

@@ -37,8 +37,8 @@ export const getAdminUserList = async (
 ): Promise<UserListResponse> => {
   const queryParams = new URLSearchParams();
 
+  // 검색어와 검색 필드에 따라 적절한 파라미터 설정
   if (searchTerm) {
-    // searchField에 따라 다른 파라미터 사용
     if (searchField === "userName") {
       queryParams.append("userName", searchTerm);
     } else if (searchField === "email") {
@@ -46,7 +46,7 @@ export const getAdminUserList = async (
     } else if (searchField === "apartmentName") {
       queryParams.append("apartmentName", searchTerm);
     } else {
-      // all 또는 기타 경우, 통합 검색어로 처리
+      // 통합 검색의 경우 searchTerm 파라미터 사용
       queryParams.append("searchTerm", searchTerm);
     }
   }
@@ -54,6 +54,8 @@ export const getAdminUserList = async (
   queryParams.append("page", page.toString());
   queryParams.append("size", size.toString());
   queryParams.append("sort", sort);
+
+  console.log("API 요청 파라미터:", queryParams.toString());
 
   const response = await get<any>(
     `/api/v1/admin/users?${queryParams.toString()}`,
