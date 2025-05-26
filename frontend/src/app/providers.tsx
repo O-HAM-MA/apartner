@@ -1,29 +1,30 @@
 "use client";
 
-
 import type React from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { ConfigProvider, App } from "antd";
+import koKR from "antd/locale/ko_KR";
 
-import React from "react"
-import { ConfigProvider } from "antd"
-import koKR from "antd/locale/ko_KR"
+import { ThemeProvider } from "@/components/theme-provider";
+import { NotificationProvider } from "@/contexts/notification-context";
+import { Toaster } from "@/components/ui/toaster";
+import { ClientLayout } from "@/auth/ClientLayout";
 
-import { ThemeProvider } from "@/components/theme-provider"
-import { NotificationProvider } from "@/contexts/notification-context"
-import { Toaster } from "@/components/ui/toaster"
-import { ClientLayout } from "@/auth/ClientLayout"
+// React 버전에 따른 antd 경고 비활성화 처리
+import { version } from "react";
+import { preMessage } from "rc-util/es/warning";
+const isReact18OrLower = parseInt(version.split(".")[0]) <= 18;
 
-
-// Ant Design React 19 호환성 문제 해결
-ConfigProvider.config({
-  theme: {
-    // 테마 설정
-  },
-  // React 19 호환성을 위한 설정
-  warning: false, // 경고 비활성화
-});
+if (!isReact18OrLower) {
+  preMessage((msg, type) => {
+    if (msg && msg.includes("antd v5 support React")) {
+      return null;
+    }
+    return msg;
+  });
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -32,7 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             refetchOnWindowFocus: false,
-            staleTime: 300000, // 5분
+            staleTime: 300000,
             retry: 1,
           },
         },
@@ -45,26 +46,26 @@ export function Providers({ children }: { children: React.ReactNode }) {
         locale={koKR}
         theme={{
           token: {
-            colorPrimary: '#2563EB',
+            colorPrimary: "#2563EB",
           },
         }}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NotificationProvider>
-            <ClientLayout>
-              {children}
-              <Toaster />
-            </ClientLayout>
-          </NotificationProvider>
-        </ThemeProvider>
+        <App>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NotificationProvider>
+              <ClientLayout>
+                {children}
+                <Toaster />
+              </ClientLayout>
+            </NotificationProvider>
+          </ThemeProvider>
+        </App>
       </ConfigProvider>
     </QueryClientProvider>
-
   );
-
 }

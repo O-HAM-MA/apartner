@@ -3,12 +3,13 @@ import {
   Home,
   Settings,
   Bell,
-  BarChart,
   Users,
   MessageSquare,
   UserCircle,
   Building,
 } from "lucide-react";
+import type React from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGlobalLoginMember } from "@/auth/loginMember";
@@ -29,13 +30,19 @@ const NavItem: React.FC<NavItemProps> = ({
   return (
     <Link
       href={href}
-      className={`flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-pink-50 ${
-        isActive ? "bg-pink-100 text-pink-700 font-semibold" : "text-gray-700"
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-950/30 ${
+        isActive
+          ? "bg-pink-100 text-pink-700 font-semibold dark:bg-pink-950/50 dark:text-pink-300"
+          : "text-foreground"
       }`}
     >
       <Icon
         size={20}
-        className={isActive ? "text-pink-700" : "text-gray-500"}
+        className={
+          isActive
+            ? "text-pink-700 dark:text-pink-300"
+            : "text-muted-foreground"
+        }
       />
       <span>{label}</span>
     </Link>
@@ -45,6 +52,15 @@ const NavItem: React.FC<NavItemProps> = ({
 const Sidebar = () => {
   const pathname = usePathname();
   const { loginMember, isLogin } = useGlobalLoginMember();
+
+  // 시설 점검 경로 확인 함수 - 상세 페이지도 포함하도록 수정
+  const isInspectionPath = (path: string) => {
+    return (
+      path === "/udash/inspections" ||
+      path.startsWith("/udash/inspections/") ||
+      path === "/inspection-detail"
+    );
+  };
 
   const navItems = [
     { href: "/udash", icon: Home, label: "대시보드" },
@@ -57,7 +73,8 @@ const Sidebar = () => {
     {
       href: "/udash/inspections",
       icon: Settings,
-      label: "점검 (소방/가스/전기/수도)",
+      label: "시설 점검",
+      isActive: isInspectionPath(pathname),
     },
     { href: "/udash/complaints", icon: Users, label: "민원 관리" },
     { href: "/udash/notices", icon: Bell, label: "공지사항" },
@@ -65,21 +82,21 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 bg-white h-screen p-5 flex flex-col border-r border-gray-200">
+    <div className="w-64 bg-card h-screen p-5 flex flex-col border-r border-border shrink-0">
       <div className="mb-10 flex flex-col items-start">
         <div className="flex items-center space-x-2 mb-2">
-          <Building size={32} className="text-pink-600" />
-          <h1 className="text-2xl font-bold text-gray-800">APTner</h1>
+          <Building size={32} className="text-pink-600 dark:text-pink-400" />
+          <h1 className="text-2xl font-bold text-foreground">APTner</h1>
         </div>
         {isLogin && loginMember ? (
-          <div className="bg-gray-100 p-3 rounded-lg w-full mt-5">
-            <p className="text-sm font-semibold text-gray-800">
+          <div className="bg-secondary p-3 rounded-lg w-full mt-5">
+            <p className="text-sm font-semibold text-foreground">
               {loginMember.userName || "입주민"}
             </p>
             {(loginMember.apartmentName ||
               loginMember.buildingName ||
               loginMember.unitNumber) && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {loginMember.apartmentName}
                 {loginMember.buildingName && ` ${loginMember.buildingName}`}
                 {loginMember.unitNumber && ` ${loginMember.unitNumber}`}
@@ -87,9 +104,11 @@ const Sidebar = () => {
             )}
           </div>
         ) : (
-          <div className="bg-gray-100 p-3 rounded-lg w-full mt-5">
-            <p className="text-sm font-semibold text-gray-800">로그인 필요</p>
-            <p className="text-xs text-gray-500">서비스를 이용해주세요.</p>
+          <div className="bg-secondary p-3 rounded-lg w-full mt-5">
+            <p className="text-sm font-semibold text-foreground">로그인 필요</p>
+            <p className="text-xs text-muted-foreground">
+              서비스를 이용해주세요.
+            </p>
           </div>
         )}
       </div>
@@ -101,7 +120,11 @@ const Sidebar = () => {
                 href={item.href}
                 icon={item.icon}
                 label={item.label}
-                isActive={pathname === item.href}
+                isActive={
+                  item.isActive !== undefined
+                    ? item.isActive
+                    : pathname === item.href
+                }
               />
             </li>
           ))}

@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.HashSet;
 
 @Getter
 @Builder
@@ -29,11 +30,19 @@ public class AdminUserListResponse {
     private Status status;
     private LocalDateTime deletedAt;
     private LocalDateTime lastLoginAt;
+    private LocalDateTime modifiedAt;
     
     public static AdminUserListResponse from(User user) {
         String apartmentName = user.getApartment() != null ? user.getApartment().getName() : null;
         String buildingName = user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : null;
         String unitNumber = user.getUnit() != null ? user.getUnit().getUnitNumber() : null;
+        
+        // roles가 null인 경우 빈 Set을 사용
+        Set<String> roles = (user.getRoles() != null) ? 
+            user.getRoles().stream()
+                .map(Role::name)
+                .collect(Collectors.toSet()) : 
+            new HashSet<>();
         
         return AdminUserListResponse.builder()
                 .id(user.getId())
@@ -44,12 +53,11 @@ public class AdminUserListResponse {
                 .apartmentName(apartmentName)
                 .buildingName(buildingName)
                 .unitNumber(unitNumber)
-                .roles(user.getRoles().stream()
-                        .map(Role::name)
-                        .collect(Collectors.toSet()))
+                .roles(roles)
                 .status(user.getStatus())
-                .deletedAt(user.getModifiedAt())
+                .deletedAt(user.getDeletedAt())
                 .lastLoginAt(user.getLastLoginAt())
+                .modifiedAt(user.getModifiedAt())
                 .build();
     }
 }
