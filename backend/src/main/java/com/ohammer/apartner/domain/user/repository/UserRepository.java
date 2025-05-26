@@ -10,7 +10,9 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -46,8 +48,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Page<User> findAllUserByRoles(Role role, Pageable pageable);
 
-    @Override
     @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
+    @Override
     Optional<User> findById(Long id);
 
     @EntityGraph(attributePaths = "roles")
@@ -58,10 +60,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("SELECT u FROM User u JOIN FETCH u.building JOIN FETCH u.unit WHERE u.id = :id")
     Optional<User> findByIdWithBuildingAndUnit(@Param("id") Long id);
-
-
-    //Optional<User> findByBuilding_BuildingNumberAndUnit_UnitNumber(String buildingNum, String unitNum);
-
 
     @Query("""
         SELECT u FROM User u
@@ -77,5 +75,18 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             @Param("bldgNum") String bldgNum,
             @Param("unitNum") String unitNum
     );
+
+    @EntityGraph(attributePaths = "roles")
+    @Override
+    List<User> findAll();
+
+    @EntityGraph(attributePaths = "roles")
+    @Override
+    Page<User> findAll(Pageable pageable);
+
+    @EntityGraph(attributePaths = "roles")
+    @Override
+    List<User> findAll(Specification<User> spec);
+
 
 }
