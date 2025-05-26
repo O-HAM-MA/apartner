@@ -84,6 +84,19 @@ public class AdminMenuController {
     @PostMapping("/menus")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<MenuDTO>> createMenu(@Valid @RequestBody MenuDTO menuDTO) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // ADMIN만 모든 메뉴 조회 가능, MANAGER는 권한 없음
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(authority -> 
+                        authority.getAuthority().equals("ADMIN") || 
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+                        
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "해당 기능에 대한 접근 권한이 없습니다.", null));
+        }
+
+
         MenuDTO createdMenuDTO = menuService.createMenu(menuDTO); // 새 메뉴 생성
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, "메뉴가 성공적으로 생성되었습니다.", createdMenuDTO));
@@ -92,6 +105,18 @@ public class AdminMenuController {
     @PutMapping("/menus/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<MenuDTO>> updateMenu(@PathVariable("id") Long id, @Valid @RequestBody MenuDTO menuDTO) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // ADMIN만 모든 메뉴 조회 가능, MANAGER는 권한 없음
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(authority -> 
+                        authority.getAuthority().equals("ADMIN") || 
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+                        
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "해당 기능에 대한 접근 권한이 없습니다.", null));
+        }
+
         MenuDTO updatedMenuDTO = menuService.updateMenu(id, menuDTO); // 메뉴 업데이트
         return ResponseEntity.ok(new ApiResponse<>(true, "메뉴가 성공적으로 업데이트되었습니다.", updatedMenuDTO));
     }
@@ -99,6 +124,18 @@ public class AdminMenuController {
     @DeleteMapping("/menus/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteMenu(@PathVariable("id") Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // ADMIN만 모든 메뉴 조회 가능, MANAGER는 권한 없음
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(authority -> 
+                        authority.getAuthority().equals("ADMIN") || 
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+                        
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "해당 기능에 대한 접근 권한이 없습니다.", null));
+        }
+
         menuService.deleteMenu(id); // 메뉴 삭제
         return ResponseEntity.ok(new ApiResponse<>(true, "메뉴가 성공적으로 삭제되었습니다.", null));
     }
@@ -122,6 +159,17 @@ public class AdminMenuController {
     @PostMapping("/grades")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<AdminGradeDTO>> createGrade(@Valid @RequestBody AdminGradeDTO gradeDTO) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // ADMIN만 모든 메뉴 조회 가능, MANAGER는 권한 없음
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(authority -> 
+                        authority.getAuthority().equals("ADMIN") || 
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+                        
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "해당 기능에 대한 접근 권한이 없습니다.", null));
+        }
         AdminGradeDTO createdGradeDTO = adminGradeService.createGrade(gradeDTO); // 새 등급 생성
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, "등급이 성공적으로 생성되었습니다.", createdGradeDTO));
@@ -130,6 +178,17 @@ public class AdminMenuController {
     @PutMapping("/grades/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<AdminGradeDTO>> updateGrade(@PathVariable("id") Long id, @Valid @RequestBody AdminGradeDTO gradeDTO) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // ADMIN만 모든 메뉴 조회 가능, MANAGER는 권한 없음
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(authority -> 
+                        authority.getAuthority().equals("ADMIN") || 
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+                        
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "해당 기능에 대한 접근 권한이 없습니다.", null));
+        }
         AdminGradeDTO updatedGradeDTO = adminGradeService.updateGrade(id, gradeDTO); // 등급 업데이트
         return ResponseEntity.ok(new ApiResponse<>(true, "등급이 성공적으로 업데이트되었습니다.", updatedGradeDTO));
     }
@@ -137,6 +196,17 @@ public class AdminMenuController {
     @DeleteMapping("/grades/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteGrade(@PathVariable("id") Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // ADMIN만 모든 메뉴 조회 가능, MANAGER는 권한 없음
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(authority -> 
+                        authority.getAuthority().equals("ADMIN") || 
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+                        
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "해당 기능에 대한 접근 권한이 없습니다.", null));
+        }
         adminGradeService.deleteGrade(id); // 등급 삭제
         return ResponseEntity.ok(new ApiResponse<>(true, "등급이 성공적으로 삭제되었습니다.", null));
     }

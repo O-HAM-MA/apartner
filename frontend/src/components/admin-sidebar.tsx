@@ -39,14 +39,6 @@ interface AdminMenu {
   sortOrder?: number;
 }
 
-interface AdminMember {
-  id: string;
-  userName?: string;
-  email?: string;
-  profileImageUrl?: string;
-  isAdmin?: boolean;
-}
-
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -100,7 +92,7 @@ export default function AdminSidebar() {
         setLoading(true);
         setApiError(null);
         setNoMenusRegistered(false);
-        
+
         console.log("[메뉴 로드] 메뉴 API 호출 시작 - 사용자:", adminMember);
         console.log("[메뉴 로드] ADMIN 여부:", adminMember.isAdmin);
 
@@ -114,19 +106,26 @@ export default function AdminSidebar() {
         if (response.success) {
           // 메뉴가 있는 경우 (ADMIN이든 MANAGER든)
           if (Array.isArray(response.data) && response.data.length > 0) {
-            console.log(`[메뉴 로드] 권한이 있는 메뉴 ${response.data.length}개 로드됨:`, response.data);
+            console.log(
+              `[메뉴 로드] 권한이 있는 메뉴 ${response.data.length}개 로드됨:`,
+              response.data
+            );
             setAuthorizedMenus(response.data);
             setUseDefaultMenus(false);
-          } 
+          }
           // ADMIN인데 반환된 메뉴가 없는 경우 (아직 메뉴가 등록되지 않음)
-          else if (adminMember.isAdmin) {
-            console.log("[메뉴 로드] ADMIN 권한이지만 등록된 메뉴가 없습니다. 기본 ADMIN 메뉴 사용");
+          else if (adminMember && adminMember.isAdmin) {
+            console.log(
+              "[메뉴 로드] ADMIN 권한이지만 등록된 메뉴가 없습니다. 기본 ADMIN 메뉴 사용"
+            );
             setNoMenusRegistered(true);
             setUseDefaultMenus(true);
-          } 
+          }
           // MANAGER인데 권한 있는 메뉴가 없는 경우
           else {
-            console.log("[메뉴 로드] MANAGER 권한이며 접근 가능한 메뉴가 없습니다.");
+            console.log(
+              "[메뉴 로드] MANAGER 권한이며 접근 가능한 메뉴가 없습니다."
+            );
             setAuthorizedMenus([]);
             setUseDefaultMenus(false);
           }
@@ -140,13 +139,18 @@ export default function AdminSidebar() {
         }
       } catch (error) {
         console.error("[메뉴 로드 오류] 메뉴 권한 로드 중 오류 발생:", error);
-        setApiError(error instanceof Error ? error.message : "알 수 없는 오류 발생");
+        setApiError(
+          error instanceof Error ? error.message : "알 수 없는 오류 발생"
+        );
         setUseDefaultMenus(true);
         // 개발 환경에서는 오류 토스트 표시
         if (process.env.NODE_ENV === "development") {
           toast({
             title: "메뉴 로드 오류",
-            description: error instanceof Error ? error.message : "메뉴 권한을 불러오는데 실패했습니다.",
+            description:
+              error instanceof Error
+                ? error.message
+                : "메뉴 권한을 불러오는데 실패했습니다.",
             variant: "destructive",
           });
         }
@@ -157,7 +161,10 @@ export default function AdminSidebar() {
 
     // 로그인 된 상태인 경우에만 메뉴 가져오기
     if (adminMember?.id) {
-      console.log("[메뉴 로드] 로그인 상태 확인됨, 메뉴 가져오기 시도", adminMember);
+      console.log(
+        "[메뉴 로드] 로그인 상태 확인됨, 메뉴 가져오기 시도",
+        adminMember
+      );
       fetchUserMenus();
     } else {
       console.log("[메뉴 로드] 로그인되지 않음, 기본 메뉴 사용");
@@ -190,17 +197,24 @@ export default function AdminSidebar() {
     if (!useDefaultMenus) {
       return dynamicNavItems;
     }
-    
+
     // ADMIN이고 시스템에 등록된 메뉴가 없는 경우 관리용 메뉴 제공
     if (adminMember.isAdmin && noMenusRegistered) {
       return adminFallbackMenuItems;
     }
-    
+
     // 그 외의 경우 기본 메뉴 사용
     return defaultMenuItems;
   })();
 
-  console.log("[메뉴 렌더링] 메뉴 항목:", navItems, "기본메뉴사용:", useDefaultMenus, "ADMIN여부:", adminMember.isAdmin);
+  console.log(
+    "[메뉴 렌더링] 메뉴 항목:",
+    navItems,
+    "기본메뉴사용:",
+    useDefaultMenus,
+    "ADMIN여부:",
+    adminMember.isAdmin
+  );
 
   // ADMIN이거나 메뉴가 있는 경우에만 접근 가능
   const hasAccessToMenu = adminMember.isAdmin || navItems.length > 0;
@@ -253,12 +267,16 @@ export default function AdminSidebar() {
             ) : navItems.length === 0 ? (
               <div className="px-4 py-3 text-sm text-amber-500">
                 <p className="font-medium">표시할 메뉴 없음</p>
-                {adminMember.isAdmin ? (
+                {adminMember && adminMember.isAdmin ? (
                   <div>
-                    <p className="text-xs mt-1">시스템에 등록된 메뉴가 없습니다</p>
-                    <p className="text-xs mt-1">메뉴 관리에서 메뉴를 추가해주세요</p>
-                    <Link 
-                      href="/admin/grades" 
+                    <p className="text-xs mt-1">
+                      시스템에 등록된 메뉴가 없습니다
+                    </p>
+                    <p className="text-xs mt-1">
+                      메뉴 관리에서 메뉴를 추가해주세요
+                    </p>
+                    <Link
+                      href="/admin/grades"
                       className="text-xs mt-2 flex items-center text-blue-500 hover:underline"
                     >
                       <Settings className="mr-1 h-3 w-3" />
@@ -292,23 +310,24 @@ export default function AdminSidebar() {
                     </Link>
                   );
                 })}
-                
+
                 {/* ADMIN이라면 메뉴 관리 추가 (어떤 경우든) */}
-                {adminMember.isAdmin && !navItems.some(item => item.href === "/admin/grades") && (
-                  <Link
-                    href="/admin/grades"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted",
-                      pathname === "/admin/grades"
-                        ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <Settings className="h-4 w-4" />
-                    메뉴 관리
-                  </Link>
-                )}
+                {adminMember.isAdmin &&
+                  !navItems.some((item) => item.href === "/admin/grades") && (
+                    <Link
+                      href="/admin/grades"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted",
+                        pathname === "/admin/grades"
+                          ? "bg-muted font-medium text-foreground"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      <Settings className="h-4 w-4" />
+                      메뉴 관리
+                    </Link>
+                  )}
               </nav>
             )}
           </div>

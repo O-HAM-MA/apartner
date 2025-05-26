@@ -34,11 +34,14 @@ public class AdminUserController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AdminUserListResponse>>> getUserList(
             @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String apartmentName,
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Status status,
             @PageableDefault(size = 20, sort = "lastLoginAt", direction = Sort.Direction.DESC) Pageable pageable) {
         
-        Page<AdminUserListResponse> userPage = adminUserService.getUserList(searchTerm, role, status, pageable);
+        Page<AdminUserListResponse> userPage = adminUserService.getUserList(searchTerm, userName, email, apartmentName, role, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(userPage));
     }
 

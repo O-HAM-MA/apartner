@@ -30,7 +30,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 import com.ohammer.apartner.domain.user.repository.UserLogRepository;
 import com.ohammer.apartner.domain.user.entity.UserLog;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserRegistService {
@@ -146,7 +151,7 @@ public class UserRegistService {
             .user(user)
             .logType(UserLog.LogType.STATUS_CHANGE)
             .description(description)
-            .ipAddress("self-withdraw") // 필요시 getClientIp()로 대체
+            .ipAddress(getClientIp()) // 필요시 getClientIp()로 대체
             .createdAt(java.time.LocalDateTime.now())
             .build();
         // userLogRepository 주입 필요시 추가
@@ -171,6 +176,24 @@ public class UserRegistService {
             userRepository.save(user);
         } catch (Exception e) {
             throw new UserException(UserErrorCode.REFRESH_TOKEN_DELETE_FAIL);
+        }
+    }
+
+    // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            
+            String forwardedHeader = request.getHeader("X-Forwarded-For");
+            if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
+                return forwardedHeader.split(",")[0].trim();
+            }
+            
+            return request.getRemoteAddr();
+        } catch (Exception e) {
+            log.warn("Failed to get client IP: {}", e.getMessage());
+            return "unknown";
         }
     }
 }
