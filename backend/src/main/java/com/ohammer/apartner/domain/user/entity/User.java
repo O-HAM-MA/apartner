@@ -9,6 +9,7 @@ import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -71,6 +72,14 @@ public class User extends BaseEntity {
     @Column(length = 255) 
     private String leaveReason;
 
+    // 마지막 로그인 시간 필드 추가
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    // 계정 삭제 시간 필드 추가
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "profile_image_id", referencedColumnName = "id")
     private Image profileImage;
@@ -83,8 +92,6 @@ public class User extends BaseEntity {
         this.status = status;
         this.roles = roles;
     }
-
-
 
     public User(Long id, String username, String password, String email, String phoneNum, String userName, Apartment apartment, Building building, Unit unit, Status status, Set<Role> roles) {
         this.setId(id); 
@@ -99,4 +106,4 @@ public class User extends BaseEntity {
         this.status = status;
         this.roles = roles;
     }
-} 
+}

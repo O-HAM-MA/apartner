@@ -9,6 +9,7 @@ import com.ohammer.apartner.domain.apartment.entity.Unit;
 import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
 import com.ohammer.apartner.domain.apartment.repository.BuildingRepository;
 import com.ohammer.apartner.domain.apartment.repository.UnitRepository;
+import com.ohammer.apartner.global.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,31 +19,60 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(readOnly = true) // 모든 메소드가 읽기 전용
 public class ApartmentService {
 
     private final ApartmentRepository apartmentRepository;
     private final BuildingRepository buildingRepository;
     private final UnitRepository unitRepository;
 
-    public List<ApartmentResponseDto> getAllApartments() {
-        List<Apartment> apartments = apartmentRepository.findAll();
-        return apartments.stream()
-                .map(ApartmentResponseDto::fromEntity)
-                .collect(Collectors.toList());
+    // == 아파트 조회 == //
+    public List<ApartmentResponseDto> getAllApartments(String name, String address, String zipcode) {
+        List<Apartment> apartments = apartmentRepository.findByCriteriaAsList(name, address, zipcode);
+        return apartments.stream().map(ApartmentResponseDto::fromEntity).collect(Collectors.toList());
     }
 
+    public ApartmentResponseDto getApartmentById(Long apartmentId) {
+        Apartment apartment = apartmentRepository.findById(apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("아파트를 찾을 수 없습니다. ID: " + apartmentId));
+        return ApartmentResponseDto.fromEntity(apartment);
+    }
+
+    // == 동 조회 == //
     public List<BuildingResponseDto> getBuildingsByApartmentId(Long apartmentId) {
+        if (!apartmentRepository.existsById(apartmentId)) {
+            throw new ResourceNotFoundException("아파트를 찾을 수 없습니다. ID: " + apartmentId);
+        }
         List<Building> buildings = buildingRepository.findByApartmentId(apartmentId);
         return buildings.stream()
-                .map(BuildingResponseDto::fromEntity)
-                .collect(Collectors.toList());
+            .map(building -> BuildingResponseDto.fromEntity(
+                building, 
+                building.getApartment() != null ? building.getApartment().getId() : null
+            ))
+            .collect(Collectors.toList());
     }
 
+    public BuildingResponseDto getBuildingById(Long buildingId) {
+        Building building = buildingRepository.findById(buildingId)
+                .orElseThrow(() -> new ResourceNotFoundException("동을 찾을 수 없습니다. ID: " + buildingId));
+        return BuildingResponseDto.fromEntity(
+            building, 
+            building.getApartment() != null ? building.getApartment().getId() : null
+        );
+    }
+
+    // == 호수 조회 == //
     public List<UnitResponseDto> getUnitsByBuildingId(Long buildingId) {
+        if (!buildingRepository.existsById(buildingId)) {
+            throw new ResourceNotFoundException("동을 찾을 수 없습니다. ID: " + buildingId);
+        }
         List<Unit> units = unitRepository.findByBuildingId(buildingId);
-        return units.stream()
-                .map(UnitResponseDto::fromEntity)
-                .collect(Collectors.toList());
+        return units.stream().map(UnitResponseDto::fromEntity).collect(Collectors.toList());
+    }
+
+    public UnitResponseDto getUnitById(Long unitId) {
+        Unit unit = unitRepository.findById(unitId)
+                .orElseThrow(() -> new ResourceNotFoundException("호수를 찾을 수 없습니다. ID: " + unitId));
+        return UnitResponseDto.fromEntity(unit);
     }
 } 

@@ -15,14 +15,14 @@ import lombok.NoArgsConstructor;
 @Builder
 public class GradeMenuAccess extends BaseEntity {
 
-
-    @Column(name = "grade", length = 255)
-    private String grade;
-
-    @Column(name = "is_accessible")
-    private Boolean isAccessible;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_id", nullable = false)
+    private AdminGrade  grade;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "menu_id")
+    @JoinColumn(name = "menu_id", nullable = false)
     private Menu menu;
-} 
+
+    @Column(name = "sort_order", nullable = true)
+    private Integer sortOrder;
+}

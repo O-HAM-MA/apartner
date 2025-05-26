@@ -30,6 +30,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.ohammer.apartner.security.dto.AdminDto;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 import com.ohammer.apartner.domain.image.entity.Image;
 import com.ohammer.apartner.domain.apartment.entity.Apartment;
@@ -89,6 +91,9 @@ public class AdminAuthController {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("알 수 없는 계정 상태입니다.");
             }
 
+            // 관리자 로그인 성공 시 updatedAt 필드를 now()로 업데이트
+            adminUser.setLastLoginAt(LocalDateTime.now());
+
             String accessToken = authService.genAccessToken(adminUser);
             String refreshToken = authService.genRefreshToken(adminUser);
             authService.addRefreshToken(adminUser, refreshToken);
@@ -144,7 +149,7 @@ public class AdminAuthController {
                                 .email(registrationRequest.getEmail())
                                 .password(passwordEncoder.encode(registrationRequest.getPassword()))
                                 .roles(java.util.Set.of(Role.ADMIN))
-                                .gradeId(2L)
+                                .gradeId(1L)
                                 .status(Status.ACTIVE)
                                 .build();
             userRepository.save(newAdmin);
@@ -312,4 +317,4 @@ public class AdminAuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing request: " + e.getMessage());
         }
     }
-} 
+}

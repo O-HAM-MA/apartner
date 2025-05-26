@@ -126,7 +126,7 @@ export default function AdminLogin() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@apartner.com"
+                placeholder="admin@apartner.site"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -135,12 +135,12 @@ export default function AdminLogin() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">비밀번호</Label>
-                <Link
+                {/* <Link
                   href="/admin/forgot-password"
                   className="text-xs text-apartner-600 dark:text-apartner-400 hover:underline"
                 >
                   비밀번호 찾기
-                </Link>
+                </Link> */}
               </div>
               <Input
                 id="password"
