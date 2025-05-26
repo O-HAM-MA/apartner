@@ -70,9 +70,9 @@ public class FacilityManagerService {
         Facility facility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new EntityNotFoundException("공용시설을 찾을 수 없습니다."));
 
-        if (facilityRepository.existsByApartmentIdAndNameAndIdNot(apartmentId, facilityUpdateRequestDto.getName(),
-                facilityId)) {
-            throw new IllegalArgumentException("이미 존재하는 시설 이름입니다.");
+        if (facilityRepository.existsByApartmentIdAndNameAndStatusAndIdNot(
+                apartmentId, facilityUpdateRequestDto.getName(), Status.ACTIVE, facilityId)) {
+            throw new IllegalArgumentException("이미 운영 중인 시설 이름입니다.");
         }
 
         if (facilityUpdateRequestDto.getOpenTime().equals(facilityUpdateRequestDto.getCloseTime())) {
@@ -123,6 +123,13 @@ public class FacilityManagerService {
                         .closeTime(f.getCloseTime())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    // 시설 단건 조회
+    public FacilityManagerSimpleResponseDto getFacility(Long facilityId, Long apartmentId) {
+        Facility facility = facilityRepository.findByIdAndApartmentId(facilityId, apartmentId)
+                .orElseThrow(() -> new IllegalArgumentException("시설을 찾을 수 없습니다."));
+        return FacilityManagerSimpleResponseDto.from(facility);
     }
 
     // 예약 목록 조회

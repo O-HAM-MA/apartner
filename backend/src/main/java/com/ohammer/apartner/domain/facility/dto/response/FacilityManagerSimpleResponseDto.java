@@ -1,14 +1,17 @@
 package com.ohammer.apartner.domain.facility.dto.response;
 
+import com.ohammer.apartner.domain.facility.entity.Facility;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 @Schema(description = "공용시설 목록 조회 [관리자] 응답 DTO")
 public class FacilityManagerSimpleResponseDto {
 
@@ -26,4 +29,15 @@ public class FacilityManagerSimpleResponseDto {
 
     @Schema(description = "공용시설 운영 종료 시간", example = "22:00")
     private LocalTime closeTime;
+
+    // 정적 팩토리 메서드 (Entity → DTO)
+    public static FacilityManagerSimpleResponseDto from(Facility entity) {
+        return FacilityManagerSimpleResponseDto.builder()
+                .facilityId(entity.getId())
+                .facilityName(entity.getName())
+                .description(entity.getDescription())
+                .openTime(entity.getOpenTime())
+                .closeTime(entity.getCloseTime())
+                .build();
+    }
 }

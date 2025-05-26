@@ -160,7 +160,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** 공용시설 단건 조회 [관리자] */
+        get: operations["getFacility"];
         /** 공용시설 수정 */
         put: operations["updateFacility"];
         post?: never;
@@ -2992,17 +2993,17 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -4081,6 +4082,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    getFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityManagerSimpleResponseDto"];
                 };
             };
         };

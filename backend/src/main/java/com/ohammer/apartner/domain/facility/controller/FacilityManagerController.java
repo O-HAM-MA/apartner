@@ -74,6 +74,16 @@ public class FacilityManagerController {
         return ResponseEntity.ok(facilityManagerService.getFacilityList(apartmentId));
     }
 
+    // 공용시설 단건 조회
+    @GetMapping("/{facilityId}")
+    @Operation(summary = "공용시설 단건 조회 [관리자]")
+    public ResponseEntity<FacilityManagerSimpleResponseDto> getFacility(
+            @PathVariable(name = "facilityId") Long facilityId) {
+        User user = SecurityUtil.getCurrentUser();
+        Long apartmentId = user.getApartment().getId();
+        return ResponseEntity.ok(facilityManagerService.getFacility(facilityId, apartmentId));
+    }
+
 //    // 상세 조회
 //    @GetMapping("/{facilityId}")
 //    @Operation(summary = "공용시설 상세 조회 [관리자]")

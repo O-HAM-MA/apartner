@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -54,7 +55,27 @@ type Facility = {
   status: string;
 };
 
+function parseFacilityErrorMessage(error: any) {
+  let errorMessage =
+    error?.data?.message ||
+    (typeof error.data === 'string' ? error.data : undefined) ||
+    error?.message ||
+    '처리에 실패했습니다.';
+
+  if (errorMessage.includes('운영 중인 시설')) {
+    return '이미 사용 중인 시설 이름입니다. 다른 이름을 입력해주세요.';
+  } else if (
+    errorMessage.includes('시작 시간과 종료 시간이 같을 수 없습니다')
+  ) {
+    return '운영 시작 시간과 종료 시간이 같을 수 없습니다.';
+  } else if (errorMessage.includes('찾을 수 없습니다')) {
+    return '해당 공용시설을 찾을 수 없습니다.';
+  }
+  return errorMessage;
+}
+
 export default function FacilitiesPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -139,45 +160,61 @@ export default function FacilitiesPage() {
 
   // 시설 등록
   const handleAddFacility = async () => {
-    try {
-      // 시간 형식을 HH:mm:ss 형식으로 변환
-      const formatTimeForBackend = (time: string) => {
-        const [hours, minutes] = time.split(':');
-        return `${hours.padStart(2, '0')}:${minutes}:00`;
-      };
-
-      await client.POST('/api/v1/admin/facilities', {
-        body: {
-          name: newFacility.name,
-          description: newFacility.description,
-          openTime: formatTimeForBackend(newFacility.openTime),
-          closeTime: formatTimeForBackend(newFacility.closeTime),
-        },
-      });
-
-      toast({
-        title: '성공',
-        description: '시설이 등록되었습니다.',
-      });
-      setIsAddDialogOpen(false);
-      setNewFacility({
-        name: '',
-        description: '',
-        openTime: '09:00',
-        closeTime: '18:00',
-      });
-      fetchFacilities();
-    } catch (error) {
-      console.error('시설 등록 실패:', error);
+    // 필수값 검증
+    if (!newFacility.name.trim()) {
       toast({
         variant: 'destructive',
-        title: '오류',
-        description: '시설 등록에 실패했습니다.',
+        title: '입력 오류',
+        description: '시설 이름을 입력해주세요.',
       });
+      return;
     }
+
+    if (!newFacility.description.trim()) {
+      toast({
+        variant: 'destructive',
+        title: '입력 오류',
+        description: '시설 설명을 입력해주세요.',
+      });
+      return;
+    }
+
+    const res = await client.POST('/api/v1/admin/facilities', {
+      body: {
+        name: newFacility.name,
+        description: newFacility.description,
+        openTime: `${newFacility.openTime}:00`,
+        closeTime: `${newFacility.closeTime}:00`,
+      },
+    });
+
+    if (res.error) {
+      // 실패 처리
+      const errorMessage = parseFacilityErrorMessage(res.error);
+      toast({
+        variant: 'destructive',
+        title: '등록 실패',
+        description: errorMessage,
+      });
+      return;
+    }
+
+    // 성공 처리
+    toast({
+      title: '성공',
+      description: '시설이 등록되었습니다.',
+    });
+    setIsAddDialogOpen(false);
+    setNewFacility({
+      name: '',
+      description: '',
+      openTime: '09:00',
+      closeTime: '18:00',
+    });
+    fetchFacilities();
   };
 
-  // 시설 수정
+  // 시설 수정 클릭
   const handleEditClick = (facility: Facility) => {
     // 시간 형식을 HH:mm 형식으로 변환
     const formatTimeForInput = (time: string) => {
@@ -197,54 +234,68 @@ export default function FacilitiesPage() {
   const handleEditFacility = async () => {
     if (!selectedFacility) return;
 
-    try {
-      const updateData = {
-        name: selectedFacility.name,
-        description: selectedFacility.description,
-        openTime: `${selectedFacility.openTime}:00`,
-        closeTime: `${selectedFacility.closeTime}:00`,
-      };
+    const res = await client.PUT(
+      `/api/v1/admin/facilities/${selectedFacility.id}`,
+      {
+        body: {
+          name: selectedFacility.name,
+          description: selectedFacility.description,
+          openTime: `${selectedFacility.openTime}:00`,
+          closeTime: `${selectedFacility.closeTime}:00`,
+        },
+      }
+    );
 
-      await client.PUT(`/api/v1/admin/facilities/${selectedFacility.id}`, {
-        body: updateData,
-      });
-
-      toast({
-        title: '성공',
-        description: '시설 정보가 수정되었습니다.',
-      });
-      setIsEditDialogOpen(false);
-      fetchFacilities();
-    } catch (error) {
-      console.error('시설 수정 실패:', error);
+    if (res.error) {
+      // 실패 처리
+      const errorMessage = parseFacilityErrorMessage(res.error);
       toast({
         variant: 'destructive',
-        title: '오류',
-        description: '시설 수정에 실패했습니다.',
+        title: '수정 실패',
+        description: errorMessage,
       });
+      return;
     }
+
+    // 성공 처리
+    toast({
+      title: '성공',
+      description: '시설 정보가 수정되었습니다.',
+    });
+    setIsEditDialogOpen(false);
+    fetchFacilities();
   };
 
   // 시설 삭제
   const handleDeleteFacility = async () => {
     if (!selectedFacility) return;
 
-    try {
-      await client.DELETE(`/api/v1/admin/facilities/${selectedFacility.id}`);
-      toast({
-        title: '성공',
-        description: '시설이 삭제되었습니다.',
-      });
-      setIsDeleteDialogOpen(false);
-      fetchFacilities();
-    } catch (error) {
-      console.error('시설 삭제 실패:', error);
+    const res = await client.DELETE(
+      `/api/v1/admin/facilities/${selectedFacility.id}`
+    );
+
+    if (res.error) {
+      // 실패 처리
       toast({
         variant: 'destructive',
-        title: '오류',
+        title: '삭제 실패',
         description: '시설 삭제에 실패했습니다.',
       });
+      return;
     }
+
+    // 성공 처리
+    toast({
+      title: '성공',
+      description: '시설이 삭제되었습니다.',
+    });
+    setIsDeleteDialogOpen(false);
+    fetchFacilities();
+  };
+
+  // 시설 상세 페이지로 이동
+  const handleRowClick = (facilityId: number) => {
+    router.push(`/admin/facilities/${facilityId}`);
   };
 
   return (
@@ -286,6 +337,7 @@ export default function FacilitiesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[80px]">번호</TableHead>
                   <TableHead>시설명</TableHead>
                   <TableHead>설명</TableHead>
                   <TableHead>운영시간</TableHead>
@@ -300,8 +352,13 @@ export default function FacilitiesPage() {
                         ?.toLowerCase()
                         .includes(searchTerm.toLowerCase()) ?? false
                   )
-                  .map((facility) => (
-                    <TableRow key={facility.id}>
+                  .map((facility, index) => (
+                    <TableRow
+                      key={facility.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleRowClick(facility.id)}
+                    >
+                      <TableCell className="text-center">{index + 1}</TableCell>
                       <TableCell className="font-medium">
                         {facility.name}
                       </TableCell>
@@ -315,7 +372,11 @@ export default function FacilitiesPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => e.stopPropagation()} // 행 클릭 이벤트 전파 방지
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">메뉴 열기</span>
                             </Button>
@@ -324,7 +385,8 @@ export default function FacilitiesPage() {
                             <DropdownMenuLabel>작업</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleEditClick(facility);
                               }}
                             >
@@ -334,7 +396,8 @@ export default function FacilitiesPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedFacility(facility);
                                 setIsDeleteDialogOpen(true);
                               }}
