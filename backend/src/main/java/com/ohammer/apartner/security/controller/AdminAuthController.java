@@ -75,7 +75,8 @@ public class AdminAuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 틀렸습니다.");
             }
 
-            if (!adminUser.getRoles().contains(Role.ADMIN) && !adminUser.getRoles().contains(Role.MANAGER)) {
+            if (!(adminUser.getRoles().contains(Role.ADMIN) || adminUser.getRoles().contains(Role.MANAGER))) {
+
                 authService.logLoginFailure(adminUser, getClientIp());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("관리자 권한이 없는 계정입니다.");
             }
@@ -259,7 +260,8 @@ public class AdminAuthController {
                     });
 
             // 6. 관리자 권한 확인
-            if (!adminUser.getRoles().contains(Role.ADMIN)) {
+            if (!(adminUser.getRoles().contains(Role.ADMIN) || adminUser.getRoles().contains(Role.MANAGER))) {
+                // 차단 로직
                 log.warn("[AdminMe] User {} does not have ADMIN role", adminUser.getUserName());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("관리자 권한이 없는 계정입니다.");
             }
