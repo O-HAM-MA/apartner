@@ -544,7 +544,9 @@ export default function VehicleManagement() {
   // mutation 추가
   const requestParkingMutation = useMutation({
     mutationFn: () => {
-      return client.POST("/api/v1/entry-records/request", {});
+      return client.POST(`/api/v1/entry-records/request/{vehicleId}`, {
+        body: {}, // 빈 객체를 보내도 됩니다. 백엔드에서 자동으로 처리
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
@@ -1023,7 +1025,7 @@ export default function VehicleManagement() {
                 className="bg-blue-500 hover:bg-blue-600 px-12 py-6 text-lg"
                 onClick={() => requestParkingMutation.mutate()}
               >
-                <Car className="mr-2 h-6 w-6" />
+                <Car className="mr-2 h-6 w-4" />
                 주차 재신청
               </Button>
             </div>
