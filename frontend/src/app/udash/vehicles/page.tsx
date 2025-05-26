@@ -460,10 +460,13 @@ export default function VehicleManagement() {
   const updateVehicleStatusMutation = useMutation({
     mutationFn: (data: EditingEntryRecordStatus) => {
       return client.PATCH(`/api/v1/entry-records/${data.id}/status`, {
+        path: { entryRecordId: data.id },
+        body: { status: data.status },
+        /* path: ["status"],
         body: {
           // id: data.id,
           type: data.status,
-        },
+        }, */
       });
     },
     onSuccess: () => {
