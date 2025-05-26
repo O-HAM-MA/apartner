@@ -28,7 +28,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
-
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
+import com.ohammer.apartner.domain.user.entity.UserLog;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +43,7 @@ public class UserRegistService {
     private final JwtTokenizer jwtTokenizer;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final UserLogRepository userLogRepository;
 
     @Transactional
     public User register(UserRegistRequestDTO dto, String socialProfileImageUrl) {
@@ -131,11 +133,24 @@ public class UserRegistService {
             throw new UserException(UserErrorCode.PASSWORD_NOT_MATCH);
         }
 
+        Status oldStatus = user.getStatus();
         user.setStatus(Status.WITHDRAWN);
         user.setLeaveReason(requestDto.getLeaveReason());
         user.setRefreshToken(null);
-        user.setModifiedAt(LocalDateTime.now());
+        user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        // 상태 변경 로그 추가
+        String description = String.format("탈퇴 처리: %s -> %s", oldStatus, Status.WITHDRAWN);
+        UserLog userLog = UserLog.builder()
+            .user(user)
+            .logType(UserLog.LogType.STATUS_CHANGE)
+            .description(description)
+            .ipAddress("self-withdraw") // 필요시 getClientIp()로 대체
+            .createdAt(java.time.LocalDateTime.now())
+            .build();
+        // userLogRepository 주입 필요시 추가
+        userLogRepository.save(userLog);
 
         SecurityContextHolder.clearContext();
     }

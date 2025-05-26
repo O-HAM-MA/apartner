@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Select, Typography, Tag, Pagination } from 'antd';
-import { getUserLogs } from '@/utils/userApi';
-import { UserLog, LogType } from '@/types/user';
-import dayjs from 'dayjs';
+import React, { useState, useEffect } from "react";
+import { Table, Select, Typography, Tag, Pagination } from "antd";
+import { getUserLogs } from "@/utils/userApi";
+import { UserLog, LogType } from "@/types/user";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -27,10 +27,10 @@ const UserLogs: React.FC<UserLogsProps> = ({ userId }) => {
     try {
       setLoading(true);
       const response = await getUserLogs(userId, logType, page, pageSize);
-      setLogs(response.data.content);
-      setTotalElements(response.data.totalElements);
+      setLogs(response.content);
+      setTotalElements(response.totalElements);
     } catch (error) {
-      console.error('Error fetching user logs:', error);
+      console.error("Error fetching user logs:", error);
     } finally {
       setLoading(false);
     }
@@ -38,16 +38,16 @@ const UserLogs: React.FC<UserLogsProps> = ({ userId }) => {
 
   // 로그 타입에 따른 색상 표시
   const getLogTypeTag = (type: LogType) => {
-    const typeColors = {
-      [LogType.LOGIN]: 'green',
-      [LogType.LOGIN_FAILED]: 'red',
-      [LogType.LOGOUT]: 'blue',
-      [LogType.STATUS_CHANGE]: 'orange',
-      [LogType.ROLE_CHANGE]: 'purple',
-      [LogType.PASSWORD_CHANGE]: 'cyan'
+    const typeColors: Record<string, string> = {
+      [LogType.LOGIN]: "green",
+      [LogType.LOGIN_FAILED]: "red",
+      [LogType.LOGOUT]: "blue",
+      [LogType.STATUS_CHANGE]: "orange",
+      [LogType.PASSWORD_CHANGE]: "cyan",
     };
-
-    return <Tag color={typeColors[type]}>{type.replace('_', ' ')}</Tag>;
+    return (
+      <Tag color={typeColors[type] || "default"}>{type.replace("_", " ")}</Tag>
+    );
   };
 
   // 로그 타입 필터 변경 핸들러
@@ -58,37 +58,39 @@ const UserLogs: React.FC<UserLogsProps> = ({ userId }) => {
 
   const columns = [
     {
-      title: '로그 타입',
-      dataIndex: 'logType',
-      key: 'logType',
+      title: "로그 타입",
+      dataIndex: "logType",
+      key: "logType",
       render: (type: LogType) => getLogTypeTag(type),
       width: 140,
     },
     {
-      title: '설명',
-      dataIndex: 'description',
-      key: 'description',
+      title: "설명",
+      dataIndex: "description",
+      key: "description",
       ellipsis: true,
     },
     {
-      title: 'IP 주소',
-      dataIndex: 'ipAddress',
-      key: 'ipAddress',
+      title: "IP 주소",
+      dataIndex: "ipAddress",
+      key: "ipAddress",
       width: 130,
     },
     {
-      title: '시간',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
+      title: "시간",
+      dataIndex: "createdAt",
+      key: "createdAt",
       width: 170,
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
+      render: (date: string) => dayjs(date).format("YYYY-MM-DD HH:mm:ss"),
     },
   ];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <Typography.Title level={5} className="m-0">사용자 활동 기록</Typography.Title>
+        <Typography.Title level={5} className="m-0">
+          사용자 활동 기록
+        </Typography.Title>
         <Select
           placeholder="로그 타입 필터"
           style={{ width: 180 }}
@@ -100,7 +102,6 @@ const UserLogs: React.FC<UserLogsProps> = ({ userId }) => {
           <Option value={LogType.LOGIN_FAILED}>로그인 실패</Option>
           <Option value={LogType.LOGOUT}>로그아웃</Option>
           <Option value={LogType.STATUS_CHANGE}>상태 변경</Option>
-          <Option value={LogType.ROLE_CHANGE}>권한 변경</Option>
           <Option value={LogType.PASSWORD_CHANGE}>비밀번호 변경</Option>
         </Select>
       </div>
@@ -129,7 +130,7 @@ const UserLogs: React.FC<UserLogsProps> = ({ userId }) => {
             } catch (e) {
               return <Text type="secondary">상세 정보 없음</Text>;
             }
-          }
+          },
         }}
       />
 

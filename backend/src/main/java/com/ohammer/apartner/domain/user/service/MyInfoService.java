@@ -21,6 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ohammer.apartner.domain.user.entity.UserLog;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 @Transactional(readOnly = true)
@@ -32,7 +37,8 @@ public class MyInfoService {
     private final BuildingRepository buildingRepository;
     private final UnitRepository unitRepository;
     private final PasswordEncoder passwordEncoder; 
-
+    private final UserLogRepository userLogRepository;
+    
     public MyInfoResponseDto getMyInfo(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
@@ -125,5 +131,33 @@ public class MyInfoService {
         user.setModifiedAt(LocalDateTime.now());
         userRepository.save(user);
         log.info("사용자 [{}] 비밀번호 변경 완료", userEmail);
+
+         // 비밀번호 변경 로그 추가
+         UserLog passwordChangeLog = UserLog.builder()
+         .user(user)
+         .logType(UserLog.LogType.PASSWORD_CHANGE)
+         .description("비밀번호 변경")
+         .ipAddress(getClientIp())
+         .createdAt(LocalDateTime.now())
+         .build();
+ userLogRepository.save(passwordChangeLog);
+    }
+
+     // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
+     private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            
+            String forwardedHeader = request.getHeader("X-Forwarded-For");
+            if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
+                return forwardedHeader.split(",")[0].trim();
+            }
+            
+            return request.getRemoteAddr();
+        } catch (Exception e) {
+            log.warn("Failed to get client IP: {}", e.getMessage());
+            return "unknown";
+        }
     }
 }

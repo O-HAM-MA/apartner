@@ -110,19 +110,16 @@ export function useAdminMember() {
   const adminLogout = (callback: () => void) => {
     fetchApi("/api/v1/admin/logout", { method: "DELETE" })
       .then((response) => {
-        if (!response.ok) {
-          console.error(
-            "Admin logout request failed with status:",
-            response.status
-          );
-        }
-        removeAdminMember();
-        callback();
+        setTimeout(() => {
+          removeAdminMember();
+          callback();
+        }, 100); // 쿠키 삭제 적용 대기
       })
       .catch((error) => {
-        console.error("Admin logout failed:", error);
-        removeAdminMember();
-        callback();
+        setTimeout(() => {
+          removeAdminMember();
+          callback();
+        }, 100);
       });
   };
 

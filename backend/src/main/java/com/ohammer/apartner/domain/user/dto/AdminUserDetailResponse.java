@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,6 +51,12 @@ public class AdminUserDetailResponse {
         
         String profileImageUrl = user.getProfileImage() != null ? user.getProfileImage().getFilePath() : null;
         
+        Set<String> roles = (user.getRoles() != null) ? 
+            user.getRoles().stream()
+                .map(Role::name)
+                .collect(Collectors.toSet()) : 
+            new HashSet<>();
+        
         return AdminUserDetailResponse.builder()
                 .id(user.getId())
                 .userName(user.getUserName())
@@ -63,15 +70,13 @@ public class AdminUserDetailResponse {
                 .buildingNumber(buildingNumber)
                 .unitId(unitId)
                 .unitNumber(unitNumber)
-                .roles(user.getRoles().stream()
-                        .map(Role::name)
-                        .collect(Collectors.toSet()))
+                .roles(roles)
                 .status(user.getStatus())
                 .leaveReason(user.getLeaveReason())
                 .createdAt(user.getCreatedAt())
                 .modifiedAt(user.getModifiedAt())
                 .lastLoginAt(user.getLastLoginAt())
-                .deletedAt(user.getModifiedAt())
+                .deletedAt(user.getDeletedAt())
                 .profileImageUrl(profileImageUrl)
                 .build();
     }

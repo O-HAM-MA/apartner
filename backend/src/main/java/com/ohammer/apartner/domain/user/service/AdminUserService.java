@@ -84,7 +84,7 @@ public class AdminUserService {
 
     @Transactional(readOnly = true)
     public AdminUserDetailResponse getUserDetail(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithRoles(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         
         return AdminUserDetailResponse.from(user);
@@ -92,7 +92,7 @@ public class AdminUserService {
 
     @Transactional
     public void updateUserStatus(Long userId, AdminUserStatusUpdateRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithRoles(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         
         Status oldStatus = user.getStatus();
@@ -114,25 +114,19 @@ public class AdminUserService {
     
     @Transactional
     public void updateUserRoles(Long userId, AdminUserRoleUpdateRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithRoles(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-        
         Set<Role> oldRoles = new HashSet<>(user.getRoles());
         Set<Role> newRoles = request.getRoles();
-        
         user.setRoles(newRoles);
         user.setModifiedAt(LocalDateTime.now());
-        
         userRepository.save(user);
-        
-        createRoleChangeLog(user, oldRoles, newRoles);
-        
         log.info("User roles updated - userId: {}, roles: {} -> {}", userId, oldRoles, newRoles);
     }
     
     @Transactional(readOnly = true)
     public Page<UserLogResponse> getUserLogs(Long userId, String logType, Pageable pageable) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithRoles(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         
         Page<UserLog> logs;
@@ -152,6 +146,7 @@ public class AdminUserService {
         return logs.map(UserLogResponse::from);
     }
     
+    @Transactional(readOnly = true)
     public Resource exportUsers(String searchTerm, Role role, Status status, String format) {
         Specification<User> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -201,7 +196,7 @@ public class AdminUserService {
             Sheet sheet = workbook.createSheet("Users");
             
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"ID", "이름", "이메일", "핸드폰 번호", "가입 방식", "아파트", "빌딩", "호수", "권한", "상태", "탈퇴 일시", "최근 로그인", "생성 일시"};
+            String[] headers = {"번호", "이름", "이메일", "핸드폰 번호", "가입 방식", "아파트", "빌딩", "호수", "권한", "상태", "탈퇴 일시", "최근 로그인", "생성 일시", "수정 일시"};
             
             CellStyle headerStyle = workbook.createCellStyle();
             headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
@@ -218,49 +213,43 @@ public class AdminUserService {
             }
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            int total = users.size();
             int rowNum = 1;
             for (User user : users) {
+                int number = total - (rowNum - 1);
                 Row row = sheet.createRow(rowNum++);
-                
-                row.createCell(0).setCellValue(user.getId());
+                row.createCell(0).setCellValue(number);
                 row.createCell(1).setCellValue(user.getUserName());
                 row.createCell(2).setCellValue(user.getEmail());
                 row.createCell(3).setCellValue(user.getPhoneNum());
                 row.createCell(4).setCellValue(user.getSocialProvider() != null ? user.getSocialProvider() : "일반");
-                
                 String apartmentName = user.getApartment() != null ? user.getApartment().getName() : "";
                 row.createCell(5).setCellValue(apartmentName);
-                
                 String buildingName = user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : "";
                 row.createCell(6).setCellValue(buildingName);
-                
                 String unitNumber = user.getUnit() != null ? user.getUnit().getUnitNumber() : "";
                 row.createCell(7).setCellValue(unitNumber);
-                
-                String roles = user.getRoles().stream()
-                        .map(Role::name)
-                        .collect(Collectors.joining(", "));
+                String roles = (user.getRoles() != null) ? 
+                    user.getRoles().stream()
+                            .map(Role::name)
+                            .collect(Collectors.joining(", ")) :
+                    "";
                 row.createCell(8).setCellValue(roles);
-                
                 row.createCell(9).setCellValue(user.getStatus().name());
-                
                 String deletedAt = user.getDeletedAt() != null ? user.getDeletedAt().format(formatter) : "";
                 row.createCell(10).setCellValue(deletedAt);
-                
                 String lastLoginAt = user.getLastLoginAt() != null ? user.getLastLoginAt().format(formatter) : "";
                 row.createCell(11).setCellValue(lastLoginAt);
-                
                 String createdAt = user.getCreatedAt() != null ? user.getCreatedAt().format(formatter) : "";
                 row.createCell(12).setCellValue(createdAt);
-                
+                String modifiedAt = user.getModifiedAt() != null ? user.getModifiedAt().format(formatter) : "";
+                row.createCell(13).setCellValue(modifiedAt);
                 for (int i = 0; i < headers.length; i++) {
                     sheet.autoSizeColumn(i);
                 }
             }
-            
             workbook.write(out);
             return new ByteArrayResource(out.toByteArray());
-            
         } catch (IOException e) {
             log.error("Error generating Excel file", e);
             throw new RuntimeException("Excel 파일 생성 중 오류가 발생했습니다.", e);
@@ -269,43 +258,40 @@ public class AdminUserService {
     
     private Resource generateCsvResource(List<User> users) {
         StringBuilder csv = new StringBuilder();
-        
-        csv.append("ID,이름,이메일,핸드폰 번호,가입 방식,아파트,빌딩,호수,권한,상태,탈퇴 일시,최근 로그인,생성 일시\n");
-        
+        csv.append("번호,이름,이메일,핸드폰 번호,가입 방식,아파트,빌딩,호수,권한,상태,탈퇴 일시,최근 로그인,생성 일시,수정 일시\n");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        int total = users.size();
+        int rowNum = 1;
         for (User user : users) {
-            csv.append(user.getId()).append(",");
+            int number = total - (rowNum - 1);
+            csv.append(number).append(",");
             csv.append(escapeSpecialCharacters(user.getUserName())).append(",");
             csv.append(escapeSpecialCharacters(user.getEmail())).append(",");
             csv.append(escapeSpecialCharacters(user.getPhoneNum())).append(",");
             csv.append(escapeSpecialCharacters(user.getSocialProvider() != null ? user.getSocialProvider() : "일반")).append(",");
-            
             String apartmentName = user.getApartment() != null ? user.getApartment().getName() : "";
             csv.append(escapeSpecialCharacters(apartmentName)).append(",");
-            
             String buildingName = user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : "";
             csv.append(escapeSpecialCharacters(buildingName)).append(",");
-            
             String unitNumber = user.getUnit() != null ? user.getUnit().getUnitNumber() : "";
             csv.append(escapeSpecialCharacters(unitNumber)).append(",");
-            
-            String roles = user.getRoles().stream()
-                    .map(Role::name)
-                    .collect(Collectors.joining(", "));
+            String roles = (user.getRoles() != null) ? 
+                user.getRoles().stream()
+                        .map(Role::name)
+                        .collect(Collectors.joining(", ")) :
+                "";
             csv.append(escapeSpecialCharacters(roles)).append(",");
-            
             csv.append(user.getStatus().name()).append(",");
-            
             String deletedAt = user.getDeletedAt() != null ? user.getDeletedAt().format(formatter) : "";
             csv.append(deletedAt).append(",");
-            
             String lastLoginAt = user.getLastLoginAt() != null ? user.getLastLoginAt().format(formatter) : "";
             csv.append(lastLoginAt).append(",");
-            
             String createdAt = user.getCreatedAt() != null ? user.getCreatedAt().format(formatter) : "";
-            csv.append(createdAt).append("\n");
+            csv.append(createdAt).append(",");
+            String modifiedAt = user.getModifiedAt() != null ? user.getModifiedAt().format(formatter) : "";
+            csv.append(modifiedAt).append("\n");
+            rowNum++;
         }
-        
         return new ByteArrayResource(csv.toString().getBytes());
     }
     
@@ -337,36 +323,6 @@ public class AdminUserService {
         UserLog userLog = UserLog.builder()
                 .user(user)
                 .logType(UserLog.LogType.STATUS_CHANGE)
-                .description(description)
-                .ipAddress(getClientIp())
-                .details(details)
-                .createdAt(LocalDateTime.now())
-                .build();
-        
-        userLogRepository.save(userLog);
-    }
-    
-    private void createRoleChangeLog(User user, Set<Role> oldRoles, Set<Role> newRoles) {
-        String oldRolesStr = oldRoles.stream().map(Role::name).collect(Collectors.joining(", "));
-        String newRolesStr = newRoles.stream().map(Role::name).collect(Collectors.joining(", "));
-        
-        String description = String.format("권한 변경: [%s] -> [%s]", oldRolesStr, newRolesStr);
-        
-        Map<String, Object> detailsMap = new HashMap<>();
-        detailsMap.put("oldRoles", oldRolesStr);
-        detailsMap.put("newRoles", newRolesStr);
-        
-        String details;
-        try {
-            details = objectMapper.writeValueAsString(detailsMap);
-        } catch (JsonProcessingException e) {
-            log.error("Error converting role change details to JSON", e);
-            details = String.format("oldRoles: [%s], newRoles: [%s]", oldRolesStr, newRolesStr);
-        }
-        
-        UserLog userLog = UserLog.builder()
-                .user(user)
-                .logType(UserLog.LogType.ROLE_CHANGE)
                 .description(description)
                 .ipAddress(getClientIp())
                 .details(details)
