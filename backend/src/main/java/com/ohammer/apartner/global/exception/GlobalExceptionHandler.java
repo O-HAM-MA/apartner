@@ -14,9 +14,33 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.dao.DataIntegrityViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.FieldError;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static class ErrorResponse {
+        private final int status;
+        private final String message;
+        private Map<String, String> errors;
+
+        public ErrorResponse(int status, String message) {
+            this.status = status;
+            this.message = message;
+        }
+
+        public ErrorResponse(int status, String message, Map<String, String> errors) {
+            this.status = status;
+            this.message = message;
+            this.errors = errors;
+        }
+        
+        public int getStatus() { return status; }
+        public String getMessage() { return message; }
+        public Map<String, String> getErrors() { return errors; }
+    }
 
     // @ExceptionHandler(MyInfoException.class)
     // public ResponseEntity<ErrorResponse> handleMyInfoException(MyInfoException e) {
@@ -27,41 +51,36 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ProfileImageException.class)
     public ResponseEntity<ErrorResponse> handleProfileImageException(ProfileImageException e) {
-        return ResponseEntity
-                .badRequest()
-                .body(new ErrorResponse(e.getErrorCode().getMessage()));
+        log.error("ProfileImageException: {}", e.getErrorCode().getMessage(), e);
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getErrorCode().getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UserException.class)
     public ResponseEntity<ErrorResponse> handleUserException(UserException e) {
-        return ResponseEntity
-                .badRequest()
-                .body(new ErrorResponse(e.getErrorCode().getMessage()));
+        log.error("UserException: {}", e.getErrorCode().getMessage(), e);
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getErrorCode().getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
-        List<String> errorMessages = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(fieldError -> String.format("[%s] %s", fieldError.getField(), fieldError.getDefaultMessage()))
-                .toList();
-
-        Map<String, Object> responseBody = new HashMap<>();
-        responseBody.put("message", "입력값이 올바르지 않습니다.");
-        responseBody.put("errors", errorMessages);
-
-        return ResponseEntity.badRequest().body(responseBody);
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        Map<String, String> errorsMap = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errorsMap.put(fieldName, errorMessage);
+        });
+        log.warn("Validation errors: {}", errorsMap);
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "입력값이 유효하지 않습니다.", errorsMap);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity
-                .badRequest()
-                .body(ApiResponse.error(HttpStatus.BAD_REQUEST, ex.getMessage()));
-    }
-
-    public record ErrorResponse(String message) {
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("IllegalArgumentException: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -77,9 +96,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(HttpStatus.NOT_FOUND, ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        log.error("ResourceNotFoundException: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(ForbiddenAccessException.class)
@@ -94,31 +114,31 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(HttpStatus.BAD_REQUEST, ex.getMessage()));
     }
     
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRequestException(InvalidRequestException ex) {
+        log.error("InvalidRequestException: {}", ex.getMessage(), ex.getCause());
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        String message = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
-        
-        // 외래 키 제약 조건 위반 처리
-        if (message.contains("foreign key constraint") && message.contains("grade_menu_access")) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.error(HttpStatus.CONFLICT, 
-                            "이 메뉴는 하나 이상의 등급에서 사용 중입니다. 삭제하기 전에 모든 등급에서 이 메뉴를 선택 해제해주세요."));
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.error("DataIntegrityViolationException: {}", ex.getMessage());
+        String userFriendlyMessage = "데이터 제약 조건 위반. 중복된 값이 있거나 필수 항목이 누락되었을 수 있습니다.";
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            String causeMessage = ex.getCause().getMessage().toLowerCase();
+            if (causeMessage.contains("unique constraint") || causeMessage.contains("duplicate key")) {
+                userFriendlyMessage = "이미 존재하는 데이터입니다. 다른 값을 사용해주세요.";
+            }
         }
-        
-        // 중복 키 위반 처리
-        if (message.contains("duplicate") || message.contains("unique constraint")) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.error(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다."));
-        }
-        
-        // 기타 데이터 무결성 위반
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(HttpStatus.CONFLICT, "데이터 무결성 제약 조건 위반이 발생했습니다."));
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), userFriendlyMessage);
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."));
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
+        log.error("Unhandled exception: {}", ex.getMessage(), ex);
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 내부 오류가 발생했습니다.");
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

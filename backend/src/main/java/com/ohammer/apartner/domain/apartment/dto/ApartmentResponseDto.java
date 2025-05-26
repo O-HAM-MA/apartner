@@ -23,11 +23,15 @@ public class ApartmentResponseDto {
     @Schema(description = "아파트 주소", example = "서울특별시 강남구 역삼동 123")
     private String address;
     
+    @Schema(description = "우편번호", example = "12345")
+    private String zipcode;
+    
     public static ApartmentResponseDto fromEntity(Apartment apartment) {
         return ApartmentResponseDto.builder()
                 .id(apartment.getId())
                 .name(apartment.getName())
                 .address(apartment.getAddress())
+                .zipcode(apartment.getZipcode())
                 .build();
     }
 } 

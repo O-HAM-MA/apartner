@@ -34,4 +34,5 @@ public abstract class BaseEntity {
 
     @Column(name = "modified_at")
     private LocalDateTime modifiedAt;
+
 } 

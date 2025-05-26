@@ -86,6 +86,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-cache")
     
+    // Apache POI for Excel export - 추가된 부분
+    implementation("org.apache.poi:poi:5.2.3")
+    implementation("org.apache.poi:poi-ooxml:5.2.3")
 }
 
 // Docker Compose 설정 (정상 작동되는 버전)

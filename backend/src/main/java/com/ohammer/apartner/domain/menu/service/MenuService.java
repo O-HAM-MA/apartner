@@ -40,4 +40,7 @@ public interface MenuService {
     
     // 등급 ID로 해당 등급에 속한 메뉴 목록 조회
     List<MenuDTO> getMenusByGradeId(Long gradeId);
+    
+    // 등급 ID로 해당 등급에 속한 메뉴 목록을 정렬 순서대로 조회
+    List<MenuDTO> getMenusByGradeIdSorted(Long gradeId);
 } 

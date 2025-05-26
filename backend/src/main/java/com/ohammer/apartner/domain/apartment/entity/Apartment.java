@@ -6,13 +6,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "apartments")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Apartment extends BaseEntity {
 
     @Column(name = "name", length = 50)
@@ -20,4 +21,7 @@ public class Apartment extends BaseEntity {
 
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
+
+    @Column(name = "zipcode", length = 10)
+    private String zipcode;
 } 

@@ -239,16 +239,20 @@ export async function fetchJson<T>(
     return {} as T;
   }
 
-  // JSON 파싱 시도
+  // JSON 파싱 시도 - 개선된 예외 처리
   try {
-    return JSON.parse(text) as T;
+    const parsedData = JSON.parse(text);
+    return parsedData as T;
   } catch (parseError) {
-    // error -> parseError 변수명 변경 및 사용
+    // 로그 개선: URL과 응답 텍스트의 일부를 포함시켜 디버깅 용이하게
     console.error(
-      `[fetchJson] Error parsing JSON response for ${url}:`,
-      parseError
-    ); // 파싱 에러 로그 추가
-    throw new Error("서버 응답을 처리할 수 없습니다.");
+      `[fetchJson] JSON 파싱 에러 (${url}):`, 
+      parseError,
+      `\n응답 텍스트 일부: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`
+    );
+    
+    // 더 자세한 에러 메시지
+    throw new Error(`JSON 파싱 에러: ${(parseError as Error).message}. API: ${url}`);
   }
 }
 

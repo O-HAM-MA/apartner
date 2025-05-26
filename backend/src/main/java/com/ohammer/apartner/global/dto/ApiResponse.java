@@ -16,6 +16,14 @@ public class ApiResponse<T> {
     private String message;
     private T data;
 
+    public static <T> ApiResponse<T> success() {
+        return ApiResponse.<T>builder()
+                .status(HttpStatus.OK.value())
+                .success(true)
+                .message("요청이 성공적으로 처리되었습니다.")
+                .build();
+    }
+
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .status(HttpStatus.OK.value())
