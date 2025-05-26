@@ -1,3 +1,4 @@
+"use client";
 import {
   BellRing,
   ChevronDown,
@@ -10,8 +11,56 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
+import { useState, useEffect } from "react";
+
+
+type IssueResponseDetailDto = {
+  id: number;
+  inspectionId: number;
+  userId: number;
+  userName: string;
+  title: string;
+  description: string;
+  typeName: string;
+  createdAt: string;
+  modifiedAt: string;
+};
+
+type Inspection = {
+  inspectionId: number;
+  userId: number;
+  userName: string;
+  startAt: string;      // LocalDateTime → string (ISO 포맷 등)
+  finishAt: string;     // LocalDateTime → string (ISO 포맷 등)
+  title: string;
+  detail: string;
+  result: "CHECKED" | "PENDING" | "NOTYET" |"ISSUE";
+  typeName: string;
+};
 
 export default function AdminDashboard() {
+  const [inspections, setInspections] = useState([]);
+  const [activeTab, setActiveTab] = useState("inspections");
+  const [issues, setIssues] = useState<IssueResponseDetailDto[]>([]);
+  const [isLoadingIssues, setIsLoadingIssues] = useState(false);
+
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === "issues") {
+      setIsLoadingIssues(true);
+      setTimeout(() => {
+        const mockIssues = [
+          { id: 1, inspectionId: 1, userId: 1, userName: "김기술", title: "엘레베이터 1호기 소음", description: "2층에서 3층 이동 시 경미한 소음 발생", typeName: "소방", createdAt: "2023-05-15 10:45", modifiedAt: "2023-05-15 11:00" },
+          { id: 2, inspectionId: 2, userId: 2, userName: "이점검", title: "비상 통신 시스템 점검", description: "비상 통신 시스템 점검 중 일부 통신 불안정", typeName: "소방", createdAt: "2023-05-16 09:00", modifiedAt: "2023-05-16 09:30" }
+        ];
+        setIssues(mockIssues);
+        setIsLoadingIssues(false);
+      }, 1000);
+    } else {
+      setIssues([]);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background overflow-hidden">
       <div className="flex flex-1 flex-col bg-background">
@@ -29,15 +78,19 @@ export default function AdminDashboard() {
           </header>
 
           {/* Tab Navigation */}
-          <div className="border-b border-border bg-card mb-6 rounded-t-lg shadow-sm">
-            <div className="flex overflow-x-auto">
-              <button className="border-b-2 border-pink-500 px-4 py-4 text-sm font-medium text-pink-600 dark:text-pink-400">
-                점검 일정
-              </button>
-              <button className="px-4 py-4 text-sm font-medium text-muted-foreground hover:text-foreground">
-                이슈 내역
-              </button>
-            </div>
+          <div className="flex border-b border-border mb-6">
+            <button
+              onClick={() => handleTabClick("inspections")}
+              className={`px-4 py-2 font-semibold ${activeTab === "inspections" ? "text-pink-600 border-b-2 border-pink-600" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              점검 내역
+            </button>
+            <button
+              onClick={() => handleTabClick("issues")}
+              className={`px-4 py-2 font-semibold ${activeTab === "issues" ? "text-pink-600 border-b-2 border-pink-600" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              이슈 내역 보기
+            </button>
           </div>
 
           {/* Filters and Actions */}
@@ -77,77 +130,61 @@ export default function AdminDashboard() {
           {/* Table */}
           <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-secondary/50 text-left text-sm font-medium text-muted-foreground">
-                    <th className="w-10 px-4 py-3">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-input"
-                      />
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-3">일정 ID</th>
-                    <th className="whitespace-nowrap px-4 py-3">점검 제목</th>
-                    <th className="whitespace-nowrap px-4 py-3">
-                      점검 시작 시간
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-3">
-                      점검 종료 예상 시간
-                    </th>
-                    <th className="whitespace-nowrap px-4 py-3">작업 상태</th>
-                    <th className="whitespace-nowrap px-4 py-3">담당자</th>
-                    <th className="whitespace-nowrap px-4 py-3">작업</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-border text-sm text-foreground hover:bg-secondary/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-input"
-                      />
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-medium">
-                      FAC-001
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <Link
-                        href="/udash/inspections/1"
-                        className="text-pink-600 hover:text-pink-700 hover:underline dark:text-pink-400 dark:hover:text-pink-300"
-                      >
-                        엘레베이터 1호기 정기 점검
+              {activeTab === "inspections" ? (
+                inspections.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {inspections.map((inspection) => (
+                      <Link key={inspection.check_id} href={`/udash/inspections/${inspection.check_id}`}>
+                        <div className="bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-xs font-medium">
+                              <Tag size={12} />
+                              {inspection.type}
+                            </span>
+                            <span className={`inline-flex items-center rounded-full ${getStatusStyle(inspection.result).bgColor} px-2 py-0.5 text-xs font-medium ${getStatusStyle(inspection.result).textColor}`}>
+                              {getStatusStyle(inspection.result).icon}
+                              {getStatusStyle(inspection.result).text}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-foreground mb-1">{inspection.title}</h3>
+                          <p className="text-sm text-muted-foreground mb-2">{inspection.detail}</p>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>시작: {inspection.start_at}</span>
+                            <span>종료: {inspection.finish_at}</span>
+                          </div>
+                        </div>
                       </Link>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">2023-05-15</td>
-                    <td className="whitespace-nowrap px-4 py-3">2023-05-15</td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 text-xs font-medium text-green-800 dark:text-green-300">
-                        정상 완료
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">김기술</td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 hover:bg-secondary/70"
-                        >
-                          <FileEdit className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 hover:bg-secondary/70"
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">등록된 점검 내역이 없습니다.</p>
+                )
+              ) : (
+                isLoadingIssues ? (
+                  <p className="text-center text-muted-foreground">이슈 목록을 불러오는 중입니다...</p>
+                ) : issues.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {issues.map((issue) => (
+                      <div key={issue.id} className="bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-xs font-medium">
+                            {issue.typeName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">(inspection ID: {issue.inspectionId})</span>
+                        </div>
+                        <h3 className="font-bold text-foreground mb-1">{issue.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{issue.description}</p>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>작성자: {issue.userName}</span>
+                          <span>생성: {issue.createdAt}</span>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                  {/* Additional rows would go here */}
-                </tbody>
-              </table>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">등록된 이슈 내역이 없습니다.</p>
+                )
+              )}
             </div>
 
             {/* Pagination */}

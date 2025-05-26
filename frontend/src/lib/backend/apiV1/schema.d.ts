@@ -153,6 +153,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/menu/grades/{id}/menus/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["assignMenusWithOrderToGrade"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/apartments/{apartmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * [관리자] 아파트 상세 조회
+         * @description 특정 아파트 정보를 ID로 조회합니다.
+         */
+        get: operations["getApartmentById"];
+        /**
+         * [관리자] 아파트 수정
+         * @description 기존 아파트 정보를 수정합니다.
+         */
+        put: operations["updateApartment"];
+        post?: never;
+        /**
+         * [관리자] 아파트 삭제
+         * @description 특정 아파트를 삭제합니다.
+         */
+        delete: operations["deleteApartment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/apartments/units/{unitId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * [관리자] 호수 상세 조회
+         * @description 특정 호수 정보를 ID로 조회합니다.
+         */
+        get: operations["getUnitById"];
+        /**
+         * [관리자] 호수 수정
+         * @description 기존 호수 정보를 수정합니다.
+         */
+        put: operations["updateUnit"];
+        post?: never;
+        /**
+         * [관리자] 호수 삭제
+         * @description 특정 호수를 삭제합니다.
+         */
+        delete: operations["deleteUnit"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/apartments/buildings/{buildingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * [관리자] 동 상세 조회
+         * @description 특정 동 정보를 ID로 조회합니다.
+         */
+        get: operations["getBuildingById"];
+        /**
+         * [관리자] 동 수정
+         * @description 기존 동 정보를 수정합니다.
+         */
+        put: operations["updateBuilding"];
+        post?: never;
+        /**
+         * [관리자] 동 삭제
+         * @description 특정 동을 삭제합니다.
+         */
+        delete: operations["deleteBuilding"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminAccountById"];
+        put: operations["updateAdminAccount"];
+        post?: never;
+        delete: operations["deleteAdminAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/{id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["resetPassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/residents": {
         parameters: {
             query?: never;
@@ -865,6 +997,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/apartments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * [관리자] 아파트 목록 조회 (페이징 및 검색)
+         * @description 모든 아파트 목록을 페이징 처리하여 조회하고, 이름, 주소, 우편번호로 검색합니다.
+         */
+        get: operations["getAllApartments"];
+        put?: never;
+        /**
+         * [관리자] 아파트 생성
+         * @description 새로운 아파트를 생성합니다.
+         */
+        post: operations["createApartment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/apartments/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * [관리자] 호수 생성
+         * @description 새로운 호수를 생성합니다.
+         */
+        post: operations["createUnit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/apartments/buildings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * [관리자] 동 생성
+         * @description 새로운 동을 생성합니다.
+         */
+        post: operations["createBuilding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAllAdminAccounts"];
+        put?: never;
+        post: operations["createAdminAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vehicles/update/{vehicleId}": {
         parameters: {
             query?: never;
@@ -977,6 +1189,54 @@ export interface paths {
          * @description 민원의 상태(PENDING, IN_PROGRESS 등)를 변경합니다
          */
         patch: operations["updateComplaintStatus"];
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateUserStatus"];
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateUserRoles"];
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["changeAccountStatus"];
         trace?: never;
     };
     "/api/v1/vehicles/visitors/pending": {
@@ -1748,10 +2008,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 아파트 목록 조회
-         * @description 모든 아파트 목록을 조회합니다.
+         * 아파트 목록 조회 (검색)
+         * @description 모든 아파트 목록을 조회하고, 이름, 주소, 우편번호로 검색합니다.
          */
-        get: operations["getAllApartments"];
+        get: operations["getAllApartments_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/apartments/{apartmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 아파트 상세 조회
+         * @description 특정 아파트 정보를 ID로 조회합니다.
+         */
+        get: operations["getApartmentById_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1768,10 +2048,50 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 동 목록 조회
-         * @description 특정 아파트의 모든 동 목록을 조회합니다.
+         * 특정 아파트의 동 목록 조회
+         * @description 특정 아파트에 속한 모든 동 목록을 조회합니다.
          */
         get: operations["getBuildingsByApartment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/apartments/units/{unitId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 호수 상세 조회
+         * @description 특정 호수 정보를 ID로 조회합니다.
+         */
+        get: operations["getUnitById_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/apartments/buildings/{buildingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 동 상세 조회
+         * @description 특정 동 정보를 ID로 조회합니다.
+         */
+        get: operations["getBuildingById_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1788,10 +2108,74 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 호수 목록 조회
-         * @description 특정 동의 모든 호수 목록을 조회합니다.
+         * 특정 동의 호수 목록 조회
+         * @description 특정 동에 속한 모든 호수 목록을 조회합니다.
          */
         get: operations["getUnitsByBuilding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getUserList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getUserDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getUserLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportUsers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1832,6 +2216,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/menu/grades/{id}/menus/sorted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMenusWithSortOrderByGradeId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/me": {
         parameters: {
             query?: never;
@@ -1864,6 +2264,110 @@ export interface paths {
          * @description 현재 인증된 관리자의 상태 또는 특정 정보를 확인합니다.
          */
         get: operations["adminCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/apartments/{apartmentId}/buildings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * [관리자] 특정 아파트의 동 목록 조회 (페이징)
+         * @description 특정 아파트에 속한 모든 동 목록을 페이징 처리하여 조회합니다.
+         */
+        get: operations["getBuildingsByApartment_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/apartments/buildings/{buildingId}/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * [관리자] 특정 동의 호수 목록 조회 (페이징)
+         * @description 특정 동에 속한 모든 호수 목록을 페이징 처리하여 조회합니다.
+         */
+        get: operations["getUnitsByBuilding_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminAccountsByPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/grades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminGrades"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/apartments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAllApartments_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/accounts/apartments/{apartmentId}/buildings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBuildingsByApartmentId"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2051,6 +2555,8 @@ export interface components {
             url?: string;
             description?: string;
             icon?: string;
+            /** Format: int32 */
+            sortOrder?: number;
         };
         ApiResponseMenuDTO: {
             success?: boolean;
@@ -2067,6 +2573,9 @@ export interface components {
             /** Format: int64 */
             usersCount?: number;
             menuIds?: number[];
+            menuSortOrders?: {
+                [key: string]: number;
+            };
         };
         ApiResponseAdminGradeDTO: {
             success?: boolean;
@@ -2077,6 +2586,154 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: Record<string, never>;
+        };
+        /** @description 아파트 생성/수정 요청 DTO */
+        ApartmentRequestDto: {
+            /**
+             * @description 아파트 이름
+             * @example 현대아파트
+             */
+            name?: string;
+            /**
+             * @description 아파트 주소
+             * @example 서울특별시 강남구 역삼동 123
+             */
+            address?: string;
+            /**
+             * @description 우편번호
+             * @example 12345
+             */
+            zipcode?: string;
+        };
+        /** @description 아파트 정보 응답 DTO */
+        ApartmentResponseDto: {
+            /**
+             * Format: int64
+             * @description 아파트 ID
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description 아파트 이름
+             * @example 현대아파트
+             */
+            name?: string;
+            /**
+             * @description 아파트 주소
+             * @example 서울특별시 강남구 역삼동 123
+             */
+            address?: string;
+            /**
+             * @description 우편번호
+             * @example 12345
+             */
+            zipcode?: string;
+        };
+        /** @description 호수 생성/수정 요청 DTO */
+        UnitRequestDto: {
+            /**
+             * Format: int64
+             * @description 건물 ID
+             * @example 1
+             */
+            buildingId: number;
+            /**
+             * @description 호수
+             * @example 101호
+             */
+            unitNumber?: string;
+        };
+        /** @description 호수 정보 응답 DTO */
+        UnitResponseDto: {
+            /**
+             * Format: int64
+             * @description 호수 ID
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description 호수
+             * @example 101호
+             */
+            unitNumber?: string;
+            /**
+             * Format: int64
+             * @description 건물 ID
+             * @example 1
+             */
+            buildingId?: number;
+        };
+        /** @description 건물(동) 생성/수정 요청 DTO */
+        BuildingRequestDto: {
+            /**
+             * Format: int64
+             * @description 아파트 ID
+             * @example 1
+             */
+            apartmentId: number;
+            /**
+             * @description 건물 번호(동)
+             * @example 101동
+             */
+            buildingNumber?: string;
+        };
+        /** @description 건물(동) 정보 응답 DTO */
+        BuildingResponseDto: {
+            /**
+             * Format: int64
+             * @description 건물 ID
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description 건물 번호(동)
+             * @example 101동
+             */
+            buildingNumber?: string;
+            /**
+             * Format: int64
+             * @description 아파트 ID
+             * @example 1
+             */
+            apartmentId?: number;
+        };
+        AdminAccountRequest: {
+            name?: string;
+            email?: string;
+            role?: string;
+            /** Format: int64 */
+            apartmentId?: number;
+            /** Format: int64 */
+            buildingId?: number;
+            password?: string;
+            /** Format: int64 */
+            gradeId?: number;
+            active?: boolean;
+        };
+        AdminAccountResponse: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            email?: string;
+            role?: string;
+            /** Format: int64 */
+            apartmentId?: number;
+            apartmentName?: string;
+            /** Format: int64 */
+            buildingId?: number;
+            buildingNumber?: string;
+            /** Format: date-time */
+            lastLogin?: string;
+            status?: string;
+            /** Format: int64 */
+            gradeId?: number;
+            gradeName?: string;
+            /** Format: int32 */
+            gradeLevel?: number;
+        };
+        PasswordChangeRequest: {
+            password?: string;
+            confirmPassword?: string;
         };
         ResidentVehicleRequestDto: {
             vehicleNum?: string;
@@ -2349,6 +3006,7 @@ export interface components {
             modifiedAt?: string;
             name?: string;
             address?: string;
+            zipcode?: string;
         };
         Building: {
             /** Format: int64 */
@@ -2359,7 +3017,6 @@ export interface components {
             modifiedAt?: string;
             apartment?: components["schemas"]["Apartment"];
             buildingNumber?: string;
-            units?: components["schemas"]["Unit"][];
         };
         Image: {
             /** Format: int64 */
@@ -2443,6 +3100,10 @@ export interface components {
             status?: "active" | "inactive" | "pending" | "withdrawn";
             refreshToken?: string;
             leaveReason?: string;
+            /** Format: date-time */
+            lastLoginAt?: string;
+            /** Format: date-time */
+            deletedAt?: string;
             profileImage?: components["schemas"]["Image"];
         };
         /** @description 이슈 등록/수정 요청 DTO */
@@ -2692,6 +3353,16 @@ export interface components {
             /** Format: int64 */
             id?: number;
             status?: string;
+        };
+        AdminUserStatusUpdateRequest: {
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status: "active" | "inactive" | "pending" | "withdrawn";
+        };
+        AdminUserRoleUpdateRequest: {
+            roles?: ("ADMIN" | "USER" | "MODERATOR" | "MANAGER")[];
         };
         VehicleRegistrationInfoDto: {
             /** Format: int64 */
@@ -3268,64 +3939,117 @@ export interface components {
             /** Format: int64 */
             messageId?: number;
         };
-        /** @description 아파트 정보 응답 DTO */
-        ApartmentResponseDto: {
-            /**
-             * Format: int64
-             * @description 아파트 ID
-             * @example 1
-             */
+        AdminUserListResponse: {
+            /** Format: int64 */
             id?: number;
-            /**
-             * @description 아파트 이름
-             * @example 현대아파트
-             */
-            name?: string;
-            /**
-             * @description 아파트 주소
-             * @example 서울특별시 강남구 역삼동 123
-             */
-            address?: string;
-        };
-        /** @description 건물(동) 정보 응답 DTO */
-        BuildingResponseDto: {
-            /**
-             * Format: int64
-             * @description 건물 ID
-             * @example 1
-             */
-            id?: number;
-            /**
-             * @description 건물 번호(동)
-             * @example 101동
-             */
-            buildingNumber?: string;
-            /**
-             * Format: int64
-             * @description 아파트 ID
-             * @example 1
-             */
-            apartmentId?: number;
-        };
-        /** @description 호수 정보 응답 DTO */
-        UnitResponseDto: {
-            /**
-             * Format: int64
-             * @description 호수 ID
-             * @example 1
-             */
-            id?: number;
-            /**
-             * @description 호수
-             * @example 101호
-             */
+            userName?: string;
+            email?: string;
+            phoneNum?: string;
+            socialProvider?: string;
+            apartmentName?: string;
+            buildingName?: string;
             unitNumber?: string;
+            roles?: string[];
             /**
-             * Format: int64
-             * @description 건물 ID
-             * @example 1
+             * @description 상태
+             * @enum {string}
              */
+            status?: "active" | "inactive" | "pending" | "withdrawn";
+            /** Format: date-time */
+            deletedAt?: string;
+            /** Format: date-time */
+            lastLoginAt?: string;
+        };
+        ApiResponsePageAdminUserListResponse: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageAdminUserListResponse"];
+        };
+        PageAdminUserListResponse: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["AdminUserListResponse"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        AdminUserDetailResponse: {
+            /** Format: int64 */
+            id?: number;
+            userName?: string;
+            email?: string;
+            phoneNum?: string;
+            socialProvider?: string;
+            socialId?: string;
+            /** Format: int64 */
+            apartmentId?: number;
+            apartmentName?: string;
+            /** Format: int64 */
             buildingId?: number;
+            buildingNumber?: string;
+            /** Format: int64 */
+            unitId?: number;
+            unitNumber?: string;
+            roles?: string[];
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status?: "active" | "inactive" | "pending" | "withdrawn";
+            leaveReason?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
+            /** Format: date-time */
+            lastLoginAt?: string;
+            /** Format: date-time */
+            deletedAt?: string;
+            profileImageUrl?: string;
+        };
+        ApiResponseAdminUserDetailResponse: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["AdminUserDetailResponse"];
+        };
+        ApiResponsePageObject: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageObject"];
+        };
+        PageObject: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: Record<string, never>[];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
         };
         ApiResponsePageMenuDTO: {
             success?: boolean;
@@ -3364,6 +4088,90 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: number[];
+        };
+        Page: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: Record<string, never>[];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        PageBuildingResponseDto: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["BuildingResponseDto"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        PageUnitResponseDto: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["UnitResponseDto"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        PageAdminAccountResponse: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["AdminAccountResponse"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        AdminGrade: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
+            /** Format: int32 */
+            level?: number;
+            name?: string;
+            description?: string;
         };
         /** @description 회원 탈퇴 요청 DTO */
         UserWithdrawRequestDto: {
@@ -3766,6 +4574,304 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ApiResponseVoid"];
                 };
+            };
+        };
+    };
+    assignMenusWithOrderToGrade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: number;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    getApartmentById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApartmentResponseDto"];
+                };
+            };
+        };
+    };
+    updateApartment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApartmentRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApartmentResponseDto"];
+                };
+            };
+        };
+    };
+    deleteApartment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getUnitById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UnitResponseDto"];
+                };
+            };
+        };
+    };
+    updateUnit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UnitResponseDto"];
+                };
+            };
+        };
+    };
+    deleteUnit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getBuildingById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BuildingResponseDto"];
+                };
+            };
+        };
+    };
+    updateBuilding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildingRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BuildingResponseDto"];
+                };
+            };
+        };
+    };
+    deleteBuilding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getAdminAccountById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminAccountResponse"];
+                };
+            };
+        };
+    };
+    updateAdminAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminAccountResponse"];
+                };
+            };
+        };
+    };
+    deleteAdminAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -4939,6 +6045,150 @@ export interface operations {
             };
         };
     };
+    getAllApartments: {
+        parameters: {
+            query: {
+                /** @description 아파트 이름 검색어 */
+                arg0?: string;
+                /** @description 아파트 주소 검색어 */
+                arg1?: string;
+                /** @description 우편번호 검색어 */
+                arg2?: string;
+                arg3: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 아파트 목록 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page"];
+                };
+            };
+        };
+    };
+    createApartment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApartmentRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApartmentResponseDto"];
+                };
+            };
+        };
+    };
+    createUnit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UnitResponseDto"];
+                };
+            };
+        };
+    };
+    createBuilding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildingRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BuildingResponseDto"];
+                };
+            };
+        };
+    };
+    getAllAdminAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminAccountResponse"][];
+                };
+            };
+        };
+    };
+    createAdminAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminAccountResponse"];
+                };
+            };
+        };
+    };
     updateVehicle: {
         parameters: {
             query?: never;
@@ -5099,6 +6349,80 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    updateUserStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUserStatusUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    updateUserRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUserRoleUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    changeAccountStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminAccountResponse"];
                 };
             };
         };
@@ -6041,7 +7365,34 @@ export interface operations {
             };
         };
     };
-    getAllApartments: {
+    getAllApartments_1: {
+        parameters: {
+            query?: {
+                /** @description 아파트 이름 검색어 */
+                arg0?: string;
+                /** @description 아파트 주소 검색어 */
+                arg1?: string;
+                /** @description 우편번호 검색어 */
+                arg2?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 아파트 목록 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    getApartmentById_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -6056,7 +7407,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApartmentResponseDto"][];
+                    "*/*": components["schemas"]["ApartmentResponseDto"];
                 };
             };
         };
@@ -6065,9 +7416,27 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                apartmentId: number;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 동 목록 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
             };
+        };
+    };
+    getUnitById_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6078,7 +7447,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["BuildingResponseDto"][];
+                    "*/*": components["schemas"]["UnitResponseDto"];
+                };
+            };
+        };
+    };
+    getBuildingById_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BuildingResponseDto"];
                 };
             };
         };
@@ -6087,9 +7476,32 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                buildingId: number;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 호수 목록 조회 성공 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
             };
+        };
+    };
+    getUserList: {
+        parameters: {
+            query: {
+                arg0?: string;
+                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                arg2?: "active" | "inactive" | "pending" | "withdrawn";
+                arg3: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6100,7 +7512,75 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["UnitResponseDto"][];
+                    "*/*": components["schemas"]["ApiResponsePageAdminUserListResponse"];
+                };
+            };
+        };
+    };
+    getUserDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminUserDetailResponse"];
+                };
+            };
+        };
+    };
+    getUserLogs: {
+        parameters: {
+            query: {
+                arg1?: string;
+                arg2: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageObject"];
+                };
+            };
+        };
+    };
+    exportUsers: {
+        parameters: {
+            query?: {
+                arg0?: string;
+                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                arg2?: "active" | "inactive" | "pending" | "withdrawn";
+                arg3?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
@@ -6130,6 +7610,28 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListMenuDTO"];
+                };
+            };
+        };
+    };
+    getMenusWithSortOrderByGradeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6181,6 +7683,135 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    getBuildingsByApartment_1: {
+        parameters: {
+            query: {
+                arg1: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageBuildingResponseDto"];
+                };
+            };
+        };
+    };
+    getUnitsByBuilding_1: {
+        parameters: {
+            query: {
+                arg1: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageUnitResponseDto"];
+                };
+            };
+        };
+    };
+    getAdminAccountsByPage: {
+        parameters: {
+            query?: {
+                arg0?: number;
+                arg1?: number;
+                arg2?: string;
+                arg3?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageAdminAccountResponse"];
+                };
+            };
+        };
+    };
+    getAdminGrades: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AdminGrade"][];
+                };
+            };
+        };
+    };
+    getAllApartments_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Apartment"][];
+                };
+            };
+        };
+    };
+    getBuildingsByApartmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Building"][];
                 };
             };
         };

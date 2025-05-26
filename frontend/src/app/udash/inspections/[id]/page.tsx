@@ -8,12 +8,31 @@ import {
   CheckCircle,
   AlertCircle,
   Tag,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useState, ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function InspectionDetail() {
+  const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [newIssueComment, setNewIssueComment] = useState("");
+
   // Database-driven inspection data (would be replaced with API call in production)
   const inspectionData = {
     check_id: "FAC-001",
@@ -79,15 +98,59 @@ export default function InspectionDetail() {
 
   const statusStyle = getStatusStyle(inspectionData.result);
 
+  // Handle edit button click
+  const handleEdit = () => {
+    // Navigate to edit page with inspection ID
+    router.push(`/inspection-edit/${inspectionData.check_id}`);
+  };
+
+  // Handle delete button click
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      // Mock API call for demo purposes
+      console.log(`Deleting inspection with ID: ${inspectionData.check_id}`);
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Show success message (in real app, you might use a toast notification)
+      alert("점검 기록이 성공적으로 삭제되었습니다.");
+
+      // Navigate back to inspection list
+      router.push("/admin-dashboard");
+    } catch (error) {
+      console.error("Error deleting inspection:", error);
+      alert("점검 기록 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleNewIssueCommentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setNewIssueComment(e.target.value);
+  };
+
+  const handleAddIssue = () => {
+    if (newIssueComment.trim() === "") {
+      alert("이슈 코멘트를 입력해 주세요.");
+      return;
+    }
+    alert("새로운 이슈 추가 기능은 준비 중입니다. 입력한 코멘트: " + newIssueComment);
+    setNewIssueComment("");
+  };
+
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="flex flex-1 flex-col">
+    <div className="flex min-h-screen bg-background overflow-hidden">
+      <div className="flex flex-1 flex-col bg-background">
         {/* Main Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          {/* Header with Title and Bell Icon */}
+        <main className="flex-1 p-8 overflow-y-auto bg-background">
+          {/* Header with Title, Theme Toggle and Bell Icon */}
           <header className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-foreground">시설점검</h2>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
               <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
                 <BellRing size={22} className="text-muted-foreground" />
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
@@ -115,7 +178,7 @@ export default function InspectionDetail() {
               {/* Inspection Detail Header */}
               <div className="bg-card rounded-lg border border-border p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                       <span>점검 ID: {inspectionData.check_id}</span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-xs font-medium">
@@ -127,13 +190,37 @@ export default function InspectionDetail() {
                       {inspectionData.title}
                     </h1>
                   </div>
-                  <div className="mt-4 md:mt-0">
+                  <div className="mt-4 md:mt-0 flex items-center gap-3">
                     <span
                       className={`inline-flex items-center rounded-full ${statusStyle.bgColor} px-3 py-1 text-sm font-medium ${statusStyle.textColor}`}
                     >
                       {statusStyle.icon}
                       {statusStyle.text}
                     </span>
+                    {/* Edit and Delete Buttons */}
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/udash/inspections/${inspectionData.check_id}/edit`}
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:border-blue-900/30 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
+                        >
+                          <Edit size={16} />
+                          <span>편집</span>
+                        </Button>
+                      </Link>
+                      <Button
+                        onClick={() => setShowDeleteDialog(true)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-900/30 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                      >
+                        <Trash2 size={16} />
+                        <span>삭제</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -242,6 +329,22 @@ export default function InspectionDetail() {
                           </div>
                         </div>
                       ))}
+                      <div className="mt-4 space-y-2">
+                        <Textarea
+                          placeholder="새로운 이슈 코멘트를 입력하세요"
+                          value={newIssueComment}
+                          onChange={handleNewIssueCommentChange}
+                          className="w-full border border-border rounded-lg p-2 text-foreground bg-card"
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-lg shadow-sm"
+                            onClick={handleAddIssue}
+                          >
+                            + 이슈 추가
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -288,6 +391,49 @@ export default function InspectionDetail() {
           © 2025 APTner. All rights reserved.
         </footer>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+              <Trash2 size={20} />
+              점검 기록 삭제
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              정말로 이 점검 기록을 삭제하시겠습니까?
+              <br />
+              <br />
+              <strong>점검 ID:</strong> {inspectionData.check_id}
+              <br />
+              <strong>점검 제목:</strong> {inspectionData.title}
+              <br />
+              <br />
+              <span className="text-red-600 dark:text-red-400 font-medium">
+                이 작업은 되돌릴 수 없습니다.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+              className="border-border text-foreground hover:bg-secondary"
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              {isDeleting ? "삭제 중..." : "삭제"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
