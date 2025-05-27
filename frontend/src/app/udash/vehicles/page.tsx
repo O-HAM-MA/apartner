@@ -459,15 +459,19 @@ export default function VehicleManagement() {
   // 차량 상태 수정 mutation 수정
   const updateVehicleStatusMutation = useMutation({
     mutationFn: (data: EditingEntryRecordStatus) => {
-      return client.PATCH(`/api/v1/entry-records/${data.id}/status`, {
-        path: { entryRecordId: data.id },
-        body: { status: data.status },
-        /* path: ["status"],
+      console.log(data);
+      return client.PATCH(
+        `/api/v1/entry-records/${data.id}/status`,
+        {
+          // path: { id: data.entryRecordId },
+          body: { status: data.status },
+          /* path: ["status"],
         body: {
           // id: data.id,
           type: data.status,
         }, */
-      });
+        }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["entryRecords", "mine"] });
@@ -1175,7 +1179,7 @@ export default function VehicleManagement() {
                                       return;
                                     }
                                     updateVehicleStatusMutation.mutate({
-                                      entryRecordId: vehicle.entryRecordId,
+                                      id: vehicle.entryRecordId,
                                       status: checked
                                         ? "INVITER_AGREE"
                                         : "INAGREE",
