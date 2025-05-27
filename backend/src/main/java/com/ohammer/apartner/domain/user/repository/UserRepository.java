@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,8 +51,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Page<User> findAllUserByRoles(Role role, Pageable pageable);
 
     @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
+    @NonNull
     @Override
-    Optional<User> findById(Long id);
+    Optional<User> findById(@NonNull Long id);
 
     @EntityGraph(attributePaths = "roles")
     Optional<User> findByRefreshToken(String refreshToken);
@@ -77,16 +80,25 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     );
 
     @EntityGraph(attributePaths = "roles")
+    @NonNull
     @Override
     List<User> findAll();
 
     @EntityGraph(attributePaths = "roles")
+    @NonNull
     @Override
-    Page<User> findAll(Pageable pageable);
+    Page<User> findAll(@NonNull Pageable pageable);
 
     @EntityGraph(attributePaths = "roles")
+    @NonNull
     @Override
-    List<User> findAll(Specification<User> spec);
+    List<User> findAll(@Nullable Specification<User> spec);
 
+    @EntityGraph(attributePaths = {"roles", "apartment", "building", "unit", "profileImage"})
+    @Query("SELECT u FROM User u WHERE u.email = :email")
+    Optional<User> findByEmailWithFullInfo(@Param("email") String email);
+
+    @Query("SELECT u FROM User u WHERE u.userName = :userName AND u.phoneNum = :phoneNum")
+    Optional<User> findByUserNameAndPhoneNum(@Param("userName") String userName, @Param("phoneNum") String phoneNum);
 
 }

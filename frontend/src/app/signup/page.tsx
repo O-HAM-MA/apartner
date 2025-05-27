@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { post, get } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import React from "react";
+import AddressSearch from "@/components/AddressSearch";
 
 export default function SignUpPage() {
   const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
@@ -50,9 +51,19 @@ export default function SignUpPage() {
 
   const [name, setName] = useState("");
 
-  const [apartment, setApartment] = useState("");
+  // 주소 관련 상태
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<{
+    id: number;
+    name: string;
+    address: string;
+    zipcode: string;
+  } | null>(null);
+  const [addressError, setAddressError] = useState("");
   const [dong, setDong] = useState("");
+  const [dongError, setDongError] = useState("");
   const [ho, setHo] = useState("");
+  const [hoError, setHoError] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneCheckMessage, setPhoneCheckMessage] = useState({
     text: "",
@@ -109,46 +120,22 @@ export default function SignUpPage() {
       .padStart(2, "0")}`;
   };
 
-  // 아파트 목록 로드
-  useEffect(() => {
-    const fetchApartments = async () => {
-      try {
-        const response = await get<{ id: number; name: string }[]>(
-          "/api/v1/apartments"
-        );
-        setApartments(response);
-      } catch (error) {
-        console.error("아파트 목록 로드 실패:", error);
-        // 실패 시 기본 데이터 사용
-        setApartments([
-          { id: 1, name: "현대아파트" },
-          { id: 2, name: "삼성아파트" },
-          { id: 3, name: "LG아파트" },
-        ]);
-      }
-    };
-
-    fetchApartments();
-  }, []);
-
   // 선택된 아파트에 따라 동 목록 로드
   useEffect(() => {
-    if (!apartment) {
+    if (!selectedAddress) {
       setBuildings([]);
       return;
     }
 
     const fetchBuildings = async () => {
       try {
-        const selectedApartment = apartments.find(
-          (apt) => apt.name === apartment
-        );
-        if (!selectedApartment) return;
-
         const response = await get<{ id: number; buildingNumber: string }[]>(
-          `/api/v1/apartments/${selectedApartment.id}/buildings`
+          `/api/v1/apartments/${selectedAddress.id}/buildings`
         );
         setBuildings(response);
+        // 동이 선택되어 있었다면 초기화
+        setDong("");
+        setHo("");
       } catch (error) {
         console.error("동 목록 로드 실패:", error);
         // 실패 시 기본 데이터 사용
@@ -161,7 +148,7 @@ export default function SignUpPage() {
     };
 
     fetchBuildings();
-  }, [apartment, apartments]);
+  }, [selectedAddress]);
 
   // 선택된 동에 따라 호수 목록 로드
   useEffect(() => {
@@ -432,8 +419,21 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!apartment || !dong || !ho) {
-      alert("아파트, 동, 호수 정보를 모두 입력해주세요.");
+    // 주소 검증
+    if (!selectedAddress) {
+      setAddressError("주소를 선택해주세요.");
+      return;
+    }
+
+    // 동 검증
+    if (!dong) {
+      setDongError("동을 선택해주세요.");
+      return;
+    }
+
+    // 호수 검증
+    if (!ho) {
+      setHoError("호수를 선택해주세요.");
       return;
     }
 
@@ -463,13 +463,10 @@ export default function SignUpPage() {
           ? `${emailId}@${customEmailDomain}`
           : `${emailId}@${emailDomain}`;
 
-      const selectedApartment = apartments.find(
-        (apt) => apt.name === apartment
-      );
       const selectedBuilding = buildings.find((b) => b.buildingNumber === dong);
       const selectedUnit = units.find((u) => u.unitNumber === ho);
 
-      if (!selectedApartment || !selectedBuilding || !selectedUnit) {
+      if (!selectedAddress || !selectedBuilding || !selectedUnit) {
         alert("선택한 주소 정보를 찾을 수 없습니다.");
         return;
       }
@@ -477,13 +474,20 @@ export default function SignUpPage() {
       const registrationData: any = {
         email: fullEmail,
         userName: name,
-        apartmentId: selectedApartment.id,
+        apartmentId: selectedAddress.id,
         buildingId: selectedBuilding.id,
         unitId: selectedUnit.id,
+        // 프로필 이미지 필드를 회원가입 시점에는 전송하지 않음
       };
 
       if (signupType === "KAKAO") {
         registrationData.socialProvider = "kakao";
+        // 프로필 이미지 관련 필드 제거 (백엔드에서 처리하도록 함)
+        // 카카오의 경우 소셜 ID 전송
+        if (kakaoInfo && kakaoInfo.socialProvider === "kakao") {
+          // 카카오 정보가 있으면 소셜 ID만 전송
+          // 프로필 이미지는 전송하지 않음 - 백엔드에서 처리하도록 함
+        }
       } else {
         registrationData.password = password;
         registrationData.phoneNum = phoneNumber;
@@ -497,7 +501,7 @@ export default function SignUpPage() {
     } catch (error: any) {
       console.error("회원가입 오류:", error);
       const errorMessage =
-        error?.response?.data || "회원가입 처리 중 오류가 발생했습니다.";
+        error?.response?.data?.message || "회원가입 처리 중 오류가 발생했습니다.";
       alert(errorMessage);
     } finally {
       setIsLoading(false);
@@ -635,6 +639,14 @@ export default function SignUpPage() {
 
   return (
     <>
+      <AddressSearch
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSelectAddress={(address) => {
+          setSelectedAddress(address);
+          setAddressError("");
+        }}
+      />
       <div className="min-h-screen bg-pink-50 p-4 sm:p-8 flex flex-col items-center  dark:bg-gray-900">
         <div className="w-full max-w-2xl p-8 space-y-8 bg-white  dark:bg-gray-800  shadow-xl rounded-xl">
           <div>
@@ -675,7 +687,7 @@ export default function SignUpPage() {
                     <input
                       type="text"
                       required
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                       placeholder="도메인 입력"
                       value={customEmailDomain}
                       onChange={(e) => {
@@ -685,7 +697,6 @@ export default function SignUpPage() {
                         setVerificationMessage({ text: "", color: "" });
                         setVerificationCode("");
                       }}
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                       disabled={isLoading}
                     />
                   ) : (
@@ -965,67 +976,111 @@ export default function SignUpPage() {
 
               <div className="pb-5">
                 <label
-                  htmlFor="address-apartment"
+                  htmlFor="address"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   주소
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <select
-                    id="address-apartment"
-                    name="address-apartment"
-                    value={apartment}
-                    onChange={(e) => setApartment(e.target.value)}
-                    required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                <div className="flex mb-2">
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    value={
+                      selectedAddress
+                        ? `(${selectedAddress.zipcode}) ${selectedAddress.address} ${selectedAddress.name}`
+                        : ""
+                    }
+                    readOnly
+                    placeholder="주소찾기 버튼을 클릭하여 주소를 검색하세요"
+                    className="flex-1 appearance-none rounded-l-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm h-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsAddressModalOpen(true)}
+                    className="h-11 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-md"
+                    style={{ minWidth: "100px" }}
                   >
-                    <option value="" disabled>
-                      아파트 선택
-                    </option>
-                    {apartments.map((apt) => (
-                      <option key={apt.id} value={apt.name}>
-                        {apt.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    id="address-dong"
-                    name="address-dong"
-                    value={dong}
-                    onChange={(e) => setDong(e.target.value)}
-                    required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  >
-                    <option value="" disabled>
-                      동 선택
-                    </option>
-                    {buildings.map((b) => (
-                      <option key={b.id} value={b.buildingNumber}>
-                        {b.buildingNumber}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    id="address-ho"
-                    name="address-ho"
-                    value={ho}
-                    onChange={(e) => setHo(e.target.value)}
-                    required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  >
-                    <option value="" disabled>
-                      호 선택
-                    </option>
-                    {units.map((u) => (
-                      <option key={u.id} value={u.unitNumber}>
-                        {u.unitNumber}
-                      </option>
-                    ))}
-                  </select>
+                    주소찾기
+                  </button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Enter your address
-                </p>
+
+                {addressError && (
+                  <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                    {addressError}
+                  </p>
+                )}
+
+                {selectedAddress && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    <div>
+                      <label
+                        htmlFor="address-dong"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        동(빌딩)
+                      </label>
+                      <select
+                        id="address-dong"
+                        name="address-dong"
+                        value={dong}
+                        onChange={(e) => {
+                          setDong(e.target.value);
+                          setDongError("");
+                        }}
+                        required
+                        className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      >
+                        <option value="" disabled>
+                          동 선택
+                        </option>
+                        {buildings.map((b) => (
+                          <option key={b.id} value={b.buildingNumber}>
+                            {b.buildingNumber}
+                          </option>
+                        ))}
+                      </select>
+                      {dongError && (
+                        <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                          {dongError}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="address-ho"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        호수
+                      </label>
+                      <select
+                        id="address-ho"
+                        name="address-ho"
+                        value={ho}
+                        onChange={(e) => {
+                          setHo(e.target.value);
+                          setHoError("");
+                        }}
+                        required
+                        className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      >
+                        <option value="" disabled>
+                          호 선택
+                        </option>
+                        {units.map((u) => (
+                          <option key={u.id} value={u.unitNumber}>
+                            {u.unitNumber}
+                          </option>
+                        ))}
+                      </select>
+                      {hoError && (
+                        <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                          {hoError}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {signupType !== "KAKAO" && (

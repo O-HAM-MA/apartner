@@ -246,13 +246,17 @@ export async function fetchJson<T>(
   } catch (parseError) {
     // 로그 개선: URL과 응답 텍스트의 일부를 포함시켜 디버깅 용이하게
     console.error(
-      `[fetchJson] JSON 파싱 에러 (${url}):`, 
+      `[fetchJson] JSON 파싱 에러 (${url}):`,
       parseError,
-      `\n응답 텍스트 일부: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`
+      `\n응답 텍스트 일부: ${text.substring(0, 200)}${
+        text.length > 200 ? "..." : ""
+      }`
     );
-    
+
     // 더 자세한 에러 메시지
-    throw new Error(`JSON 파싱 에러: ${(parseError as Error).message}. API: ${url}`);
+    throw new Error(
+      `JSON 파싱 에러: ${(parseError as Error).message}. API: ${url}`
+    );
   }
 }
 
@@ -633,4 +637,19 @@ export async function joinChatroom<T = any>(
  */
 export async function leaveChatroom<T = any>(chatroomId: number): Promise<T> {
   return await del<T>(`/api/v1/chats/${chatroomId}/users`, {}, true);
+}
+
+export async function uploadProfileImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("multipartFile", file);
+  const response = await fetchApi("/api/v1/profile-images/upload", {
+    method: "POST",
+    body: formData,
+    // fetchApi가 FormData면 Content-Type 자동 처리
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "업로드 실패");
+  }
+  return response.text();
 }

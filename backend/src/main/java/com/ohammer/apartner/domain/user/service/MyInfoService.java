@@ -40,13 +40,31 @@ public class MyInfoService {
     private final UserLogRepository userLogRepository;
     
     public MyInfoResponseDto getMyInfo(String email) {
-        User user = userRepository.findByEmail(email)
+        // 아파트, 빌딩, 유닛, 프로필 이미지 정보를 모두 함께 로드
+        User user = userRepository.findByEmailWithFullInfo(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         String profileImageUrl = user.getProfileImage() != null ? user.getProfileImage().getFilePath() : null;
-        String apartmentName = user.getApartment() != null ? user.getApartment().getName() : null;
-        String buildingName = user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : null;
-        String unitNumber = user.getUnit() != null ? user.getUnit().getUnitNumber() : null;
+        
+        // 연관 관계 엔티티들에 안전하게 접근
+        String apartmentName = null;
+        String zipcode = null;
+        String address = null;
+        if (user.getApartment() != null) {
+            apartmentName = user.getApartment().getName();
+            zipcode = user.getApartment().getZipcode();
+            address = user.getApartment().getAddress();
+        }
+        
+        String buildingName = null;
+        if (user.getBuilding() != null) {
+            buildingName = user.getBuilding().getBuildingNumber();
+        }
+        
+        String unitNumber = null;
+        if (user.getUnit() != null) {
+            unitNumber = user.getUnit().getUnitNumber();
+        }
 
         return MyInfoResponseDto.builder()
                 .id(user.getId())
@@ -60,6 +78,8 @@ public class MyInfoService {
                 .buildingName(buildingName)
                 .unitNumber(unitNumber)
                 .socialProvider(user.getSocialProvider())
+                .zipcode(zipcode)
+                .address(address)
                 .build();
     }
 

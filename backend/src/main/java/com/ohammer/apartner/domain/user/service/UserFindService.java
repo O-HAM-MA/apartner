@@ -13,6 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
+import com.ohammer.apartner.domain.user.dto.PasswordResetRequestDTO;
+import com.ohammer.apartner.security.dto.FindEmailRequest;
+import com.ohammer.apartner.security.dto.FindEmailResponse;
+import org.springframework.data.redis.core.RedisTemplate;
+import com.ohammer.apartner.security.exception.AuthException;
+import com.ohammer.apartner.security.exception.AuthErrorCode;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +28,7 @@ public class UserFindService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserLogRepository userLogRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     // 아이디(Username) 찾기
     public String findUserNameByPhoneNum(String phoneNum) {
@@ -61,18 +69,20 @@ public class UserFindService {
     }
 
     //비밀번호 찾기 후 문자 인증이 완료된 경우 비밀번호 재설정
-    public void resetPassword(Long userId, String newPassword, String newPasswordConfirm) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-
-        // 새 비밀번호 확인
-        if (!newPassword.equals(newPasswordConfirm)) {
-            throw new UserException(UserErrorCode.PASSWORD_CONFIRM_NOT_MATCH);
+    public void resetPassword(PasswordResetRequestDTO request) {
+        String verified = redisTemplate.opsForValue().get("verified:" + request.getEmail());
+    if (!"true".equals(verified)) {
+        throw new AuthException(AuthErrorCode.INVALID_VERIFICATION_CODE);
+    }
+        User user = userRepository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND));
+        if (user.getSocialProvider() != null && !user.getSocialProvider().isEmpty()) {
+            throw new AuthException(AuthErrorCode.SOCIAL_USER_CANNOT_CHANGE_PASSWORD);
         }
-
-        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setModifiedAt(LocalDateTime.now());
         userRepository.save(user);
+        redisTemplate.delete("verified:" + request.getEmail());
     }
 
     // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
@@ -90,5 +100,16 @@ public class UserFindService {
         } catch (Exception e) {
             return "unknown";
         }
+    }
+
+    // 아이디(이메일) 찾기
+    public FindEmailResponse findEmail(FindEmailRequest request) {
+        Optional<User> userOpt = userRepository.findByUserNameAndPhoneNum(
+                request.getUserName(), request.getPhoneNum());
+        if (userOpt.isEmpty()) {
+            return null;
+        }
+        User user = userOpt.get();
+        return FindEmailResponse.builder().email(user.getEmail()).build();
     }
 }

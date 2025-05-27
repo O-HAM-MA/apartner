@@ -1,4 +1,4 @@
-package com.ohammer.apartner.security.exception;
+package com.ohammer.apartner.domain.auth.exception;
 
 import lombok.Getter;
 
@@ -10,9 +10,4 @@ public class AuthException extends RuntimeException {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
-    
-    public AuthException(String message) {
-        super(message);
-        this.errorCode = null;
-    }
-}
+} 

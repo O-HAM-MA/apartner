@@ -1,5 +1,4 @@
 package com.ohammer.apartner.security.service;
-//이 부분은 테스트를 위한 것이며 추후 어딘가에 병합이 될 수 있음
 
 
 import com.amazonaws.services.s3.AmazonS3;
