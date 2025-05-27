@@ -47,10 +47,19 @@ export default function AdminVehicleManagement() {
     },
   });
 
-  // 페이지네이션 헬퍼 함수들
-  const totalPages = Math.ceil((vehicles?.length || 0) / itemsPerPage);
+  // vehicles 데이터 정렬
+  const sortedVehicles = vehicles
+    ? [...vehicles].sort((a, b) => {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      })
+    : [];
 
-  const paginatedVehicles = vehicles?.slice(
+  // 페이지네이션 헬퍼 함수들
+  const totalPages = Math.ceil((sortedVehicles?.length || 0) / itemsPerPage);
+
+  const paginatedVehicles = sortedVehicles?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -262,7 +271,7 @@ export default function AdminVehicleManagement() {
                         </td>
                         <td className="px-6 py-4">
                           {vehicle.registerType === "방문자" ? (
-                            <span className="text-rose-600">
+                            <span className="text-black-600">
                               {vehicle.applicantName}
                             </span>
                           ) : (
