@@ -19,15 +19,22 @@ export default function VehicleDetailPage({
 }: {
   params: { vehicleId: string };
 }) {
+  const vehicleId = React.use(params).vehicleId;
+
   // 차량 상세 정보 조회
   const { data: vehicle } = useQuery<VehicleRegistrationInfoDto>({
-    queryKey: ["vehicle", params.vehicleId],
+    queryKey: ["vehicles", vehicleId],
     queryFn: async () => {
       const { data, error } = await client.GET(
-        `/api/v1/vehicles/registrationsWithStatus/${params.vehicleId}`
+        `/api/v1/vehicles/registrationsWithStatus`
       );
       if (error) throw error;
-      return data;
+
+      // 모든 차량 중에서 해당 ID의 차량 찾기
+      const foundVehicle = data.find((v) => v.id === Number(vehicleId));
+      if (!foundVehicle) throw new Error("Vehicle not found");
+
+      return foundVehicle;
     },
   });
 
@@ -47,6 +54,7 @@ export default function VehicleDetailPage({
     <div className="min-h-screen bg-white">
       <Header />
       <main className="container mx-auto px-4 py-8">
+        {/* 상단 버튼과 제목 */}
         <div className="mb-6">
           <Link href="/admin/addash/vehicles">
             <Button variant="ghost" className="mb-4">
@@ -57,9 +65,10 @@ export default function VehicleDetailPage({
           <h1 className="text-2xl font-bold">차량 상세 정보</h1>
         </div>
 
-        {/* 차량 상세 정보 */}
+        {/* 차량 상세 정보 카드 */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="grid grid-cols-2 gap-6">
+            {/* 차량 기본 정보 */}
             <div>
               <h2 className="text-lg font-semibold mb-4">기본 정보</h2>
               <div className="space-y-3">
@@ -104,6 +113,8 @@ export default function VehicleDetailPage({
                 </p>
               </div>
             </div>
+
+            {/* 주소 정보 */}
             <div>
               <h2 className="text-lg font-semibold mb-4">주소 정보</h2>
               <div className="space-y-3">
