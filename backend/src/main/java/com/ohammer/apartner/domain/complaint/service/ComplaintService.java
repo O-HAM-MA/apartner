@@ -4,15 +4,18 @@ import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintRequestD
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.CreateComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintStatusResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.UpdateStateResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
@@ -50,14 +53,16 @@ public class ComplaintService {
                         .id(complaint.getId())
                         .title(complaint.getTitle())
                         .category(complaint.getCategory())
-                        .status(complaint.getStatus().name())
                         .createdAt(complaint.getCreatedAt())
+                        .content(complaint.getContent())
+                        .complaintStatus(complaint.getComplaintStatus().name())
                         .build())
                 .collect(Collectors.toList());
     }
 
 
     // Read
+    @Transactional(readOnly = true)
     public List<AllComplaintResponseDto> getAllComplaints() throws AccessDeniedException {
 
         // 로그인한 유저의 권한 확인 로직
@@ -84,7 +89,10 @@ public class ComplaintService {
                         .title(complaint.getTitle())
                         .category(complaint.getCategory())
                         .status(complaint.getStatus().name())
+                        .content(complaint.getContent())
+                        .complaintStatus(complaint.getComplaintStatus().name())
                         .createdAt(complaint.getCreatedAt())
+                        .userName(complaint.getUser().getUserName())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -112,7 +120,7 @@ public class ComplaintService {
             throw new AccessDeniedException("전체 민원 목록을 조회할 권한이 없습니다.");
         }
 
-        Complaint.Status state = mapStatus(status);
+        Complaint.ComplaintStatus state = mapStatus(status);
         if (state == null) {
             throw new IllegalArgumentException("유효하지 않은 상태값입니다: " + status);
         }
@@ -143,13 +151,13 @@ public class ComplaintService {
                 .content(requestDto.getContent())
                 .category(requestDto.getCategory())
                 .user(user)
-                .status(Complaint.Status.PENDING)
+                .complaintStatus(Complaint.ComplaintStatus.PENDING)
+                .status(Status.ACTIVE)
                 .build();
 
         log.info("user Id : {}", user.getId());
 
         complaintRepository.save(complaint);
-
 
         return CreateComplaintResponseDto.builder()
                 .id(complaint.getId())
@@ -163,6 +171,7 @@ public class ComplaintService {
 
 
     // Update
+    @Transactional
     public CreateComplaintResponseDto updateComplaint(CreateComplaintRequestDto requestDto, Long complaintId) throws AccessDeniedException {
 
         // 유저 찾기
@@ -192,6 +201,7 @@ public class ComplaintService {
     }
 
     // Update
+    @Transactional
     public UpdateComplaintStatusResponseDto updateStatus(Long complaintId, Long status) throws Exception {
 
         Complaint complaint = complaintRepository.findById(complaintId).orElseThrow(()->new Exception("컴플레인을 찾을 수 없습니다."));
@@ -211,7 +221,7 @@ public class ComplaintService {
             throw new AccessDeniedException("민원 상태를 변경할 권한이 없습니다.");
         }
 
-        complaint.setStatus(mapStatus(status));
+        complaint.setComplaintStatus(mapStatus(status));
 
         complaintRepository.save(complaint);
 
@@ -222,7 +232,37 @@ public class ComplaintService {
                 .build();
     }
 
+    @Transactional
+    public UpdateStateResponseDto inactiveComplaint(Long complaintId) throws Exception {
+
+        Complaint complaint = complaintRepository.findById(complaintId).orElseThrow(()->new Exception("컴플레인을 찾을 수 없습니다."));
+
+        User user = SecurityUtil.getCurrentUser();
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
+        Set<Role> userRoles = user.getRoles();
+
+        boolean hasRequiredRole = userRoles.stream()
+                .anyMatch(role -> role == Role.ADMIN);
+
+        if (!hasRequiredRole) {
+            throw new AccessDeniedException("민원 상태를 변경할 권한이 없습니다.");
+        }
+
+        complaint.setStatus(Status.INACTIVE);
+        complaintRepository.save(complaint);
+
+        return UpdateStateResponseDto.builder()
+                .id(complaint.getId())
+                .title(complaint.getTitle())
+                .state(complaint.getStatus())
+                .build();
+    }
+
     // delete
+    @Transactional
     public void deleteComplaint(Long complaintId) throws AccessDeniedException {
 
         Optional<Complaint> complaint = complaintRepository.findById(complaintId);
@@ -247,12 +287,12 @@ public class ComplaintService {
 
 
     // 상태 매핑 매서드
-    private Complaint.Status mapStatus(Long statusCode) {
+    private Complaint.ComplaintStatus mapStatus(Long statusCode) {
         return switch (statusCode.intValue()) {
-            case 1 -> Complaint.Status.PENDING;
-            case 2 -> Complaint.Status.IN_PROGRESS;
-            case 3 -> Complaint.Status.COMPLETED;
-            case 4 -> Complaint.Status.REJECTED;
+            case 1 -> Complaint.ComplaintStatus.PENDING;
+            case 2 -> Complaint.ComplaintStatus.IN_PROGRESS;
+            case 3 -> Complaint.ComplaintStatus.COMPLETED;
+            case 4 -> Complaint.ComplaintStatus.REJECTED;
             default -> null;
         };
     }

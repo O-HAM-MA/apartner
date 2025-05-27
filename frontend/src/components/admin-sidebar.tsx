@@ -267,7 +267,7 @@ export default function AdminSidebar() {
             ) : navItems.length === 0 ? (
               <div className="px-4 py-3 text-sm text-amber-500">
                 <p className="font-medium">표시할 메뉴 없음</p>
-                {adminMember && adminMember.isAdmin ? (
+                {adminMember.isAdmin ? (
                   <div>
                     <p className="text-xs mt-1">
                       시스템에 등록된 메뉴가 없습니다
