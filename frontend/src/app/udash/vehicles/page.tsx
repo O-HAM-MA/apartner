@@ -456,28 +456,55 @@ export default function VehicleManagement() {
     },
   });
 
-  // 차량 상태 수정 mutation 수정
+  // 승인 상태 표시를 위한 컴포넌트
+  const StatusBadge = ({ status }: { status: string }) => {
+    const getStatusInfo = (status: string) => {
+      switch (status) {
+        case "INVITER_AGREE":
+          return {
+            label: "내가 승인함",
+            className: "bg-blue-100 text-blue-800",
+          };
+        case "AGREE":
+          return {
+            label: "최종 승인됨",
+            className: "bg-green-100 text-green-800",
+          };
+        case "INAGREE":
+          return { label: "미승인", className: "bg-gray-100 text-gray-800" };
+        default:
+          return {
+            label: "대기중",
+            className: "bg-yellow-100 text-yellow-800",
+          };
+      }
+    };
+
+    const statusInfo = getStatusInfo(status);
+    return (
+      <Badge
+        className={`${statusInfo.className} hover:${statusInfo.className}`}
+      >
+        {statusInfo.label}
+      </Badge>
+    );
+  };
+
+  // 상태 변경 mutation 수정
   const updateVehicleStatusMutation = useMutation({
-    mutationFn: (data: EditingEntryRecordStatus) => {
-      console.log(data);
-      return client.PATCH(
-        `/api/v1/entry-records/${data.id}/status`,
-        {
-          // path: { id: data.entryRecordId },
-          body: { status: data.status },
-          /* path: ["status"],
-        body: {
-          // id: data.id,
-          type: data.status,
-        }, */
-        }
-      );
+    mutationFn: ({
+      entryRecordId,
+      status,
+    }: {
+      entryRecordId: number;
+      status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+    }) => {
+      return client.PATCH(`/api/v1/entry-records/${entryRecordId}/status`, {
+        body: { status },
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["entryRecords", "mine"] });
-      alert("방문자 차량 승인 상태가 변경되었습니다.");
-      setCurrentEntryRecord(null);
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
     },
     onError: (error) => {
       console.error("승인 상태 변경 실패:", error);
@@ -1145,15 +1172,7 @@ export default function VehicleManagement() {
                         </td>
                         <td className="px-4 py-4">{vehicle.type}</td>
                         <td className="px-4 py-4">
-                          <Badge
-                            className={
-                              vehicle.status === "주차중"
-                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                            }
-                          >
-                            {vehicle.status}
-                          </Badge>
+                          <StatusBadge status={vehicle.status} />
                         </td>
                         <td className="px-4 py-4 text-sm">
                           <div className="space-y-1">
@@ -1172,14 +1191,21 @@ export default function VehicleManagement() {
                             <div className="flex flex-col items-start gap-2">
                               <div className="flex items-center gap-2">
                                 <Switch
-                                  checked={vehicle.status === "INVITER_AGREE"}
+                                  checked={vehicle.status !== "INAGREE"}
+                                  className={
+                                    vehicle.status === "AGREE"
+                                      ? "bg-green-500"
+                                      : vehicle.status === "INVITER_AGREE"
+                                      ? "bg-blue-500"
+                                      : ""
+                                  }
                                   onCheckedChange={(checked) => {
                                     if (!vehicle.entryRecordId) {
                                       alert("출입 기록 ID가 없습니다.");
                                       return;
                                     }
                                     updateVehicleStatusMutation.mutate({
-                                      id: vehicle.entryRecordId,
+                                      entryRecordId: vehicle.entryRecordId,
                                       status: checked
                                         ? "INVITER_AGREE"
                                         : "INAGREE",
@@ -1187,14 +1213,18 @@ export default function VehicleManagement() {
                                   }}
                                 />
                                 <span className="text-sm">
-                                  {vehicle.status === "INVITER_AGREE"
-                                    ? "승인됨"
+                                  {vehicle.status === "AGREE"
+                                    ? "최종 승인됨"
+                                    : vehicle.status === "INVITER_AGREE"
+                                    ? "내가 승인함"
                                     : "미승인"}
                                 </span>
                               </div>
                               <span className="text-xs text-gray-500">
-                                {vehicle.status === "INVITER_AGREE"
-                                  ? "방문자 출입이 승인되었습니다"
+                                {vehicle.status === "AGREE"
+                                  ? "관리자가 최종 승인했습니다"
+                                  : vehicle.status === "INVITER_AGREE"
+                                  ? "관리자 승인 대기중입니다"
                                   : "방문자 출입을 승인하려면 켜세요"}
                               </span>
                             </div>
