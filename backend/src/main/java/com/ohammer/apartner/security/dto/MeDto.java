@@ -20,4 +20,6 @@ public class MeDto {
     private  String buildingName;
     private  String unitNumber;
     private  String socialProvider;
+    private  String zipcode;
+    private  String address;
 }
