@@ -94,7 +94,7 @@ const Header: React.FC = () => {
                 onClick={logoutAndHome}
                 className="text-gray-600 hover:text-pink-500 dark:text-gray-300 dark:hover:text-pink-400"
               >
-                로그sss아웃
+                로그아웃
               </button>
             </>
           ) : (

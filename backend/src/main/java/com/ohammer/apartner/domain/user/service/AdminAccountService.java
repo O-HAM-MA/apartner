@@ -22,6 +22,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import com.ohammer.apartner.domain.user.entity.UserLog;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
+import com.ohammer.apartner.global.Status;
+
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +41,7 @@ public class AdminAccountService {
     private final BuildingRepository buildingRepository;
     private final AdminGradeRepository adminGradeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserLogRepository userLogRepository;
     
     @Transactional(readOnly = true)
     public List<AdminAccountResponse> getAllAdminAccounts() {
@@ -89,6 +98,7 @@ public class AdminAccountService {
     }
     
     public AdminAccountResponse createAdminAccount(AdminAccountRequest request) {
+        
         String email = addDomainIfNeeded(request.getEmail());
         
         if (userRepository.existsByEmail(email)) {
@@ -214,13 +224,23 @@ public class AdminAccountService {
     public AdminAccountResponse changeAccountStatus(Long id, boolean active) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AdminAccountException("사용자를 찾을 수 없습니다: " + id));
-        
         if (!isAdminOrManager(user)) {
             throw new AdminAccountException("해당 사용자는 관리자 계정이 아닙니다.");
         }
-        
-        user.setStatus(active ? Status.ACTIVE : Status.INACTIVE);
+        Status oldStatus = user.getStatus();
+        Status newStatus = active ? Status.ACTIVE : Status.INACTIVE;
+        user.setStatus(newStatus);
         User updatedUser = userRepository.save(user);
+        // 상태 변경 로그 추가
+        String description = String.format("관리자 상태 변경: %s -> %s", oldStatus, newStatus);
+        com.ohammer.apartner.domain.user.entity.UserLog userLog = com.ohammer.apartner.domain.user.entity.UserLog.builder()
+            .user(user)
+            .logType(com.ohammer.apartner.domain.user.entity.UserLog.LogType.STATUS_CHANGE)
+            .description(description)
+            .ipAddress("admin-change") // 필요시 getClientIp()로 대체
+            .createdAt(java.time.LocalDateTime.now())
+            .build();
+        userLogRepository.save(userLog);
         return AdminAccountResponse.from(updatedUser);
     }
     
@@ -238,6 +258,15 @@ public class AdminAccountService {
         
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
+
+        UserLog passwordChangeLog = UserLog.builder()
+    .user(user)
+    .logType(UserLog.LogType.PASSWORD_CHANGE)
+    .description("관리자에 의한 비밀번호 변경")
+    .ipAddress(getClientIp())
+    .createdAt(LocalDateTime.now())
+    .build();
+userLogRepository.save(passwordChangeLog);
     }
     
     @Transactional(readOnly = true)
@@ -303,6 +332,23 @@ public class AdminAccountService {
                     }
                 }
             });
+        }
+    }
+
+     // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
+     private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            
+            String forwardedHeader = request.getHeader("X-Forwarded-For");
+            if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
+                return forwardedHeader.split(",")[0].trim();
+            }
+            
+            return request.getRemoteAddr();
+        } catch (Exception e) {
+            return "unknown";
         }
     }
 }

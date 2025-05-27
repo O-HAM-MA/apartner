@@ -44,8 +44,14 @@ public class MyInfoResponseDto { //사용자 정보 조회용
     @Schema(description = "소셜 로그인 제공자", example = "Google")
     private String socialProvider;
 
+    @Schema(description = "아파트 우편번호", example = "12345")
+    private String zipcode;
+
+    @Schema(description = "아파트 주소", example = "서울시 강남구 테헤란로 123")
+    private String address;
+
     @Builder
-    public MyInfoResponseDto(Long id, String userName, String email, String phoneNum, String profileImageUrl, String apartmentName, String buildingName, String unitNumber, String socialProvider, LocalDateTime createdAt, LocalDateTime modifiedAt) {
+    public MyInfoResponseDto(Long id, String userName, String email, String phoneNum, String profileImageUrl, String apartmentName, String buildingName, String unitNumber, String socialProvider, String zipcode, String address, LocalDateTime createdAt, LocalDateTime modifiedAt) {
         this.id = id;
         this.userName = userName;
         this.email = email;
@@ -55,6 +61,8 @@ public class MyInfoResponseDto { //사용자 정보 조회용
         this.buildingName = buildingName;
         this.unitNumber = unitNumber;
         this.socialProvider = socialProvider;
+        this.zipcode = zipcode;
+        this.address = address;
         this.createdAt = createdAt;
         this.modifiedAt = modifiedAt;
     }

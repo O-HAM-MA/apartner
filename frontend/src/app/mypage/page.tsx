@@ -6,11 +6,22 @@ import { useGlobalLoginMember } from "@/auth/loginMember";
 import Image from "next/image";
 import { get, post, patch } from "@/utils/api";
 import { useRouter } from "next/navigation";
+import AddressSearch from "@/components/AddressSearch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/dialog";
 
 // 회원가입 페이지에서 사용된 타입들을 참고하여 정의 (실제 프로젝트에서는 공통 타입으로 분리하는 것이 좋음)
 interface Apartment {
   id: number;
   name: string;
+  address: string;
+  zipcode: string;
 }
 
 interface Building {
@@ -33,10 +44,18 @@ const MyPage: React.FC = () => {
   const [emailDomain, setEmailDomain] = useState("");
   const [customEmailDomain, setCustomEmailDomain] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [apartment, setApartment] = useState("");
+  const [userName, setUserName] = useState("");
+
+  // 주소 관련 상태 - 회원가입 페이지와 동일하게 변경
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<{
+    id: number;
+    name: string;
+    address: string;
+    zipcode: string;
+  } | null>(null);
   const [dong, setDong] = useState("");
   const [ho, setHo] = useState("");
-  const [userName, setUserName] = useState("");
 
   // 이메일 인증 관련 상태
   const [originalEmail, setOriginalEmail] = useState("");
@@ -62,9 +81,9 @@ const MyPage: React.FC = () => {
     color: "",
   });
   const [isPhoneNumberChanged, setIsPhoneNumberChanged] = useState(false);
-  const [isPhoneChecked, setIsPhoneChecked] = useState(false); // 휴대폰 중복 확인 완료 여부
+  const [isPhoneChecked, setIsPhoneChecked] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false); // 공통 로딩 상태 (필요시 세분화)
+  const [isLoading, setIsLoading] = useState(false);
   const [isLoadingEmailCheck, setIsLoadingEmailCheck] = useState(false);
   const [isLoadingSendCode, setIsLoadingSendCode] = useState(false);
   const [isLoadingVerifyCode, setIsLoadingVerifyCode] = useState(false);
@@ -116,68 +135,140 @@ const MyPage: React.FC = () => {
       .padStart(2, "0")}`;
   };
 
+  // 아파트 이름으로 검색하는 함수 수정
+  const searchApartmentByName = async (apartmentName: string) => {
+    try {
+      // 올바른 API 경로 사용 - /search 제거
+      const response = await get<any[]>(
+        `/api/v1/apartments?name=${encodeURIComponent(apartmentName)}`
+      );
+      return response;
+    } catch (error) {
+      console.error("아파트 검색 실패:", error);
+      return [];
+    }
+  };
+
+  // 1. loginMember가 바뀔 때(로그인/로그아웃 등)만 상태 초기화
   useEffect(() => {
-    console.log(
-      "[DEBUG] useEffect[loginMember, isEditMode] triggered. isEditMode:",
-      isEditMode
-    );
-    if (loginMember) {
-      setUserName(loginMember.userName || "");
-      const currentFullEmail = loginMember.email || "";
-      setOriginalEmail(currentFullEmail);
-      if (currentFullEmail) {
-        const [id, domain] = currentFullEmail.split("@");
-        setEmailId(id || "");
-        if (domain) {
-          if (emailDomains.includes(domain)) {
-            setEmailDomain(domain);
-            setCustomEmailDomain("");
+    if (!loginMember) return;
+    setUserName(loginMember.userName || "");
+    setOriginalEmail(loginMember.email || "");
+    setOriginalPhoneNumber(loginMember.phoneNum || "");
+    setPhoneNumber(loginMember.phoneNum || "");
+    setDong(loginMember.buildingName || "");
+    setHo(loginMember.unitNumber || "");
+    // 주소 정보도 초기화
+    if (loginMember.apartmentName) {
+      searchApartmentByName(loginMember.apartmentName)
+        .then((apartments) => {
+          if (apartments && apartments.length > 0) {
+            const foundApartment = apartments.find(
+              (apt) => apt.name === loginMember.apartmentName
+            );
+            if (foundApartment) {
+              setSelectedAddress({
+                id: foundApartment.id,
+                name: foundApartment.name,
+                address: foundApartment.address || loginMember.address || "",
+                zipcode: foundApartment.zipcode || loginMember.zipcode || "",
+              });
+            } else {
+              setSelectedAddress({
+                id: 0,
+                name: loginMember.apartmentName || "",
+                address: loginMember.address || "",
+                zipcode: loginMember.zipcode || "",
+              });
+            }
           } else {
-            setEmailDomain("직접 입력");
-            setCustomEmailDomain(domain);
+            setSelectedAddress({
+              id: 0,
+              name: loginMember.apartmentName || "",
+              address: loginMember.address || "",
+              zipcode: loginMember.zipcode || "",
+            });
           }
-        } else {
-          setEmailDomain(emailDomains[0]);
+        })
+        .catch(() => {
+          setSelectedAddress({
+            id: 0,
+            name: loginMember.apartmentName || "",
+            address: loginMember.address || "",
+            zipcode: loginMember.zipcode || "",
+          });
+        });
+    } else {
+      setSelectedAddress(null);
+    }
+  }, [loginMember]);
+
+  // 2. isEditMode가 true로 바뀔 때만 입력 상태 초기화
+  useEffect(() => {
+    if (!isEditMode || !loginMember) return;
+    setUserName(loginMember.userName || "");
+    const currentFullEmail = loginMember.email || "";
+    setOriginalEmail(currentFullEmail);
+    if (currentFullEmail) {
+      const [id, domain] = currentFullEmail.split("@");
+      setEmailId(id || "");
+      if (domain) {
+        if (emailDomains.includes(domain)) {
+          setEmailDomain(domain);
           setCustomEmailDomain("");
+        } else {
+          setEmailDomain("직접 입력");
+          setCustomEmailDomain(domain);
         }
       } else {
-        setEmailId("");
         setEmailDomain(emailDomains[0]);
         setCustomEmailDomain("");
       }
-      // 중요: isEditMode가 false일 때 (즉, 보기 모드로 전환될 때) 인증 상태를 완전히 초기화합니다.
-      // isEditMode가 true일 때 (수정 모드 시작 시)도 동일하게 NOT_CHANGED로 시작합니다.
-      setEmailVerificationStep("NOT_CHANGED");
-      setEmailCheckMessage({ text: "", color: "" });
-      setVerificationMessage({ text: "", color: "" });
-      setVerificationCode("");
-      setIsEmailChanged(false); // 수정 모드 시작 시 이메일 변경 없음으로 시작
-      clearVerificationTimer(); // 타이머 정리
-
-      const currentPhoneNumber = loginMember.phoneNum || "";
-      setOriginalPhoneNumber(currentPhoneNumber);
-      setPhoneNumber(currentPhoneNumber);
-      setPhoneCheckMessage({ text: "", color: "" });
-      setIsPhoneNumberChanged(false); // 수정 모드 시작 시 휴대폰 번호 변경 없음으로 시작
-      setIsPhoneChecked(true); // 원래 번호는 체크된 것으로 간주
-
-      setApartment(loginMember.apartmentName || "");
-      setDong(loginMember.buildingName || "");
-      setHo(loginMember.unitNumber || "");
+    } else {
+      setEmailId("");
+      setEmailDomain(emailDomains[0]);
+      setCustomEmailDomain("");
     }
-  }, [loginMember, isEditMode]); // isEditMode가 변경될 때마다 실행
+    setEmailVerificationStep("NOT_CHANGED");
+    setEmailCheckMessage({ text: "", color: "" });
+    setVerificationMessage({ text: "", color: "" });
+    setVerificationCode("");
+    setIsEmailChanged(false);
+    clearVerificationTimer();
+    setOriginalPhoneNumber(loginMember.phoneNum || "");
+    setPhoneNumber(loginMember.phoneNum || "");
+    setPhoneCheckMessage({ text: "", color: "" });
+    setIsPhoneNumberChanged(false);
+    setIsPhoneChecked(true);
+    // 주소 관련 상태도 최초 1회만 초기화
+    setSelectedAddress({
+      id: 0,
+      name: loginMember.apartmentName || "",
+      address: loginMember.address || "",
+      zipcode: loginMember.zipcode || "",
+    });
+    setDong(loginMember.buildingName || "");
+    setHo(loginMember.unitNumber || "");
+  }, [isEditMode]);
 
   useEffect(() => {
     const fetchApartments = async () => {
       try {
         const response = await get<Apartment[]>("/api/v1/apartments");
         setApartments(response);
-        if (
-          loginMember?.apartmentName &&
-          response.find((apt) => apt.name === loginMember.apartmentName)
-        ) {
-          setApartment(loginMember.apartmentName);
-        } else if (response.length > 0) {
+        // 현재 사용자의 아파트 정보가 있으면 설정
+        if (loginMember?.apartmentName) {
+          const userApartment = response.find(
+            (apt) => apt.name === loginMember.apartmentName
+          );
+          if (userApartment) {
+            setSelectedAddress({
+              id: userApartment.id,
+              name: userApartment.name,
+              address: "", // 실제 주소는 별도 API 호출 필요
+              zipcode: "", // 실제 우편번호는 별도 API 호출 필요
+            });
+          }
         }
       } catch (error) {
         console.error("아파트 목록 로드 실패:", error);
@@ -188,91 +279,51 @@ const MyPage: React.FC = () => {
     }
   }, [isEditMode, loginMember?.apartmentName]);
 
+  // 선택된 아파트에 따라 동 목록 로드 - 회원가입 페이지와 동일하게 수정
   useEffect(() => {
-    if (!apartment || !isEditMode) {
+    if (!selectedAddress || selectedAddress.id === 0) {
       setBuildings([]);
       setDong("");
       return;
     }
     const fetchBuildings = async () => {
-      const selectedApartment = apartments.find(
-        (apt) => apt.name === apartment
-      );
-      if (!selectedApartment) return;
       try {
         const response = await get<Building[]>(
-          `/api/v1/apartments/${selectedApartment.id}/buildings`
+          `/api/v1/apartments/${selectedAddress.id}/buildings`
         );
         setBuildings(response);
-        // 수정 모드 진입 시 또는 아파트 변경 시 기존 동 정보 설정
-        const initialDong =
-          isEditMode &&
-          loginMember?.buildingName &&
-          response.find((b) => b.buildingNumber === loginMember.buildingName)
-            ? loginMember.buildingName
-            : "";
-        setDong(initialDong);
-        if (
-          !initialDong &&
-          response.length > 0 &&
-          apartment === loginMember?.apartmentName
-        ) {
-          // 아파트가 같고, loginMember에 buildingName이 없거나 목록에 없는 경우, 빈값 유지 또는 첫번째 값 설정 안 함
-        }
+        // 동이 선택되어 있었다면 초기화 (새로운 아파트 선택 시)
+        setDong("");
+        setHo("");
       } catch (error) {
         console.error("동 목록 로드 실패:", error);
       }
     };
     fetchBuildings();
-  }, [
-    apartment,
-    apartments,
-    isEditMode,
-    loginMember?.apartmentName,
-    loginMember?.buildingName,
-  ]);
+  }, [selectedAddress]);
 
+  // 선택된 동에 따라 호수 목록 로드 - 회원가입 페이지와 동일하게 수정
   useEffect(() => {
-    if (!dong || !isEditMode) {
+    if (!dong) {
       setUnits([]);
-      setHo("");
       return;
     }
     const fetchUnits = async () => {
-      const selectedBuilding = buildings.find((b) => b.buildingNumber === dong);
-      if (!selectedBuilding) return;
       try {
+        const selectedBuilding = buildings.find(
+          (b) => b.buildingNumber === dong
+        );
+        if (!selectedBuilding) return;
         const response = await get<Unit[]>(
           `/api/v1/apartments/buildings/${selectedBuilding.id}/units`
         );
         setUnits(response);
-        // 수정 모드 진입 시 또는 동 변경 시 기존 호수 정보 설정
-        const initialHo =
-          isEditMode &&
-          loginMember?.unitNumber &&
-          response.find((u) => u.unitNumber === loginMember.unitNumber)
-            ? loginMember.unitNumber
-            : "";
-        setHo(initialHo);
-        if (
-          !initialHo &&
-          response.length > 0 &&
-          dong === loginMember?.buildingName
-        ) {
-          // 동이 같고, loginMember에 unitNumber가 없거나 목록에 없는 경우, 빈값 유지 또는 첫번째 값 설정 안 함
-        }
       } catch (error) {
         console.error("호수 목록 로드 실패:", error);
       }
     };
     fetchUnits();
-  }, [
-    dong,
-    buildings,
-    isEditMode,
-    loginMember?.buildingName,
-    loginMember?.unitNumber,
-  ]);
+  }, [dong, buildings]);
 
   // 이메일 변경 감지
   useEffect(() => {
@@ -319,21 +370,118 @@ const MyPage: React.FC = () => {
     (isEmailChanged && emailVerificationStep !== "VERIFIED") ||
     (isPhoneNumberChanged && !isPhoneChecked);
 
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string>("");
+  const [profileImageError, setProfileImageError] = useState<string>("");
+  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
+
+  // 프로필 이미지 업로드 핸들러
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfileImageError("");
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 200 * 1024) {
+      setProfileImageError("이미지 크기는 200KB 이하만 가능합니다.");
+      setProfileImageFile(null);
+      setProfileImagePreview("");
+      return;
+    }
+    setProfileImageFile(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleProfileImageUpload = async () => {
+    if (!profileImageFile) return;
+    setIsUploadingProfile(true);
+    setProfileImageError("");
+    try {
+      const formData = new FormData();
+      formData.append("multipartFile", profileImageFile);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/profile-images/upload`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "프로필 이미지 업로드에 실패했습니다.");
+      }
+
+      // 서버 응답이 문자열 URL인 경우를 처리
+      const contentType = response.headers.get("content-type");
+      let imageUrl;
+
+      if (contentType && contentType.includes("application/json")) {
+        // JSON 응답인 경우
+        const result = await response.json();
+        imageUrl = result.profileImageUrl || "";
+      } else {
+        // 문자열 URL 응답인 경우
+        imageUrl = await response.text();
+      }
+
+      if (setLoginMember && loginMember) {
+        setLoginMember({ ...loginMember, profileImageUrl: imageUrl });
+      }
+      setIsProfileModalOpen(false);
+      setProfileImageFile(null);
+      setProfileImagePreview("");
+    } catch (e: any) {
+      setProfileImageError(e.message || "업로드 실패");
+    } finally {
+      setIsUploadingProfile(false);
+    }
+  };
+
+  // 아파트 목록 불러온 후 selectedAddress 자동 세팅
+  useEffect(() => {
+    if (!isEditMode || !loginMember || apartments.length === 0) return;
+    const apt = apartments.find((a) => a.name === loginMember.apartmentName);
+    if (apt) {
+      setSelectedAddress({
+        id: apt.id,
+        name: apt.name,
+        address: apt.address,
+        zipcode: apt.zipcode,
+      });
+    }
+  }, [isEditMode, loginMember, apartments]);
+
+  // 동 목록 불러온 후 dong 자동 세팅
+  useEffect(() => {
+    if (!isEditMode || !loginMember || buildings.length === 0) return;
+    const bld = buildings.find(
+      (b) => b.buildingNumber === loginMember.buildingName
+    );
+    if (bld) setDong(bld.buildingNumber);
+  }, [isEditMode, loginMember, buildings]);
+
+  // 호수 목록 불러온 후 ho 자동 세팅
+  useEffect(() => {
+    if (!isEditMode || !loginMember || units.length === 0) return;
+    const unit = units.find((u) => u.unitNumber === loginMember.unitNumber);
+    if (unit) setHo(unit.unitNumber);
+  }, [isEditMode, loginMember, units]);
+
   if (!isLogin || !loginMember) {
     return <div>로그인 정보가 없습니다.</div>;
   }
 
   const handleEditToggle = () => {
-    console.log(
-      "[DEBUG] handleEditToggle: CALLED. Current isEditMode:",
-      isEditMode
-    );
-    // 이 함수는 정보 보기 모드에서 정보 수정 모드로 전환할 때만 사용됩니다.
-    // (isEditMode가 false일 때만 "정보 수정" 버튼이 보이므로)
+    // 프로필 이미지 업로드 모달 상태 초기화
+    setIsProfileModalOpen(false);
+    setProfileImageFile(null);
+    setProfileImagePreview("");
+    setProfileImageError("");
+    setIsUploadingProfile(false);
+    // 기존 코드
     setIsEditMode(true);
-    console.log(
-      "[DEBUG] handleEditToggle: FINISHED. isEditMode will be true in the next render."
-    );
   };
 
   const handleCancel = () => {
@@ -653,7 +801,7 @@ const MyPage: React.FC = () => {
     setIsLoading(true);
 
     const selectedApartmentObj = apartments.find(
-      (apt) => apt.name === apartment
+      (apt) => apt.name === selectedAddress?.name
     );
     const selectedBuildingObj = buildings.find(
       (b) => b.buildingNumber === dong
@@ -739,6 +887,18 @@ const MyPage: React.FC = () => {
 
   return (
     <>
+      {/* 주소 검색 모달 */}
+      <AddressSearch
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSelectAddress={(address) => {
+          setSelectedAddress(address);
+          setDong(""); // 동/호는 새 주소 선택 시 초기화
+          setHo("");
+          setIsAddressModalOpen(false);
+        }}
+      />
+
       <div className="min-h-screen bg-pink-50 p-4 sm:p-8 flex flex-col items-center dark:bg-gray-900">
         <div className="max-w-2xl w-full">
           <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-xl overflow-hidden">
@@ -768,6 +928,13 @@ const MyPage: React.FC = () => {
                       type="button"
                       className="absolute bottom-2 right-2 bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full p-3 shadow-lg transition-all duration-300 opacity-80 group-hover:opacity-100 transform scale-90 group-hover:scale-100"
                       aria-label="프로필 사진 변경"
+                      onClick={() => {
+                        setProfileImageFile(null);
+                        setProfileImagePreview("");
+                        setProfileImageError("");
+                        setIsUploadingProfile(false);
+                        setIsProfileModalOpen(true);
+                      }}
                     >
                       <MdEdit size={20} />
                     </button>
@@ -779,11 +946,10 @@ const MyPage: React.FC = () => {
                 <form
                   id="mypage-form"
                   onSubmit={(e) => {
-                    e.preventDefault(); // 기본 폼 제출 방지
+                    e.preventDefault();
                     console.log(
                       "[DEBUG] Form onSubmit: Default prevented. handleSubmit will be called by button click."
                     );
-                    // 이 핸들러에서는 handleSubmit을 호출하지 않습니다.
                   }}
                   className="space-y-6"
                 >
@@ -826,7 +992,6 @@ const MyPage: React.FC = () => {
                         value={emailId}
                         onChange={(e) => {
                           setEmailId(e.target.value);
-                          // 이메일 변경 시 관련 상태 초기화
                           setEmailCheckMessage({ text: "", color: "" });
                           setEmailVerificationStep("NONE");
                           setVerificationMessage({ text: "", color: "" });
@@ -920,7 +1085,6 @@ const MyPage: React.FC = () => {
                     )}
                     {showEmailVerificationProcessUI && (
                       <>
-                        {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
                         {emailVerificationStep !== "VERIFIED" && (
                           <div className="flex items-center space-x-2 mt-2">
                             <input
@@ -937,7 +1101,6 @@ const MyPage: React.FC = () => {
                                 isLoading
                               }
                             />
-                            {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
                             {(emailVerificationStep === "CHECKED" ||
                               emailVerificationStep === "FAILED") && (
                               <button
@@ -964,7 +1127,6 @@ const MyPage: React.FC = () => {
                                   : "인증번호 받기"}
                               </button>
                             )}
-                            {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
                             {(emailVerificationStep === "CODE_SENT" ||
                               emailVerificationStep === "FAILED") && (
                               <button
@@ -990,7 +1152,6 @@ const MyPage: React.FC = () => {
                             )}
                           </div>
                         )}
-                        {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
                         {verificationMessage.text && (
                           <p
                             className={`mt-2 text-xs ${
@@ -1035,7 +1196,6 @@ const MyPage: React.FC = () => {
                         value={phoneNumber}
                         onChange={(e) => {
                           setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""));
-                          // 휴대폰 번호 변경 시 관련 상태 초기화
                           setPhoneCheckMessage({ text: "", color: "" });
                           setIsPhoneChecked(false);
                         }}
@@ -1077,82 +1237,91 @@ const MyPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* 주소 수정 */}
+                  {/* 주소 수정 - 회원가입 페이지와 동일한 방식으로 변경 */}
                   <div>
                     <label
-                      htmlFor="address-apartment"
+                      htmlFor="address"
                       className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                     >
                       주소
                     </label>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <select
-                        id="address-apartment"
-                        name="address-apartment"
-                        value={apartment}
-                        onChange={(e) => setApartment(e.target.value)}
-                        required
-                        className="appearance-none rounded-md relative block w-full sm:w-auto flex-grow px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm h-11"
-                        disabled={isLoading}
+                    <div className="flex mb-2">
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={
+                          selectedAddress
+                            ? `(${selectedAddress.zipcode}) ${selectedAddress.address} ${selectedAddress.name}`
+                            : ""
+                        }
+                        readOnly
+                        placeholder="주소찾기 버튼을 클릭하여 주소를 검색하세요"
+                        className="flex-1 appearance-none rounded-l-md block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm h-11"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsAddressModalOpen(true)}
+                        className="h-11 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-md"
+                        style={{ minWidth: "100px" }}
                       >
-                        <option value="" disabled>
-                          아파트 선택
-                        </option>
-                        {apartments.map((apt) => (
-                          <option key={apt.id} value={apt.name}>
-                            {apt.name}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="flex items-center w-full sm:w-auto">
-                        <select
-                          id="address-dong"
-                          name="address-dong"
-                          value={dong}
-                          onChange={(e) => setDong(e.target.value)}
-                          required
-                          disabled={
-                            !apartment || buildings.length === 0 || isLoading
-                          }
-                          className="appearance-none rounded-md relative block w-full flex-grow px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm h-11"
-                        >
-                          <option value="" disabled>
-                            동 선택
-                          </option>
-                          {buildings.map((b) => (
-                            <option key={b.id} value={b.buildingNumber}>
-                              {b.buildingNumber}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="ml-1 mr-2 text-sm text-gray-700 dark:text-gray-300">
-                          동
-                        </span>
-                      </div>
-                      <div className="flex items-center w-full sm:w-auto">
-                        <select
-                          id="address-ho"
-                          name="address-ho"
-                          value={ho}
-                          onChange={(e) => setHo(e.target.value)}
-                          required
-                          disabled={!dong || units.length === 0 || isLoading}
-                          className="appearance-none rounded-md relative block w-full flex-grow px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm h-11"
-                        >
-                          <option value="" disabled>
-                            호 선택
-                          </option>
-                          {units.map((u) => (
-                            <option key={u.id} value={u.unitNumber}>
-                              {u.unitNumber}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="ml-1 text-sm text-gray-700 dark:text-gray-300">
-                          호
-                        </span>
-                      </div>
+                        주소찾기
+                      </button>
                     </div>
+                    {selectedAddress && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                        <div>
+                          <label
+                            htmlFor="address-dong"
+                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            동(빌딩)
+                          </label>
+                          <select
+                            id="address-dong"
+                            name="address-dong"
+                            value={dong}
+                            onChange={(e) => setDong(e.target.value)}
+                            required
+                            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                          >
+                            <option value="" disabled>
+                              동 선택
+                            </option>
+                            {buildings.map((b) => (
+                              <option key={b.id} value={b.buildingNumber}>
+                                {b.buildingNumber}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="address-ho"
+                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                          >
+                            호수
+                          </label>
+                          <select
+                            id="address-ho"
+                            name="address-ho"
+                            value={ho}
+                            onChange={(e) => setHo(e.target.value)}
+                            required
+                            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                          >
+                            <option value="" disabled>
+                              호 선택
+                            </option>
+                            {units.map((u) => (
+                              <option key={u.id} value={u.unitNumber}>
+                                {u.unitNumber}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </form>
               ) : (
@@ -1169,13 +1338,14 @@ const MyPage: React.FC = () => {
                     },
                     {
                       label: "주소",
-                      value: loginMember.apartmentName
-                        ? `${loginMember.apartmentName} ${
-                            loginMember.buildingName || ""
-                          }${loginMember.buildingName ? "동" : ""} ${
-                            loginMember.unitNumber || ""
-                          }${loginMember.unitNumber ? "호" : ""}`.trim()
-                        : "주소 정보가 없습니다.",
+                      value:
+                        loginMember.zipcode &&
+                        loginMember.address &&
+                        loginMember.apartmentName &&
+                        loginMember.buildingName &&
+                        loginMember.unitNumber
+                          ? `(${loginMember.zipcode}) ${loginMember.address} ${loginMember.apartmentName} ${loginMember.buildingName}동 ${loginMember.unitNumber}호`
+                          : "주소 정보가 없습니다.",
                     },
                   ].map((item) => (
                     <div
@@ -1198,9 +1368,8 @@ const MyPage: React.FC = () => {
                 {isEditMode ? (
                   <>
                     <button
-                      type="button" // type="button"으로 변경
+                      type="button"
                       onClick={() => {
-                        // onClick으로 handleSubmit 호출
                         console.log(
                           "[DEBUG] '수정 완료' button clicked. Calling handleSubmit..."
                         );
@@ -1216,7 +1385,7 @@ const MyPage: React.FC = () => {
                       {isLoading ? "수정 중..." : "수정 완료"}
                     </button>
                     <button
-                      type="button" // "취소" 버튼
+                      type="button"
                       onClick={handleCancel}
                       className="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-slate-300 dark:border-slate-600 text-base font-semibold rounded-lg shadow-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-gray-700 hover:bg-slate-50 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-pink-400 transition-all duration-300 transform hover:scale-105"
                       disabled={isLoading}
@@ -1227,7 +1396,7 @@ const MyPage: React.FC = () => {
                 ) : (
                   <>
                     <button
-                      type="button" // "정보 수정" 버튼
+                      type="button"
                       onClick={handleEditToggle}
                       className="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-semibold rounded-lg shadow-md text-white bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-pink-400 transition-all duration-300 transform hover:scale-105"
                     >
@@ -1235,14 +1404,13 @@ const MyPage: React.FC = () => {
                     </button>
                     {loginMember && loginMember.socialProvider === null && (
                       <button
-                        type="button" // "비밀번호 변경" 버튼
+                        type="button"
                         onClick={() => router.push("/mypage/editPassword")}
                         className="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-slate-300 dark:border-slate-600 text-base font-semibold rounded-lg shadow-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-gray-700 hover:bg-slate-50 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-pink-400 transition-all duration-300 transform hover:scale-105"
                       >
                         비밀번호 변경
                       </button>
                     )}
-                    {/* 회원탈퇴 버튼 추가 */}
                     {!isEditMode && (
                       <button
                         type="button"
@@ -1259,6 +1427,52 @@ const MyPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 프로필 이미지 업로드 모달 */}
+      <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>프로필 이미지 변경</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProfileImageChange}
+              disabled={isUploadingProfile}
+            />
+            {profileImagePreview && (
+              <img
+                src={profileImagePreview}
+                alt="미리보기"
+                className="w-32 h-32 rounded-full object-cover border"
+              />
+            )}
+            {profileImageError && (
+              <div className="text-red-500 text-sm">{profileImageError}</div>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              className="px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600 disabled:bg-gray-300"
+              onClick={handleProfileImageUpload}
+              disabled={!profileImageFile || isUploadingProfile}
+            >
+              {isUploadingProfile ? "업로드 중..." : "업로드"}
+            </button>
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="px-4 py-2 border rounded text-gray-700 bg-white hover:bg-gray-100"
+                disabled={isUploadingProfile}
+              >
+                취소
+              </button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

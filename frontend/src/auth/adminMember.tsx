@@ -16,6 +16,7 @@ type AdminMember = {
   socialProvider: string | null;
   roles: string[];
   gradeId: number;
+  isAdmin?: boolean;
 };
 
 export const AdminMemberContext = createContext<{
@@ -51,6 +52,7 @@ function createEmptyAdminMember(): AdminMember {
     socialProvider: null,
     roles: [],
     gradeId: 0,
+    isAdmin: false,
   };
 }
 
@@ -83,10 +85,15 @@ export function useAdminMember() {
 
   const setAdminMember = (member: AdminMember) => {
     console.log("[AdminMember] 관리자 정보 설정:", member);
-    _setAdminMember(member);
+    // isAdmin 속성 설정 - roles 배열에 ADMIN이 포함되어 있으면 true
+    const memberWithIsAdmin = {
+      ...member,
+      isAdmin: member.roles.includes("ADMIN"),
+    };
+    _setAdminMember(memberWithIsAdmin);
     setAdminMemberPending(false);
     if (typeof window !== "undefined") {
-      localStorage.setItem("adminMember", JSON.stringify(member));
+      localStorage.setItem("adminMember", JSON.stringify(memberWithIsAdmin));
     }
   };
 
@@ -110,19 +117,16 @@ export function useAdminMember() {
   const adminLogout = (callback: () => void) => {
     fetchApi("/api/v1/admin/logout", { method: "DELETE" })
       .then((response) => {
-        if (!response.ok) {
-          console.error(
-            "Admin logout request failed with status:",
-            response.status
-          );
-        }
-        removeAdminMember();
-        callback();
+        setTimeout(() => {
+          removeAdminMember();
+          callback();
+        }, 100); // 쿠키 삭제 적용 대기
       })
       .catch((error) => {
-        console.error("Admin logout failed:", error);
-        removeAdminMember();
-        callback();
+        setTimeout(() => {
+          removeAdminMember();
+          callback();
+        }, 100);
       });
   };
 

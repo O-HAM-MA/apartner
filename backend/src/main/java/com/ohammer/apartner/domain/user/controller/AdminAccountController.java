@@ -16,7 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +54,10 @@ public class AdminAccountController {
     
     @PostMapping
     public ResponseEntity<AdminAccountResponse> createAdminAccount(@Valid @RequestBody AdminAccountRequest request) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(adminAccountService.createAdminAccount(request));
     }
     
@@ -60,11 +65,17 @@ public class AdminAccountController {
     public ResponseEntity<AdminAccountResponse> updateAdminAccount(
             @PathVariable Long id, 
             @Valid @RequestBody AdminAccountRequest request) {
+                if (!isAdmin()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+                }
         return ResponseEntity.ok(adminAccountService.updateAdminAccount(id, request));
     }
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAdminAccount(@PathVariable Long id) {
+        if (!isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
         adminAccountService.deleteAdminAccount(id);
         return ResponseEntity.noContent().build();
     }
@@ -73,6 +84,9 @@ public class AdminAccountController {
     public ResponseEntity<AdminAccountResponse> changeAccountStatus(
             @PathVariable Long id, 
             @RequestBody Map<String, Boolean> status) {
+                if (!isAdmin()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+                }
         return ResponseEntity.ok(adminAccountService.changeAccountStatus(id, status.get("active")));
     }
     
@@ -80,6 +94,9 @@ public class AdminAccountController {
     public ResponseEntity<Void> resetPassword(
             @PathVariable Long id, 
             @Valid @RequestBody PasswordChangeRequest request) {
+                if (!isAdmin()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+                }
         adminAccountService.resetPassword(id, request);
         return ResponseEntity.noContent().build();
     }
@@ -98,4 +115,19 @@ public class AdminAccountController {
     public ResponseEntity<List<Building>> getBuildingsByApartmentId(@PathVariable Long apartmentId) {
         return ResponseEntity.ok(adminAccountService.getBuildingsByApartmentId(apartmentId));
     }
+
+    public boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // ADMIN만 모든 메뉴 조회 가능, MANAGER는 권한 없음
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(authority -> 
+                        authority.getAuthority().equals("ADMIN") || 
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+                        
+        if (!isAdmin) {
+            return false;
+        }
+        return true;
+    }
+
 }

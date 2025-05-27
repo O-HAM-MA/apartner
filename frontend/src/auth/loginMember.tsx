@@ -14,6 +14,8 @@ type Member = {
   email: string | null;
   phoneNum: string | null;
   socialProvider: string | null;
+  zipcode: string | null;
+  address: string | null;
 };
 
 export const LoginMemberContext = createContext<{
@@ -47,6 +49,8 @@ function createEmptyMember(): Member {
     email: null,
     phoneNum: null,
     socialProvider: null,
+    zipcode: null,
+    address: null,
   };
 }
 

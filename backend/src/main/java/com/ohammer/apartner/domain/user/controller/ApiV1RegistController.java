@@ -43,6 +43,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 import com.ohammer.apartner.security.service.AuthService;
+import com.ohammer.apartner.domain.user.entity.UserLog;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
+import java.time.LocalDateTime;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,6 +60,7 @@ public class ApiV1RegistController {
     private final ApartmentService apartmentService;
     private final PasswordEncoder passwordEncoder;
     private final CustomRequest customRequest;
+    private final UserLogRepository userLogRepository;
 
     @PostMapping("/userreg")
     public ResponseEntity<?> register(@Valid @RequestBody UserRegistRequestDTO registerDto, BindingResult bindingResult, HttpServletRequest request) {
@@ -72,11 +78,11 @@ public class ApiV1RegistController {
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("휴대폰 번호는 필수 입력값입니다.");
                     }
                 }
-                
+                // 첫 번째 에러 메시지만 반환
                 String errorMessage = bindingResult.getFieldErrors().stream()
+                    .findFirst()
                     .map(error -> error.getDefaultMessage())
-                    .collect(Collectors.joining(", "));
-                
+                    .orElse("입력값이 올바르지 않습니다.");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
             }
             
@@ -236,6 +242,17 @@ public class ApiV1RegistController {
 
         userRegistService.logout(token, userId);
 
+        // 로그아웃 로그 추가
+        User user = principal.getUser();
+        UserLog logoutLog = UserLog.builder()
+                .user(user)
+                .logType(UserLog.LogType.LOGOUT)
+                .description("로그아웃")
+                .ipAddress(getClientIp())
+                .createdAt(LocalDateTime.now())
+                .build();
+        userLogRepository.save(logoutLog);
+
         HttpSession session = request.getSession(false); 
         if (session != null) {
             session.invalidate(); 
@@ -243,5 +260,23 @@ public class ApiV1RegistController {
         }
 
         return ResponseEntity.ok("로그아웃 완료");
+    }
+
+    // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            
+            String forwardedHeader = request.getHeader("X-Forwarded-For");
+            if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
+                return forwardedHeader.split(",")[0].trim();
+            }
+            
+            return request.getRemoteAddr();
+        } catch (Exception e) {
+            log.warn("Failed to get client IP: {}", e.getMessage());
+            return "unknown";
+        }
     }
 }
