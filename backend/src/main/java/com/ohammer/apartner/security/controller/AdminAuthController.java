@@ -150,6 +150,8 @@ public class AdminAuthController {
     public ResponseEntity<String> adminRegister(@RequestBody AdminRegistrationRequest registrationRequest) {
         log.info("Admin registration attempt for username: {}", registrationRequest.getUsername());
         try {
+
+            
             if (authService.findByEmail(registrationRequest.getEmail()) != null) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 사용 중인 이메일입니다.");
             }

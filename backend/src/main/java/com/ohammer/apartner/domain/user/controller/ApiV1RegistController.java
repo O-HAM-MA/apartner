@@ -78,11 +78,11 @@ public class ApiV1RegistController {
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("휴대폰 번호는 필수 입력값입니다.");
                     }
                 }
-                
+                // 첫 번째 에러 메시지만 반환
                 String errorMessage = bindingResult.getFieldErrors().stream()
+                    .findFirst()
                     .map(error -> error.getDefaultMessage())
-                    .collect(Collectors.joining(", "));
-                
+                    .orElse("입력값이 올바르지 않습니다.");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
             }
             

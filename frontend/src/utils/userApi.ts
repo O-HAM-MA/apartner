@@ -19,6 +19,10 @@ const userStatusToBackendStatus = (status: UserStatus): string => {
       return "PENDING";
     case UserStatus.WITHDRAWN:
       return "WITHDRAWN";
+    case UserStatus.SUSPENDED:
+      return "SUSPENDED";
+    case UserStatus.DELETED:
+      return "DELETED";
     default:
       return status;
   }
@@ -31,14 +35,16 @@ const userStatusToBackendStatus = (status: UserStatus): string => {
 export const getAdminUserList = async (
   searchTerm?: string,
   searchField?: string,
+  role?: string,
+  status?: UserStatus,
   page: number = 0,
   size: number = 20,
   sort: string = "lastLoginAt,desc"
 ): Promise<UserListResponse> => {
   const queryParams = new URLSearchParams();
 
+  // 검색어와 검색 필드에 따라 적절한 파라미터 설정
   if (searchTerm) {
-    // searchField에 따라 다른 파라미터 사용
     if (searchField === "userName") {
       queryParams.append("userName", searchTerm);
     } else if (searchField === "email") {
@@ -46,14 +52,24 @@ export const getAdminUserList = async (
     } else if (searchField === "apartmentName") {
       queryParams.append("apartmentName", searchTerm);
     } else {
-      // all 또는 기타 경우, 통합 검색어로 처리
+      // 통합 검색의 경우 searchTerm 파라미터 사용
       queryParams.append("searchTerm", searchTerm);
     }
+  }
+
+  // role과 status 파라미터 추가
+  if (role) {
+    queryParams.append("role", role);
+  }
+  if (status) {
+    queryParams.append("status", userStatusToBackendStatus(status));
   }
 
   queryParams.append("page", page.toString());
   queryParams.append("size", size.toString());
   queryParams.append("sort", sort);
+
+  console.log("API 요청 파라미터:", queryParams.toString());
 
   const response = await get<any>(
     `/api/v1/admin/users?${queryParams.toString()}`,
@@ -137,6 +153,8 @@ export const getUserLogs = async (
 export const exportUsers = (
   searchTerm?: string,
   searchField?: string,
+  role?: string,
+  status?: UserStatus,
   format: "csv" | "excel" = "csv"
 ): string => {
   const queryParams = new URLSearchParams();
@@ -153,6 +171,14 @@ export const exportUsers = (
       // all 또는 기타 경우, 통합 검색어로 처리
       queryParams.append("searchTerm", searchTerm);
     }
+  }
+
+  // role과 status 파라미터 추가
+  if (role) {
+    queryParams.append("role", role);
+  }
+  if (status) {
+    queryParams.append("status", userStatusToBackendStatus(status));
   }
 
   queryParams.append("format", format);

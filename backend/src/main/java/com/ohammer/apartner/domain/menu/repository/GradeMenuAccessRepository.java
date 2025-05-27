@@ -37,6 +37,6 @@ public interface GradeMenuAccessRepository extends JpaRepository<GradeMenuAccess
     List<Menu> findMenusByGradeIdOrderBySortOrder(@Param("gradeId") Long gradeId);
     
     // 메뉴별 정렬 순서 조회
-    @Query("SELECT gma FROM GradeMenuAccess gma WHERE gma.grade.id = :gradeId ORDER BY gma.sortOrder ASC")
+    @Query("SELECT gma FROM GradeMenuAccess gma WHERE gma.grade.id = :gradeId ORDER BY gma.sortOrder DESC")
     List<GradeMenuAccess> findByGradeIdOrderBySortOrder(@Param("gradeId") Long gradeId);
 } 

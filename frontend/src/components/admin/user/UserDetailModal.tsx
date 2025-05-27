@@ -9,9 +9,9 @@ import {
   Select,
   Tag,
   Button,
-  Space,
+  App,
 } from "antd";
-import { UserDetail, UserStatus, UserStatusDisplay } from "@/types/user";
+import { UserDetail, UserStatus } from "@/types/user";
 import { getAdminUserDetail, updateUserStatus } from "@/utils/userApi";
 import dayjs from "dayjs";
 import UserLogs from "./UserLogs";
@@ -20,11 +20,9 @@ import {
   CloseCircleFilled,
   ExclamationCircleFilled,
   MinusCircleFilled,
-  QuestionCircleOutlined,
 } from "@ant-design/icons";
 
 const { Option } = Select;
-const { useMessage } = message;
 
 interface UserDetailModalProps {
   userId: number | null;
@@ -39,13 +37,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   onClose,
   onUserUpdated,
 }) => {
+  const { message } = App.useApp();
   const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<UserStatus | null>(null);
   const [activeTab, setActiveTab] = useState("1");
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const [messageApi, contextHolder] = useMessage();
 
   useEffect(() => {
     if (open && userId) {
@@ -66,7 +63,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
       setSelectedStatus(response.status);
     } catch (error) {
       console.error("사용자 상세 정보 조회 중 오류 발생:", error);
-      messageApi.error("사용자 정보를 불러올 수 없습니다");
+      message.error("사용자 정보를 불러올 수 없습니다");
     } finally {
       setLoading(false);
     }
@@ -76,7 +73,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
     setSelectedStatus(status);
   };
 
-  const showConfirmModal = () => {
+  const handleStatusUpdate = async () => {
     if (
       !userId ||
       !userDetail ||
@@ -85,34 +82,44 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
     )
       return;
 
-    setConfirmModalVisible(true);
-  };
+    Modal.confirm({
+      title: "사용자 상태 변경",
+      content: `사용자 상태를 ${getStatusText(
+        userDetail.status
+      )}에서 ${getStatusText(selectedStatus)}로 변경하시겠습니까?`,
+      okText: "변경",
+      cancelText: "취소",
+      onOk: async () => {
+        try {
+          setStatusUpdating(true);
+          await updateUserStatus(userId, { status: selectedStatus });
 
-  const handleConfirmCancel = () => {
-    setConfirmModalVisible(false);
-  };
-
-  const handleConfirmOk = async () => {
-    if (!userId || !selectedStatus) return;
-
-    try {
-      setStatusUpdating(true);
-      await updateUserStatus(userId, { status: selectedStatus });
-
-      messageApi.success("사용자 상태가 변경되었습니다");
-      setConfirmModalVisible(false);
-      fetchUserDetail();
-      onUserUpdated();
-    } catch (error) {
-      console.error("사용자 상태 업데이트 중 오류 발생:", error);
-      messageApi.error("상태 변경 중 오류가 발생했습니다");
-    } finally {
-      setStatusUpdating(false);
-    }
+          message.success("사용자 상태가 변경되었습니다");
+          fetchUserDetail();
+          onUserUpdated();
+        } catch (error) {
+          console.error("사용자 상태 업데이트 중 오류 발생:", error);
+          message.error("상태 변경 중 오류가 발생했습니다");
+        } finally {
+          setStatusUpdating(false);
+        }
+      },
+    });
   };
 
   const getStatusText = (status: UserStatus): string => {
-    return UserStatusDisplay[status] || status;
+    switch (status) {
+      case UserStatus.ACTIVE:
+        return "활성";
+      case UserStatus.INACTIVE:
+        return "비활성";
+      case UserStatus.SUSPENDED:
+        return "정지";
+      case UserStatus.DELETED:
+        return "탈퇴";
+      default:
+        return status;
+    }
   };
 
   const getStatusBadge = (status: UserStatus) => {
@@ -131,18 +138,18 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
         );
-      case UserStatus.PENDING:
+      case UserStatus.SUSPENDED:
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
-            <CloseCircleFilled style={{ color: "orange", fontSize: "16px" }} />
+            <CloseCircleFilled style={{ color: "red", fontSize: "16px" }} />
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
         );
-      case UserStatus.WITHDRAWN:
+      case UserStatus.DELETED:
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
             <ExclamationCircleFilled
-              style={{ color: "red", fontSize: "16px" }}
+              style={{ color: "orange", fontSize: "16px" }}
             />
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
@@ -227,20 +234,22 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                         </span>
                       </div>
                     </Option>
-                    <Option value={UserStatus.PENDING}>
+                    <Option value={UserStatus.SUSPENDED}>
                       <div style={{ display: "flex", alignItems: "center" }}>
-                        <CloseCircleFilled style={{ color: "orange" }} />
+                        <CloseCircleFilled style={{ color: "red" }} />
                         <span style={{ marginLeft: 5 }}>
-                          {getStatusText(UserStatus.PENDING)}
+                          {getStatusText(UserStatus.SUSPENDED)}
                         </span>
                       </div>
                     </Option>
-                    {userDetail.status === UserStatus.WITHDRAWN && (
-                      <Option value={UserStatus.WITHDRAWN}>
+                    {userDetail.status === UserStatus.DELETED && (
+                      <Option value={UserStatus.DELETED}>
                         <div style={{ display: "flex", alignItems: "center" }}>
-                          <ExclamationCircleFilled style={{ color: "red" }} />
+                          <ExclamationCircleFilled
+                            style={{ color: "orange" }}
+                          />
                           <span style={{ marginLeft: 5 }}>
-                            {getStatusText(UserStatus.WITHDRAWN)}
+                            {getStatusText(UserStatus.DELETED)}
                           </span>
                         </div>
                       </Option>
@@ -249,7 +258,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   <Button
                     type="primary"
                     size="small"
-                    onClick={showConfirmModal}
+                    onClick={handleStatusUpdate}
                     loading={statusUpdating}
                     disabled={selectedStatus === userDetail.status}
                     style={{ marginLeft: "8px" }}
@@ -259,7 +268,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 </div>
               </div>
             </Descriptions.Item>
-            {userDetail.status === UserStatus.WITHDRAWN && (
+            {userDetail.status === UserStatus.DELETED && (
               <Descriptions.Item label="탈퇴 사유" span={2}>
                 {userDetail.leaveReason || "(입력된 사유 없음)"}
               </Descriptions.Item>
@@ -269,17 +278,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 ? dayjs(userDetail.createdAt).format("YYYY-MM-DD HH:mm:ss")
                 : "-"}
             </Descriptions.Item>
-            <Descriptions.Item label="수정 일시">
-              {userDetail.modifiedAt
-                ? dayjs(userDetail.modifiedAt).format("YYYY-MM-DD HH:mm:ss")
-                : "-"}
-            </Descriptions.Item>
             <Descriptions.Item label="최근 로그인">
               {userDetail.lastLoginAt
                 ? dayjs(userDetail.lastLoginAt).format("YYYY-MM-DD HH:mm:ss")
                 : "-"}
             </Descriptions.Item>
-            {userDetail.status === UserStatus.WITHDRAWN && (
+            {userDetail.status === UserStatus.DELETED && (
               <Descriptions.Item label="탈퇴 일시" span={2}>
                 {userDetail.deletedAt
                   ? dayjs(userDetail.deletedAt).format("YYYY-MM-DD HH:mm:ss")
@@ -298,66 +302,31 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   ];
 
   return (
-    <>
-      {contextHolder}
-      <Modal
-        title="사용자 상세 정보"
-        open={open}
-        onCancel={onClose}
-        width={800}
-        footer={null}
-        destroyOnHidden={true}
-        maskClosable={false}
-      >
-        <Spin spinning={loading}>
-          {userDetail ? (
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={tabItems}
-            />
-          ) : (
-            <div className="py-8 text-center text-gray-500">
-              {loading
-                ? "사용자 정보를 불러오는 중..."
-                : "사용자 정보가 없습니다"}
-            </div>
-          )}
-        </Spin>
-      </Modal>
-
-      {/* 상태 변경 확인 모달 */}
-      <Modal
-        title="사용자 상태 변경"
-        open={confirmModalVisible}
-        onCancel={handleConfirmCancel}
-        footer={[
-          <Button key="cancel" onClick={handleConfirmCancel}>
-            취소
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            loading={statusUpdating}
-            onClick={handleConfirmOk}
-          >
-            변경
-          </Button>,
-        ]}
-        destroyOnHidden={true}
-      >
-        <div className="flex items-center mb-4">
-          <QuestionCircleOutlined
-            style={{ color: "#faad14", fontSize: "22px", marginRight: "8px" }}
+    <Modal
+      title="사용자 상세 정보"
+      open={open}
+      onCancel={onClose}
+      width={800}
+      footer={null}
+      destroyOnHidden={true}
+      maskClosable={false}
+    >
+      <Spin spinning={loading}>
+        {userDetail ? (
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={tabItems}
           />
-          <span>
-            사용자 상태를 {userDetail && getStatusText(userDetail.status)}에서{" "}
-            {selectedStatus && getStatusText(selectedStatus)}로
-            변경하시겠습니까?
-          </span>
-        </div>
-      </Modal>
-    </>
+        ) : (
+          <div className="py-8 text-center text-gray-500">
+            {loading
+              ? "사용자 정보를 불러오는 중..."
+              : "사용자 정보가 없습니다"}
+          </div>
+        )}
+      </Spin>
+    </Modal>
   );
 };
 

@@ -137,6 +137,30 @@ const iconMap: Record<string, any> = {
   FileText: FileText,
 };
 
+// 오류 처리 함수 추가 (최상단 함수에 추가)
+const handleApiError = (error: any, defaultMessage: string) => {
+  // 403 권한 오류 처리
+  if (error?.response?.status === 403) {
+    const msg =
+      error?.response?.data?.message ||
+      "해당 기능에 대한 접근 권한이 없습니다.";
+    toast({
+      description: msg,
+      variant: "destructive",
+    });
+    return;
+  }
+  // 그 외 오류 처리
+  let errorMessage = defaultMessage;
+  if (error?.response?.data?.message) {
+    errorMessage = error.response.data.message;
+  }
+  toast({
+    description: errorMessage, // title 없이 description만!
+    variant: "destructive",
+  });
+};
+
 export default function GradesPage() {
   // State for grades and menus
   const [grades, setGrades] = useState<Grade[]>([]);
@@ -219,13 +243,7 @@ export default function GradesPage() {
         );
       }
     } catch (error) {
-      console.error("등급 목록을 불러오는데 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description:
-          "등급 목록을 불러오는데 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "등급 목록을 불러오는데 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, grades: false }));
     }
@@ -259,13 +277,7 @@ export default function GradesPage() {
         });
       }
     } catch (error) {
-      console.error("전체 메뉴 목록을 불러오는데 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description:
-          "전체 메뉴 목록을 불러오는데 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "전체 메뉴 목록을 불러오는데 실패했습니다:");
     } finally {
       setLoadingAllMenus(false);
     }
@@ -300,13 +312,7 @@ export default function GradesPage() {
         });
       }
     } catch (error) {
-      console.error("메뉴 페이지를 불러오는데 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description:
-          "메뉴 목록을 불러오는데 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 페이지를 불러오는데 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, menus: false }));
     }
@@ -378,12 +384,7 @@ export default function GradesPage() {
         setSortedMenus([]);
       }
     } catch (error) {
-      console.error("등급 추가에 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description: "등급 추가에 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "등급 추가에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -499,16 +500,7 @@ export default function GradesPage() {
         });
       }
     } catch (error: any) {
-      console.error("등급 수정에 실패했습니다:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "등급 수정 중 알 수 없는 오류가 발생했습니다.";
-      toast({
-        title: "오류",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      handleApiError(error, "등급 수정에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -547,12 +539,7 @@ export default function GradesPage() {
         setIsAddMenuDialogOpen(false);
       }
     } catch (error) {
-      console.error("메뉴 추가에 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description: "메뉴 추가에 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 추가에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -594,12 +581,7 @@ export default function GradesPage() {
         setIsEditMenuDialogOpen(false);
       }
     } catch (error) {
-      console.error("메뉴 수정에 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description: "메뉴 수정에 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 수정에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -637,46 +619,7 @@ export default function GradesPage() {
         setIsDeleteMenuDialogOpen(false);
       }
     } catch (error) {
-      console.error("메뉴 삭제에 실패했습니다:", error);
-
-      // 오류 메시지 처리 개선
-      let errorMessage = "메뉴 삭제에 실패했습니다.";
-
-      // error 객체에서 실제 메시지 추출 시도
-      if (error instanceof Error) {
-        const errorText = error.message;
-
-        // 외래 키 제약 조건 오류인 경우 (409 Conflict)
-        if (
-          errorText.includes("409") &&
-          errorText.includes("이 메뉴는 하나 이상의 등급에서 사용 중입니다")
-        ) {
-          errorMessage =
-            "이 메뉴는 하나 이상의 등급에서 사용 중입니다. 삭제하기 전에 모든 등급에서 이 메뉴를 선택 해제해주세요.";
-        }
-        // API 응답에 메시지가 있는 경우
-        else if (errorText.includes("message")) {
-          try {
-            const errorData = JSON.parse(
-              errorText.substring(
-                errorText.indexOf("{"),
-                errorText.lastIndexOf("}") + 1
-              )
-            );
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            }
-          } catch (e) {
-            // JSON 파싱 실패 시 기본 메시지 사용
-          }
-        }
-      }
-
-      toast({
-        title: "오류",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 삭제에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -761,22 +704,7 @@ export default function GradesPage() {
       setIsDeleteDialogOpen(false);
       setSelectedGrade(null);
     } catch (error: any) {
-      console.error("등급 삭제에 실패했습니다:", error);
-      let errorMessage = "등급 삭제에 실패했습니다.";
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      toast({
-        title: "오류",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      handleApiError(error, "등급 삭제에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }

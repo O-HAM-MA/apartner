@@ -21,7 +21,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import com.ohammer.apartner.domain.user.entity.UserLog;
 import com.ohammer.apartner.domain.user.repository.UserLogRepository;
-
+import com.ohammer.apartner.security.dto.FindEmailRequest;
+import com.ohammer.apartner.security.dto.FindEmailResponse;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Map;
@@ -43,6 +44,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.ohammer.apartner.security.CustomUserDetails;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.validation.BindingResult;
+import jakarta.validation.Valid;
+import com.ohammer.apartner.domain.user.dto.PasswordResetRequestDTO;
+import com.ohammer.apartner.domain.user.service.UserFindService;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,6 +60,7 @@ public class ApiV1AuthController {
     private final JwtTokenizer jwtTokenizer;
     private final UserRegistService userRegistService; // UserRegistService 주입
     private final ApartmentService apartmentService;
+    private final UserFindService userFindService;
 
     //테스트용이라서 배포 전에 삭제할꺼임
     @GetMapping("/home")
@@ -112,6 +118,12 @@ public class ApiV1AuthController {
             String unitNumber = Optional.ofNullable(user.getUnit())
                     .map(Unit::getUnitNumber)
                     .orElse(null);
+            String zipcode = Optional.ofNullable(user.getApartment())
+                    .map(Apartment::getZipcode)
+                    .orElse(null);
+            String address = Optional.ofNullable(user.getApartment())
+                    .map(Apartment::getAddress)
+                    .orElse(null);
 
             // 7. MeDto 생성 (프론트엔드로 보낼 데이터 객체 - 아파트 정보 포함)
             MeDto meDto = new MeDto(
@@ -125,7 +137,9 @@ public class ApiV1AuthController {
                     apartmentName,
                     buildingName,
                     unitNumber,
-                    user.getSocialProvider()
+                    user.getSocialProvider(),
+                    zipcode,
+                    address
             );
             log.info("[/me] Successfully retrieved user info for userId: {}", userIdLong);
             log.info("[/me] Successfully retrieved 너의 핸드폰번호 : {}", meDto.getPhoneNum());
@@ -263,6 +277,43 @@ public class ApiV1AuthController {
         return ResponseEntity.ok("로그아웃 완료");
     }
 
+
+    @PostMapping("/find-email")
+    public ResponseEntity<?> findEmail(@RequestBody FindEmailRequest request) {
+        FindEmailResponse response = userFindService.findEmail(request);
+        
+        if (response == null) {
+            return ResponseEntity.notFound().build(); // 404 응답
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequestDTO request, BindingResult bindingResult) {
+        log.info("[/reset-password] Received password reset request for email: {}", request.getEmail());
+
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("입력값이 올바르지 않습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+        }
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+        }
+
+        try {
+            userFindService.resetPassword(request);
+            return ResponseEntity.ok(Map.of("message", "비밀번호가 성공적으로 재설정되었습니다."));
+        } catch (Exception e) {
+            log.error("Password reset failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
     // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
     private String getClientIp() {
         try {
@@ -280,4 +331,6 @@ public class ApiV1AuthController {
             return "unknown";
         }
     }
+
+
 }

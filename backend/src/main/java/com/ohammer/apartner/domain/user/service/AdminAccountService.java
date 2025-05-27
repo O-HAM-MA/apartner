@@ -98,6 +98,7 @@ public class AdminAccountService {
     }
     
     public AdminAccountResponse createAdminAccount(AdminAccountRequest request) {
+        
         String email = addDomainIfNeeded(request.getEmail());
         
         if (userRepository.existsByEmail(email)) {

@@ -94,7 +94,7 @@ const UserLogs: React.FC<UserLogsProps> = ({ userId }) => {
         <Select
           placeholder="로그 타입 필터"
           style={{ width: 180 }}
-          allowClear
+          allowClear={false}
           value={logType}
           onChange={handleLogTypeChange}
         >
@@ -113,25 +113,6 @@ const UserLogs: React.FC<UserLogsProps> = ({ userId }) => {
         pagination={false}
         loading={loading}
         size="small"
-        expandable={{
-          expandedRowRender: (record) => {
-            try {
-              const details = record.details ? JSON.parse(record.details) : {};
-              return (
-                <div className="p-3 bg-gray-50">
-                  {Object.entries(details).map(([key, value]) => (
-                    <div key={key} className="mb-1">
-                      <Text strong>{key}: </Text>
-                      <Text>{String(value)}</Text>
-                    </div>
-                  ))}
-                </div>
-              );
-            } catch (e) {
-              return <Text type="secondary">상세 정보 없음</Text>;
-            }
-          },
-        }}
       />
 
       <div className="mt-4 flex justify-center">

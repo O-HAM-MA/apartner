@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { Table, Typography, Tag, Badge, Pagination, message } from "antd";
+import React, { useState, useEffect } from "react";
+import { Table, Typography, Tag, Badge, Pagination, message, App } from "antd";
 import { getAdminUserList, exportUsers } from "@/utils/userApi";
-import { UserListItem, UserStatus, UserStatusDisplay } from "@/types/user";
+import { UserListItem, UserStatus } from "@/types/user";
 import dayjs from "dayjs";
 import UserDetailModal from "@/components/admin/user/UserDetailModal";
 import UserFilterPanel from "@/components/admin/user/UserFilterPanel";
@@ -16,14 +16,16 @@ import {
 } from "@ant-design/icons";
 
 const { Title } = Typography;
-const { useMessage } = message;
 
 interface FilterParams {
   searchTerm: string;
   searchField: string;
+  role: string | undefined;
+  status: UserStatus | undefined;
 }
 
 export default function AdminUsersPage() {
+  const { message } = App.useApp();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -33,56 +35,51 @@ export default function AdminUsersPage() {
   const [filterParams, setFilterParams] = useState<FilterParams>({
     searchTerm: "",
     searchField: "all",
+    role: undefined,
+    status: undefined,
   });
   const [sortField, setSortField] = useState<string>("id");
-  const [sortOrder, setSortOrder] = useState<string>("desc");
-  const [messageApi, contextHolder] = useMessage();
+  const [sortOrder, setSortOrder] = useState<string>("desc"); // 기본값을 desc로 변경
   const pageSize = 20;
 
-  const fetchUsers = useCallback(async () => {
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, sortField, sortOrder]);
+
+  const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { searchTerm, searchField } = filterParams;
+      const { searchTerm, searchField, role, status } = filterParams;
       const sortParam = `${sortField},${sortOrder}`;
 
-      console.log("필터 요청: ", { searchTerm, searchField });
+      console.log("필터 요청: ", { searchTerm, searchField, role, status });
 
       const response = await getAdminUserList(
         searchTerm,
         searchField,
+        role,
+        status,
         currentPage,
         pageSize,
         sortParam
       );
 
-      // key 속성 추가 부분
-      const processedUsers = response.content.map((user) => ({
-        ...user,
-        key: user.id.toString(), // 고유 key 생성
-      }));
-
-      setUsers(processedUsers);
+      setUsers(response.content);
       setTotal(response.totalElements);
     } catch (error) {
       console.error("사용자 목록 불러오기 중 오류 발생:", error);
-      messageApi.error("사용자 목록을 불러오는 중 문제가 발생했습니다.");
+      message.error("사용자 목록을 불러오는 중 문제가 발생했습니다.");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, sortField, sortOrder, filterParams, messageApi]);
+  };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  const handleSearch = (searchTerm: string, searchField: string) => {
-    const newFilters = {
-      ...filterParams,
-      searchTerm,
-      searchField,
-    };
-    setFilterParams(newFilters);
-    setCurrentPage(0);
+  const handleSearch = (
+    searchTerm: string,
+    role?: string,
+    status?: UserStatus
+  ) => {
+    console.log("검색 요청:", searchTerm, role, status);
   };
 
   const handleFilterApply = (values: FilterParams) => {
@@ -91,29 +88,36 @@ export default function AdminUsersPage() {
     setFilterParams({
       searchTerm: values.searchTerm || "",
       searchField: values.searchField || "all",
+      role: values.role,
+      status: values.status,
     });
 
     setCurrentPage(0);
+
+    setTimeout(() => {
+      fetchUsers();
+    }, 100);
   };
 
   const handleReset = () => {
-    // 필터 파라미터 초기화
-    setFilterParams({
-      searchTerm: "",
-      searchField: "all",
-    });
-
-    // 정렬 초기화
     setSortField("id");
-    setSortOrder("desc");
-
-    // 페이지 초기화
+    setSortOrder("desc"); // 기본값을 desc로 변경
     setCurrentPage(0);
+
+    setTimeout(() => {
+      fetchUsers();
+    }, 100);
   };
 
   const handleExport = (format: "csv" | "excel") => {
-    const { searchTerm, searchField } = filterParams;
-    const exportUrl = exportUsers(searchTerm, searchField, format);
+    const { searchTerm, searchField, role, status } = filterParams;
+    const exportUrl = exportUsers(
+      searchTerm,
+      searchField,
+      role,
+      status,
+      format
+    );
 
     window.open(exportUrl, "_blank");
   };
@@ -121,9 +125,9 @@ export default function AdminUsersPage() {
   const handleTableChange = (
     pagination: any,
     filters: any,
-    sorter: SorterResult<UserListItem> | SorterResult<UserListItem>[]
+    sorter: SorterResult<UserListItem>
   ) => {
-    if (sorter && "field" in sorter && sorter.field && sorter.order) {
+    if (sorter && sorter.field && sorter.order) {
       const field = sorter.field as string;
       const order = sorter.order === "ascend" ? "asc" : "desc";
 
@@ -151,7 +155,18 @@ export default function AdminUsersPage() {
   };
 
   const getStatusText = (status: UserStatus): string => {
-    return UserStatusDisplay[status] || status;
+    switch (status) {
+      case UserStatus.ACTIVE:
+        return "활성";
+      case UserStatus.INACTIVE:
+        return "비활성";
+      case UserStatus.SUSPENDED:
+        return "정지";
+      case UserStatus.DELETED:
+        return "탈퇴";
+      default:
+        return status;
+    }
   };
 
   const getStatusBadge = (status: UserStatus) => {
@@ -170,18 +185,18 @@ export default function AdminUsersPage() {
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
         );
-      case UserStatus.PENDING:
+      case UserStatus.SUSPENDED:
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
-            <CloseCircleFilled style={{ color: "orange", fontSize: "16px" }} />
+            <CloseCircleFilled style={{ color: "red", fontSize: "16px" }} />
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
         );
-      case UserStatus.WITHDRAWN:
+      case UserStatus.DELETED:
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
             <ExclamationCircleFilled
-              style={{ color: "red", fontSize: "16px" }}
+              style={{ color: "orange", fontSize: "16px" }}
             />
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
@@ -254,7 +269,7 @@ export default function AdminUsersPage() {
     {
       title: "동/호수",
       key: "building",
-      render: (_: unknown, record: UserListItem) => {
+      render: (_, record: UserListItem) => {
         if (record.buildingName && record.unitNumber) {
           return `${record.buildingName}동 ${record.unitNumber}호`;
         } else if (record.buildingName) {
@@ -292,19 +307,10 @@ export default function AdminUsersPage() {
         date ? dayjs(date).format("YYYY-MM-DD HH:mm") : "-",
       sorter: true,
     },
-    {
-      title: "수정 일시",
-      dataIndex: "modifiedAt",
-      key: "modifiedAt",
-      render: (date: string | null) =>
-        date ? dayjs(date).format("YYYY-MM-DD HH:mm") : "-",
-      sorter: true,
-    },
   ];
 
   return (
     <div className="p-6">
-      {contextHolder}
       <Title level={2}>사용자 관리</Title>
 
       <UserFilterPanel
@@ -323,12 +329,7 @@ export default function AdminUsersPage() {
         onChange={handleTableChange}
         scroll={{ x: 1200 }}
         onRow={(record) => ({
-          onClick: (e) => {
-            e.preventDefault(); // 이벤트 기본 동작 방지
-            // wave 효과 이벤트 전파 방지
-            if (e.defaultPrevented) return;
-            handleUserRowClick(record);
-          },
+          onClick: () => handleUserRowClick(record),
           style: { cursor: "pointer" },
         })}
       />
