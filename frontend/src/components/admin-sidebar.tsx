@@ -98,7 +98,7 @@ export default function AdminSidebar() {
 
         // 사용자 등급에 따른 메뉴 API 호출
         const response = await get<ApiResponse<AdminMenu[]>>(
-            "/api/v1/admin/menu/me/menus"
+          "/api/v1/admin/menu/me/menus"
         );
 
         console.log("[메뉴 로드] API 응답:", JSON.stringify(response));
@@ -220,21 +220,21 @@ export default function AdminSidebar() {
   const hasAccessToMenu = adminMember.isAdmin || navItems.length > 0;
 
   return (
-      <>
-        {/* Mobile menu button */}
-        <div className="fixed lg:hidden top-4 left-4 z-40">
-          <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-                <X className="h-4 w-4" />
-            ) : (
-                <Menu className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+    <>
+      {/* Mobile menu button */}
+      <div className="fixed lg:hidden top-4 left-4 z-40">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <Menu className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
 
       {/* Sidebar */}
       <div
@@ -267,7 +267,7 @@ export default function AdminSidebar() {
             ) : navItems.length === 0 ? (
               <div className="px-4 py-3 text-sm text-amber-500">
                 <p className="font-medium">표시할 메뉴 없음</p>
-                {adminMember && adminMember.isAdmin ? (
+                {adminMember.isAdmin ? (
                   <div>
                     <p className="text-xs mt-1">
                       시스템에 등록된 메뉴가 없습니다
@@ -366,139 +366,14 @@ export default function AdminSidebar() {
           </div>
         </div>
       </div>
-        {/* Sidebar */}
+
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && (
         <div
-            className={cn(
-                "fixed lg:static inset-0 z-30 lg:z-0 bg-background/80 backdrop-blur-sm lg:backdrop-blur-none lg:bg-transparent transform transition-transform duration-200 lg:translate-x-0",
-                isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-            )}
-        >
-          <div className="h-full w-64 border-r bg-background flex flex-col">
-            <div className="p-4 border-b">
-              <div className="font-bold text-lg">Apartner Admin</div>
-              <div className="text-sm text-muted-foreground">관리자 대시보드</div>
-              {adminMember.isAdmin && (
-                  <div className="text-xs mt-1 text-green-600">ADMIN 권한</div>
-              )}
-            </div>
-            <div className="flex-1 overflow-auto py-2">
-              {loading ? (
-                  <div className="flex justify-center items-center h-20">
-                    <div className="text-sm text-muted-foreground">
-                      메뉴 로드 중...
-                    </div>
-                  </div>
-              ) : apiError ? (
-                  <div className="px-4 py-3 text-sm text-red-500">
-                    <p className="font-medium">메뉴 로드 오류</p>
-                    <p className="text-xs mt-1">{apiError}</p>
-                    <p className="text-xs mt-2">관리자 권한 확인 필요</p>
-                  </div>
-              ) : navItems.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-amber-500">
-                    <p className="font-medium">표시할 메뉴 없음</p>
-                    {adminMember.isAdmin ? (
-                        <div>
-                          <p className="text-xs mt-1">시스템에 등록된 메뉴가 없습니다</p>
-                          <p className="text-xs mt-1">메뉴 관리에서 메뉴를 추가해주세요</p>
-                          <Link
-                              href="/admin/grades"
-                              className="text-xs mt-2 flex items-center text-blue-500 hover:underline"
-                          >
-                            <Settings className="mr-1 h-3 w-3" />
-                            메뉴 관리로 이동
-                          </Link>
-                        </div>
-                    ) : (
-                        <p className="text-xs mt-1">
-                          계정에 메뉴 접근 권한이 없습니다
-                        </p>
-                    )}
-                  </div>
-              ) : (
-                  <nav className="grid gap-1 px-2">
-                    {navItems.map((item, index) => {
-                      const isActive = pathname === item.href;
-                      return (
-                          <Link
-                              key={index}
-                              href={item.href}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className={cn(
-                                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted",
-                                  isActive
-                                      ? "bg-muted font-medium text-foreground"
-                                      : "text-muted-foreground"
-                              )}
-                          >
-                            <item.icon className="h-4 w-4" />
-                            {item.title}
-                          </Link>
-                      );
-                    })}
-
-                    {/* ADMIN이라면 메뉴 관리 추가 (어떤 경우든) */}
-                    {adminMember.isAdmin && !navItems.some(item => item.href === "/admin/grades") && (
-                        <Link
-                            href="/admin/grades"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={cn(
-                                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted",
-                                pathname === "/admin/grades"
-                                    ? "bg-muted font-medium text-foreground"
-                                    : "text-muted-foreground"
-                            )}
-                        >
-                          <Settings className="h-4 w-4" />
-                          메뉴 관리
-                        </Link>
-                    )}
-                  </nav>
-              )}
-            </div>
-            <div className="mt-auto p-4 border-t">
-              <div className="flex items-center gap-3 mb-4">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage
-                      src={adminMember.profileImageUrl || undefined}
-                      alt="Admin"
-                  />
-                  <AvatarFallback>
-                    {adminMember.userName?.charAt(0) || "A"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium">
-                    {adminMember.userName || "관리자"}
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate max-w-28">
-                    {adminMember.email || "admin@apartner.site"}
-                  </div>
-                  {adminMember.isAdmin && (
-                      <div className="text-xs text-green-600">ADMIN 권한</div>
-                  )}
-                </div>
-              </div>
-              <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start"
-                  onClick={logoutAndRedirect}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                로그아웃
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Overlay for mobile */}
-        {isMobileMenuOpen && (
-            <div
-                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
-                onClick={() => setIsMobileMenuOpen(false)}
-            />
-        )}
-      </>
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+    </>
   );
 }
