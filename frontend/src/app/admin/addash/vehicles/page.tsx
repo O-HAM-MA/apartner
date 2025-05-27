@@ -9,6 +9,7 @@ import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 // 필요한 타입 정의
 type ParkingStatusDto = components["schemas"]["ParkingStatusDto"];
@@ -16,6 +17,10 @@ type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
 
 export default function AdminVehicleManagement() {
+  // 페이징 상태 추가
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   // React Query Client 인스턴스
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -41,6 +46,39 @@ export default function AdminVehicleManagement() {
       return data;
     },
   });
+
+  // 페이지네이션 헬퍼 함수들
+  const totalPages = Math.ceil((vehicles?.length || 0) / itemsPerPage);
+
+  const paginatedVehicles = vehicles?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // 페이지네이션 버튼 생성 함수
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    for (let i = 1; i <= totalPages; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+            currentPage === i
+              ? "z-10 bg-[#FF4081] text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF4081]"
+              : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
+    return buttons;
+  };
 
   return (
     <div className="min-h-screen bg-white m-0 p-0">
@@ -196,7 +234,7 @@ export default function AdminVehicleManagement() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {vehicles?.map((vehicle) => (
+                    {paginatedVehicles?.map((vehicle) => (
                       <tr
                         key={`${vehicle.id}-${vehicle.vehicleNum}`}
                         className="hover:bg-gray-50 cursor-pointer"
@@ -261,10 +299,20 @@ export default function AdminVehicleManagement() {
               {/* 페이지네이션 */}
               <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
                 <div className="flex-1 flex justify-between sm:hidden">
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
                     이전
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
                     다음
                   </Button>
                 </div>
@@ -275,12 +323,40 @@ export default function AdminVehicleManagement() {
                       <span className="font-medium">
                         {vehicles?.length || 0}
                       </span>{" "}
-                      대의 차량
+                      대의 차량 중{" "}
+                      <span className="font-medium">
+                        {(currentPage - 1) * itemsPerPage + 1}
+                      </span>
+                      -
+                      <span className="font-medium">
+                        {Math.min(
+                          currentPage * itemsPerPage,
+                          vehicles?.length || 0
+                        )}
+                      </span>
+                      대 표시
                     </p>
                   </div>
                   <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                      {/* 페이지네이션 버튼들 */}
+                    <nav
+                      className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                      aria-label="Pagination"
+                    >
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                      >
+                        이전
+                      </button>
+                      {renderPaginationButtons()}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                      >
+                        다음
+                      </button>
                     </nav>
                   </div>
                 </div>
