@@ -189,6 +189,7 @@ export default function AdminVehicleManagement() {
                       <th className="px-6 py-4">차종</th>
                       <th className="px-6 py-4">등록유형</th>
                       <th className="px-6 py-4">차주명</th>
+                      <th className="px-6 py-4">방문사유</th>
                       <th className="px-6 py-4">연락처</th>
                       <th className="px-6 py-4">등록일</th>
                       <th className="px-6 py-4">상태</th>
@@ -208,15 +209,28 @@ export default function AdminVehicleManagement() {
                         <td className="px-6 py-4">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              vehicle.registerType === "입주민"
+                              vehicle.registerType === "거주자"
                                 ? "bg-blue-100 text-blue-800"
-                                : "bg-purple-100 text-purple-800"
+                                : "bg-rose-100 text-rose-800"
                             }`}
                           >
                             {vehicle.registerType}
                           </span>
                         </td>
-                        <td className="px-6 py-4">{vehicle.applicantName}</td>
+                        <td className="px-6 py-4">
+                          {vehicle.registerType === "거주자"
+                            ? vehicle.applicantName
+                            : "-"}
+                        </td>
+                        <td className="px-6 py-4">
+                          {vehicle.registerType === "방문자" ? (
+                            <span className="text-rose-600">
+                              {vehicle.applicantName}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
                         <td className="px-6 py-4">{vehicle.userPhone}</td>
                         <td className="px-6 py-4">
                           {new Date(vehicle.createdAt).toLocaleDateString()}
