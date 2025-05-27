@@ -46,6 +46,28 @@ export default function AdminVehicleManagement() {
     <div className="min-h-screen bg-white m-0 p-0">
       <Header />
 
+      {/* 사용자 정보 배너 */}
+      <div className="bg-[#FFE6EE] py-4 w-full m-0">
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
+              <span className="text-gray-500 text-xl">백</span>
+            </div>
+            <div>
+              <h2 className="font-bold text-lg text-[#FF4081]">
+                백선영 입주민
+              </h2>
+              <p className="text-sm text-gray-600">삼성아파트 101동 102호</p>
+            </div>
+          </div>
+          <Link href="/dashboard">
+            <Button className="bg-black text-white hover:bg-gray-800">
+              대시보드 가기
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-sm p-6">
           {/* 주차장 현황 섹션 */}
