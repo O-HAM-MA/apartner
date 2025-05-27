@@ -10,6 +10,7 @@ import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
 import com.ohammer.apartner.security.utils.SecurityUtil;
+import com.ohammer.apartner.security.utils.checkAdminUtils;
 import com.ohammer.apartner.security.utils.checkRoleUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,7 +156,8 @@ public class VehicleService {
 //            throw new RuntimeException("관리자만 조회할 수 있습니다.");
 //        }
 
-        checkRoleUtils.validateAdminAccess();
+        //checkRoleUtils.validateAdminAccess();
+        checkAdminUtils.validateAdminAccess();
 
         List<EntryRecord> entryRecords;
 
@@ -170,34 +172,6 @@ public class VehicleService {
                 .collect(Collectors.toList());
     }
 
-
-    private VehicleRegistrationInfoDto convertToDto(Vehicle vehicle) {
-        // 외부인과 거주자의 구분에 따라 DTO를 매핑
-        if (vehicle.getIsForeign()) {
-            return VehicleRegistrationInfoDto.builder()
-                    .vehicleNum(vehicle.getVehicleNum())
-                    .type(vehicle.getType())
-                    .reason(vehicle.getReason()) // 외부인만 reason
-                    .phone(vehicle.getPhone()) // 외부인만 phone
-                    .build();
-        } else {
-            User user = vehicle.getUser();
-            return VehicleRegistrationInfoDto.builder()
-                    .vehicleNum(vehicle.getVehicleNum())
-                    .type(vehicle.getType())
-                    .userPhone(user.getPhoneNum()) // 거주자일 경우 phone은 user에서 가져옴
-                    .apartmentName(user.getApartment().getName())
-                    .buildingName(user.getBuilding().getBuildingNumber())
-                    .unitName(user.getUnit().getUnitNumber())
-                    .build();
-        }
-    }
-
-    public List<VehicleRegistrationInfoDto> getAll() {
-        return entryRecordRepository.findAllWithVehicleAndUser().stream()
-                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
-                .collect(Collectors.toList());
-    }
 
 
     @Transactional

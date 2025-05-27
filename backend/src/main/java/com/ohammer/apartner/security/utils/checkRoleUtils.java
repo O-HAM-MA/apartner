@@ -24,7 +24,7 @@ public class checkRoleUtils {
                 role.equals(Role.MANAGER) || role.equals(Role.MODERATOR));
 
         if (!isManagerOrModerator) {
-            throw new RuntimeException("관리자만 접근할 수 있습니다.");
+            throw new RuntimeException("매니저만 접근할 수 있습니다.");
         }
     }
 
