@@ -8,6 +8,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // 필요한 타입 정의
 type ParkingStatusDto = components["schemas"]["ParkingStatusDto"];
@@ -17,6 +18,7 @@ type VehicleRegistrationInfoDto =
 export default function AdminVehicleManagement() {
   // React Query Client 인스턴스
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // 주차장 현황 조회 쿼리
   const { data: parkingStatus } = useQuery<ParkingStatusDto>({
@@ -168,15 +170,18 @@ export default function AdminVehicleManagement() {
                       <th className="px-6 py-4">연락처</th>
                       <th className="px-6 py-4">등록일</th>
                       <th className="px-6 py-4">상태</th>
-                      <th className="px-6 py-4">관리</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {vehicles?.map((vehicle) => (
-                      <tr key={vehicle.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 font-medium">
-                          {vehicle.vehicleNum}
-                        </td>
+                      <tr
+                        key={`${vehicle.id}-${vehicle.vehicleNum}`}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          router.push(`/admin/addash/vehicles/${vehicle.id}`);
+                        }}
+                      >
+                        <td className="px-6 py-4">{vehicle.vehicleNum}</td>
                         <td className="px-6 py-4">{vehicle.type}</td>
                         <td className="px-6 py-4">
                           <span
@@ -189,7 +194,7 @@ export default function AdminVehicleManagement() {
                             {vehicle.registerType}
                           </span>
                         </td>
-                        <td className="px-6 py-4">{vehicle.userName}</td>
+                        <td className="px-6 py-4">{vehicle.applicantName}</td>
                         <td className="px-6 py-4">{vehicle.userPhone}</td>
                         <td className="px-6 py-4">
                           {new Date(vehicle.createdAt).toLocaleDateString()}
@@ -210,16 +215,6 @@ export default function AdminVehicleManagement() {
                               ? "1차승인"
                               : "미승인"}
                           </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              수정
-                            </Button>
-                            <Button variant="destructive" size="sm">
-                              삭제
-                            </Button>
-                          </div>
                         </td>
                       </tr>
                     ))}
