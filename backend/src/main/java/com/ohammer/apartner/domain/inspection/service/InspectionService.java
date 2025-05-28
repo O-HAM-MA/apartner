@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.inspection.service;
 
+import com.ohammer.apartner.domain.inspection.dto.InspectionIssueDto;
 import com.ohammer.apartner.domain.inspection.dto.InspectionRequestDto;
 import com.ohammer.apartner.domain.inspection.dto.InspectionResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.dto.InspectionUpdateDto;
@@ -30,9 +31,10 @@ public class InspectionService {
     private final UserRepository userRepository;
     //대충 유저 리포지토리가 있다고 가정
     public boolean itIsYou(Inspection inspection) {
-        Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
-
-        return userId.equals(inspection.getUser().getId());
+        User user = SecurityUtil.getCurrentUser();
+        if (user == null)
+            return false;
+        return user.getUserName().equals(inspection.getUser().getUserName());
     }
 
     public Result findResult(String result) {
@@ -53,9 +55,10 @@ public class InspectionService {
     public Inspection newInspectionSchedule (InspectionRequestDto dto) {
         //대충 유저 찾기
         //원래 통으로 객체를 찾을까 싶었는데, 도용?의 문제가 있을 것 같아서 효율성 깎고 id뽑아서 찾아오는걸루
-        Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
-
-        User user = userRepository.findById(userId).get();
+        //하지만 우리는 보안상으로 jwt는 필터에서만 처리시키기 때문에 여기서는 처리하지 않는다
+        User user = SecurityUtil.getCurrentUser();
+        if (user == null)
+            throw new RuntimeException("인증 과정에 오류가 생겼음");
 
         InspectionType type = inspectionTypeRepository.findByTypeName(dto.getType());
 
@@ -78,7 +81,7 @@ public class InspectionService {
     //전부 조회
     public List<InspectionResponseDetailDto> showAllInspections() {
         //TODO 일단 페이징까지는 패스
-        return inspectionRepository.findAll().stream()
+        return inspectionRepository.findAllByStatusNotWithdrawn(Status.WITHDRAWN).stream()
                  .map( r-> new InspectionResponseDetailDto(
                          r.getId(),
                          r.getUser().getId(),
@@ -118,8 +121,8 @@ public class InspectionService {
     @Transactional
     public void deleteInspection(Long id) {
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
-        if (!itIsYou(inspection))
-            throw new RuntimeException("본인만 삭제 가능합니다");
+        if(!itIsYou(inspection))
+            throw new RuntimeException("본인이 아닌뎁쇼");
 
         inspection.setStatus(Status.WITHDRAWN);
         inspectionRepository.save(inspection);
@@ -160,17 +163,17 @@ public class InspectionService {
     }
 
     //이슈 변경
-    @Transactional
-    public void IssueInspection(Long id) {
-        if (!inspectionRepository.existsById(id))
-            throw new RuntimeException("그거 없는댑쇼");
-        Inspection inspection = inspectionRepository.findById(id).get();
-        if (!itIsYou(inspection))
-            throw new RuntimeException("본인만 이슈 추가가 가능합니다");
-        inspection.setResult(Result.ISSUE);
-
-        inspectionRepository.save(inspection);
-    }
+//    @Transactional
+//    public void IssueInspection(Long id, InspectionIssueDto dto) {
+//        if (!inspectionRepository.existsById(id))
+//            throw new RuntimeException("그거 없는댑쇼");
+//        Inspection inspection = inspectionRepository.findById(id).get();
+//        if (!itIsYou(dto.getUserName(), inspection))
+//            throw new RuntimeException("본인만 이슈 추가가 가능합니다");
+//        inspection.setResult(Result.ISSUE);
+//
+//        inspectionRepository.save(inspection);
+//    }
 
 
     // =========== 여기서 부턴 타입쪽 ===========
