@@ -403,15 +403,6 @@ export default function VehicleManagement() {
   });
 
   // 주차장 현황 조회 쿼리 추가
-  const { data: parkingStatus } = useQuery<ParkingStatusDto>({
-    queryKey: ["parking", "status"],
-    queryFn: async () => {
-      const { data, error } = await client.GET("/api/v1/vehicles/status");
-      if (error) throw error;
-      return data;
-    },
-    enabled: isLogin,
-  });
 
   // 차량 등록 mutation 수정
   const addVehicleMutation = useMutation({
@@ -777,68 +768,6 @@ export default function VehicleManagement() {
         <div className="bg-white rounded-lg shadow-sm p-6">
           {/* 주차장 현황 섹션과 차량 관리 제목 부분 수정 */}
           <div>
-            {/* 주차장 현황 섹션 */}
-            <div className="mb-6 p-6 bg-white rounded-lg border border-gray-200 w-full">
-              <h2 className="text-lg font-semibold mb-4">주차장 현황</h2>
-              <div className="grid grid-cols-3 gap-10 max-w-[1200px] mx-auto">
-                <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-600 mb-2">전체 주차공간</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {parkingStatus?.totalCapacity || 0}
-                    <span className="text-base font-normal text-gray-600 ml-1">
-                      면
-                    </span>
-                  </p>
-                </div>
-                <div className="text-center p-6 bg-pink-50 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-600 mb-2">현재 주차</p>
-                  <p className="text-3xl font-bold text-[#FF4081]">
-                    {parkingStatus?.activeCount || 0}
-                    <span className="text-base font-normal text-gray-600 ml-1">
-                      대
-                    </span>
-                  </p>
-                </div>
-                <div className="text-center p-6 bg-green-50 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-600 mb-2">남은 공간</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {parkingStatus?.remainingSpace || 0}
-                    <span className="text-base font-normal text-gray-600 ml-1">
-                      면
-                    </span>
-                  </p>
-                </div>
-              </div>
-              {/* 주차장 사용률 프로그레스 바 */}
-              <div className="mt-8 max-w-[1200px] mx-auto">
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-[#FF4081] h-3 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${
-                        parkingStatus
-                          ? (parkingStatus.activeCount /
-                              parkingStatus.totalCapacity) *
-                            100
-                          : 0
-                      }%`,
-                    }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-500 mt-3 text-center">
-                  주차장 사용률:{" "}
-                  {parkingStatus
-                    ? Math.round(
-                        (parkingStatus.activeCount /
-                          parkingStatus.totalCapacity) *
-                          100
-                      )
-                    : 0}
-                  %
-                </p>
-              </div>
-            </div>
-
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h1 className="text-2xl font-bold">차량 관리</h1>
