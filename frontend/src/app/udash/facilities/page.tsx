@@ -145,6 +145,9 @@ export default function FacilitiesPage() {
     null
   );
   const [activeTab, setActiveTab] = useState('facilities');
+  const [activeReservationTab, setActiveReservationTab] = useState<
+    'current' | 'past'
+  >('current');
   const [selectedReservation, setSelectedReservation] =
     useState<FacilityReservationDetailDto | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -159,15 +162,17 @@ export default function FacilitiesPage() {
   );
   const [isCancelling, setIsCancelling] = useState(false);
 
+  // 검색과 필터링을 위한 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [facilityFilter, setFacilityFilter] = useState<string>('ALL');
+  const [instructorFilter, setInstructorFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+
   const formatTime = (time: string) => {
     if (!time) return '';
     try {
-      // HH:mm:ss 형식이면 HH:mm만 추출
-      if (time.includes(':')) {
-        const [hours, minutes] = time.split(':');
-        return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
-      }
-      return time;
+      const [hours, minutes] = time.split(':');
+      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
     } catch (error) {
       console.error('시간 포맷 에러:', error);
       return time;
@@ -176,17 +181,13 @@ export default function FacilitiesPage() {
 
   const formatOperatingHours = (openTime: string, closeTime: string) => {
     if (!openTime || !closeTime) return '운영시간 정보 없음';
-
     const openHour = parseInt(openTime.split(':')[0]);
     const closeHour = parseInt(closeTime.split(':')[0]);
-
-    // 종료 시간이 시작 시간보다 작으면 자정을 넘어가는 경우
     if (closeHour < openHour || closeHour === 0) {
       return `운영시간: ${formatTime(openTime)} - 익일 ${formatTime(
         closeTime
       )}`;
     }
-
     return `운영시간: ${formatTime(openTime)} - ${formatTime(closeTime)}`;
   };
 
@@ -279,7 +280,6 @@ export default function FacilitiesPage() {
         }
       );
 
-      // 성공적으로 취소되면 모달 닫고 예약 목록 새로고침
       setIsCancelModalOpen(false);
       fetchReservations();
 
@@ -296,6 +296,8 @@ export default function FacilitiesPage() {
 
   const openCancelModal = (reservationId: number) => {
     setCancelReservationId(reservationId);
+    setSelectedCancelReasonType('');
+    setCancelReason('');
     setIsCancelModalOpen(true);
   };
 
@@ -322,6 +324,94 @@ export default function FacilitiesPage() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const keyword = e.target.value;
     setSearchKeyword(keyword);
+  };
+
+  // 필터링된 예약 목록을 반환하는 함수
+  const getFilteredReservations = () => {
+    return reservations.filter((reservation) => {
+      const matchesSearch =
+        searchQuery === '' ||
+        reservation.programName
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        reservation.instructorName
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+
+      const matchesFacility =
+        facilityFilter === 'ALL' || reservation.facilityName === facilityFilter;
+
+      const matchesInstructor =
+        instructorFilter === 'ALL' ||
+        reservation.instructorName === instructorFilter;
+
+      const matchesStatus =
+        statusFilter === 'ALL' || reservation.status === statusFilter;
+
+      return (
+        matchesSearch && matchesFacility && matchesInstructor && matchesStatus
+      );
+    });
+  };
+
+  // 고유한 시설명, 강사명 목록을 얻는 함수들
+  const getUniqueFacilities = () => {
+    return Array.from(new Set(reservations.map((r) => r.facilityName)));
+  };
+
+  const getUniqueInstructors = () => {
+    return Array.from(new Set(reservations.map((r) => r.instructorName)));
+  };
+
+  // 예약을 현재와 과거로 구분하는 함수
+  const separateReservations = (
+    reservations: FacilityReservationSimpleUserDto[]
+  ) => {
+    // 오늘 날짜 (시간은 00:00:00으로 설정)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const current: FacilityReservationSimpleUserDto[] = [];
+    const past: FacilityReservationSimpleUserDto[] = [];
+
+    reservations.forEach((reservation) => {
+      // 예약일시에서 날짜만 추출 (시간 제외)
+      const [datePart] = reservation.reservationDateTime.split(' ');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const reservationDate = new Date(year, month - 1, day);
+      reservationDate.setHours(0, 0, 0, 0);
+
+      // 오늘 날짜와 비교하여 분류
+      if (reservationDate >= today) {
+        current.push(reservation);
+      } else {
+        past.push(reservation);
+      }
+    });
+
+    // 날짜와 시간을 모두 고려한 정렬 함수
+    const sortByDateTime = (
+      a: FacilityReservationSimpleUserDto,
+      b: FacilityReservationSimpleUserDto
+    ) => {
+      const [dateA, timeA] = a.reservationDateTime.split(' ');
+      const [dateB, timeB] = b.reservationDateTime.split(' ');
+
+      // 날짜 비교
+      const dateCompare = new Date(dateA).getTime() - new Date(dateB).getTime();
+      if (dateCompare !== 0) return dateCompare;
+
+      // 날짜가 같으면 시간 비교
+      return timeA.localeCompare(timeB);
+    };
+
+    // 예정된 예약: 날짜와 시간이 빠른 순
+    current.sort(sortByDateTime);
+
+    // 이용 완료: 최근 날짜와 시간 순
+    past.sort((a, b) => sortByDateTime(b, a));
+
+    return { current, past };
   };
 
   const FacilitiesList = () => (
@@ -369,16 +459,14 @@ export default function FacilitiesPage() {
               <p className="text-sm text-gray-500 mb-3">
                 {formatOperatingHours(facility.openTime, facility.closeTime)}
               </p>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    router.push(`/udash/facilities/${facility.facilityId}`);
-                  }}
-                  className="bg-pink-50 hover:bg-pink-100 text-pink-700 text-sm font-semibold py-1.5 px-3 rounded-lg transition-colors duration-300"
-                >
-                  예약하기
-                </button>
-              </div>
+              <Button
+                onClick={() => {
+                  router.push(`/udash/facilities/${facility.facilityId}`);
+                }}
+                className="bg-pink-50 hover:bg-pink-100 text-pink-700 text-sm font-semibold py-1.5 px-3 rounded-lg transition-colors duration-300"
+              >
+                예약하기
+              </Button>
             </CardContent>
           </Card>
         ))}
@@ -386,19 +474,113 @@ export default function FacilitiesPage() {
     </>
   );
 
-  const MyReservationsList = ({
-    reservations,
-    reservationsLoading,
-    reservationsError,
-    onCancelReservation,
-  }: {
-    reservations: FacilityReservationSimpleUserDto[];
-    reservationsLoading: boolean;
-    reservationsError: string | null;
-    onCancelReservation?: (reservationId: number) => void;
-  }) => {
+  const MyReservationsList = () => {
+    const filteredReservations = getFilteredReservations();
+    const { current, past } = separateReservations(filteredReservations);
+    const displayReservations =
+      activeReservationTab === 'current' ? current : past;
+
     return (
       <div>
+        <div className="mb-6">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* 검색창 */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Input
+                type="text"
+                placeholder="프로그램명 또는 강사명으로 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            </div>
+
+            {/* 필터 드롭다운들 */}
+            <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="시설명 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">전체 시설</SelectItem>
+                {getUniqueFacilities().map((facility) => (
+                  <SelectItem key={facility} value={facility}>
+                    {facility}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={instructorFilter}
+              onValueChange={setInstructorFilter}
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="강사명 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">전체 강사</SelectItem>
+                {getUniqueInstructors().map((instructor) => (
+                  <SelectItem key={instructor} value={instructor}>
+                    {instructor}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="상태 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">전체 상태</SelectItem>
+                <SelectItem value="AGREE">승인 완료</SelectItem>
+                <SelectItem value="PENDING">승인 대기</SelectItem>
+                <SelectItem value="REJECT">승인 거절</SelectItem>
+                <SelectItem value="CANCEL">예약 취소</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* 예약 상태 탭 */}
+        <div className="mb-6">
+          <div className="border-b">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setActiveReservationTab('current')}
+                className={`pb-2 pt-1 px-1 relative ${
+                  activeReservationTab === 'current'
+                    ? 'text-pink-600 border-b-2 border-pink-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                예정된 예약
+                {current.length > 0 && (
+                  <span className="ml-2 bg-pink-100 text-pink-600 text-xs px-2 py-0.5 rounded-full">
+                    {current.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveReservationTab('past')}
+                className={`pb-2 pt-1 px-1 relative ${
+                  activeReservationTab === 'past'
+                    ? 'text-pink-600 border-b-2 border-pink-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                이용 완료
+                {past.length > 0 && (
+                  <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                    {past.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {reservationsLoading && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 text-pink-500 animate-spin" />
@@ -407,18 +589,27 @@ export default function FacilitiesPage() {
             </span>
           </div>
         )}
+
         {reservationsError && (
           <div className="text-center text-red-500 py-8">
             {reservationsError}
           </div>
         )}
-        {!reservationsLoading && reservations.length === 0 && (
+
+        {!reservationsLoading && displayReservations.length === 0 && (
           <div className="text-center py-8">
             <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">예약 내역이 없습니다.</p>
+            <p className="text-gray-500">
+              {filteredReservations.length === 0
+                ? '예약 내역이 없습니다.'
+                : activeReservationTab === 'current'
+                ? '예정된 예약이 없습니다.'
+                : '이용 완료된 예약이 없습니다.'}
+            </p>
           </div>
         )}
-        {!reservationsLoading && reservations.length > 0 && (
+
+        {!reservationsLoading && displayReservations.length > 0 && (
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-sm">
               <thead>
@@ -447,7 +638,7 @@ export default function FacilitiesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {reservations.map((reservation, index) => (
+                {displayReservations.map((reservation, index) => (
                   <tr
                     key={reservation.reservationId}
                     className="bg-white hover:bg-gray-50 transition-colors"
@@ -523,10 +714,13 @@ export default function FacilitiesPage() {
 
     return (
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent
+          className="sm:max-w-[500px]"
+          aria-describedby="reservation-detail-description"
+        >
           <DialogHeader>
             <DialogTitle>예약 상세 내역</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="reservation-detail-description">
               예약하신 시설의 상세 정보를 확인하실 수 있습니다.
             </DialogDescription>
           </DialogHeader>
@@ -590,21 +784,75 @@ export default function FacilitiesPage() {
   };
 
   const CancelReservationModal = () => {
+    const [localCancelReason, setLocalCancelReason] = useState('');
+    const [localCancelReasonType, setLocalCancelReasonType] = useState<
+      CancelReasonType | ''
+    >('');
+
+    useEffect(() => {
+      if (isCancelModalOpen) {
+        setLocalCancelReason('');
+        setLocalCancelReasonType('');
+      }
+    }, [isCancelModalOpen]);
+
+    const handleCancelSubmit = async () => {
+      if (!cancelReservationId || !localCancelReasonType) return;
+
+      try {
+        setIsCancelling(true);
+        await client.DELETE(
+          '/api/v1/facilities/reservations/{facilityReservationId}',
+          {
+            params: {
+              path: {
+                facilityReservationId: cancelReservationId,
+              },
+            },
+            body: {
+              cancelReasonType: localCancelReasonType,
+              cancelReason:
+                localCancelReasonType === 'OTHER'
+                  ? localCancelReason
+                  : undefined,
+            },
+          }
+        );
+
+        setIsCancelModalOpen(false);
+        fetchReservations(); // 예약 목록 새로고침
+
+        // 상태 초기화
+        setLocalCancelReasonType('');
+        setLocalCancelReason('');
+        setCancelReservationId(null);
+      } catch (err) {
+        console.error('예약 취소 중 오류 발생:', err);
+        alert('예약 취소 중 오류가 발생했습니다. 다시 시도해주세요.');
+      } finally {
+        setIsCancelling(false);
+      }
+    };
+
     return (
       <Dialog
         open={isCancelModalOpen}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedCancelReasonType('');
-            setCancelReason('');
+            setLocalCancelReason('');
+            setLocalCancelReasonType('');
+            setCancelReservationId(null);
           }
           setIsCancelModalOpen(open);
         }}
       >
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent
+          className="sm:max-w-[400px]"
+          aria-describedby="cancel-reservation-description"
+        >
           <DialogHeader>
             <DialogTitle>예약 취소</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="cancel-reservation-description">
               예약을 취소하시려면 취소 사유를 선택해 주세요.
             </DialogDescription>
           </DialogHeader>
@@ -612,10 +860,13 @@ export default function FacilitiesPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">취소 사유 선택</label>
               <Select
-                value={selectedCancelReasonType}
-                onValueChange={(value: CancelReasonType) =>
-                  setSelectedCancelReasonType(value)
-                }
+                value={localCancelReasonType}
+                onValueChange={(value: CancelReasonType) => {
+                  setLocalCancelReasonType(value);
+                  if (value !== 'OTHER') {
+                    setLocalCancelReason('');
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="취소 사유를 선택해주세요" />
@@ -629,13 +880,13 @@ export default function FacilitiesPage() {
                 </SelectContent>
               </Select>
             </div>
-            {selectedCancelReasonType === 'OTHER' && (
+            {localCancelReasonType === 'OTHER' && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">취소 사유 입력</label>
                 <Textarea
                   placeholder="취소 사유를 입력해주세요"
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
+                  value={localCancelReason}
+                  onChange={(e) => setLocalCancelReason(e.target.value)}
                 />
               </div>
             )}
@@ -649,10 +900,11 @@ export default function FacilitiesPage() {
               취소
             </Button>
             <Button
-              onClick={handleCancelReservation}
+              onClick={handleCancelSubmit}
               disabled={
-                !selectedCancelReasonType ||
-                (selectedCancelReasonType === 'OTHER' && !cancelReason) ||
+                !localCancelReasonType ||
+                (localCancelReasonType === 'OTHER' &&
+                  !localCancelReason.trim()) ||
                 isCancelling
               }
               className="bg-red-600 hover:bg-red-700 text-white"
@@ -713,15 +965,7 @@ export default function FacilitiesPage() {
               </TabsContent>
 
               <TabsContent value="my-reservations" className="m-0">
-                <MyReservationsList
-                  reservations={reservations}
-                  reservationsLoading={reservationsLoading}
-                  reservationsError={reservationsError}
-                  onCancelReservation={(id) => {
-                    // 예약 취소 로직 추가 예정
-                    console.log('예약 취소:', id);
-                  }}
-                />
+                <MyReservationsList />
               </TabsContent>
             </div>
           </Tabs>
