@@ -37,6 +37,7 @@ interface CommunityOpinion {
   userName: string;
   content: string;
   status: "ACTIVE" | "INACTIVE";
+  createdAt: string;
   replies?: {
     id: number;
     userName: string;
@@ -257,6 +258,7 @@ export default function CommunityPage() {
                 <TableHead>제목</TableHead>
                 <TableHead>내용</TableHead>
                 <TableHead>작성자</TableHead>
+                <TableHead>작성일</TableHead>
                 <TableHead>관리</TableHead>
               </TableRow>
             </TableHeader>
@@ -275,6 +277,15 @@ export default function CommunityPage() {
                   <TableCell>{opinion.title}</TableCell>
                   <TableCell>{opinion.content}</TableCell>
                   <TableCell>{opinion.userName}</TableCell>
+                  <TableCell>
+                    {format(
+                      new Date(opinion.createdAt),
+                      "yyyy년 MM월 dd일 HH:mm",
+                      {
+                        locale: ko,
+                      }
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
