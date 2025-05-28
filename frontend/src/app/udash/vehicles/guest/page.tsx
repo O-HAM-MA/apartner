@@ -79,8 +79,14 @@ export default function GuestVehicleRegistration() {
 
   // 페이지네이션 데이터 처리 함수
   const getPaginatedData = (data: VehicleRegistrationInfoDto[] = []) => {
+    // 최신순 정렬 (createdAt 기준)
+    const sortedData = [...data].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return data.slice(startIndex, startIndex + itemsPerPage);
+    return sortedData.slice(startIndex, startIndex + itemsPerPage);
   };
 
   // 총 페이지 수 계산
