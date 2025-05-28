@@ -5,6 +5,7 @@ import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSimpleManagerDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilitySimpleResponseDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityInstructor;
@@ -14,13 +15,10 @@ import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
 import com.ohammer.apartner.global.Status;
 import jakarta.persistence.EntityNotFoundException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -132,70 +130,41 @@ public class FacilityManagerService {
         return FacilitySimpleResponseDto.from(facility);
     }
 
+    // ---예약 관련
     // 예약 목록 조회
-    public Page<FacilityReservationManagerDto> getReservations(
-            LocalDate date,
-            Long facilityId,
-            String statusStr,
-            Pageable pageable
-    ) {
-        FacilityReservation.Status status = null;
-        if (statusStr != null && !statusStr.isBlank()) {
-            try {
-                status = FacilityReservation.Status.valueOf(statusStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("잘못된 예약 상태입니다: " + statusStr);
-            }
-        }
-
-        Page<FacilityReservation> reservations = facilityReservationRepository.findByManagerFilter(
-                date, facilityId, status, pageable
-        );
-
-        return reservations.map(this::convertToDto);
+    public List<FacilityReservationSimpleManagerDto> getReservationsByApartment(Long apartmentId) {
+        List<FacilityReservation> list = facilityReservationRepository.findByFacility_Apartment_IdOrderByStartTimeDesc(
+                apartmentId);
+        return list.stream()
+                .map(FacilityReservationSimpleManagerDto::from)
+                .collect(Collectors.toList());
     }
 
-    private FacilityReservationManagerDto convertToDto(FacilityReservation r) {
-        String reservationTime = String.format("%s %02d:%02d-%02d:%02d",
-                r.getDate(),
-                r.getStartTime().getHour(), r.getStartTime().getMinute(),
-                r.getEndTime().getHour(), r.getEndTime().getMinute()
-        );
-
-        return new FacilityReservationManagerDto(
-                r.getUser().getUserName(),
-                r.getUser().getBuilding().getBuildingNumber(),
-                r.getUser().getUnit().getUnitNumber(),
-                r.getFacility().getName(),
-                reservationTime,
-                r.getCreatedAt().toString(),
-                r.getStatus().name()
-        );
+    // 예약 상세 조회
+    public FacilityReservationManagerDto getReservationDetail(Long reservationId) {
+        FacilityReservation facilityReservation = facilityReservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약 정보 없음"));
+        return FacilityReservationManagerDto.from(facilityReservation);
     }
 
     // 예약 상태 변경
     @Transactional
-    public void updateReservationStatus(Long facilityReservationId, String newStatusStr) {
-        FacilityReservation facilityReservation = facilityReservationRepository.findById(facilityReservationId)
-                .orElseThrow(() -> new EntityNotFoundException("예약 정보를 찾을 수 없습니다."));
+    public void updateReservationStatus(Long facilityReservationId, FacilityReservation.Status newStatus) {
+        FacilityReservation reservation = facilityReservationRepository.findById(facilityReservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약 정보 없음"));
 
-        if (facilityReservation.getStatus() != FacilityReservation.Status.PENDING) {
-            throw new IllegalStateException("예약 상태가 'PENDING'일 때만 상태를 변경할 수 있습니다.");
+        if (reservation.getStatus() == FacilityReservation.Status.CANCEL) {
+            throw new IllegalStateException("이미 취소된 예약은 상태 변경이 불가합니다.");
+        }
+        if (newStatus == null) {
+            throw new IllegalArgumentException("상태값이 없습니다.");
+        }
+        if (reservation.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("이미 시작된 예약은 상태 변경이 불가합니다.");
         }
 
-        FacilityReservation.Status newStatus;
-        try {
-            newStatus = FacilityReservation.Status.valueOf(newStatusStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("잘못된 상태 값 입니다: " + newStatusStr);
-        }
-
-        if (newStatus != FacilityReservation.Status.AGREE && newStatus != FacilityReservation.Status.REJECT) {
-            throw new IllegalArgumentException("상태는 AGREE 또는 REJECT만 가능합니다.");
-        }
-
-        facilityReservation.setStatus(newStatus);
-        facilityReservationRepository.save(facilityReservation);
+        reservation.setStatus(newStatus);
+        reservation.setModifiedAt(LocalDateTime.now());
     }
 
 }

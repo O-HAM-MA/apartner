@@ -46,8 +46,8 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
                                @Param("startTime") LocalDateTime startTime,
                                @Param("endTime") LocalDateTime endTime);
 
-    // 슬롯 내 예약된 인원 수 체크
-    Long countByTimeSlotIdAndStatus(Long timeSlotId, FacilityReservation.Status status);
+    // 같은 아파트 사용자 예약 전체 조회 (최신순)
+    List<FacilityReservation> findByFacility_Apartment_IdOrderByStartTimeDesc(Long apartmentId);
 
     List<FacilityReservation> findByUserIdOrderByStartTimeDesc(Long userId);
 

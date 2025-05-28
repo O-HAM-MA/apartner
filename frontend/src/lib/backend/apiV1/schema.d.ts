@@ -1343,7 +1343,7 @@ export interface paths {
         patch: operations["updateUserRoles"];
         trace?: never;
     };
-    "/api/v1/admin/facilities/reservations/{facilityReservationId}/status": {
+    "/api/v1/admin/facilities/reservations/{reservationId}/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -1360,7 +1360,7 @@ export interface paths {
          * 유저들의 예약 상태 변경
          * @description 유저들의 예약 상태 pending/agree/reject로 변경하기
          */
-        patch: operations["changeReservationStatus"];
+        patch: operations["updateReservationStatus"];
         trace?: never;
     };
     "/api/v1/admin/accounts/{id}/status": {
@@ -2503,11 +2503,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * 유저들의 예약 목록 조회
-         * @description 유저들의 예약 목록 조희 - 전체보기, 시설별, 예약상태별, 날짜별
-         */
-        get: operations["getReservations"];
+        /** 유저들의 예약 목록 조회 */
+        get: operations["getReservationsByApartment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/reservations/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 유저들의 예약 상세 조회 */
+        get: operations["getReservationDetail"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3808,6 +3822,15 @@ export interface components {
         AdminUserRoleUpdateRequest: {
             roles?: ("ADMIN" | "USER" | "MODERATOR" | "MANAGER")[];
         };
+        /** @description 공용시설 예약 상태 변경 요청 DTO */
+        FacilityReservationStatusUpdateDto: {
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             * @enum {string}
+             */
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+        };
         VehicleRegistrationInfoDto: {
             /** Format: int64 */
             id?: number;
@@ -3871,10 +3894,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3883,21 +3906,21 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
@@ -3967,10 +3990,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3979,9 +4002,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -4384,10 +4407,10 @@ export interface components {
             data?: components["schemas"]["PageAdminUserListResponse"];
         };
         PageAdminUserListResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4396,9 +4419,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminUserDetailResponse: {
@@ -4450,10 +4473,10 @@ export interface components {
             data?: components["schemas"]["PageObject"];
         };
         PageObject: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4462,9 +4485,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ApiResponsePageMenuDTO: {
@@ -4473,10 +4496,10 @@ export interface components {
             data?: components["schemas"]["PageMenuDTO"];
         };
         PageMenuDTO: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4485,9 +4508,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ApiResponseListMenuDTO: {
@@ -4662,13 +4685,19 @@ export interface components {
              */
             reservationCount?: number;
         };
-        /** @description 공용시설 예약 조회 [관리자] 응답 DTO */
-        FacilityReservationManagerDto: {
+        /** @description 공용시설 사용자 예약 목록 조회 [관리자] 응답 DTO */
+        FacilityReservationSimpleManagerDto: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
+             */
+            reservationId?: number;
             /**
              * @description 신청자 이름
              * @example 신짱구
              */
-            userName?: string;
+            applicantName?: string;
             /**
              * @description 신청자 주소(동)
              * @example 101동
@@ -4680,16 +4709,72 @@ export interface components {
              */
             unit?: string;
             /**
-             * @description 예약한 공용시설 이름
-             * @example 헬스장
+             * @description 신청한 공용시설 이름
+             * @example 수영장
              */
             facilityName?: string;
             /**
-             * @description 예약 일시
-             * @example 2025-05-15 09:00-11:00
+             * @description 신청한 공용시설 강사 이름
+             * @example 박태환
              */
-            reservationTime?: string;
+            instructorName?: string;
             /**
+             * @description 신청한 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             * @enum {string}
+             */
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+        };
+        /** @description 공용시설 사용자 예약 상세 조회 [관리자] 응답 DTO */
+        FacilityReservationManagerDto: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
+             */
+            reservationId?: number;
+            /**
+             * @description 신청자 이름
+             * @example 신짱구
+             */
+            applicantName?: string;
+            /**
+             * @description 신청자 주소(동)
+             * @example 101동
+             */
+            building?: string;
+            /**
+             * @description 신청자 주소(호수)
+             * @example 202호
+             */
+            unit?: string;
+            /**
+             * @description 신청한 공용시설 이름
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 신청한 공용시설 강사 이름
+             * @example 박태환
+             */
+            instructorName?: string;
+            /**
+             * @description 신청한 공용시설 프로그램 이름
+             * @example 자유형 초보
+             */
+            programName?: string;
+            /**
+             * @description 신청한 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
+            /**
+             * Format: date-time
              * @description 신청 일시
              * @example 2025-05-13 10:10
              */
@@ -4697,32 +4782,15 @@ export interface components {
             /**
              * @description 예약 상태
              * @example PENDING
+             * @enum {string}
              */
-            status?: string;
-        };
-        PageFacilityReservationManagerDto: {
-            /** Format: int64 */
-            totalElements?: number;
-            /** Format: int32 */
-            totalPages?: number;
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["FacilityReservationManagerDto"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            empty?: boolean;
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
         };
         Page: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4731,16 +4799,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageBuildingResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4749,16 +4817,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageUnitResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4767,16 +4835,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageAdminAccountResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4785,9 +4853,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminGrade: {
@@ -5391,7 +5459,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5411,7 +5481,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5435,7 +5507,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5453,7 +5527,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5473,7 +5549,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5497,7 +5575,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5515,7 +5595,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5535,7 +5617,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5559,7 +5643,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5577,7 +5663,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5597,7 +5685,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5621,7 +5711,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5639,7 +5731,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6828,7 +6922,7 @@ export interface operations {
     getAllMenus: {
         parameters: {
             query: {
-                arg0: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -7085,12 +7179,12 @@ export interface operations {
         parameters: {
             query: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
-                arg3: components["schemas"]["Pageable"];
+                zipcode?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -7391,7 +7485,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -7415,7 +7511,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -7435,27 +7533,27 @@ export interface operations {
             };
         };
     };
-    changeReservationStatus: {
+    updateReservationStatus: {
         parameters: {
-            query: {
-                status: string;
-            };
+            query?: never;
             header?: never;
             path: {
-                facilityReservationId: number;
+                reservationId: number;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityReservationStatusUpdateDto"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "*/*": string;
-                };
+                content?: never;
             };
         };
     };
@@ -7463,7 +7561,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -8421,11 +8521,11 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
+                zipcode?: string;
             };
             header?: never;
             path?: never;
@@ -8448,7 +8548,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8468,7 +8570,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8488,7 +8592,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8508,7 +8614,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8528,7 +8636,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8547,13 +8657,13 @@ export interface operations {
     getUserList: {
         parameters: {
             query: {
-                arg0?: string;
-                arg1?: string;
-                arg2?: string;
-                arg3?: string;
-                arg4?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg5?: "active" | "inactive" | "pending" | "withdrawn";
-                arg6: components["schemas"]["Pageable"];
+                searchTerm?: string;
+                userName?: string;
+                email?: string;
+                apartmentName?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -8576,7 +8686,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8595,11 +8707,13 @@ export interface operations {
     getUserLogs: {
         parameters: {
             query: {
-                arg1?: string;
-                arg2: components["schemas"]["Pageable"];
+                logType?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8618,10 +8732,10 @@ export interface operations {
     exportUsers: {
         parameters: {
             query?: {
-                arg0?: string;
-                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg2?: "active" | "inactive" | "pending" | "withdrawn";
-                arg3?: string;
+                searchTerm?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                format?: string;
             };
             header?: never;
             path?: never;
@@ -8888,14 +9002,9 @@ export interface operations {
             };
         };
     };
-    getReservations: {
+    getReservationsByApartment: {
         parameters: {
-            query: {
-                date?: string;
-                facilityId?: number;
-                status?: string;
-                arg3: components["schemas"]["Pageable"];
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -8908,7 +9017,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PageFacilityReservationManagerDto"];
+                    "*/*": components["schemas"]["FacilityReservationSimpleManagerDto"][];
+                };
+            };
+        };
+    };
+    getReservationDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityReservationManagerDto"];
                 };
             };
         };
@@ -8936,10 +9067,12 @@ export interface operations {
     getBuildingsByApartment_1: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8958,10 +9091,12 @@ export interface operations {
     getUnitsByBuilding_1: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8980,10 +9115,10 @@ export interface operations {
     getAdminAccountsByPage: {
         parameters: {
             query?: {
-                arg0?: number;
-                arg1?: number;
-                arg2?: string;
-                arg3?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+                direction?: string;
             };
             header?: never;
             path?: never;
@@ -9046,7 +9181,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
