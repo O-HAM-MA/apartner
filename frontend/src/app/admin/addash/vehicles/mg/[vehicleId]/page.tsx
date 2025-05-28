@@ -56,7 +56,7 @@ export default function VehicleDetailPage({
       <main className="container mx-auto px-4 py-8">
         {/* 상단 버튼과 제목 */}
         <div className="mb-6">
-          <Link href="/admin/addash/vehicles/ad">
+          <Link href="/admin/addash/vehicles/mg">
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
               목록으로 돌아가기

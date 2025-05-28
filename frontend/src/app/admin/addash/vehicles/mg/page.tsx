@@ -18,6 +18,7 @@ type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
 
 export default function AdminVehicleManagement() {
+  const router = useRouter();
   const [slidingVehicleId, setSlidingVehicleId] = useState<number | null>(null);
   // Add query for invited-approved vehicles
   const { data: invitedVehicles } = useQuery<VehicleRegistrationInfoDto[]>({
@@ -55,6 +56,30 @@ export default function AdminVehicleManagement() {
       setSlidingVehicleId(null);
     },
   });
+
+  // 현재 주차 중인 차량 조회 쿼리 추가
+  const { data: activeVehicles, isLoading: isLoadingActive } = useQuery<
+    VehicleRegistrationInfoDto[]
+  >({
+    queryKey: ["vehicles", "active"],
+    queryFn: async () => {
+      const { data, error } = await client.GET("/api/v1/vehicles/active");
+      console.log("Active vehicles data:", data); // 데이터 구조 확인
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // formatDate 함수 추가
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-white m-0 p-0">
@@ -172,6 +197,81 @@ export default function AdminVehicleManagement() {
             {/* 차량 목록 테이블 */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
               {/* 페이지네이션 */}
+            </div>
+          </div>
+
+          {/* 현재 주차 중인 차량 섹션 추가 */}
+          <div className="mt-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                현재 주차 중인 차량
+              </h2>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-4">차량번호</th>
+                      <th className="px-6 py-4">차종</th>
+                      <th className="px-6 py-4">등록유형</th>
+                      <th className="px-6 py-4">차주명</th>
+                      <th className="px-6 py-4">방문사유</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {isLoadingActive ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-4 text-center">
+                          데이터를 불러오는 중...
+                        </td>
+                      </tr>
+                    ) : activeVehicles?.length ? (
+                      activeVehicles.map((vehicle) => (
+                        <tr
+                          key={vehicle.id}
+                          className="hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() =>
+                            router.push(
+                              `/admin/addash/vehicles/mg/${vehicle.id}`
+                            )
+                          }
+                        >
+                          <td className="px-6 py-4">{vehicle.vehicleNum}</td>
+                          <td className="px-6 py-4">{vehicle.type}</td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                vehicle.registerType === "거주자"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-rose-100 text-rose-800"
+                              }`}
+                            >
+                              {vehicle.registerType}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {vehicle.registerType === "거주자"
+                              ? vehicle.applicantName
+                              : "-"}
+                          </td>
+                          <td className="px-6 py-4">{vehicle.reason || "-"}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-6 py-4 text-center text-gray-500"
+                        >
+                          현재 주차 중인 차량이 없습니다.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
