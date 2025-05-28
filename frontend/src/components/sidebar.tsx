@@ -78,7 +78,6 @@ const Sidebar = () => {
     },
     { href: "/udash/complaints", icon: Users, label: "민원 관리" },
     { href: "/udash/notices", icon: Bell, label: "공지사항" },
-    { href: "/udash/chat", icon: MessageSquare, label: "실시간 채팅" },
   ];
 
   return (

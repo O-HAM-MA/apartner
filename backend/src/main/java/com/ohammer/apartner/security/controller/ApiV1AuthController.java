@@ -112,6 +112,9 @@ public class ApiV1AuthController {
             String apartmentName = Optional.ofNullable(user.getApartment())
                     .map(Apartment::getName)
                     .orElse(null);
+            Long apartmentId = Optional.ofNullable(user.getApartment())
+                    .map(Apartment::getId)
+                    .orElse(null);
             String buildingName = Optional.ofNullable(user.getBuilding())
                     .map(Building::getBuildingNumber) 
                     .orElse(null);
@@ -135,6 +138,7 @@ public class ApiV1AuthController {
                     user.getModifiedAt(),
                     profileImageUrl,
                     apartmentName,
+                    apartmentId,
                     buildingName,
                     unitNumber,
                     user.getSocialProvider(),
@@ -200,7 +204,7 @@ public class ApiV1AuthController {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정 상태를 확인할 수 없습니다. 관리자에게 문의하세요.");
             }
 
-            // 로그인 성공 시 updatedAt 필드를 now()로 업데이트
+            // 로그인 성공 시 lastLoginAt 필드를 now()로 업데이트
             user.setLastLoginAt(LocalDateTime.now());
 
             String accessToken = authService.genAccessToken(user);
