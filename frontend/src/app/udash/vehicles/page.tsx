@@ -453,7 +453,7 @@ export default function VehicleManagement() {
       switch (status) {
         case "INVITER_AGREE":
           return {
-            label: "내가 승인함",
+            label: "1차 승인됨",
             className: "bg-blue-100 text-blue-800",
           };
         case "AGREE":
@@ -1147,7 +1147,7 @@ export default function VehicleManagement() {
                                   {vehicle.status === "AGREE"
                                     ? "최종 승인됨"
                                     : vehicle.status === "INVITER_AGREE"
-                                    ? "내가 승인함"
+                                    ? "1차 승인됨"
                                     : "미승인"}
                                 </span>
                               </div>
@@ -1155,7 +1155,7 @@ export default function VehicleManagement() {
                                 {vehicle.status === "AGREE"
                                   ? "관리자가 최종 승인했습니다"
                                   : vehicle.status === "INVITER_AGREE"
-                                  ? "관리자 승인 ㅇㅇㅇ대기중입니다"
+                                  ? "관리자 승인 대기중입니다"
                                   : "방문자 출입을 승인하려면 켜세요"}
                               </span>
                             </div>

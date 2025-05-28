@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { components } from "@/lib/backend/apiV1/schema";
 import client from "@/lib/backend/client";
@@ -12,6 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type ForeignVehicleRequestDto =
   components["schemas"]["ForeignVehicleRequestDto"];
@@ -21,6 +27,7 @@ type VehicleRegistrationInfoDto =
 
 export default function GuestVehicleRegistration() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<ForeignVehicleRequestDto>({
     vehicleNum: "",
     type: "",
@@ -34,6 +41,11 @@ export default function GuestVehicleRegistration() {
   // 페이징 상태 추가
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  const [isEnterDialogOpen, setIsEnterDialogOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] =
+    useState<VehicleRegistrationInfoDto | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const registerMutation = useMutation({
     mutationFn: (data: ForeignVehicleRequestDto) => {
@@ -63,6 +75,28 @@ export default function GuestVehicleRegistration() {
       );
       if (error) throw error;
       return data;
+    },
+  });
+
+  // 입차 mutation 추가
+  const enterMutation = useMutation({
+    mutationFn: (data: { phone: string }) => {
+      return client.POST("/api/v1/entry-records/enter", {
+        body: data,
+      });
+    },
+    onSuccess: () => {
+      alert("입차가 완료되었습니다.");
+      setIsEnterDialogOpen(false);
+      setPhoneNumber("");
+      // 데이터 리프레시
+      queryClient.invalidateQueries({
+        queryKey: ["vehicles", "recent-foreigns"],
+      });
+    },
+    onError: (error) => {
+      console.error("입차 실패:", error);
+      alert("입차에 실패했습니다.");
     },
   });
 
@@ -107,6 +141,15 @@ export default function GuestVehicleRegistration() {
     }));
   };
 
+  // 입차 처리 함수
+  const handleEnter = () => {
+    if (!phoneNumber) {
+      alert("전화번호를 입력해주세요.");
+      return;
+    }
+    enterMutation.mutate({ phone: phoneNumber });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -130,6 +173,7 @@ export default function GuestVehicleRegistration() {
                         <th className="text-left p-4 font-medium">방문 사유</th>
                         <th className="text-left p-4 font-medium">상태</th>
                         <th className="text-left p-4 font-medium">등록시간</th>
+                        <th className="text-left p-4 font-medium">입차</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -144,12 +188,26 @@ export default function GuestVehicleRegistration() {
                           <td className="p-4">
                             {formatDate(vehicle.createdAt)}
                           </td>
+                          <td className="p-4">
+                            {vehicle.status === "AGREE" && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setIsEnterDialogOpen(true);
+                                  setSelectedVehicle(vehicle);
+                                }}
+                                className="bg-blue-500 hover:bg-blue-600 text-white"
+                              >
+                                입차
+                              </Button>
+                            )}
+                          </td>
                         </tr>
                       ))}
                       {!recentVehicles?.length && (
                         <tr>
                           <td
-                            colSpan={5}
+                            colSpan={6}
                             className="text-center py-8 text-gray-500"
                           >
                             24시간 내 등록된 외부 차량이 없습니다.
@@ -307,6 +365,44 @@ export default function GuestVehicleRegistration() {
             </form>
           </div>
         </div>
+
+        {/* 입차 다이얼로그 추가 */}
+        <Dialog open={isEnterDialogOpen} onOpenChange={setIsEnterDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>입차 전화번호 확인</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>차량 번호: {selectedVehicle?.vehicleNum}</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">전화번호</Label>
+                <Input
+                  id="phone"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="전화번호를 입력하세요"
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEnterDialogOpen(false);
+                  setPhoneNumber("");
+                }}
+              >
+                취소
+              </Button>
+              <Button onClick={handleEnter} disabled={enterMutation.isPending}>
+                확인
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
       <Footer />
     </div>
