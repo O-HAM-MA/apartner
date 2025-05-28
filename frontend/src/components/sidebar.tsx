@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   Home,
   Settings,
@@ -8,10 +8,10 @@ import {
   MessageSquare,
   UserCircle,
   Building,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useGlobalLoginMember } from "@/auth/loginMember";
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useGlobalLoginMember } from '@/auth/loginMember';
 
 interface NavItemProps {
   href: string;
@@ -30,12 +30,12 @@ const NavItem: React.FC<NavItemProps> = ({
     <Link
       href={href}
       className={`flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-pink-50 ${
-        isActive ? "bg-pink-100 text-pink-700 font-semibold" : "text-gray-700"
+        isActive ? 'bg-pink-100 text-pink-700 font-semibold' : 'text-gray-700'
       }`}
     >
       <Icon
         size={20}
-        className={isActive ? "text-pink-700" : "text-gray-500"}
+        className={isActive ? 'text-pink-700' : 'text-gray-500'}
       />
       <span>{label}</span>
     </Link>
@@ -47,21 +47,21 @@ const Sidebar = () => {
   const { loginMember, isLogin } = useGlobalLoginMember();
 
   const navItems = [
-    { href: "/udash", icon: Home, label: "대시보드" },
+    { href: '/udash', icon: Home, label: '대시보드' },
     {
-      href: "/udash/reservations",
+      href: '/udash/facilities',
       icon: Building,
-      label: "공용시설 예약/확인",
+      label: '공용시설 예약/확인',
     },
-    { href: "/udash/vehicles", icon: UserCircle, label: "차량 관리" },
+    { href: '/udash/vehicles', icon: UserCircle, label: '차량 관리' },
     {
-      href: "/udash/inspections",
+      href: '/udash/inspections',
       icon: Settings,
-      label: "점검 (소방/가스/전기/수도)",
+      label: '점검 (소방/가스/전기/수도)',
     },
-    { href: "/udash/complaints", icon: Users, label: "민원 관리" },
-    { href: "/udash/notices", icon: Bell, label: "공지사항" },
-    { href: "/udash/chat", icon: MessageSquare, label: "실시간 채팅" },
+    { href: '/udash/complaints', icon: Users, label: '민원 관리' },
+    { href: '/udash/notices', icon: Bell, label: '공지사항' },
+    { href: '/udash/chat', icon: MessageSquare, label: '실시간 채팅' },
   ];
 
   return (
@@ -74,7 +74,7 @@ const Sidebar = () => {
         {isLogin && loginMember ? (
           <div className="bg-gray-100 p-3 rounded-lg w-full mt-5">
             <p className="text-sm font-semibold text-gray-800">
-              {loginMember.userName || "입주민"}
+              {loginMember.userName || '입주민'}
             </p>
             {(loginMember.apartmentName ||
               loginMember.buildingName ||

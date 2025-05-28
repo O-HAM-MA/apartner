@@ -4,8 +4,8 @@ import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilitySimpleResponseDto;
 import com.ohammer.apartner.domain.facility.entity.Facility;
 import com.ohammer.apartner.domain.facility.entity.FacilityInstructor;
 import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
@@ -111,11 +111,11 @@ public class FacilityManagerService {
     }
 
     // 시설 목록 조회
-    public List<FacilityManagerSimpleResponseDto> getFacilityList(Long apartmentId) {
+    public List<FacilitySimpleResponseDto> getFacilityList(Long apartmentId) {
         List<Facility> facilities = facilityRepository.findByApartmentIdAndStatus(apartmentId, Status.ACTIVE);
 
         return facilities.stream()
-                .map(f -> FacilityManagerSimpleResponseDto.builder()
+                .map(f -> FacilitySimpleResponseDto.builder()
                         .facilityId(f.getId())
                         .facilityName(f.getName())
                         .description(f.getDescription())
@@ -126,10 +126,10 @@ public class FacilityManagerService {
     }
 
     // 시설 단건 조회
-    public FacilityManagerSimpleResponseDto getFacility(Long facilityId, Long apartmentId) {
+    public FacilitySimpleResponseDto getFacility(Long facilityId, Long apartmentId) {
         Facility facility = facilityRepository.findByIdAndApartmentId(facilityId, apartmentId)
                 .orElseThrow(() -> new IllegalArgumentException("시설을 찾을 수 없습니다."));
-        return FacilityManagerSimpleResponseDto.from(facility);
+        return FacilitySimpleResponseDto.from(facility);
     }
 
     // 예약 목록 조회

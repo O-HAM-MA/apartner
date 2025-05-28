@@ -1,9 +1,12 @@
 package com.ohammer.apartner.domain.facility.controller;
 
+import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationCancelDto;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityReservationRequestDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationSimpleUserDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationUserDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityUserSimpleResponseDto;
-import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
+import com.ohammer.apartner.domain.facility.dto.response.FacilitySimpleResponseDto;
+import com.ohammer.apartner.domain.facility.dto.response.InstructorSimpleResponseDto;
+import com.ohammer.apartner.domain.facility.dto.response.TimeSlotSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.service.FacilityUserService;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.security.utils.SecurityUtil;
@@ -32,62 +35,89 @@ public class FacilityUserController {
 
     private final FacilityUserService facilityUserService;
 
+    // 시설 목록 보기
+    @GetMapping
+    @Operation(summary = "공용시설 목록 조회", description = "등록된(활성화 중) 공용시설 목록 조희")
+    public ResponseEntity<List<FacilitySimpleResponseDto>> getFacilityList(
+            @RequestParam(name = "keyword", required = false) String keyword) {
+        Long apartmentId = SecurityUtil.getCurrentUser().getApartment().getId();
+        List<FacilitySimpleResponseDto> list = facilityUserService.getFacilityList(apartmentId, keyword);
+        return ResponseEntity.ok(list);
+    }
+
+    // 공용시설 단건 조회
+    @GetMapping("/{facilityId}")
+    @Operation(summary = "공용시설 단건 조회")
+    public ResponseEntity<FacilitySimpleResponseDto> getFacility(
+            @PathVariable(name = "facilityId") Long facilityId) {
+        User user = SecurityUtil.getCurrentUser();
+        Long apartmentId = user.getApartment().getId();
+        FacilitySimpleResponseDto dto = facilityUserService.getFacility(facilityId, apartmentId);
+        return ResponseEntity.ok(dto);
+    }
+
+    // 강사 목록 보기
+    @GetMapping("/{facilityId}/instructors")
+    @Operation(summary = "시설별 강사 목록 조회")
+    public ResponseEntity<List<InstructorSimpleResponseDto>> getInstructorList(
+            @PathVariable(name = "facilityId") Long facilityId) {
+        List<InstructorSimpleResponseDto> list = facilityUserService.getInstructorList(facilityId);
+        return ResponseEntity.ok(list);
+    }
+
+    // 강사별 스케줄 목록 보기
+    @GetMapping("/{facilityId}/instructors/{instructorId}/schedules")
+    @Operation(summary = "강사별 캘린더 타임슬롯 조회")
+    public ResponseEntity<List<TimeSlotSimpleResponseDto>> getInstructorTimeSlots(
+            @PathVariable(name = "facilityId") Long facilityId,
+            @PathVariable(name = "instructorId") Long instructorId,
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        List<TimeSlotSimpleResponseDto> slots =
+                facilityUserService.getInstructorTimeSlots(facilityId, instructorId, startDate, endDate);
+        return ResponseEntity.ok(slots);
+    }
+
     // 예약 신청하기
-    @PostMapping("/{facilityId}/reserve")
+    @PostMapping("/reservations")
     @Operation(summary = "유저 공용시설 예약하기", description = "유저가 등록된 공용시설을 예약하기")
-    public ResponseEntity<Long> reserveFacility(
+    public ResponseEntity<Long> reservationFacility(
             @RequestBody @Valid FacilityReservationRequestDto requestDto
     ) {
         Long userId = SecurityUtil.getCurrentUser().getId();
-        Long reservationId = facilityUserService.reserveFacility(userId, requestDto);
+        Long reservationId = facilityUserService.reservationFacility(userId, requestDto);
         return ResponseEntity.ok(reservationId);
     }
 
     // 내 예약 취소
-    @DeleteMapping("/{facilityReservationId}")
+    @DeleteMapping("/reservations/{facilityReservationId}")
     @Operation(summary = "유저 예약 취소", description = "유저가 예약한 공용시설을 예약 취소하기")
     public ResponseEntity<Void> cancelReservation(
-            @PathVariable(name = "facilityReservationId") Long facilityReservationId
+            @PathVariable(name = "facilityReservationId") Long facilityReservationId,
+            @RequestBody FacilityReservationCancelDto facilityReservationCancelDto
     ) {
         Long userId = SecurityUtil.getCurrentUser().getId();
-        facilityUserService.cancelReservation(userId, facilityReservationId);
+        facilityUserService.cancelReservation(userId, facilityReservationId, facilityReservationCancelDto);
         return ResponseEntity.ok().build();
     }
 
-    // 시설 목록 보기
-    @GetMapping
-    @Operation(summary = "공용시설 목록 조회", description = "등록된(활성화 중) 공용시설 목록 조희")
-    public ResponseEntity<List<FacilityUserSimpleResponseDto>> getFacilityList(
-            @RequestParam(name = "keyword", required = false) String keyword) {
-        Long apartmentId = SecurityUtil.getCurrentUser().getApartment().getId();
-        List<FacilityUserSimpleResponseDto> list = facilityUserService.getFacilityList(apartmentId, keyword);
-        return ResponseEntity.ok(list);
+    // 본인 예약 목록 조회
+    @GetMapping("/reservations")
+    @Operation(summary = "유저 예약 조회", description = "유저가 예약한 공용시설 예약 목록 조회")
+    public ResponseEntity<List<FacilityReservationSimpleUserDto>> getMyReservations() {
+        User user = SecurityUtil.getCurrentUser();
+        List<FacilityReservationSimpleUserDto> reservationsList = facilityUserService.getMyReservations(user.getId());
+        return ResponseEntity.ok(reservationsList);
     }
 
-//    @GetMapping("/{facilityId}/timeslots")
-//    @Operation(summary = "시설별 타임슬롯 목록 조회(날짜별)")
-//    public ResponseEntity<List<TimeSlotSimpleResponseDto>> getFacilityTimeSlots(
-//            @PathVariable(name = "facilityId") Long facilityId,
-//            @RequestParam(name = "date", required = false) String date // "2025-06-10"
-//    ) {
-//        List<TimeSlotSimpleResponseDto> slots = facilityUserService.getTimeSlots(facilityId, date);
-//        return ResponseEntity.ok(slots);
-//    }
-
-    // 내 예약 조회 (전체, 날짜, 시설, 상태 선택 가능)
-    @GetMapping("/reservations")
-    @Operation(
-            summary = "유저 예약 조회",
-            description = "유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)"
-    )
-    public ResponseEntity<List<FacilityReservationUserDto>> getUserReservations(
-            @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(name = "facilityId", required = false) Long facilityId,
-            @RequestParam(name = "status", required = false) FacilityReservation.Status status
+    // 본인 예약 단건 상세 조회
+    @GetMapping("/reservations/{facilityReservationId}")
+    public ResponseEntity<FacilityReservationUserDto> getMyReservationDetail(
+            @PathVariable(name = "facilityReservationId") Long facilityReservationId
     ) {
-        User user = SecurityUtil.getCurrentUser();
-        List<FacilityReservationUserDto> reservations =
-                facilityUserService.getUserReservationsWithFilter(user.getId(), date, facilityId, status);
-        return ResponseEntity.ok(reservations);
+        FacilityReservationUserDto facilityReservationUserDto = facilityUserService.getMyReservationDetail(
+                facilityReservationId);
+        return ResponseEntity.ok(facilityReservationUserDto);
     }
 }

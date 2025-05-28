@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "공용시설 목록 조회 [관리자] 응답 DTO")
-public class FacilityManagerSimpleResponseDto {
+public class FacilitySimpleResponseDto {
 
     @Schema(description = "공용시설 id", example = "1")
     private Long facilityId;
@@ -31,8 +31,8 @@ public class FacilityManagerSimpleResponseDto {
     private LocalTime closeTime;
 
     // 정적 팩토리 메서드 (Entity → DTO)
-    public static FacilityManagerSimpleResponseDto from(Facility entity) {
-        return FacilityManagerSimpleResponseDto.builder()
+    public static FacilitySimpleResponseDto from(Facility entity) {
+        return FacilitySimpleResponseDto.builder()
                 .facilityId(entity.getId())
                 .facilityName(entity.getName())
                 .description(entity.getDescription())

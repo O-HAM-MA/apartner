@@ -37,4 +37,7 @@ public interface FacilityInstructorRepository extends JpaRepository<FacilityInst
             @Param("facilityStatus") Status facilityStatus
     );
 
+    List<FacilityInstructor> findByFacilityIdAndStatus(Long facilityId, Status status);
+
+
 }

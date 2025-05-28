@@ -2,8 +2,8 @@ package com.ohammer.apartner.domain.facility.controller;
 
 import com.ohammer.apartner.domain.facility.dto.request.FacilityCreateRequestDto;
 import com.ohammer.apartner.domain.facility.dto.request.FacilityUpdateRequestDto;
-import com.ohammer.apartner.domain.facility.dto.response.FacilityManagerSimpleResponseDto;
 import com.ohammer.apartner.domain.facility.dto.response.FacilityReservationManagerDto;
+import com.ohammer.apartner.domain.facility.dto.response.FacilitySimpleResponseDto;
 import com.ohammer.apartner.domain.facility.service.FacilityManagerService;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.security.utils.SecurityUtil;
@@ -68,7 +68,7 @@ public class FacilityManagerController {
     // 공용시설 목록 조회
     @GetMapping
     @Operation(summary = "공용시설 목록 조회 [관리자]")
-    public ResponseEntity<List<FacilityManagerSimpleResponseDto>> getFacilityList() {
+    public ResponseEntity<List<FacilitySimpleResponseDto>> getFacilityList() {
         User user = SecurityUtil.getCurrentUser();
         Long apartmentId = user.getApartment().getId();
         return ResponseEntity.ok(facilityManagerService.getFacilityList(apartmentId));
@@ -77,7 +77,7 @@ public class FacilityManagerController {
     // 공용시설 단건 조회
     @GetMapping("/{facilityId}")
     @Operation(summary = "공용시설 단건 조회 [관리자]")
-    public ResponseEntity<FacilityManagerSimpleResponseDto> getFacility(
+    public ResponseEntity<FacilitySimpleResponseDto> getFacility(
             @PathVariable(name = "facilityId") Long facilityId) {
         User user = SecurityUtil.getCurrentUser();
         Long apartmentId = user.getApartment().getId();

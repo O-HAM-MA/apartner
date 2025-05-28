@@ -533,20 +533,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/{facilityId}/reserve": {
+    "/api/v1/facilities/reservations": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * 유저 예약 조회
+         * @description 유저가 예약한 공용시설 예약 목록 조회
+         */
+        get: operations["getMyReservations"];
         put?: never;
         /**
          * 유저 공용시설 예약하기
          * @description 유저가 등록된 공용시설을 예약하기
          */
-        post: operations["reserveFacility"];
+        post: operations["reservationFacility"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1402,21 +1406,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/reservations": {
+    "/api/v1/facilities/{facilityId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 유저 예약 조회
-         * @description 유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)
-         */
-        get: operations["getUserReservations"];
+        /** 공용시설 단건 조회 */
+        get: operations["getFacility_1"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilities/{facilityId}/instructors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 시설별 강사 목록 조회 */
+        get: operations["getInstructorList_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilities/{facilityId}/instructors/{instructorId}/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 강사별 캘린더 타임슬롯 조회 */
+        get: operations["getInstructorTimeSlots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilities/reservations/{facilityReservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyReservationDetail"];
+        put?: never;
+        post?: never;
+        /**
+         * 유저 예약 취소
+         * @description 유저가 예약한 공용시설을 예약 취소하기
+         */
+        delete: operations["cancelReservation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2013,26 +2068,6 @@ export interface paths {
          * @description 사용자의 프로필 이미지를 삭제합니다.
          */
         delete: operations["deleteProfileImage"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/{facilityReservationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * 유저 예약 취소
-         * @description 유저가 예약한 공용시설을 예약 취소하기
-         */
-        delete: operations["cancelReservation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2650,6 +2685,11 @@ export interface components {
              * @example 1001
              */
             timeSlotId?: number;
+            /**
+             * @description 사용자 요청사항
+             * @example (선택) 요청사항 입력
+             */
+            requestMessage?: string;
         };
         EntryRecordResponseDto: {
             /** Format: int64 */
@@ -3008,10 +3048,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3020,26 +3060,26 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -3104,10 +3144,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3116,9 +3156,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -3270,47 +3310,181 @@ export interface components {
             /** Format: date-time */
             modifiedAt?: string;
         };
-        /** @description 공용시설 목록 조회 응답 DTO */
-        FacilityUserSimpleResponseDto: {
+        /** @description 공용시설 목록 조회 [관리자] 응답 DTO */
+        FacilitySimpleResponseDto: {
             /**
              * Format: int64
-             * @description 시설 ID
+             * @description 공용시설 id
              * @example 1
              */
             facilityId?: number;
             /**
              * @description 공용시설 이름
-             * @example 헬스장
-             */
-            name?: string;
-            /**
-             * @description 공용시설 설명
-             * @example 24시간 이용가능한 피트니스 센터
-             */
-            description?: string;
-        };
-        /** @description 공용시설 예약 조회 [사용자] 응답 DTO */
-        FacilityReservationUserDto: {
-            /**
-             * @description 예약한 공용시설 이름
-             * @example 헬스장
+             * @example 수영장
              */
             facilityName?: string;
             /**
-             * @description 예약 일시
-             * @example 2025-05-15 09:00-11:00
+             * @description 공용시설 설명
+             * @example 반드시 수영모를 씁시다
              */
-            reservationTime?: string;
+            description?: string;
             /**
-             * @description 신청 일시
-             * @example 2025-05-13 10:10
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
              */
-            createdAt?: string;
+            openTime?: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 22:00
+             */
+            closeTime?: string;
+        };
+        /** @description 공용시설 강사 목록 조회 응답 DTO */
+        InstructorSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 강사 ID
+             * @example 1
+             */
+            instructorId?: number;
+            /**
+             * @description 강사 이름
+             * @example 박태환
+             */
+            name?: string;
+            /**
+             * @description 강사 소개/설명
+             * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
+             */
+            description?: string;
+        };
+        /** @description 타임슬롯 조회 응답 DTO */
+        TimeSlotSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 타임슬롯 ID
+             * @example 123
+             */
+            timeSlotId?: number;
+            /**
+             * @description 프로그램명
+             * @example 초보반
+             */
+            scheduleName?: string;
+            /**
+             * Format: date
+             * @description 날짜
+             * @example 2025-06-10
+             */
+            date?: string;
+            /**
+             * @description 시작 시간
+             * @example 10:00
+             */
+            startTime?: string;
+            /**
+             * @description 종료 시간
+             * @example 11:00
+             */
+            endTime?: string;
+            /**
+             * Format: int64
+             * @description 최대 예약 가능 인원
+             * @example 10
+             */
+            maxCapacity?: number;
+            /**
+             * Format: int64
+             * @description 현재 예약 인원
+             * @example 4
+             */
+            reservedCount?: number;
+            /**
+             * @description 마감 여부
+             * @example false
+             */
+            isFull?: boolean;
+        };
+        /** @description 공용시설 예약 목록 조회 [사용자] 응답 DTO */
+        FacilityReservationSimpleUserDto: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
+             */
+            reservationId?: number;
+            /**
+             * @description 예약한 공용시설 이름
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 예약한 공용시설 강사 이름
+             * @example 박태환
+             */
+            instructorName?: string;
+            /**
+             * @description 예약한 공용시설 프로그램 이름
+             * @example 자유형 기초
+             */
+            programName?: string;
+            /**
+             * @description 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
             /**
              * @description 예약 상태
              * @example PENDING
+             * @enum {string}
              */
-            status?: string;
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+        };
+        /** @description 공용시설 예약 단건 조회 [사용자] 응답 DTO */
+        FacilityReservationUserDto: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
+             */
+            reservationId?: number;
+            /**
+             * @description 예약한 공용시설 이름
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 예약한 공용시설 강사 이름
+             * @example 박태환
+             */
+            instructorName?: string;
+            /**
+             * @description 예약한 공용시설 프로그램 이름
+             * @example 자유형 기초
+             */
+            programName?: string;
+            /**
+             * @description 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
+            /**
+             * Format: date-time
+             * @description 예약 신청 일시
+             * @example 2025-05-27 13:30
+             */
+            createdAt?: string;
+            /**
+             * @description 예약시 요청사항
+             * @example (선택사항)
+             */
+            requestMessage?: string;
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             * @enum {string}
+             */
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
         };
         ComplaintHandlingRateResponseDto: {
             /** Format: int64 */
@@ -3419,10 +3593,10 @@ export interface components {
             data?: components["schemas"]["PageMenuDTO"];
         };
         PageMenuDTO: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3431,9 +3605,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ApiResponseListMenuDTO: {
@@ -3450,54 +3624,6 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: number[];
-        };
-        /** @description 공용시설 목록 조회 [관리자] 응답 DTO */
-        FacilityManagerSimpleResponseDto: {
-            /**
-             * Format: int64
-             * @description 공용시설 id
-             * @example 1
-             */
-            facilityId?: number;
-            /**
-             * @description 공용시설 이름
-             * @example 수영장
-             */
-            facilityName?: string;
-            /**
-             * @description 공용시설 설명
-             * @example 반드시 수영모를 씁시다
-             */
-            description?: string;
-            /**
-             * @description 공용시설 운영 시작 시간
-             * @example 06:00
-             */
-            openTime?: string;
-            /**
-             * @description 공용시설 운영 종료 시간
-             * @example 22:00
-             */
-            closeTime?: string;
-        };
-        /** @description 공용시설 강사 목록 조회 응답 DTO */
-        InstructorSimpleResponseDto: {
-            /**
-             * Format: int64
-             * @description 강사 ID
-             * @example 1
-             */
-            instructorId?: number;
-            /**
-             * @description 강사 이름
-             * @example 박태환
-             */
-            name?: string;
-            /**
-             * @description 강사 소개/설명
-             * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
-             */
-            description?: string;
         };
         /** @description 강사 스케줄 목록 조회 응답 DTO */
         InstructorScheduleSimpleResponseDto: {
@@ -3539,53 +3665,6 @@ export interface components {
              * @example 20
              */
             capacity?: number;
-        };
-        /** @description 타임슬롯 조회 응답 DTO */
-        TimeSlotSimpleResponseDto: {
-            /**
-             * Format: int64
-             * @description 타임슬롯 ID
-             * @example 123
-             */
-            timeSlotId?: number;
-            /**
-             * @description 프로그램명
-             * @example 초보반
-             */
-            scheduleName?: string;
-            /**
-             * Format: date
-             * @description 날짜
-             * @example 2025-06-10
-             */
-            date?: string;
-            /**
-             * @description 시작 시간
-             * @example 10:00
-             */
-            startTime?: string;
-            /**
-             * @description 종료 시간
-             * @example 11:00
-             */
-            endTime?: string;
-            /**
-             * Format: int64
-             * @description 최대 예약 가능 인원
-             * @example 10
-             */
-            maxCapacity?: number;
-            /**
-             * Format: int64
-             * @description 현재 예약 인원
-             * @example 4
-             */
-            reservedCount?: number;
-            /**
-             * @description 마감 여부
-             * @example false
-             */
-            isFull?: boolean;
         };
         /** @description 공용시설 사용자별 이용 횟수 DTO */
         UserUsageCountDto: {
@@ -3742,10 +3821,10 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3754,9 +3833,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 회원 탈퇴 요청 DTO */
@@ -3771,6 +3850,20 @@ export interface components {
              * @example 서비스 불만
              */
             leaveReason?: string;
+        };
+        /** @description 공용시설 예약 취소 요청 DTO */
+        FacilityReservationCancelDto: {
+            /**
+             * @description 예약 취소 사유 선택
+             * @example 잘못 예약함
+             * @enum {string}
+             */
+            cancelReasonType?: "PERSONAL_REASON" | "SCHEDULE_CONFLICT" | "ILLNESS" | "MISTAKE" | "OTHER";
+            /**
+             * @description 취소 사유 입력
+             * @example '기타'선택시 입력
+             */
+            cancelReason?: string;
         };
     };
     responses: never;
@@ -4180,7 +4273,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FacilityManagerSimpleResponseDto"];
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"];
                 };
             };
         };
@@ -4872,7 +4965,27 @@ export interface operations {
             };
         };
     };
-    reserveFacility: {
+    getMyReservations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityReservationSimpleUserDto"][];
+                };
+            };
+        };
+    };
+    reservationFacility: {
         parameters: {
             query?: never;
             header?: never;
@@ -5481,7 +5594,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FacilityManagerSimpleResponseDto"][];
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"][];
                 };
             };
         };
@@ -6226,20 +6339,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FacilityUserSimpleResponseDto"][];
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"][];
                 };
             };
         };
     };
-    getUserReservations: {
+    getFacility_1: {
         parameters: {
-            query?: {
-                date?: string;
-                facilityId?: number;
-                status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
-            };
+            query?: never;
             header?: never;
-            path?: never;
+            path: {
+                facilityId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6250,8 +6361,102 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FacilityReservationUserDto"][];
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"];
                 };
+            };
+        };
+    };
+    getInstructorList_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InstructorSimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    getInstructorTimeSlots: {
+        parameters: {
+            query: {
+                startDate: string;
+                endDate: string;
+            };
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TimeSlotSimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    getMyReservationDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityReservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityReservationUserDto"];
+                };
+            };
+        };
+    };
+    cancelReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityReservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityReservationCancelDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -6942,26 +7147,6 @@ export interface operations {
                 content: {
                     "*/*": string;
                 };
-            };
-        };
-    };
-    cancelReservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                facilityReservationId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

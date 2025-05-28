@@ -61,7 +61,7 @@ interface ApiResponse<T> {
   status?: number;
 }
 
-interface FacilityResponse {
+interface FacilitySimpleResponseDto {
   facilityId: number;
   facilityName: string;
   description: string;
@@ -122,6 +122,35 @@ export default function IntegratedFacilitiesPage() {
   const formatTimeToHHMM = (time: string) => {
     const [hours, minutes] = time.split(':');
     return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+  };
+
+  // 요일 변환 함수 추가
+  const getDayOfWeek = (date: string) => {
+    const days = [
+      '일요일',
+      '월요일',
+      '화요일',
+      '수요일',
+      '목요일',
+      '금요일',
+      '토요일',
+    ];
+    const dayIndex = new Date(date).getDay();
+    return days[dayIndex];
+  };
+
+  // 날짜 포맷 함수 추가
+  const formatDateWithDay = (date: string) => {
+    return `${date}-${getDayOfWeek(date)}`;
+  };
+
+  // 시간 포맷 함수 추가
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(':');
+      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    };
+    return `${formatTime(startTime)}-${formatTime(endTime)}`;
   };
 
   // 시설 관련 상태
@@ -227,7 +256,7 @@ export default function IntegratedFacilitiesPage() {
 
       if (data) {
         setFacilities(
-          data.map((item: FacilityApiResponse) => ({
+          data.map((item: FacilitySimpleResponseDto) => ({
             id: item.facilityId,
             name: item.facilityName,
             description: item.description || '',
@@ -734,6 +763,13 @@ export default function IntegratedFacilitiesPage() {
     }
   };
 
+  // searchDateRange가 변경될 때마다 타임슬롯을 다시 불러오는 useEffect 추가
+  useEffect(() => {
+    if (selectedFacility && selectedInstructor) {
+      fetchTimeSlots(selectedFacility.id, selectedInstructor.id);
+    }
+  }, [searchDateRange.startDate, searchDateRange.endDate]);
+
   useEffect(() => {
     fetchFacilities();
   }, []);
@@ -994,34 +1030,83 @@ export default function IntegratedFacilitiesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-end gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Label className="whitespace-nowrap">조회기간</Label>
-                    <Input
-                      type="date"
-                      value={searchDateRange.startDate}
-                      onChange={(e) =>
-                        setSearchDateRange({
-                          ...searchDateRange,
-                          startDate: e.target.value,
-                        })
-                      }
-                    />
-                    <span className="flex items-center">~</span>
-                    <Input
-                      type="date"
-                      value={searchDateRange.endDate}
-                      onChange={(e) =>
-                        setSearchDateRange({
-                          ...searchDateRange,
-                          endDate: e.target.value,
-                        })
-                      }
-                    />
+                {viewMode === 'table' && (
+                  <div className="flex justify-end gap-4 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Label className="whitespace-nowrap">조회기간</Label>
+                      <Input
+                        type="date"
+                        value={searchDateRange.startDate}
+                        onChange={(e) =>
+                          setSearchDateRange((prev) => ({
+                            ...prev,
+                            startDate: e.target.value,
+                          }))
+                        }
+                      />
+                      <span className="flex items-center">~</span>
+                      <Input
+                        type="date"
+                        value={searchDateRange.endDate}
+                        onChange={(e) =>
+                          setSearchDateRange((prev) => ({
+                            ...prev,
+                            endDate: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
                 {viewMode === 'calendar' ? (
-                  <div className="h-[calc(100vh-400px)] min-h-[500px]">
+                  <div className="h-[calc(100vh-300px)] min-h-[700px]">
+                    <style jsx global>{`
+                      .fc .fc-button,
+                      .fc .fc-today-button {
+                        background-color: transparent !important;
+                        border: 1px solid hsl(var(--border));
+                        color: hsl(var(--foreground));
+                        font-size: 0.875rem;
+                        height: 2.25rem;
+                        padding-left: 0.75rem;
+                        padding-right: 0.75rem;
+                        font-weight: 500;
+                      }
+                      .fc .fc-today-button {
+                        color: hsl(var(--foreground)) !important;
+                      }
+                      .fc .fc-button:hover,
+                      .fc .fc-today-button:hover {
+                        background-color: hsl(var(--accent)) !important;
+                        color: hsl(var(--accent-foreground));
+                        border-color: transparent !important;
+                      }
+                      .fc .fc-button.fc-button-active,
+                      .fc .fc-button-primary.fc-button-active {
+                        background-color: hsl(var(--primary)) !important;
+                        border-color: transparent !important;
+                        color: hsl(var(--primary-foreground)) !important;
+                      }
+                      .fc .fc-today-button.fc-button-active {
+                        background-color: transparent !important;
+                        border: 1px solid hsl(var(--primary)) !important;
+                        color: hsl(var(--foreground)) !important;
+                      }
+                      .fc .fc-button:disabled,
+                      .fc .fc-today-button:disabled {
+                        opacity: 0.5;
+                      }
+                      .fc .fc-button:focus,
+                      .fc .fc-today-button:focus {
+                        outline: none;
+                        box-shadow: 0 0 0 2px hsl(var(--background)),
+                          0 0 0 4px hsl(var(--primary));
+                      }
+                      .fc .fc-toolbar-title {
+                        font-size: 1.25rem !important;
+                        font-weight: 600;
+                      }
+                    `}</style>
                     <FullCalendar
                       plugins={[
                         dayGridPlugin,
@@ -1068,7 +1153,11 @@ export default function IntegratedFacilitiesPage() {
                       </TableHeader>
                       <TableBody>
                         {timeSlots
-                          .sort((a, b) => a.timeSlotId - b.timeSlotId)
+                          .sort(
+                            (a, b) =>
+                              new Date(a.date).getTime() -
+                              new Date(b.date).getTime()
+                          )
                           .map((slot, index) => (
                             <TableRow key={slot.timeSlotId}>
                               <TableCell className="text-center font-medium">
@@ -1078,14 +1167,21 @@ export default function IntegratedFacilitiesPage() {
                                 {slot.scheduleName}
                               </TableCell>
                               <TableCell className="text-center">
-                                {slot.date}
+                                {formatDateWithDay(slot.date)}
                               </TableCell>
-                              <TableCell className="text-center">{`${slot.startTime} - ${slot.endTime}`}</TableCell>
+                              <TableCell className="text-center">
+                                {formatTimeRange(slot.startTime, slot.endTime)}
+                              </TableCell>
                               <TableCell className="text-center">
                                 <div className="flex justify-center">
                                   <Badge
+                                    className={`${
+                                      slot.isFull
+                                        ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                                        : ''
+                                    }`}
                                     variant={
-                                      slot.isFull ? 'destructive' : 'default'
+                                      slot.isFull ? 'default' : 'secondary'
                                     }
                                   >
                                     {slot.reservedCount}/{slot.maxCapacity}
