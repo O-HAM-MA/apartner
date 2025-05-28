@@ -254,11 +254,11 @@ export default function Home() {
                     <h3 className="font-medium mb-4 dark:text-white">
                       편리한 비대면 예약 서비스 제공
                     </h3>
-                    <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
+                    {/* <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
                       <ThumbsUp className="w-4 h-4 transition-transform duration-300 group-hover:scale-110 group-hover:text-pink-400" />
                       <MessageCircle className="w-4 h-4 transition-transform duration-300 group-hover:scale-110 group-hover:text-pink-400" />
                       <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-pink-400" />
-                    </div>
+                    </div> */}
                   </div>
                 </motion.div>
 
@@ -287,11 +287,11 @@ export default function Home() {
                     <h3 className="font-medium mb-4 dark:text-white">
                       공지 및 민원 제출을 쉽게 할 수 있습니다
                     </h3>
-                    <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
+                    {/* <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
                       <ThumbsUp className="w-4 h-4 transition-transform duration-300 group-hover:scale-110 group-hover:text-pink-400" />
                       <MessageCircle className="w-4 h-4 transition-transform duration-300 group-hover:scale-110 group-hover:text-pink-400" />
                       <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-pink-400" />
-                    </div>
+                    </div> */}
                   </div>
                 </motion.div>
 
@@ -320,11 +320,11 @@ export default function Home() {
                     <h3 className="font-medium mb-4 dark:text-white">
                       공용 시설의 안전 점검 일정을 확인하세요
                     </h3>
-                    <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
+                    {/* <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
                       <ThumbsUp className="w-4 h-4 transition-transform duration-300 group-hover:scale-110 group-hover:text-pink-400" />
                       <MessageCircle className="w-4 h-4 transition-transform duration-300 group-hover:scale-110 group-hover:text-pink-400" />
                       <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-pink-400" />
-                    </div>
+                    </div> */}
                   </div>
                 </motion.div>
               </div>

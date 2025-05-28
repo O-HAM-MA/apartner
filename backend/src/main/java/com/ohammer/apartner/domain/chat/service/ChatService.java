@@ -39,13 +39,47 @@ private final SimpMessagingTemplate simpMessagingTemplate;
 
 // 채팅방 생성
 @Transactional
-public ChatroomDto createChatRoom(User user, String title){
+public ChatroomDto createChatRoom(User user, String title, String category, Long apartmentId){
     if(title == null || title.trim().isEmpty()) {
         throw new BadRequestException("채팅방 제목은 비워둘 수 없습니다.");
+    }
+    
+    if(category == null || category.trim().isEmpty()) {
+        throw new BadRequestException("카테고리는 비워둘 수 없습니다.");
+    }
+    
+    if(apartmentId == null) {
+        throw new BadRequestException("아파트 ID는 비워둘 수 없습니다.");
+    }
+
+    // 이미 존재하는 같은 카테고리의 채팅방이 있는지 확인
+    List<UserChatroomMapping> userChatroomMappings = userChatroomMappingRepository.findAllByUserId(user.getId());
+    for (UserChatroomMapping mapping : userChatroomMappings) {
+        Chatroom existingChatroom = mapping.getChatroom();
+        if (existingChatroom.getCategory() != null && 
+            existingChatroom.getCategory().equals(category) && 
+            existingChatroom.getApartmentId() != null && 
+            existingChatroom.getApartmentId().equals(apartmentId)) {
+            
+            // 이미 존재하는 채팅방 반환
+            return new ChatroomDto(
+                existingChatroom.getId(),
+                existingChatroom.getTitle(),
+                existingChatroom.getCategory(),
+                existingChatroom.getApartmentId(),
+                existingChatroom.getHasNewMessage(),
+                null,
+                existingChatroom.getCreatedAt(),
+                existingChatroom.getStatus().name()
+            );
+        }
     }
 
     Chatroom chatroom = Chatroom.builder()
             .title(title)
+            .category(category)
+            .apartmentId(apartmentId)
+            .status(Chatroom.Status.ACTIVE)
             .createdAt(LocalDateTime.now())
             .build();
 
@@ -59,9 +93,12 @@ public ChatroomDto createChatRoom(User user, String title){
     return new ChatroomDto(
         chatroom.getId(),
         chatroom.getTitle(),
+        chatroom.getCategory(),
+        chatroom.getApartmentId(),
         chatroom.getHasNewMessage(),
-        chatroom.getUserChatroomMappingSet().size(),
-        chatroom.getCreatedAt()
+        null,
+        chatroom.getCreatedAt(),
+        chatroom.getStatus().name()
     );
 }
 
@@ -121,6 +158,12 @@ public Boolean leaveChatroom(User user, Long chatroomId){
 
     userChatroomMappingRepository.deleteByUserIdAndChatroomId(user.getId(), chatroomId);
 
+    // 채팅방 상태를 INACTIVE로 변경
+    Chatroom chatroom = chatroomRepository.findById(chatroomId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+    chatroom.setStatus(Chatroom.Status.INACTIVE);
+    chatroomRepository.save(chatroom);
+
     return true;
 }
 
@@ -149,9 +192,12 @@ public List<ChatroomDto> getChatroomList(User user){
             return new ChatroomDto(
                 chatroom.getId(),
                 chatroom.getTitle(),
+                chatroom.getCategory(),
+                chatroom.getApartmentId(),
                 chatroom.getHasNewMessage(),
-                chatroom.getUserChatroomMappingSet().size(),
-                chatroom.getCreatedAt()
+                null,
+                chatroom.getCreatedAt(),
+                chatroom.getStatus().name()
             );
         })
         .toList();
@@ -205,9 +251,12 @@ public List<ChatroomDto> getAllChatrooms(){
         .map(chatroom -> new ChatroomDto(
             chatroom.getId(),
             chatroom.getTitle(),
+            chatroom.getCategory(),
+            chatroom.getApartmentId(),
             chatroom.getHasNewMessage(),
-            chatroom.getUserChatroomMappingSet().size(),
-            chatroom.getCreatedAt()
+            null,
+            chatroom.getCreatedAt(),
+            chatroom.getStatus().name()
         ))
         .toList();
 }
@@ -221,9 +270,12 @@ public ChatroomDto getChatroomById(Long chatroomId){
     return new ChatroomDto(
         chatroom.getId(),
         chatroom.getTitle(),
+        chatroom.getCategory(),
+        chatroom.getApartmentId(),
         chatroom.getHasNewMessage(),
-        chatroom.getUserChatroomMappingSet().size(),
-        chatroom.getCreatedAt()
+        null,
+        chatroom.getCreatedAt(),
+        chatroom.getStatus().name()
     );
 }
 
@@ -236,21 +288,15 @@ public boolean isUserInChatroom(Long userId, Long chatroomId) {
     return userChatroomMappingRepository.existsByUserIdAndChatroomId(userId, chatroomId);
 }
 
-/**
- * 채팅 메시지를 처리하고 저장한 후 구독자에게 전달합니다.
- */
+// 채팅 메시지를 처리하고 저장한 후 구독자에게 전달합니다.
 public ChatMessageDto handleChatMessage(Map<String, String> payload, Long chatroomId) {
     try {
-        // 1. 사용자 확인
         User currentUser = resolveCurrentUser(payload);
         
-        // 2. 메시지 내용 확인
         String messageContent = validateAndGetMessage(payload);
         
-        // 3. 채팅방 참여 확인 및 처리
         ensureUserInChatroom(currentUser, chatroomId);
         
-        // 4. 메시지 저장 및 전송
         return processAndSendMessage(currentUser, chatroomId, messageContent);
     } catch (ChatException e) {
         log.error("메시지 처리 오류: {}", e.getMessage());
@@ -261,27 +307,21 @@ public ChatMessageDto handleChatMessage(Map<String, String> payload, Long chatro
     }
 }
 
-/**
- * 현재 사용자 정보를 조회합니다. 
- * SecurityUtil에서 인증 정보가 없으면 payload의 userId로 조회합니다.
- */
+// 현재 사용자 정보를 조회합니다. 
+// SecurityUtil에서 인증 정보가 없으면 payload의 userId로 조회합니다.
 private User resolveCurrentUser(Map<String, String> payload) {
-    // SecurityUtil로 현재 인증된 사용자 조회 시도
     User currentUser = securityUtil.getCurrentUser();
     
     if (currentUser != null) {
         return currentUser;
     }
     
-    // 인증 정보가 없는 경우 payload에서 userId 추출하여 사용자 조회
     Long userId = getUserIdFromPayload(payload);
     return userRepository.findById(userId)
             .orElseThrow(() -> new ChatException("사용자를 찾을 수 없습니다: " + userId));
 }
 
-/**
- * payload에서 userId를 안전하게 추출합니다.
- */
+// payload에서 userId를 안전하게 추출합니다.
 private Long getUserIdFromPayload(Map<String, String> payload) {
     if (!payload.containsKey("userId") || payload.get("userId") == null) {
         throw new ChatException("메시지에 userId가 포함되어 있지 않습니다.");
@@ -299,9 +339,7 @@ private Long getUserIdFromPayload(Map<String, String> payload) {
     }
 }
 
-/**
- * payload에서 메시지 내용을 검증하고 가져옵니다.
- */
+// payload에서 메시지 내용을 검증하고 가져옵니다.
 private String validateAndGetMessage(Map<String, String> payload) {
     String message = payload.get("message");
     if (message == null || message.trim().isEmpty()) {
@@ -310,9 +348,7 @@ private String validateAndGetMessage(Map<String, String> payload) {
     return message;
 }
 
-/**
- * 사용자가 채팅방에 참여 중인지 확인하고, 참여하지 않았다면 자동 참여시킵니다.
- */
+// 사용자가 채팅방에 참여 중인지 확인하고, 참여하지 않았다면 자동 참여시킵니다.
 private void ensureUserInChatroom(User user, Long chatroomId) {
     try {
         if (!isUserInChatroom(user.getId(), chatroomId)) {
@@ -323,31 +359,22 @@ private void ensureUserInChatroom(User user, Long chatroomId) {
     }
 }
 
-/**
- * 메시지를 저장하고 채팅방 업데이트 알림을 전송한 후 메시지 DTO를 반환합니다.
- */
+// 메시지를 저장하고 채팅방 업데이트 알림을 전송한 후 메시지 DTO를 반환합니다.
 private ChatMessageDto processAndSendMessage(User user, Long chatroomId, String messageContent) {
-    // 메시지 저장
     Message message = saveMessage(user, chatroomId, messageContent);
     
-    // 채팅방 업데이트 알림 전송
     notifyChatroomUpdate(chatroomId);
     
-    // 메시지 DTO 생성 및 반환
     return ChatMessageDto.from(message);
 }
 
-/**
- * 채팅방 업데이트 알림을 전송합니다.
- */
+// 채팅방 업데이트 알림을 전송합니다.
 private void notifyChatroomUpdate(Long chatroomId) {
     ChatroomDto chatroomDto = getChatroomById(chatroomId);
     simpMessagingTemplate.convertAndSend("/sub/chats/updates", chatroomDto);
 }
 
-/**
- * 오류 메시지를 담은 ChatMessageDto를 생성합니다.
- */
+// 오류 메시지를 담은 ChatMessageDto를 생성합니다.
 private ChatMessageDto createErrorMessageDto(String errorMessage) {
     return new ChatMessageDto(
             1L, 

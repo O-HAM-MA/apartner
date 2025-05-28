@@ -83,6 +83,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import React from "react";
+import MenuSortableList from "@/components/MenuSortableList";
+import { GripVertical } from "lucide-react";
 
 // API 기본 URL
 const API_BASE_URL = "/api/v1/admin/menu";
@@ -95,6 +97,7 @@ interface Grade {
   grade: string;
   usersCount: number;
   menuIds: string[]; // 선택된 메뉴 ID 배열
+  menuSortOrders?: Record<string, number>; // 메뉴 ID와 정렬 순서 매핑
 }
 
 interface Menu {
@@ -102,7 +105,8 @@ interface Menu {
   name: string;
   url: string;
   description: string;
-  icon?: string; // 아이콘 필드 추가
+  icon?: string;
+  sortOrder?: number;
 }
 
 // API 응답 타입 정의
@@ -133,10 +137,35 @@ const iconMap: Record<string, any> = {
   FileText: FileText,
 };
 
+// 오류 처리 함수 추가 (최상단 함수에 추가)
+const handleApiError = (error: any, defaultMessage: string) => {
+  // 403 권한 오류 처리
+  if (error?.response?.status === 403) {
+    const msg =
+      error?.response?.data?.message ||
+      "해당 기능에 대한 접근 권한이 없습니다.";
+    toast({
+      description: msg,
+      variant: "destructive",
+    });
+    return;
+  }
+  // 그 외 오류 처리
+  let errorMessage = defaultMessage;
+  if (error?.response?.data?.message) {
+    errorMessage = error.response.data.message;
+  }
+  toast({
+    description: errorMessage, // title 없이 description만!
+    variant: "destructive",
+  });
+};
+
 export default function GradesPage() {
   // State for grades and menus
   const [grades, setGrades] = useState<Grade[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
+  const [allAvailableMenus, setAllAvailableMenus] = useState<Menu[]>([]);
 
   // 로딩 상태
   const [loading, setLoading] = useState({
@@ -144,6 +173,7 @@ export default function GradesPage() {
     menus: false,
     action: false,
   });
+  const [loadingAllMenus, setLoadingAllMenus] = useState(false);
 
   // 페이지네이션 관련 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -157,6 +187,7 @@ export default function GradesPage() {
   const [isAddMenuDialogOpen, setIsAddMenuDialogOpen] = useState(false);
   const [isEditMenuDialogOpen, setIsEditMenuDialogOpen] = useState(false);
   const [isDeleteMenuDialogOpen, setIsDeleteMenuDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Selected items
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
@@ -176,15 +207,21 @@ export default function GradesPage() {
     description: "",
   });
 
+  const [gradeLevelInput, setGradeLevelInput] = useState<string>("");
+  const [gradeLevelError, setGradeLevelError] = useState<string | null>(null);
+
   // 데이터 불러오기
   useEffect(() => {
     fetchGrades();
     fetchAllMenus();
+    fetchPagedMenus(currentPage);
   }, []);
 
   // 페이지 변경시 메뉴 데이터 불러오기
   useEffect(() => {
-    fetchPagedMenus(currentPage);
+    if (currentPage > 0) {
+      fetchPagedMenus(currentPage);
+    }
   }, [currentPage]);
 
   // API 함수들
@@ -201,17 +238,12 @@ export default function GradesPage() {
             grade: `${grade.level}등급`,
             usersCount: grade.usersCount || 0,
             menuIds: grade.menuIds?.map((id: number) => id.toString()) || [],
+            menuSortOrders: grade.menuSortOrders || {},
           }))
         );
       }
     } catch (error) {
-      console.error("등급 목록을 불러오는데 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description:
-          "등급 목록을 불러오는데 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "등급 목록을 불러오는데 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, grades: false }));
     }
@@ -219,38 +251,41 @@ export default function GradesPage() {
 
   const fetchAllMenus = async () => {
     try {
-      setLoading((prev) => ({ ...prev, menus: true }));
+      setLoadingAllMenus(true);
       const response = await get<ApiResponse<any[]>>(
         `${API_BASE_URL}/menus/list`
       );
       if (response.success) {
-        setMenus(
-          response.data.map((menu: any) => ({
-            id: menu.id.toString(),
-            name: menu.name,
-            url: menu.url,
-            description: menu.description || "",
-          }))
+        const fullMenuList = response.data.map((menu: any) => ({
+          id: menu.id.toString(),
+          name: menu.name,
+          url: menu.url,
+          description: menu.description || "",
+          icon: menu.icon || "",
+        }));
+        setAllAvailableMenus(fullMenuList);
+      } else {
+        console.error(
+          "전체 메뉴 목록을 불러오는데 실패했습니다:",
+          response.message
         );
-        setTotalMenus(response.data.length);
+        toast({
+          title: "오류",
+          description:
+            response.message || "전체 메뉴 목록을 불러오는데 실패했습니다.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("메뉴 목록을 불러오는데 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description:
-          "메뉴 목록을 불러오는데 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "전체 메뉴 목록을 불러오는데 실패했습니다:");
     } finally {
-      setLoading((prev) => ({ ...prev, menus: false }));
+      setLoadingAllMenus(false);
     }
   };
 
   const fetchPagedMenus = async (page: number) => {
     try {
       setLoading((prev) => ({ ...prev, menus: true }));
-      // URL 쿼리 파라미터로 변환
       const url = `${API_BASE_URL}/menus?page=${page - 1}&size=${itemsPerPage}`;
       const response = await get<ApiResponse<PageResponse<any>>>(url);
       if (response.success) {
@@ -260,22 +295,24 @@ export default function GradesPage() {
           name: menu.name,
           url: menu.url,
           description: menu.description || "",
-          icon: menu.icon || "", // icon 필드가 null이면 빈 문자열로 처리
+          icon: menu.icon || "",
         }));
-
-        // 현재 페이지 메뉴만 업데이트
         setMenus(mappedMenus);
         setTotalMenus(pageData.totalElements);
-        console.log("메뉴 데이터 로드됨:", mappedMenus); // 디버깅용 로그 추가
+      } else {
+        console.error(
+          "페이지 메뉴 목록을 불러오는데 실패했습니다:",
+          response.message
+        );
+        toast({
+          title: "오류",
+          description:
+            response.message || "페이지 메뉴 목록을 불러오는데 실패했습니다.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("메뉴 페이지를 불러오는데 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description:
-          "메뉴 목록을 불러오는데 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 페이지를 불러오는데 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, menus: false }));
     }
@@ -283,15 +320,51 @@ export default function GradesPage() {
 
   // Handle adding a new grade
   const handleAddGrade = async () => {
+    if (gradeLevelError) {
+      toast({
+        title: "오류",
+        description: gradeLevelError,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!gradeLevelInput) {
+      toast({
+        title: "오류",
+        description: "등급 레벨을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       setLoading((prev) => ({ ...prev, action: true }));
 
-      // API 요청 형식에 맞게 데이터 변환
+      const menuSortOrders: Record<string, number> = {};
+      // sortedMenus (D&D로 정렬된 전체 리스트)를 기준으로 선택된 메뉴들의 순서를 결정
+      if (sortedMenus.length > 0) {
+        sortedMenus.forEach((menu, index) => {
+          if (newGrade.menuIds?.includes(menu.id)) {
+            menuSortOrders[menu.id] = index;
+          }
+        });
+      } else {
+        // D&D 변경이 없다면 선택된 순서대로
+        newGrade.menuIds?.forEach((menuId, index) => {
+          menuSortOrders[menuId] = index;
+        });
+      }
+
       const gradeToAdd = {
         name: newGrade.name,
         description: newGrade.description || "",
-        level: grades.length + 1, // 레벨은 기존 등급 수 + 1로 설정
+        level: parseInt(gradeLevelInput, 10),
         menuIds: newGrade.menuIds?.map((id) => parseInt(id)) || [],
+        menuSortOrders: Object.fromEntries(
+          Object.entries(menuSortOrders).map(([key, value]) => [
+            parseInt(key),
+            value,
+          ])
+        ),
       };
 
       const response = await post<ApiResponse<any>>(
@@ -305,20 +378,13 @@ export default function GradesPage() {
           description: "새 등급이 추가되었습니다.",
         });
 
-        // 등급 목록 다시 불러오기
         await fetchGrades();
-
-        // 상태 초기화
         setNewGrade({ name: "", description: "", grade: "", menuIds: [] });
         setIsAddGradeDialogOpen(false);
+        setSortedMenus([]);
       }
     } catch (error) {
-      console.error("등급 추가에 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description: "등급 추가에 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "등급 추가에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -327,17 +393,90 @@ export default function GradesPage() {
   // Handle editing a grade
   const handleEditGrade = async () => {
     if (!selectedGrade) return;
-
+    if (gradeLevelError) {
+      toast({
+        title: "오류",
+        description: gradeLevelError,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!gradeLevelInput) {
+      toast({
+        title: "오류",
+        description: "등급 레벨을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       setLoading((prev) => ({ ...prev, action: true }));
 
-      // API 요청 형식에 맞게 데이터 변환
+      const finalMenuSortOrders: Record<string, number> = {};
+      let finalMenuIds: string[] = [];
+
+      if (sortedMenus.length > 0) {
+        // D&D로 순서가 변경된 경우, sortedMenus를 기준으로 선택된 메뉴들의 순서를 결정
+        let currentOrder = 0;
+        sortedMenus.forEach((menu) => {
+          if (newGrade.menuIds?.includes(menu.id)) {
+            finalMenuSortOrders[menu.id] = currentOrder++;
+            finalMenuIds.push(menu.id);
+          }
+        });
+      } else if (
+        selectedGrade.menuSortOrders &&
+        Object.keys(selectedGrade.menuSortOrders).length > 0
+      ) {
+        // D&D 변경 없고, 기존 등급에 저장된 menuSortOrders가 있는 경우
+        // 현재 선택된(newGrade.menuIds) 메뉴들만 대상으로 하되, 기존 순서 유지 시도
+        // allAvailableMenus를 사용해 Menu 객체 정보 가져오기
+        const tempSortedFromExistingOrders: Menu[] = [...allAvailableMenus]
+          .filter((menu) => newGrade.menuIds?.includes(menu.id))
+          .sort((a, b) => {
+            const orderA = selectedGrade.menuSortOrders![a.id];
+            const orderB = selectedGrade.menuSortOrders![b.id];
+
+            if (orderA !== undefined && orderB !== undefined)
+              return orderA - orderB;
+            if (orderA !== undefined) return -1;
+            if (orderB !== undefined) return 1;
+            // 만약 한쪽만 order 정보가 있다면, 정보 있는 쪽이 우선
+            // 둘 다 없거나, 한쪽만 있을 때의 기본 정렬 (이름순 또는 ID순)
+            return a.name.localeCompare(b.name);
+          });
+
+        tempSortedFromExistingOrders.forEach((menu, index) => {
+          finalMenuSortOrders[menu.id] = index;
+          finalMenuIds.push(menu.id);
+        });
+      } else {
+        // D&D 변경 없고, 기존 menuSortOrders도 없는 경우
+        // 선택된 메뉴(newGrade.menuIds)들의 현재 순서(선택된 순서 또는 allAvailableMenus에서의 순서)를 따름
+        let currentOrder = 0;
+        // allAvailableMenus를 기준으로 순서를 부여
+        allAvailableMenus.forEach((menu) => {
+          if (newGrade.menuIds?.includes(menu.id)) {
+            finalMenuSortOrders[menu.id] = currentOrder++;
+            finalMenuIds.push(menu.id);
+          }
+        });
+      }
+
       const gradeToUpdate = {
         name: newGrade.name,
         description: newGrade.description || "",
-        level: parseInt(selectedGrade.grade.replace("등급", "")), // "N등급"에서 N 추출
-        menuIds: newGrade.menuIds?.map((id) => parseInt(id)) || [],
+        level: parseInt(gradeLevelInput, 10),
+        menuIds: finalMenuIds.map((id) => parseInt(id)),
+        menuSortOrders: Object.fromEntries(
+          Object.entries(finalMenuSortOrders).map(([key, value]) => [
+            parseInt(key),
+            value,
+          ])
+        ),
       };
+
+      console.log("Updating grade with data:", gradeToUpdate);
 
       const response = await put<ApiResponse<any>>(
         `${API_BASE_URL}/grades/${selectedGrade.id}`,
@@ -345,32 +484,23 @@ export default function GradesPage() {
       );
 
       if (response.success) {
-        // 메뉴 할당 API 호출
-        if (newGrade.menuIds && newGrade.menuIds.length > 0) {
-          await put<ApiResponse<any>>(
-            `${API_BASE_URL}/grades/${selectedGrade.id}/menus`,
-            newGrade.menuIds.map((id) => parseInt(id))
-          );
-        }
-
         toast({
           title: "성공",
           description: "등급이 수정되었습니다.",
         });
 
-        // 등급 목록 다시 불러오기
         await fetchGrades();
-
-        // 상태 초기화
         setIsAddGradeDialogOpen(false);
+        setSortedMenus([]); // 중요: 수정 후 sortedMenus 초기화
+      } else {
+        toast({
+          title: "오류",
+          description: response.message || "등급 수정에 실패했습니다.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("등급 수정에 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description: "등급 수정에 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      handleApiError(error, "등급 수정에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -409,12 +539,7 @@ export default function GradesPage() {
         setIsAddMenuDialogOpen(false);
       }
     } catch (error) {
-      console.error("메뉴 추가에 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description: "메뉴 추가에 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 추가에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -456,12 +581,7 @@ export default function GradesPage() {
         setIsEditMenuDialogOpen(false);
       }
     } catch (error) {
-      console.error("메뉴 수정에 실패했습니다:", error);
-      toast({
-        title: "오류",
-        description: "메뉴 수정에 실패했습니다. 인증이 필요할 수 있습니다.",
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 수정에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -499,46 +619,7 @@ export default function GradesPage() {
         setIsDeleteMenuDialogOpen(false);
       }
     } catch (error) {
-      console.error("메뉴 삭제에 실패했습니다:", error);
-
-      // 오류 메시지 처리 개선
-      let errorMessage = "메뉴 삭제에 실패했습니다.";
-
-      // error 객체에서 실제 메시지 추출 시도
-      if (error instanceof Error) {
-        const errorText = error.message;
-
-        // 외래 키 제약 조건 오류인 경우 (409 Conflict)
-        if (
-          errorText.includes("409") &&
-          errorText.includes("이 메뉴는 하나 이상의 등급에서 사용 중입니다")
-        ) {
-          errorMessage =
-            "이 메뉴는 하나 이상의 등급에서 사용 중입니다. 삭제하기 전에 모든 등급에서 이 메뉴를 선택 해제해주세요.";
-        }
-        // API 응답에 메시지가 있는 경우
-        else if (errorText.includes("message")) {
-          try {
-            const errorData = JSON.parse(
-              errorText.substring(
-                errorText.indexOf("{"),
-                errorText.lastIndexOf("}") + 1
-              )
-            );
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            }
-          } catch (e) {
-            // JSON 파싱 실패 시 기본 메시지 사용
-          }
-        }
-      }
-
-      toast({
-        title: "오류",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      handleApiError(error, "메뉴 삭제에 실패했습니다:");
     } finally {
       setLoading((prev) => ({ ...prev, action: false }));
     }
@@ -571,6 +652,64 @@ export default function GradesPage() {
     }
   };
 
+  // 메뉴 순서 변경 핸들러 이름 변경 및 로직 유지
+  const handleListOrderChange = (orderedAllMenus: Menu[]) => {
+    console.log("전체 메뉴 리스트 순서 변경:", orderedAllMenus);
+    // D&D로 변경된 전체 메뉴 리스트를 sortedMenus 상태에 저장
+    // 이 sortedMenus는 handleAddGrade/handleEditGrade에서 사용되어
+    // 선택된 메뉴들의 최종 순서를 결정합니다.
+    setSortedMenus(orderedAllMenus);
+  };
+
+  // sortedMenus 상태 추가
+  const [sortedMenus, setSortedMenus] = useState<Menu[]>([]);
+
+  // 등급 레벨 변경 핸들러
+  const handleGradeLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 숫자만 입력 가능하도록 필터링 (또는 type="number" 사용)
+    if (/^\d*$/.test(value)) {
+      setGradeLevelInput(value);
+      // 중복 검사
+      if (value) {
+        const level = parseInt(value, 10);
+        const isDuplicate = grades.some(
+          (g) =>
+            parseInt(g.grade.replace("등급", "")) === level &&
+            (!selectedGrade || g.id !== selectedGrade.id) // 수정 시 현재 등급은 제외
+        );
+        if (isDuplicate) {
+          setGradeLevelError("이미 사용 중인 등급 레벨입니다.");
+        } else {
+          setGradeLevelError(null);
+        }
+      } else {
+        setGradeLevelError(null);
+      }
+    }
+  };
+
+  // 등급 삭제 처리 함수
+  const handleDeleteGrade = async () => {
+    if (!selectedGrade) return;
+
+    try {
+      setLoading((prev) => ({ ...prev, action: true }));
+      await del(`${API_BASE_URL}/grades/${selectedGrade.id}`);
+      toast({
+        title: "성공",
+        description: `'${selectedGrade.name}' 등급이 삭제되었습니다.`,
+      });
+      await fetchGrades(); // 등급 목록 새로고침
+      setIsDeleteDialogOpen(false);
+      setSelectedGrade(null);
+    } catch (error: any) {
+      handleApiError(error, "등급 삭제에 실패했습니다:");
+    } finally {
+      setLoading((prev) => ({ ...prev, action: false }));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -594,6 +733,8 @@ export default function GradesPage() {
                 grade: "",
                 menuIds: [],
               });
+              setGradeLevelInput("");
+              setGradeLevelError(null);
               setIsAddGradeDialogOpen(true);
             }}
           >
@@ -634,7 +775,7 @@ export default function GradesPage() {
                           {grade.name}
                         </TableCell>
                         <TableCell>{grade.description}</TableCell>
-                        <TableCell>{grade.grade}</TableCell>
+                        <TableCell>{grade.grade.replace("등급", "")}</TableCell>
                         <TableCell>{grade.usersCount}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -645,7 +786,6 @@ export default function GradesPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {/* <DropdownMenuLabel>작업</DropdownMenuLabel> */}
                               <DropdownMenuItem
                                 onClick={() => {
                                   setSelectedGrade(grade);
@@ -656,11 +796,25 @@ export default function GradesPage() {
                                     grade: grade.grade,
                                     menuIds: [...grade.menuIds],
                                   });
+                                  setGradeLevelInput(
+                                    grade.grade.replace("등급", "")
+                                  );
+                                  setGradeLevelError(null);
                                   setIsAddGradeDialogOpen(true);
                                 }}
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 수정
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedGrade(grade);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                삭제
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -687,17 +841,22 @@ export default function GradesPage() {
       {/* 등급 추가/수정 모달 */}
       <Dialog
         open={isAddGradeDialogOpen}
-        onOpenChange={setIsAddGradeDialogOpen}
+        onOpenChange={(open) => {
+          setIsAddGradeDialogOpen(open);
+          if (!open) {
+            setSortedMenus([]);
+          }
+        }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {selectedGrade ? "등급 수정" : "등급 추가"}
             </DialogTitle>
             <DialogDescription>메뉴 접근 등급을 정의합니다.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
+          <div className="grid gap-4 py-4 flex-grow overflow-y-auto">
+            <div className="grid gap-2 pr-1 ps-1">
               <Label htmlFor="name">이름</Label>
               <Input
                 id="name"
@@ -708,7 +867,7 @@ export default function GradesPage() {
                 placeholder="예: 관리자"
               />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-2 pr-1 ps-1">
               <Label htmlFor="description">설명</Label>
               <Input
                 id="description"
@@ -719,90 +878,49 @@ export default function GradesPage() {
                 placeholder="이 등급에 대한 간략한 설명"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="grade">등급</Label>
+            <div className="grid gap-2 pr-1 ps-1">
+              <Label htmlFor="grade-level">등급 레벨</Label>
               <Input
-                id="grade"
-                value={
-                  selectedGrade
-                    ? selectedGrade.grade
-                    : `${grades.length + 1}등급`
-                }
-                disabled
-                readOnly
+                id="grade-level"
+                type="number"
+                value={gradeLevelInput}
+                onChange={handleGradeLevelChange}
+                placeholder="예: 1 (숫자만 입력)"
+                className={gradeLevelError ? "border-red-500" : ""}
               />
+              {gradeLevelError && (
+                <p className="text-xs text-red-500">{gradeLevelError}</p>
+              )}
             </div>
 
             {/* 메뉴 목록 */}
-            <div className="grid gap-2 mt-4">
-              <Label>메뉴 권한</Label>
-              {loading.menus ? (
+            <div className="grid gap-2 mt-4 min-h-[200px]">
+              <Label>메뉴 권한 (드래그하여 순서 변경 가능)</Label>
+              {loadingAllMenus ? (
                 <div className="flex justify-center items-center p-4">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <div className="rounded-md border max-h-[300px] overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]">선택</TableHead>
-                        <TableHead>아이콘</TableHead>
-                        <TableHead>메뉴 이름</TableHead>
-                        <TableHead>메뉴 URL</TableHead>
-                        <TableHead>설명</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {menus.length > 0 ? (
-                        menus.map((menu) => (
-                          <TableRow key={menu.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={
-                                  newGrade.menuIds?.includes(menu.id) || false
-                                }
-                                onCheckedChange={() =>
-                                  toggleMenuForGrade(menu.id)
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {menu.icon && iconMap[menu.icon] ? (
-                                React.createElement(iconMap[menu.icon], {
-                                  className: "h-4 w-4",
-                                })
-                              ) : (
-                                <FileText className="h-4 w-4" />
-                              )}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {menu.name}
-                            </TableCell>
-                            <TableCell>{menu.url}</TableCell>
-                            <TableCell>{menu.description}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={4}
-                            className="text-center py-4 text-muted-foreground"
-                          >
-                            등록된 메뉴가 없습니다
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                <MenuSortableList
+                  allMenus={allAvailableMenus}
+                  selectedMenuIds={newGrade.menuIds || []}
+                  onMenuToggle={toggleMenuForGrade}
+                  onListOrderChange={handleListOrderChange}
+                  iconMap={iconMap}
+                  loading={loadingAllMenus}
+                  initialSortOrders={selectedGrade?.menuSortOrders}
+                />
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-auto pt-4">
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setIsAddGradeDialogOpen(false)}
+              onClick={() => {
+                setIsAddGradeDialogOpen(false);
+                setSortedMenus([]);
+              }}
               disabled={loading.action}
             >
               취소
@@ -887,14 +1005,14 @@ export default function GradesPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => {
-                              console.log("선택된 메뉴:", menu); // 디버깅용 로그 추가
+                              console.log("선택된 메뉴:", menu);
                               setSelectedMenu(menu);
                               setNewMenu({
                                 id: menu.id,
                                 name: menu.name,
                                 url: menu.url,
                                 description: menu.description || "",
-                                icon: menu.icon || "", // 아이콘 정보 명시적으로 설정
+                                icon: menu.icon || "",
                               });
                               setIsEditMenuDialogOpen(true);
                             }}
@@ -1296,6 +1414,46 @@ export default function GradesPage() {
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   처리 중...
+                </>
+              ) : (
+                "삭제"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 등급 삭제 확인 모달 */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) {
+            setSelectedGrade(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="sm:max-w-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>등급 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 '{selectedGrade?.name}' (
+              {selectedGrade?.grade.replace("등급", "")} 레벨) 등급을
+              삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading.action}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteGrade}
+              disabled={loading.action}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {loading.action ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 처리 중...
                 </>
               ) : (
                 "삭제"

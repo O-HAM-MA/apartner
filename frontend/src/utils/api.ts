@@ -239,16 +239,24 @@ export async function fetchJson<T>(
     return {} as T;
   }
 
-  // JSON 파싱 시도
+  // JSON 파싱 시도 - 개선된 예외 처리
   try {
-    return JSON.parse(text) as T;
+    const parsedData = JSON.parse(text);
+    return parsedData as T;
   } catch (parseError) {
-    // error -> parseError 변수명 변경 및 사용
+    // 로그 개선: URL과 응답 텍스트의 일부를 포함시켜 디버깅 용이하게
     console.error(
-      `[fetchJson] Error parsing JSON response for ${url}:`,
-      parseError
-    ); // 파싱 에러 로그 추가
-    throw new Error("서버 응답을 처리할 수 없습니다.");
+      `[fetchJson] JSON 파싱 에러 (${url}):`,
+      parseError,
+      `\n응답 텍스트 일부: ${text.substring(0, 200)}${
+        text.length > 200 ? "..." : ""
+      }`
+    );
+
+    // 더 자세한 에러 메시지
+    throw new Error(
+      `JSON 파싱 에러: ${(parseError as Error).message}. API: ${url}`
+    );
   }
 }
 
@@ -629,4 +637,56 @@ export async function joinChatroom<T = any>(
  */
 export async function leaveChatroom<T = any>(chatroomId: number): Promise<T> {
   return await del<T>(`/api/v1/chats/${chatroomId}/users`, {}, true);
+}
+
+export async function uploadProfileImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("multipartFile", file);
+  const response = await fetchApi("/api/v1/profile-images/upload", {
+    method: "POST",
+    body: formData,
+    // fetchApi가 FormData면 Content-Type 자동 처리
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "업로드 실패");
+  }
+  return response.text();
+}
+
+/**
+ * [사용자] 채팅방 종료하기 (상태를 INACTIVE로 변경)
+ * @param chatroomId 종료할 채팅방 ID
+ */
+export async function closeChatroom<T = any>(chatroomId: number): Promise<T> {
+  // 채팅방 종료 전용 엔드포인트가 없어서 채팅방 나가기 API를 사용
+  // 백엔드 로직에서 leaveChatroom 함수가 채팅방 상태를 INACTIVE로 변경함
+  return await del<T>(`/api/v1/chats/${chatroomId}/users`, {}, true);
+}
+
+/**
+ * [사용자] 사용자의 활성화된 채팅방 조회
+ * 상태가 ACTIVE인 채팅방만 필터링하여 반환
+ */
+export async function getActiveUserChatrooms<T = any[]>(): Promise<T> {
+  try {
+    console.log("[getActiveUserChatrooms] 활성화된 채팅방 목록 조회 시도");
+    const allChatrooms = await getUserChatrooms();
+
+    // 상태가 ACTIVE인 채팅방만 필터링
+    const activeChatrooms = Array.isArray(allChatrooms)
+      ? allChatrooms.filter((room: any) => room.status === "ACTIVE")
+      : [];
+
+    console.log(
+      `[getActiveUserChatrooms] 활성화된 채팅방 ${activeChatrooms.length}개 조회됨`
+    );
+    return activeChatrooms as unknown as T;
+  } catch (error) {
+    console.error(
+      "[getActiveUserChatrooms] 활성화된 채팅방 목록 조회 중 오류:",
+      error
+    );
+    return [] as unknown as T;
+  }
 }

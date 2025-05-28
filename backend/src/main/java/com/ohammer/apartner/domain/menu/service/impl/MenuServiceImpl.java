@@ -15,8 +15,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.ohammer.apartner.domain.menu.entity.GradeMenuAccess;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Slf4j
 @Service
@@ -134,5 +137,24 @@ public class MenuServiceImpl implements MenuService {
     public List<MenuDTO> getMenusByGradeId(Long gradeId) {
         List<Menu> menus = gradeMenuAccessRepository.findMenusByGradeId(gradeId);
         return MenuDTO.fromEntities(menus);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<MenuDTO> getMenusByGradeIdSorted(Long gradeId) {
+        List<GradeMenuAccess> accessList = gradeMenuAccessRepository.findByGradeIdOrderBySortOrder(gradeId);
+        List<MenuDTO> menuDTOs = new ArrayList<>();
+        
+        for (GradeMenuAccess access : accessList) {
+            if (access.getMenu() == null) {
+                continue;
+            }
+            Menu menu = access.getMenu();
+            MenuDTO menuDTO = MenuDTO.fromEntity(menu);
+            menuDTO.setSortOrder(access.getSortOrder());
+            menuDTOs.add(menuDTO);
+        }
+        
+        return menuDTOs;
     }
 } 

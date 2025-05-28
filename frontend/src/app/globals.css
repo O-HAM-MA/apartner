@@ -23,29 +23,29 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 346.8 77.2% 49.8%;
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 346.8 77.2% 49.8%;
+    --background: 224 25% 12%;
+    --foreground: 210 20% 98%;
+    --card: 224 30% 15%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 30% 15%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 346.8 70% 60%;
     --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
+    --secondary: 228 22% 20%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 228 22% 20%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --accent: 228 22% 22%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 346.8 77.2% 49.8%;
+    --border: 228 18% 22%;
+    --input: 228 18% 22%;
+    --ring: 346.8 70% 60%;
   }
 }
 
@@ -55,100 +55,131 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    overflow: auto;
+  }
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 }
 
-/* Custom animations */
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
+/* 다크모드에서 핑크색 요소 스타일 재정의 */
+.dark .bg-pink-50 {
+  @apply bg-secondary/50;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+.dark .bg-pink-100 {
+  @apply bg-secondary;
 }
 
-html {
-  scroll-behavior: smooth;
+.dark .text-pink-600 {
+  @apply text-pink-400;
 }
 
-/* 스크롤바 스타일 */
-@layer utilities {
-  .hide-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    background: transparent;
-    opacity: 0;
-  }
-
-  .hide-scrollbar::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 4px;
-  }
-
-  .hover\:show-scrollbar:hover::-webkit-scrollbar-thumb,
-  .active\:show-scrollbar:active::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
-  }
-
-  /* Firefox */
-  .hide-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-  }
-
-  .hover\:show-scrollbar:hover,
-  .active\:show-scrollbar:active {
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  }
+.dark .text-pink-700 {
+  @apply text-pink-300;
 }
 
-/* 메시지 애니메이션 */
-@keyframes message-appear {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.dark .hover\:bg-pink-50:hover {
+  @apply hover:bg-secondary/70;
 }
 
-.message-animation {
-  animation: message-appear 0.3s ease-out forwards;
-  will-change: transform, opacity;
+.dark .hover\:bg-pink-600:hover {
+  @apply hover:bg-pink-500;
 }
 
-/* 고성능 스크롤 및 애니메이션 설정 */
-.smooth-scroll {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  will-change: scroll-position;
+.dark .border-pink-200 {
+  @apply border-pink-900/30;
 }
 
-/* 초고성능 애니메이션 - 프레임 끊김 없는 120hz 최적화 */
-.ultra-smooth-animation {
-  animation-duration: 280ms;
-  animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  will-change: transform, opacity;
+.dark .hover\:text-pink-700:hover {
+  @apply hover:text-pink-300;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .ultra-smooth-transition {
-    transition: transform 180ms cubic-bezier(0.33, 1, 0.68, 1),
-      opacity 180ms cubic-bezier(0.33, 1, 0.68, 1);
-    will-change: transform, opacity;
-  }
+/* 테이블 스타일 개선 */
+.dark .bg-card {
+  background-color: hsl(var(--card));
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 스크롤바 스타일 개선 */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(var(--secondary));
+  border-radius: 5px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 5px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* 에디터 다크모드 스타일 */
+.dark .ProseMirror {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark .ProseMirror h1,
+.dark .ProseMirror h2,
+.dark .ProseMirror h3,
+.dark .ProseMirror h4,
+.dark .ProseMirror h5,
+.dark .ProseMirror h6 {
+  color: hsl(var(--foreground));
+}
+
+.dark .ProseMirror blockquote {
+  border-left: 3px solid hsl(var(--muted-foreground) / 0.5);
+  color: hsl(var(--foreground) / 0.9);
+  background-color: hsl(var(--secondary) / 0.3);
+  padding: 0.5em 1em;
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.dark .ProseMirror pre {
+  background-color: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.25rem;
+}
+
+.dark .ProseMirror ul,
+.dark .ProseMirror ol {
+  color: hsl(var(--foreground));
+}
+
+.dark .ProseMirror ul li::marker,
+.dark .ProseMirror ol li::marker {
+  color: hsl(var(--primary));
+}
+
+/* 이미지 리사이저 다크모드 스타일 */
+.dark .image-resizer {
+  box-shadow: 0 0 0 1px hsl(var(--border));
+}
+
+.dark .image-resizer.resizing {
+  outline: 2px solid hsl(var(--primary));
+  box-shadow: 0 0 8px hsla(var(--primary), 0.5);
+}
+
+.dark .image-resizer .resize-trigger {
+  background-color: hsl(var(--primary)) !important;
+  border: 2px solid hsl(var(--background)) !important;
+}
+
+.dark .image-resizer.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  box-shadow: 0 0 0 1px hsl(var(--border));
 }

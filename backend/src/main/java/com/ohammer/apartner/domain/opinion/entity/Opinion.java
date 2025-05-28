@@ -1,16 +1,15 @@
 package com.ohammer.apartner.domain.opinion.entity;
 
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "opinions")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -30,6 +29,10 @@ public class Opinion extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private Type type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private Status status;
 
     // Enum for type
     public enum Type {

@@ -1,6 +1,8 @@
 package com.ohammer.apartner.security.OAuth;
 
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.domain.user.entity.UserLog;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
 import com.ohammer.apartner.security.service.AuthService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +21,7 @@ import java.util.Map;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 
 //로그인 처리하고 프론트에게 던져주는거
@@ -28,6 +31,7 @@ import java.util.Optional;
 public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
     private final AuthService authService;
     private final CustomRequest customRequest;
+    private final UserLogRepository userLogRepository;
 
     @SneakyThrows
     @Override
@@ -114,6 +118,15 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
                     log.info("[KakaoLogin] 기존 ACTIVE 사용자 로그인. JWT 쿠키 생성: {}. 이메일: {}",
                             existingUser.getSocialId(), existingUser.getEmail() != null ? existingUser.getEmail() : "N/A");
                     
+                    UserLog oauthLoginLog = UserLog.builder()
+                            .user(existingUser)
+                            .logType(UserLog.LogType.LOGIN)
+                            .description("카카오 소셜 로그인 성공")
+                            .ipAddress(request.getRemoteAddr())
+                            .createdAt(LocalDateTime.now())
+                            .build();
+                    userLogRepository.save(oauthLoginLog);
+                    
                     String targetUrl = requestUrl != null ? requestUrl : "/";
                     clearAuthenticationAttributes(request); 
                     getRedirectStrategy().sendRedirect(request, response, targetUrl);
@@ -121,6 +134,16 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
 
                 case PENDING:
                     log.warn("[KakaoLogin] PENDING 상태의 기존 사용자 로그인 시도: {}. 로그인 페이지로 리다이렉트.", existingUser.getSocialId());
+                    
+                    UserLog pendingLoginLog = UserLog.builder()
+                            .user(existingUser)
+                            .logType(UserLog.LogType.LOGIN_FAILED)
+                            .description("정지된 계정으로 카카오 소셜 로그인 시도")
+                            .ipAddress(request.getRemoteAddr())
+                            .createdAt(LocalDateTime.now())
+                            .build();
+                    userLogRepository.save(pendingLoginLog);
+                    
                     response.sendRedirect(getRedirectUrlWithErrorMessage(requestUrl, "/login", "account_pending"));
                     return;
 

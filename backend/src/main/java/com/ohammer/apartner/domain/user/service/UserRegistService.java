@@ -28,8 +28,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
+import com.ohammer.apartner.domain.user.entity.UserLog;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserRegistService {
@@ -42,6 +48,7 @@ public class UserRegistService {
     private final JwtTokenizer jwtTokenizer;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final UserLogRepository userLogRepository;
 
     @Transactional
     public User register(UserRegistRequestDTO dto, String socialProfileImageUrl) {
@@ -131,11 +138,24 @@ public class UserRegistService {
             throw new UserException(UserErrorCode.PASSWORD_NOT_MATCH);
         }
 
+        Status oldStatus = user.getStatus();
         user.setStatus(Status.WITHDRAWN);
         user.setLeaveReason(requestDto.getLeaveReason());
         user.setRefreshToken(null);
-        user.setModifiedAt(LocalDateTime.now());
+        user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        // 상태 변경 로그 추가
+        String description = String.format("탈퇴 처리: %s -> %s", oldStatus, Status.WITHDRAWN);
+        UserLog userLog = UserLog.builder()
+            .user(user)
+            .logType(UserLog.LogType.STATUS_CHANGE)
+            .description(description)
+            .ipAddress(getClientIp()) // 필요시 getClientIp()로 대체
+            .createdAt(java.time.LocalDateTime.now())
+            .build();
+        // userLogRepository 주입 필요시 추가
+        userLogRepository.save(userLog);
 
         SecurityContextHolder.clearContext();
     }
@@ -156,6 +176,24 @@ public class UserRegistService {
             userRepository.save(user);
         } catch (Exception e) {
             throw new UserException(UserErrorCode.REFRESH_TOKEN_DELETE_FAIL);
+        }
+    }
+
+    // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            
+            String forwardedHeader = request.getHeader("X-Forwarded-For");
+            if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
+                return forwardedHeader.split(",")[0].trim();
+            }
+            
+            return request.getRemoteAddr();
+        } catch (Exception e) {
+            log.warn("Failed to get client IP: {}", e.getMessage());
+            return "unknown";
         }
     }
 }

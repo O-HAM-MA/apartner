@@ -30,11 +30,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.ohammer.apartner.security.dto.AdminDto;
+import com.ohammer.apartner.domain.user.entity.UserLog;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import com.ohammer.apartner.domain.image.entity.Image;
 import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.entity.Building;
 import com.ohammer.apartner.domain.apartment.entity.Unit;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.ohammer.apartner.security.CustomUserDetails;
 
 @Slf4j
 @RestController
@@ -49,6 +56,7 @@ public class AdminAuthController {
     private final UserRepository userRepository;
     private final UserRegistService userRegistService;
     private final CustomRequest customRequest;
+    private final UserLogRepository userLogRepository;
 
     @Operation(summary = "관리자 로그인", description = "관리자 아이디(이메일)와 비밀번호로 로그인하고 JWT 토큰을 발급받습니다.")
     @PostMapping("/login")
@@ -58,17 +66,18 @@ public class AdminAuthController {
             User adminUser = authService.findByEmail(loginRequest.getUsername());
 
             if (adminUser == null) {
-                log.warn("Admin login failed: User not found with email/username: {}", loginRequest.getUsername());
+                authService.logLoginFailure(null, getClientIp());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 관리자 계정입니다.");
             }
 
             if (!passwordEncoder.matches(loginRequest.getPassword(), adminUser.getPassword())) {
-                log.warn("Admin login failed: Incorrect password for email/username: {}", loginRequest.getUsername());
+                authService.logLoginFailure(adminUser, getClientIp());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 틀렸습니다.");
             }
 
-            if (!adminUser.getRoles().contains(Role.ADMIN)) {
-                log.warn("Admin login failed: User {} does not have ADMIN role.", loginRequest.getUsername());
+            if (!(adminUser.getRoles().contains(Role.ADMIN) || adminUser.getRoles().contains(Role.MANAGER))) {
+
+                authService.logLoginFailure(adminUser, getClientIp());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("관리자 권한이 없는 계정입니다.");
             }
             
@@ -79,7 +88,7 @@ public class AdminAuthController {
                     log.warn("[AdminLogin] INACTIVE admin tried to login: {}, status: {}", adminUser.getEmail(), adminUser.getStatus());
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비활성화된 관리자 계정입니다.");
                 case PENDING:
-                     log.warn("[AdminLogin] PENDING admin tried to login: {}, status: {}", adminUser.getEmail(), adminUser.getStatus());
+                    log.warn("[AdminLogin] PENDING admin tried to login: {}, status: {}", adminUser.getEmail(), adminUser.getStatus());
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("정지된 관리자 계정입니다.");
                 case WITHDRAWN:
                     log.warn("[AdminLogin] WITHDRAWN admin tried to login: {}, status: {}", adminUser.getEmail(), adminUser.getStatus());
@@ -89,9 +98,14 @@ public class AdminAuthController {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("알 수 없는 계정 상태입니다.");
             }
 
+            // 관리자 로그인 성공 시 updatedAt 필드를 now()로 업데이트
+            adminUser.setLastLoginAt(LocalDateTime.now());
+
             String accessToken = authService.genAccessToken(adminUser);
             String refreshToken = authService.genRefreshToken(adminUser);
             authService.addRefreshToken(adminUser, refreshToken);
+
+            authService.logLoginSuccess(adminUser, getClientIp());
 
             LoginResponseDto loginResponseDto = new LoginResponseDto(accessToken, refreshToken, adminUser.getId(), adminUser.getUserName());
 
@@ -136,6 +150,8 @@ public class AdminAuthController {
     public ResponseEntity<String> adminRegister(@RequestBody AdminRegistrationRequest registrationRequest) {
         log.info("Admin registration attempt for username: {}", registrationRequest.getUsername());
         try {
+
+            
             if (authService.findByEmail(registrationRequest.getEmail()) != null) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 사용 중인 이메일입니다.");
             }
@@ -174,32 +190,20 @@ public class AdminAuthController {
 
     @Operation(summary = "관리자 로그아웃", description = "관리자 계정의 로그아웃을 처리하고 토큰을 무효화합니다.")
     @DeleteMapping("/logout")
-    public ResponseEntity<?> adminLogout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> adminLogout(HttpServletRequest request, HttpServletResponse response, @AuthenticationPrincipal CustomUserDetails principal) {
         String accessToken = customRequest.getCookieValue("accessToken");
-
+        String ipAddress = getClientIp();
         if (accessToken != null && !accessToken.isEmpty()) {
-            try {
-                Claims claims = jwtTokenizer.parseAccessToken(accessToken);
-                Long userId = ((Number) claims.get("userId")).longValue();
-
-                userRegistService.logout(accessToken, userId);
-                log.info("[AdminLogout] Token invalidated for userId: {}", userId);
-
-            } catch (ExpiredJwtException eje) {
-                log.warn("[AdminLogout] AccessToken already expired during logout: {}", eje.getMessage());
-            } catch (Exception e) {
-                log.error("[AdminLogout] Error processing token during logout: {}", e.getMessage());
-            }
+            authService.logout(accessToken, ipAddress);
         } else {
             log.warn("[AdminLogout] AccessToken cookie not found during logout attempt");
         }
-
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
             log.info("[AdminLogout] HTTP session invalidated");
         }
-
+        // 3. 쿠키 삭제
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", "")
                 .path("/")
                 .sameSite("Strict")
@@ -208,7 +212,6 @@ public class AdminAuthController {
                 .maxAge(0)
                 .build();
         response.addHeader("Set-Cookie", accessTokenCookie.toString());
-
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
                 .path("/")
                 .sameSite("Strict")
@@ -217,9 +220,7 @@ public class AdminAuthController {
                 .maxAge(0)
                 .build();
         response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-
         log.info("[AdminLogout] Logout process completed. Cookies cleared.");
-
         return ResponseEntity.ok("관리자 로그아웃 완료");
     }
 
@@ -261,7 +262,8 @@ public class AdminAuthController {
                     });
 
             // 6. 관리자 권한 확인
-            if (!adminUser.getRoles().contains(Role.ADMIN)) {
+            if (!(adminUser.getRoles().contains(Role.ADMIN) || adminUser.getRoles().contains(Role.MANAGER))) {
+                // 차단 로직
                 log.warn("[AdminMe] User {} does not have ADMIN role", adminUser.getUserName());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("관리자 권한이 없는 계정입니다.");
             }
@@ -312,4 +314,22 @@ public class AdminAuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing request: " + e.getMessage());
         }
     }
-} 
+
+    // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            
+            String forwardedHeader = request.getHeader("X-Forwarded-For");
+            if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
+                return forwardedHeader.split(",")[0].trim();
+            }
+            
+            return request.getRemoteAddr();
+        } catch (Exception e) {
+            log.warn("Failed to get client IP: {}", e.getMessage());
+            return "unknown";
+        }
+    }
+}
