@@ -39,13 +39,47 @@ private final SimpMessagingTemplate simpMessagingTemplate;
 
 // 채팅방 생성
 @Transactional
-public ChatroomDto createChatRoom(User user, String title){
+public ChatroomDto createChatRoom(User user, String title, String category, Long apartmentId){
     if(title == null || title.trim().isEmpty()) {
         throw new BadRequestException("채팅방 제목은 비워둘 수 없습니다.");
+    }
+    
+    if(category == null || category.trim().isEmpty()) {
+        throw new BadRequestException("카테고리는 비워둘 수 없습니다.");
+    }
+    
+    if(apartmentId == null) {
+        throw new BadRequestException("아파트 ID는 비워둘 수 없습니다.");
+    }
+
+    // 이미 존재하는 같은 카테고리의 채팅방이 있는지 확인
+    List<UserChatroomMapping> userChatroomMappings = userChatroomMappingRepository.findAllByUserId(user.getId());
+    for (UserChatroomMapping mapping : userChatroomMappings) {
+        Chatroom existingChatroom = mapping.getChatroom();
+        if (existingChatroom.getCategory() != null && 
+            existingChatroom.getCategory().equals(category) && 
+            existingChatroom.getApartmentId() != null && 
+            existingChatroom.getApartmentId().equals(apartmentId)) {
+            
+            // 이미 존재하는 채팅방 반환
+            return new ChatroomDto(
+                existingChatroom.getId(),
+                existingChatroom.getTitle(),
+                existingChatroom.getCategory(),
+                existingChatroom.getApartmentId(),
+                existingChatroom.getHasNewMessage(),
+                null,
+                existingChatroom.getCreatedAt(),
+                existingChatroom.getStatus().name()
+            );
+        }
     }
 
     Chatroom chatroom = Chatroom.builder()
             .title(title)
+            .category(category)
+            .apartmentId(apartmentId)
+            .status(Chatroom.Status.ACTIVE)
             .createdAt(LocalDateTime.now())
             .build();
 
@@ -59,9 +93,12 @@ public ChatroomDto createChatRoom(User user, String title){
     return new ChatroomDto(
         chatroom.getId(),
         chatroom.getTitle(),
+        chatroom.getCategory(),
+        chatroom.getApartmentId(),
         chatroom.getHasNewMessage(),
-        chatroom.getUserChatroomMappingSet().size(),
-        chatroom.getCreatedAt()
+        null,
+        chatroom.getCreatedAt(),
+        chatroom.getStatus().name()
     );
 }
 
@@ -121,6 +158,12 @@ public Boolean leaveChatroom(User user, Long chatroomId){
 
     userChatroomMappingRepository.deleteByUserIdAndChatroomId(user.getId(), chatroomId);
 
+    // 채팅방 상태를 INACTIVE로 변경
+    Chatroom chatroom = chatroomRepository.findById(chatroomId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+    chatroom.setStatus(Chatroom.Status.INACTIVE);
+    chatroomRepository.save(chatroom);
+
     return true;
 }
 
@@ -149,9 +192,12 @@ public List<ChatroomDto> getChatroomList(User user){
             return new ChatroomDto(
                 chatroom.getId(),
                 chatroom.getTitle(),
+                chatroom.getCategory(),
+                chatroom.getApartmentId(),
                 chatroom.getHasNewMessage(),
-                chatroom.getUserChatroomMappingSet().size(),
-                chatroom.getCreatedAt()
+                null,
+                chatroom.getCreatedAt(),
+                chatroom.getStatus().name()
             );
         })
         .toList();
@@ -205,9 +251,12 @@ public List<ChatroomDto> getAllChatrooms(){
         .map(chatroom -> new ChatroomDto(
             chatroom.getId(),
             chatroom.getTitle(),
+            chatroom.getCategory(),
+            chatroom.getApartmentId(),
             chatroom.getHasNewMessage(),
-            chatroom.getUserChatroomMappingSet().size(),
-            chatroom.getCreatedAt()
+            null,
+            chatroom.getCreatedAt(),
+            chatroom.getStatus().name()
         ))
         .toList();
 }
@@ -221,9 +270,12 @@ public ChatroomDto getChatroomById(Long chatroomId){
     return new ChatroomDto(
         chatroom.getId(),
         chatroom.getTitle(),
+        chatroom.getCategory(),
+        chatroom.getApartmentId(),
         chatroom.getHasNewMessage(),
-        chatroom.getUserChatroomMappingSet().size(),
-        chatroom.getCreatedAt()
+        null,
+        chatroom.getCreatedAt(),
+        chatroom.getStatus().name()
     );
 }
 
