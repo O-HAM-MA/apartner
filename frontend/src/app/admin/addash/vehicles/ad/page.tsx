@@ -381,7 +381,9 @@ export default function AdminVehicleManagement() {
                         key={vehicle.id} // vehicle.id만 사용하여 고유성 보장
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => {
-                          router.push(`/admin/addash/vehicles/${vehicle.id}`);
+                          router.push(
+                            `/admin/addash/vehicles/ad/${vehicle.id}`
+                          );
                         }}
                       >
                         <td className="px-6 py-4">{vehicle.vehicleNum}</td>
