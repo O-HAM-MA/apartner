@@ -94,6 +94,7 @@ public class FacilityManagerController {
 //        return ResponseEntity.ok(facilityManagerService.getFacilityDetail(facilityId, apartmentId));
 //    }
 
+    // ----- 예약 관리
     // 예약 목록 조회
     @GetMapping("/reservations")
     @Operation(

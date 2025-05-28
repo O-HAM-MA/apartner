@@ -20,8 +20,8 @@ export default function FeatureCard({
   title,
   description,
   icon,
-  iconBgColor = 'bg-primary/10', // 기본값 설정
-  iconColor = 'text-primary', // 기본값 설정
+  iconBgColor = 'bg-pink-50',
+  iconColor = 'text-pink-600',
   href,
 }: FeatureCardProps) {
   const IconComponent = Icons[icon] as React.ElementType;
@@ -38,15 +38,20 @@ export default function FeatureCard({
       transition={{ duration: 0.5 }}
       viewport={{ once: true }}
       whileHover={{ y: -5 }}
-      className="bg-card border border-border rounded-lg p-6 transition-all duration-300 hover:shadow-md h-full flex flex-col cursor-pointer"
+      className="group bg-card border border-border rounded-lg p-6 transition-all duration-300 hover:shadow-md hover:border-pink-200 h-full flex flex-col cursor-pointer"
     >
       <div
-        className={`w-12 h-12 ${iconBgColor} rounded-full flex items-center justify-center mb-4 shrink-0`}
+        className={`w-12 h-12 ${iconBgColor} rounded-full flex items-center justify-center mb-4 shrink-0 transition-colors group-hover:bg-pink-100`}
       >
-        <IconComponent size={24} className={iconColor} />
+        <IconComponent
+          size={24}
+          className={`${iconColor} transition-colors group-hover:text-pink-700`}
+        />
       </div>
       <div className="flex flex-col grow">
-        <h3 className="text-xl font-semibold mb-3">{title}</h3>
+        <h3 className="text-xl font-semibold mb-3 transition-colors group-hover:text-pink-600">
+          {title}
+        </h3>
         <p className="text-muted-foreground text-sm">{description}</p>
       </div>
       {/* actionIcon이 필요하다면 여기에 렌더링 로직 추가 */}
@@ -54,7 +59,14 @@ export default function FeatureCard({
   );
 
   if (href) {
-    return <Link href={href}>{CardContent}</Link>;
+    return (
+      <Link
+        href={href}
+        className="block no-underline text-foreground hover:text-foreground"
+      >
+        {CardContent}
+      </Link>
+    );
   }
 
   return CardContent;

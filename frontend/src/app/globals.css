@@ -64,6 +64,10 @@
     margin: 0;
     padding: 0;
   }
+  /* 기본 링크 스타일 재정의 */
+  a {
+    @apply text-inherit hover:text-inherit;
+  }
 }
 
 /* 다크모드에서 핑크색 요소 스타일 재정의 */
