@@ -653,3 +653,40 @@ export async function uploadProfileImage(file: File): Promise<string> {
   }
   return response.text();
 }
+
+/**
+ * [사용자] 채팅방 종료하기 (상태를 INACTIVE로 변경)
+ * @param chatroomId 종료할 채팅방 ID
+ */
+export async function closeChatroom<T = any>(chatroomId: number): Promise<T> {
+  // 채팅방 종료 전용 엔드포인트가 없어서 채팅방 나가기 API를 사용
+  // 백엔드 로직에서 leaveChatroom 함수가 채팅방 상태를 INACTIVE로 변경함
+  return await del<T>(`/api/v1/chats/${chatroomId}/users`, {}, true);
+}
+
+/**
+ * [사용자] 사용자의 활성화된 채팅방 조회
+ * 상태가 ACTIVE인 채팅방만 필터링하여 반환
+ */
+export async function getActiveUserChatrooms<T = any[]>(): Promise<T> {
+  try {
+    console.log("[getActiveUserChatrooms] 활성화된 채팅방 목록 조회 시도");
+    const allChatrooms = await getUserChatrooms();
+
+    // 상태가 ACTIVE인 채팅방만 필터링
+    const activeChatrooms = Array.isArray(allChatrooms)
+      ? allChatrooms.filter((room: any) => room.status === "ACTIVE")
+      : [];
+
+    console.log(
+      `[getActiveUserChatrooms] 활성화된 채팅방 ${activeChatrooms.length}개 조회됨`
+    );
+    return activeChatrooms as unknown as T;
+  } catch (error) {
+    console.error(
+      "[getActiveUserChatrooms] 활성화된 채팅방 목록 조회 중 오류:",
+      error
+    );
+    return [] as unknown as T;
+  }
+}

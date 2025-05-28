@@ -13,14 +13,16 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination:
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090/api/:path*",
+        destination: process.env.NEXT_PUBLIC_API_BASE_URL + "/api/:path*",
+      },
+      {
+        source: "/stomp/:path*",
+        destination: process.env.NEXT_PUBLIC_API_BASE_URL + "/stomp/:path*",
       },
     ];
   },
   env: {
-    NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8090/api",
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
   experimental: {
     optimizeCss: true,
