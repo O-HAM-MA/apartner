@@ -221,17 +221,7 @@ public class EntryRecordService {
 //            throw new IllegalArgumentException("로그인이 필요합니다.");
 //        }
 //
-//        Set<Role> roles = currentUser.getRoles();
-//
-//        // 관리자 권한 확인 (MANAGER 또는 MODERATOR가 하나라도 있는지)
-//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-//                role == Role.MANAGER || role == Role.MODERATOR);
-//
-//        if (!isManagerOrModerator) {
-//            throw new IllegalArgumentException("해당 기능은 관리자만 접근할 수 있습니다.");
-//        }
 
-        //checkRoleUtils.validateAdminAccess();
 
         return entryRecordRepository.findByVehicleIdOrderByEntryTimeDesc(vehicleId)
                 .stream()
