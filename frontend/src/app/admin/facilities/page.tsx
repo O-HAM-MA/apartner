@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import koLocale from '@fullcalendar/core/locales/ko';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Building2,
+  CalendarDays,
+  Plus,
+  Search,
+  Check,
+  X,
+  Clock,
+  MoreVertical,
+  Pencil,
+  Trash,
+  Table as TableIcon,
+  Calendar as CalendarIcon,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -14,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -24,6 +33,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -36,37 +47,32 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import {
-  Search,
-  MoreHorizontal,
-  Plus,
-  Edit,
-  Trash,
-  Calendar as CalendarIcon,
-  Table as TableIcon,
-  Building2,
-  CalendarDays,
-  Check,
-  X,
-} from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
 import client from '@/lib/backend/client';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format, addMonths } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import koLocale from '@fullcalendar/core/locales/ko';
+import { useRouter } from 'next/navigation';
 
-interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  status?: number;
-}
-
-interface FacilitySimpleResponseDto {
+// 시설 정보 타입
+interface Facility {
   facilityId: number;
   facilityName: string;
   description: string;
@@ -74,7 +80,26 @@ interface FacilitySimpleResponseDto {
   closeTime: string;
 }
 
-interface TimeSlotResponse {
+// 강사 정보 타입
+interface Instructor {
+  instructorId: number;
+  name: string;
+  description: string;
+}
+
+// 스케줄 정보 타입
+interface Schedule {
+  scheduleId: number;
+  scheduleName: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  slotMinutes: number;
+  capacity: number;
+}
+
+// 타임슬롯 응답 타입
+interface TimeSlotSimpleResponseDto {
   timeSlotId: number;
   scheduleName: string;
   date: string;
@@ -85,115 +110,261 @@ interface TimeSlotResponse {
   isFull: boolean;
 }
 
-interface FacilityApiResponse {
-  facilityId: number;
-  facilityName: string;
-  description?: string;
-  openTime: string;
-  closeTime: string;
-}
-
-type Facility = {
-  id: number;
-  name: string;
-  description: string;
-  openTime: string;
-  closeTime: string;
-  status: string;
-};
-
-type Instructor = {
-  id: number;
-  name: string;
-  description: string;
-};
-
-type TimeSlot = {
-  timeSlotId: number;
+// 스케줄 응답 타입
+interface InstructorScheduleSimpleResponseDto {
+  scheduleId: number;
+  instructorId: number;
   scheduleName: string;
-  date: string;
+  dayOfWeek: string;
   startTime: string;
   endTime: string;
-  maxCapacity: number;
-  reservedCount: number;
-  isFull: boolean;
+  slotMinutes: number;
+  capacity: number;
+}
+
+// 시설 생성 폼 스키마
+const facilityFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, { message: '시설명은 필수 입력값입니다.' })
+    .max(50, { message: '시설명은 50자 이하여야 합니다.' }),
+  description: z.string().min(1, { message: '시설 설명은 필수 입력값입니다.' }),
+  openTime: z.string().min(1, { message: '운영 시작 시간은 필수입니다.' }),
+  closeTime: z.string().min(1, { message: '운영 종료 시간은 필수입니다.' }),
+});
+
+// 강사 폼 스키마
+const instructorFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, { message: '강사명은 필수 입력값입니다.' })
+    .max(50, { message: '강사명은 50자 이하여야 합니다.' }),
+  description: z.string().min(1, { message: '설명은 필수 입력값입니다.' }),
+});
+
+// 스케줄 생성 폼 스키마
+const scheduleFormSchema = z.object({
+  scheduleName: z
+    .string()
+    .min(1, { message: '프로그램명은 필수 입력값입니다.' }),
+  dayOfWeek: z.string().min(1, { message: '근무 요일을 선택해주세요.' }),
+  startTime: z.string().min(1, { message: '시작 시간은 필수입니다.' }),
+  endTime: z.string().min(1, { message: '종료 시간은 필수입니다.' }),
+  slotMinutes: z
+    .number()
+    .min(1, { message: '예약 단위는 1분 이상이어야 합니다.' }),
+  capacity: z
+    .number()
+    .min(1, { message: '수용 인원은 1명 이상이어야 합니다.' }),
+  periodStart: z.date({ required_error: '적용 시작일을 선택해주세요.' }),
+  periodEnd: z.date({ required_error: '적용 종료일을 선택해주세요.' }),
+});
+
+// 시간 검증을 위한 유틸리티 함수 추가
+const parseTime = (timeStr: string): { hours: number; minutes: number } => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return { hours, minutes };
 };
 
-// 예약 상태 타입 수정
-type ReservationStatus = 'AGREE' | 'PENDING' | 'REJECT' | 'CANCEL';
+const isTimeInRange = (
+  start: string,
+  end: string,
+  open: string,
+  close: string
+): boolean => {
+  const startTime = parseTime(start);
+  const endTime = parseTime(end);
+  const openTime = parseTime(open);
+  const closeTime = parseTime(close);
 
-// 예약 정보 타입 추가
-interface Reservation {
-  reservationId: number;
-  applicantName: string;
-  building: string;
-  unit: string;
-  facilityName: string;
-  instructorName: string;
-  reservationDateTime: string;
-  status: ReservationStatus;
-}
+  // 시간을 분으로 변환하여 비교
+  const toMinutes = (time: { hours: number; minutes: number }) =>
+    time.hours * 60 + time.minutes;
+  const startMinutes = toMinutes(startTime);
+  const endMinutes = toMinutes(endTime);
+  const openMinutes = toMinutes(openTime);
+  const closeMinutes = toMinutes(closeTime);
 
-// 예약 상세 정보 타입 추가
-interface ReservationDetail {
-  reservationId: number;
-  applicantName: string;
-  building: string;
-  unit: string;
-  facilityName: string;
-  instructorName: string;
-  programName: string;
-  reservationDateTime: string;
-  createdAt: string;
-  status: ReservationStatus;
-}
+  if (openMinutes < closeMinutes) {
+    // 일반 운영(예: 09:00~23:00)
+    return startMinutes >= openMinutes && endMinutes <= closeMinutes;
+  } else {
+    // 자정 넘김(예: 23:00~05:00)
+    const midnight = 24 * 60;
+    const normalizedEndMinutes =
+      endMinutes < openMinutes ? endMinutes + midnight : endMinutes;
+    const normalizedCloseMinutes = closeMinutes + midnight;
+
+    return (
+      (startMinutes >= openMinutes || startMinutes <= closeMinutes) &&
+      (normalizedEndMinutes >= openMinutes || endMinutes <= closeMinutes)
+    );
+  }
+};
+
+const checkTimeOverlap = (
+  startTime: string,
+  endTime: string,
+  dayOfWeek: string,
+  schedules: InstructorScheduleSimpleResponseDto[]
+): boolean => {
+  const daySchedules = schedules.filter((s) => s.dayOfWeek === dayOfWeek);
+
+  const start = parseTime(startTime);
+  const end = parseTime(endTime);
+  const startMinutes = start.hours * 60 + start.minutes;
+  const endMinutes = end.hours * 60 + end.minutes;
+
+  return daySchedules.some((schedule) => {
+    const scheduleStart = parseTime(schedule.startTime);
+    const scheduleEnd = parseTime(schedule.endTime);
+    const scheduleStartMinutes =
+      scheduleStart.hours * 60 + scheduleStart.minutes;
+    const scheduleEndMinutes = scheduleEnd.hours * 60 + scheduleEnd.minutes;
+
+    return (
+      startMinutes < scheduleEndMinutes && endMinutes > scheduleStartMinutes
+    );
+  });
+};
 
 export default function FacilitiesPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('facilities');
+  const { toast } = useToast();
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(
+    null
+  );
+  const [selectedInstructor, setSelectedInstructor] =
+    useState<Instructor | null>(null);
+  const [isAddFacilityDialogOpen, setIsAddFacilityDialogOpen] = useState(false);
+  const [isEditFacilityDialogOpen, setIsEditFacilityDialogOpen] =
+    useState(false);
+  const [isDeleteFacilityDialogOpen, setIsDeleteFacilityDialogOpen] =
+    useState(false);
+  const [facilityToEdit, setFacilityToEdit] = useState<Facility | null>(null);
+  const [facilityToDelete, setFacilityToDelete] = useState<Facility | null>(
+    null
+  );
 
-  // 시간 형식을 'HH:mm' 형식으로 변환하는 함수
-  const formatTimeToHHMM = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
-  };
+  // 시설 관리 관련 상태
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [facilitySearchTerm, setFacilitySearchTerm] = useState('');
 
-  // 요일 변환 함수 추가
-  const getDayOfWeek = (date: string) => {
-    const days = [
-      '일요일',
-      '월요일',
-      '화요일',
-      '수요일',
-      '목요일',
-      '금요일',
-      '토요일',
-    ];
-    const dayIndex = new Date(date).getDay();
-    return days[dayIndex];
-  };
+  // 강사 관리 관련 상태
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [isAddInstructorDialogOpen, setIsAddInstructorDialogOpen] =
+    useState(false);
+  const [instructorSearchTerm, setInstructorSearchTerm] = useState('');
+  const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] =
+    useState(false);
+  const [isDeleteInstructorDialogOpen, setIsDeleteInstructorDialogOpen] =
+    useState(false);
+  const [instructorToEdit, setInstructorToEdit] = useState<Instructor | null>(
+    null
+  );
+  const [instructorToDelete, setInstructorToDelete] =
+    useState<Instructor | null>(null);
+  const [expandedInstructorId, setExpandedInstructorId] = useState<
+    number | null
+  >(null);
 
-  // 날짜 포맷 함수 추가
-  const formatDateWithDay = (date: string) => {
-    return `${date}-${getDayOfWeek(date)}`;
-  };
+  // 스케줄 관리 관련 상태
+  const [schedules, setSchedules] = useState<TimeSlotSimpleResponseDto[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [isAddScheduleDialogOpen, setIsAddScheduleDialogOpen] = useState(false);
+  const [scheduleViewMode, setScheduleViewMode] = useState<
+    'calendar' | 'table'
+  >('table');
+  const [selectedEvents, setSelectedEvents] = useState<
+    TimeSlotSimpleResponseDto[]
+  >([]);
 
-  // 시간 포맷 함수 추가
-  const formatTimeRange = (startTime: string, endTime: string) => {
-    const formatTime = (time: string) => {
-      const [hours, minutes] = time.split(':');
-      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
-    };
-    return `${formatTime(startTime)}-${formatTime(endTime)}`;
-  };
+  // 상태 추가
+  const [isDeleteTimeSlotDialogOpen, setIsDeleteTimeSlotDialogOpen] =
+    useState(false);
+  const [timeSlotToDelete, setTimeSlotToDelete] =
+    useState<TimeSlotSimpleResponseDto | null>(null);
 
-  // 주소 포맷팅 함수 추가
+  // 날짜 범위 선택 상태 추가
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
+
+  // 상태 추가
+  const [selectedProgramName, setSelectedProgramName] = useState<string>('all');
+  const [programNames, setProgramNames] = useState<string[]>([]);
+
+  // 기존 스케줄 목록을 위한 상태 추가
+  const [instructorSchedules, setInstructorSchedules] = useState<
+    InstructorScheduleSimpleResponseDto[]
+  >([]);
+
+  // 시설 추가 폼
+  const form = useForm<z.infer<typeof facilityFormSchema>>({
+    resolver: zodResolver(facilityFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      openTime: '09:00',
+      closeTime: '18:00',
+    },
+  });
+
+  // 수정용 폼
+  const editForm = useForm<z.infer<typeof facilityFormSchema>>({
+    resolver: zodResolver(facilityFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      openTime: '09:00',
+      closeTime: '18:00',
+    },
+  });
+
+  // 강사 추가 폼
+  const instructorForm = useForm<z.infer<typeof instructorFormSchema>>({
+    resolver: zodResolver(instructorFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  });
+
+  // 강사 수정 폼
+  const editInstructorForm = useForm<z.infer<typeof instructorFormSchema>>({
+    resolver: zodResolver(instructorFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  });
+
+  // 스케줄 추가 폼
+  const scheduleForm = useForm<z.infer<typeof scheduleFormSchema>>({
+    resolver: zodResolver(scheduleFormSchema),
+    defaultValues: {
+      scheduleName: '',
+      dayOfWeek: '',
+      startTime: '09:00',
+      endTime: '18:00',
+      slotMinutes: 60,
+      capacity: 20,
+      periodStart: new Date(),
+      periodEnd: new Date(),
+    },
+  });
+
+  // 주소 포맷팅 함수
   const formatAddress = (building: string, unit: string) => {
     return `${building}동 ${unit}호`;
   };
 
-  // 날짜 포맷팅 함수 추가
+  // 날짜 포맷팅 함수
   const formatDateTime = (dateTimeString: string) => {
     const date = new Date(dateTimeString);
     const year = date.getFullYear();
@@ -206,132 +377,34 @@ export default function FacilitiesPage() {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   };
 
-  // 시설 관련 상태
-  const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(
-    null
-  );
-  const [facilitySearchTerm, setFacilitySearchTerm] = useState('');
-  const [isAddFacilityDialogOpen, setIsAddFacilityDialogOpen] = useState(false);
-  const [isEditFacilityDialogOpen, setIsEditFacilityDialogOpen] =
-    useState(false);
-  const [isDeleteFacilityDialogOpen, setIsDeleteFacilityDialogOpen] =
-    useState(false);
-  const [newFacility, setNewFacility] = useState({
-    name: '',
-    description: '',
-    openTime: '09:00',
-    closeTime: '18:00',
-  });
-
-  // 강사 관련 상태
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
-  const [selectedInstructor, setSelectedInstructor] =
-    useState<Instructor | null>(null);
-  const [instructorSearchTerm, setInstructorSearchTerm] = useState('');
-  const [isAddInstructorDialogOpen, setIsAddInstructorDialogOpen] =
-    useState(false);
-  const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] =
-    useState(false);
-  const [isDeleteInstructorDialogOpen, setIsDeleteInstructorDialogOpen] =
-    useState(false);
-  const [newInstructor, setNewInstructor] = useState({
-    name: '',
-    description: '',
-  });
-
-  // 타임슬롯 관련 상태
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [viewMode, setViewMode] = useState<'calendar' | 'table'>('calendar');
-  const [isAddTimeSlotDialogOpen, setIsAddTimeSlotDialogOpen] = useState(false);
-  const [isDeleteTimeSlotDialogOpen, setIsDeleteTimeSlotDialogOpen] =
-    useState(false);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(
-    null
-  );
-  const [searchDateRange, setSearchDateRange] = useState({
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(new Date().setMonth(new Date().getMonth() + 1))
-      .toISOString()
-      .split('T')[0],
-  });
-  const [newTimeSlot, setNewTimeSlot] = useState({
-    scheduleName: '',
-    dayOfWeek: 'MONDAY',
-    startTime: '09:00',
-    endTime: '18:00',
-    slotMinutes: 60,
-    capacity: 20,
-    periodStart: new Date().toISOString().split('T')[0],
-    periodEnd: new Date(new Date().setMonth(new Date().getMonth() + 1))
-      .toISOString()
-      .split('T')[0],
-  });
-
-  // 예약 관련 상태 추가
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [reservationSearchTerm, setReservationSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ReservationStatus | 'ALL'>(
-    'ALL'
-  );
-  const [facilityFilter, setFacilityFilter] = useState('ALL');
-  const [uniqueFacilities, setUniqueFacilities] = useState<string[]>([]);
-
-  // 예약 상세 관련 상태 추가
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedReservation, setSelectedReservation] =
-    useState<ReservationDetail | null>(null);
-
-  const dayOfWeekOptions = [
-    { value: 'MONDAY', label: '월요일' },
-    { value: 'TUESDAY', label: '화요일' },
-    { value: 'WEDNESDAY', label: '수요일' },
-    { value: 'THURSDAY', label: '목요일' },
-    { value: 'FRIDAY', label: '금요일' },
-    { value: 'SATURDAY', label: '토요일' },
-    { value: 'SUNDAY', label: '일요일' },
-  ];
-
-  // 시간 형식 변환 함수들
-  const formatTimeDisplay = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    return `${parseInt(hours)}:${minutes}`;
-  };
-
-  const formatOperatingHours = (openTime: string, closeTime: string) => {
-    const openHour = parseInt(openTime.split(':')[0]);
-    const closeHour = parseInt(closeTime.split(':')[0]);
-
-    if (closeHour < openHour || closeHour === 0) {
-      return `${openTime} - 익일 ${closeTime}`;
+  // 날짜 포맷팅 함수 수정
+  const formatDateSafely = (dateString: string) => {
+    try {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      return format(date, 'yyyy-MM-dd (EEE)', { locale: ko });
+    } catch (error) {
+      console.error('날짜 포맷팅 오류:', error);
+      return dateString;
     }
-    return `${openTime} - ${closeTime}`;
   };
 
-  // API 호출 함수들
+  // 시설 목록 조회
   const fetchFacilities = async () => {
     try {
-      const { data } = await client.GET('/api/v1/admin/facilities' as any, {
-        params: {
-          query: {
-            page: '0',
-            size: '100',
-            sort: 'desc',
-          },
-        },
-      });
-
-      if (data) {
-        setFacilities(
-          data.map((item: FacilitySimpleResponseDto) => ({
-            id: item.facilityId,
-            name: item.facilityName,
+      const response = await client.GET('/api/v1/admin/facilities');
+      if (response.data) {
+        const formattedFacilities = (response.data as any[]).map(
+          (item): Facility => ({
+            facilityId: item.facilityId || 0,
+            facilityName: item.facilityName || '',
             description: item.description || '',
-            openTime: formatTimeDisplay(item.openTime),
-            closeTime: formatTimeDisplay(item.closeTime),
-            status: 'AVAILABLE',
-          }))
+            openTime: item.openTime || '',
+            closeTime: item.closeTime || '',
+          })
         );
+        setFacilities(formattedFacilities);
       }
     } catch (error) {
       console.error('시설 목록 조회 실패:', error);
@@ -343,6 +416,7 @@ export default function FacilitiesPage() {
     }
   };
 
+  // 강사 목록 조회
   const fetchInstructors = async (facilityId: number) => {
     try {
       const response = await client.GET(
@@ -355,15 +429,15 @@ export default function FacilitiesPage() {
           },
         }
       );
-
       if (response.data) {
-        setInstructors(
-          response.data.map((item: any) => ({
-            id: item.instructorId,
-            name: item.name,
+        const formattedInstructors = (response.data as any[]).map(
+          (item): Instructor => ({
+            instructorId: item.instructorId || 0,
+            name: item.name || '',
             description: item.description || '',
-          }))
+          })
         );
+        setInstructors(formattedInstructors);
       }
     } catch (error) {
       console.error('강사 목록 조회 실패:', error);
@@ -375,37 +449,162 @@ export default function FacilitiesPage() {
     }
   };
 
-  const fetchTimeSlots = async (facilityId: number, instructorId: number) => {
+  // 시설 선택 처리 (토글)
+  const handleFacilitySelect = (facility: Facility) => {
+    if (selectedFacility?.facilityId === facility.facilityId) {
+      setSelectedFacility(null);
+      setSelectedInstructor(null);
+      setInstructors([]);
+    } else {
+      setSelectedFacility(facility);
+      fetchInstructors(facility.facilityId);
+    }
+  };
+
+  // 강사 선택 처리
+  const handleInstructorSelect = (instructor: Instructor) => {
+    setSelectedInstructor(instructor);
+    if (selectedFacility) {
+      fetchSchedules(instructor.instructorId);
+      fetchInstructorSchedules(instructor.instructorId);
+    }
+  };
+
+  // 시설 검색 처리
+  const handleFacilitySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFacilitySearchTerm(e.target.value);
+  };
+
+  // 강사 검색 처리
+  const handleInstructorSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInstructorSearchTerm(e.target.value);
+  };
+
+  // 시설 필터링
+  const filteredFacilities = facilities.filter(
+    (facility) =>
+      facility.facilityName
+        .toLowerCase()
+        .includes(facilitySearchTerm.toLowerCase()) ||
+      facility.description
+        .toLowerCase()
+        .includes(facilitySearchTerm.toLowerCase())
+  );
+
+  // 강사 필터링
+  const filteredInstructors = instructors.filter(
+    (instructor) =>
+      instructor.name
+        .toLowerCase()
+        .includes(instructorSearchTerm.toLowerCase()) ||
+      instructor.description
+        .toLowerCase()
+        .includes(instructorSearchTerm.toLowerCase())
+  );
+
+  // 시간 포맷팅 함수 (HH:MM 형식)
+  const formatTime = (time: string) => {
+    if (!time) return '';
     try {
+      if (time.includes(':')) {
+        const [hours, minutes] = time.split(':');
+        return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+      }
+      return time;
+    } catch (error) {
+      console.error('시간 포맷 에러:', error);
+      return time;
+    }
+  };
+
+  // 운영 시간 포맷팅 함수
+  const formatOperatingHours = (openTime: string, closeTime: string) => {
+    if (!openTime || !closeTime) return '';
+    try {
+      const [openHours, openMinutes] = openTime.split(':').map(Number);
+      const [closeHours, closeMinutes] = closeTime.split(':').map(Number);
+
+      // 시작 시간과 종료 시간을 분 단위로 변환하여 비교
+      const openTimeInMinutes = openHours * 60 + openMinutes;
+      const closeTimeInMinutes = closeHours * 60 + closeMinutes;
+
+      const formattedOpenTime = formatTime(openTime);
+      const formattedCloseTime = formatTime(closeTime);
+
+      // 종료 시간이 시작 시간보다 이른 경우 (다음 날로 넘어가는 경우)
+      if (closeTimeInMinutes < openTimeInMinutes) {
+        return `${formattedOpenTime} - 익일 ${formattedCloseTime}`;
+      }
+
+      return `${formattedOpenTime} - ${formattedCloseTime}`;
+    } catch (error) {
+      console.error('운영 시간 포맷 에러:', error);
+      return `${openTime} - ${closeTime}`;
+    }
+  };
+
+  // 강사 행 클릭 처리
+  const handleInstructorRowClick = (instructor: Instructor) => {
+    if (selectedInstructor?.instructorId === instructor.instructorId) {
+      setSelectedInstructor(null);
+    } else {
+      setSelectedInstructor(instructor);
+      fetchSchedules(instructor.instructorId);
+    }
+  };
+
+  // 타임슬롯 목록 조회
+  const fetchSchedules = async (instructorId: number) => {
+    try {
+      console.log('Fetching timeslots for instructor:', instructorId);
+      console.log('Selected facility:', selectedFacility);
+
+      const startDate = dateRange.from
+        ? format(dateRange.from, 'yyyy-MM-dd')
+        : format(new Date(), 'yyyy-MM-dd');
+
+      const endDate = dateRange.to
+        ? format(dateRange.to, 'yyyy-MM-dd')
+        : format(addMonths(new Date(), 3), 'yyyy-MM-dd');
+
+      console.log('Date range:', { startDate, endDate });
+
       const response = await client.GET(
         '/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules/timeslots',
         {
           params: {
             path: {
-              facilityId,
-              instructorId,
+              facilityId: selectedFacility!.facilityId,
+              instructorId: instructorId,
             },
             query: {
-              startDate: searchDateRange.startDate,
-              endDate: searchDateRange.endDate,
+              startDate,
+              endDate,
             },
           },
         }
       );
 
+      console.log('API Response:', response);
+
       if (response.data) {
-        setTimeSlots(
-          response.data.map((item: any) => ({
-            timeSlotId: item.timeSlotId,
-            scheduleName: item.scheduleName,
-            date: item.date,
-            startTime: item.startTime,
-            endTime: item.endTime,
-            maxCapacity: item.maxCapacity,
-            reservedCount: item.reservedCount,
-            isFull: item.isFull,
-          }))
-        );
+        const formattedTimeSlots = (
+          response.data as TimeSlotSimpleResponseDto[]
+        ).map((item) => ({
+          timeSlotId: item.timeSlotId,
+          scheduleName: item.scheduleName,
+          date: item.date,
+          startTime: item.startTime,
+          endTime: item.endTime,
+          maxCapacity: item.maxCapacity,
+          reservedCount: item.reservedCount,
+          isFull: item.isFull,
+        }));
+        console.log('Formatted timeslots:', formattedTimeSlots);
+        setSchedules(formattedTimeSlots);
+      } else {
+        console.log('No data in response');
+        setSchedules([]);
       }
     } catch (error) {
       console.error('타임슬롯 목록 조회 실패:', error);
@@ -417,252 +616,112 @@ export default function FacilitiesPage() {
     }
   };
 
-  // 예약 상태별 배지 스타일
-  const getStatusBadgeStyle = (status: ReservationStatus) => {
-    switch (status) {
-      case 'PENDING':
-        return {
-          variant: 'outline' as const,
-          label: '승인 대기',
-          className: 'bg-yellow-100 text-yellow-800',
-        };
-      case 'AGREE':
-        return {
-          variant: 'default' as const,
-          label: '승인 완료',
-          className: 'bg-green-100 text-green-800',
-        };
-      case 'REJECT':
-        return {
-          variant: 'destructive' as const,
-          label: '승인 거절',
-          className: 'bg-red-100 text-red-800',
-        };
-      case 'CANCEL':
-        return {
-          variant: 'secondary' as const,
-          label: '예약 취소',
-          className: 'bg-gray-100 text-gray-800',
-        };
-      default:
-        return {
-          variant: 'outline' as const,
-          label: '알 수 없음',
-          className: 'bg-gray-100 text-gray-800',
-        };
-    }
-  };
-
-  // 예약 목록 조회
-  const fetchReservations = async () => {
+  // 스케줄 목록 조회 함수 수정
+  const fetchInstructorSchedules = async (instructorId: number) => {
     try {
-      const { data } = await client.GET(
-        '/api/v1/admin/facilities/reservations' as any,
+      const response = await client.GET(
+        '/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules',
         {
           params: {
-            query: {
-              page: '0',
-              size: '100',
-              sort: 'desc',
+            path: {
+              facilityId: selectedFacility!.facilityId,
+              instructorId: instructorId,
             },
           },
         }
       );
 
-      if (data) {
-        setReservations(data);
-        // 고유한 시설명 목록 추출
-        const facilities = [
-          'ALL',
-          ...Array.from(
-            new Set(data.map((item: Reservation) => item.facilityName))
-          ),
-        ] as string[];
-        setUniqueFacilities(facilities);
+      if (response.data) {
+        const formattedSchedules = (response.data as any[]).map(
+          (item): InstructorScheduleSimpleResponseDto => ({
+            scheduleId: item.scheduleId,
+            instructorId: item.instructorId,
+            scheduleName: item.scheduleName,
+            dayOfWeek: item.dayOfWeek,
+            startTime: item.startTime,
+            endTime: item.endTime,
+            slotMinutes: item.slotMinutes,
+            capacity: item.capacity,
+          })
+        );
+        setInstructorSchedules(formattedSchedules);
       }
     } catch (error) {
-      console.error('예약 목록 조회 실패:', error);
+      console.error('스케줄 목록 조회 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
-        description: '예약 목록을 불러오는데 실패했습니다.',
+        description: '스케줄 목록을 불러오는데 실패했습니다.',
       });
     }
   };
 
-  // 이벤트 핸들러들
-  const handleFacilitySelect = (facility: Facility) => {
-    if (selectedFacility?.id === facility.id) {
-      setSelectedFacility(null);
-      setSelectedInstructor(null);
-    } else {
-      setSelectedFacility(facility);
-      setSelectedInstructor(null);
-      fetchInstructors(facility.id);
-    }
+  // 시설 수정 처리
+  const handleFacilityEdit = (facility: Facility) => {
+    setFacilityToEdit(facility);
+    editForm.reset({
+      name: facility.facilityName,
+      description: facility.description,
+      openTime: facility.openTime,
+      closeTime: facility.closeTime,
+    });
+    setIsEditFacilityDialogOpen(true);
   };
 
-  const handleInstructorSelect = (instructor: Instructor) => {
-    if (selectedInstructor?.id === instructor.id) {
-      setSelectedInstructor(null);
-    } else {
-      setSelectedInstructor(instructor);
-      if (selectedFacility) {
-        fetchTimeSlots(selectedFacility.id, instructor.id);
-      }
-    }
-  };
-
-  // 캘린더 이벤트 변환
-  const calendarEvents = timeSlots.map((slot) => ({
-    id: String(slot.timeSlotId),
-    title: `${slot.scheduleName} (${slot.startTime}~${slot.endTime})${
-      slot.isFull ? ' [마감]' : ''
-    }`,
-    start: `${slot.date}T${slot.startTime}`,
-    end: `${slot.date}T${slot.endTime}`,
-    allDay: false,
-    classNames: slot.isFull
-      ? ['cursor-pointer', 'bg-red-50']
-      : ['cursor-pointer', 'hover:bg-red-100', 'active:bg-red-200'],
-    extendedProps: slot,
-  }));
-
-  // 시설 관련 핸들러
-  const handleAddFacility = async () => {
-    if (!newFacility.name.trim()) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '시설 이름을 입력해주세요.',
-      });
-      return;
-    }
-
-    // 시설명 중복 체크
-    const isDuplicate = facilities.some(
-      (facility) =>
-        facility.name.toLowerCase() === newFacility.name.trim().toLowerCase()
-    );
-
-    if (isDuplicate) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '이미 운영 중인 시설 이름입니다.',
-      });
-      return;
-    }
-
-    if (!newFacility.description.trim()) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '시설 설명을 입력해주세요.',
-      });
-      return;
-    }
-
+  // 시설 수정 제출
+  const handleEditFacilitySubmit = async (
+    values: z.infer<typeof facilityFormSchema>
+  ) => {
     try {
-      await client.POST('/api/v1/admin/facilities', {
-        body: {
-          name: newFacility.name,
-          description: newFacility.description,
-          openTime: formatTimeToHHMM(newFacility.openTime),
-          closeTime: formatTimeToHHMM(newFacility.closeTime),
-        },
-      });
+      // 시간 형식 변환
+      const formattedOpenTime = values.openTime.substring(0, 5);
+      const formattedCloseTime = values.closeTime.substring(0, 5);
 
-      toast({
-        title: '성공',
-        description: '시설이 등록되었습니다.',
-      });
-      setIsAddFacilityDialogOpen(false);
-      setNewFacility({
-        name: '',
-        description: '',
-        openTime: '09:00',
-        closeTime: '18:00',
-      });
-      fetchFacilities();
-    } catch (error: any) {
-      console.error('시설 등록 실패:', error);
-      toast({
-        variant: 'destructive',
-        title: '등록 실패',
-        description: error?.response?.data || '시설 등록에 실패했습니다.',
-      });
-    }
-  };
-
-  const handleEditFacility = async () => {
-    if (!selectedFacility) return;
-
-    if (!selectedFacility.name.trim()) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '시설 이름을 입력해주세요.',
-      });
-      return;
-    }
-
-    // 시설명 중복 체크 (자기 자신은 제외)
-    const isDuplicate = facilities.some(
-      (facility) =>
-        facility.id !== selectedFacility.id &&
-        facility.name.toLowerCase() ===
-          selectedFacility.name.trim().toLowerCase()
-    );
-
-    if (isDuplicate) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '이미 운영 중인 시설 이름입니다.',
-      });
-      return;
-    }
-
-    try {
       await client.PUT('/api/v1/admin/facilities/{facilityId}', {
         params: {
           path: {
-            facilityId: selectedFacility.id,
+            facilityId: facilityToEdit!.facilityId,
           },
         },
         body: {
-          name: selectedFacility.name,
-          description: selectedFacility.description,
-          openTime: `${selectedFacility.openTime}:00`,
-          closeTime: `${selectedFacility.closeTime}:00`,
+          name: values.name,
+          description: values.description,
+          openTime: formattedOpenTime,
+          closeTime: formattedCloseTime,
         },
       });
 
       toast({
         title: '성공',
-        description: '시설 정보가 수정되었습니다.',
+        description: '시설이 수정되었습니다.',
       });
+
       setIsEditFacilityDialogOpen(false);
+      editForm.reset();
       fetchFacilities();
-    } catch (error: any) {
+    } catch (error) {
       console.error('시설 수정 실패:', error);
       toast({
         variant: 'destructive',
-        title: '수정 실패',
-        description: error?.response?.data || '시설 수정에 실패했습니다.',
+        title: '오류',
+        description: '시설 수정에 실패했습니다.',
       });
     }
   };
 
-  const handleDeleteFacility = async () => {
-    if (!selectedFacility) return;
+  // 시설 삭제 처리
+  const handleFacilityDelete = (facility: Facility) => {
+    setFacilityToDelete(facility);
+    setIsDeleteFacilityDialogOpen(true);
+  };
 
+  // 시설 삭제 확인
+  const handleDeleteConfirm = async () => {
     try {
       await client.DELETE('/api/v1/admin/facilities/{facilityId}', {
         params: {
           path: {
-            facilityId: selectedFacility.id,
+            facilityId: facilityToDelete!.facilityId,
           },
         },
       });
@@ -671,69 +730,82 @@ export default function FacilitiesPage() {
         title: '성공',
         description: '시설이 삭제되었습니다.',
       });
+
       setIsDeleteFacilityDialogOpen(false);
-      setSelectedFacility(null);
+      setFacilityToDelete(null);
       fetchFacilities();
-    } catch (error: any) {
+    } catch (error) {
       console.error('시설 삭제 실패:', error);
       toast({
         variant: 'destructive',
-        title: '삭제 실패',
-        description: error?.response?.data || '시설 삭제에 실패했습니다.',
+        title: '오류',
+        description: '시설 삭제에 실패했습니다.',
       });
     }
   };
 
-  // 강사 관련 핸들러
-  const handleAddInstructor = async () => {
-    if (!selectedFacility) return;
-
+  // 강사 추가 처리
+  const handleAddInstructor = async (
+    values: z.infer<typeof instructorFormSchema>
+  ) => {
     try {
       await client.POST('/api/v1/admin/facilities/{facilityId}/instructors', {
         params: {
           path: {
-            facilityId: selectedFacility.id,
+            facilityId: selectedFacility!.facilityId,
           },
         },
-        body: newInstructor,
+        body: {
+          name: values.name,
+          description: values.description,
+        },
       });
 
       toast({
         title: '성공',
-        description: '강사가 등록되었습니다.',
+        description: '강사가 추가되었습니다.',
       });
+
       setIsAddInstructorDialogOpen(false);
-      setNewInstructor({
-        name: '',
-        description: '',
-      });
-      fetchInstructors(selectedFacility.id);
-    } catch (error: any) {
-      console.error('강사 등록 실패:', error);
+      instructorForm.reset();
+      fetchInstructors(selectedFacility!.facilityId);
+    } catch (error) {
+      console.error('강사 추가 실패:', error);
       toast({
         variant: 'destructive',
-        title: '등록 실패',
-        description: error?.response?.data || '강사 등록에 실패했습니다.',
+        title: '오류',
+        description: '강사 추가에 실패했습니다.',
       });
     }
   };
 
-  const handleEditInstructor = async () => {
-    if (!selectedFacility || !selectedInstructor) return;
+  // 강사 수정 처리
+  const handleInstructorEdit = (instructor: Instructor) => {
+    setInstructorToEdit(instructor);
+    editInstructorForm.reset({
+      name: instructor.name,
+      description: instructor.description,
+    });
+    setIsEditInstructorDialogOpen(true);
+  };
 
+  // 강사 수정 제출
+  const handleEditInstructorSubmit = async (
+    values: z.infer<typeof instructorFormSchema>
+  ) => {
     try {
       await client.PUT(
         '/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}',
         {
           params: {
             path: {
-              facilityId: selectedFacility.id,
-              instructorId: selectedInstructor.id,
+              facilityId: selectedFacility!.facilityId,
+              instructorId: instructorToEdit!.instructorId,
             },
           },
           body: {
-            name: selectedInstructor.name,
-            description: selectedInstructor.description,
+            name: values.name,
+            description: values.description,
           },
         }
       );
@@ -742,29 +814,36 @@ export default function FacilitiesPage() {
         title: '성공',
         description: '강사 정보가 수정되었습니다.',
       });
+
       setIsEditInstructorDialogOpen(false);
-      fetchInstructors(selectedFacility.id);
-    } catch (error: any) {
+      editInstructorForm.reset();
+      fetchInstructors(selectedFacility!.facilityId);
+    } catch (error) {
       console.error('강사 수정 실패:', error);
       toast({
         variant: 'destructive',
-        title: '수정 실패',
-        description: error?.response?.data || '강사 수정에 실패했습니다.',
+        title: '오류',
+        description: '강사 수정에 실패했습니다.',
       });
     }
   };
 
-  const handleDeleteInstructor = async () => {
-    if (!selectedFacility || !selectedInstructor) return;
+  // 강사 삭제 처리
+  const handleInstructorDelete = (instructor: Instructor) => {
+    setInstructorToDelete(instructor);
+    setIsDeleteInstructorDialogOpen(true);
+  };
 
+  // 강사 삭제 확인
+  const handleDeleteInstructorConfirm = async () => {
     try {
       await client.DELETE(
         '/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}',
         {
           params: {
             path: {
-              facilityId: selectedFacility.id,
-              instructorId: selectedInstructor.id,
+              facilityId: selectedFacility!.facilityId,
+              instructorId: instructorToDelete!.instructorId,
             },
           },
         }
@@ -774,104 +853,155 @@ export default function FacilitiesPage() {
         title: '성공',
         description: '강사가 삭제되었습니다.',
       });
+
       setIsDeleteInstructorDialogOpen(false);
-      setSelectedInstructor(null);
-      fetchInstructors(selectedFacility.id);
-    } catch (error: any) {
+      setInstructorToDelete(null);
+      fetchInstructors(selectedFacility!.facilityId);
+    } catch (error) {
       console.error('강사 삭제 실패:', error);
       toast({
         variant: 'destructive',
-        title: '삭제 실패',
-        description: error?.response?.data || '강사 삭제에 실패했습니다.',
+        title: '오류',
+        description: '강사 삭제에 실패했습니다.',
       });
     }
   };
 
-  // 타임슬롯 관련 핸들러
-  const handleAddTimeSlot = async () => {
-    if (!selectedFacility || !selectedInstructor) return;
-
-    if (!newTimeSlot.scheduleName.trim()) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '프로그램명을 입력해주세요.',
-      });
-      return;
-    }
-
-    if (newTimeSlot.endTime <= newTimeSlot.startTime) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '종료 시간은 시작 시간보다 늦어야 합니다.',
-      });
-      return;
-    }
-
-    if (newTimeSlot.periodEnd < newTimeSlot.periodStart) {
-      toast({
-        variant: 'destructive',
-        title: '입력 오류',
-        description: '종료일은 시작일보다 늦어야 합니다.',
-      });
-      return;
-    }
-
+  // 시설 추가 처리
+  const handleAddFacility = async (
+    values: z.infer<typeof facilityFormSchema>
+  ) => {
     try {
-      await client.POST(
-        '/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules',
-        {
-          params: {
-            path: {
-              facilityId: selectedFacility.id,
-              instructorId: selectedInstructor.id,
-            },
-          },
-          body: {
-            scheduleName: newTimeSlot.scheduleName,
-            dayOfWeek: newTimeSlot.dayOfWeek,
-            startTime: newTimeSlot.startTime,
-            endTime: newTimeSlot.endTime,
-            slotMinutes: Number(newTimeSlot.slotMinutes),
-            capacity: Number(newTimeSlot.capacity),
-            periodStart: newTimeSlot.periodStart,
-            periodEnd: newTimeSlot.periodEnd,
-          },
-        }
-      );
+      // 시간 형식 변환
+      const formattedOpenTime = values.openTime.substring(0, 5);
+      const formattedCloseTime = values.closeTime.substring(0, 5);
+
+      await client.POST('/api/v1/admin/facilities', {
+        body: {
+          name: values.name,
+          description: values.description,
+          openTime: formattedOpenTime,
+          closeTime: formattedCloseTime,
+        },
+      });
 
       toast({
         title: '성공',
-        description: '강사 일정이 등록되었습니다.',
+        description: '시설이 추가되었습니다.',
       });
-      setIsAddTimeSlotDialogOpen(false);
-      setNewTimeSlot({
-        scheduleName: '',
-        dayOfWeek: 'MONDAY',
-        startTime: '09:00',
-        endTime: '18:00',
-        slotMinutes: 60,
-        capacity: 20,
-        periodStart: new Date().toISOString().split('T')[0],
-        periodEnd: new Date(new Date().setMonth(new Date().getMonth() + 1))
-          .toISOString()
-          .split('T')[0],
-      });
-      fetchTimeSlots(selectedFacility.id, selectedInstructor.id);
-    } catch (error: any) {
-      console.error('강사 일정 등록 실패:', error);
+
+      setIsAddFacilityDialogOpen(false);
+      form.reset();
+      fetchFacilities();
+    } catch (error) {
+      console.error('시설 추가 실패:', error);
       toast({
         variant: 'destructive',
-        title: '등록 실패',
-        description:
-          error?.response?.data?.message || '강사 일정 등록에 실패했습니다.',
+        title: '오류',
+        description: '시설 추가에 실패했습니다.',
       });
     }
   };
 
-  const handleDeleteTimeSlot = async () => {
-    if (!selectedFacility || !selectedInstructor || !selectedTimeSlot) return;
+  // 스케줄 추가 처리
+  const handleAddSchedule = async (
+    values: z.infer<typeof scheduleFormSchema>
+  ) => {
+    try {
+      await client
+        .POST(
+          '/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules',
+          {
+            params: {
+              path: {
+                facilityId: selectedFacility!.facilityId,
+                instructorId: selectedInstructor!.instructorId,
+              },
+            },
+            body: {
+              scheduleName: values.scheduleName,
+              dayOfWeek: values.dayOfWeek,
+              startTime: values.startTime,
+              endTime: values.endTime,
+              slotMinutes: values.slotMinutes,
+              capacity: values.capacity,
+              periodStart: format(values.periodStart, 'yyyy-MM-dd'),
+              periodEnd: format(values.periodEnd, 'yyyy-MM-dd'),
+            },
+          }
+        )
+        .catch((error) => {
+          throw error;
+        });
+
+      // 에러가 없을 경우에만 실행되는 부분
+      toast({
+        title: '성공',
+        description: '스케줄이 추가되었습니다.',
+      });
+
+      setIsAddScheduleDialogOpen(false);
+      scheduleForm.reset();
+      fetchSchedules(selectedInstructor!.instructorId);
+    } catch (error: any) {
+      console.error('스케줄 추가 실패:', error);
+
+      // 서버에서 반환하는 에러 메시지 처리
+      let errorMessage = '스케줄 추가에 실패했습니다.';
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (
+        error.message &&
+        error.message.includes('IllegalArgumentException')
+      ) {
+        // IllegalArgumentException 메시지 파싱
+        const match = error.message.match(/IllegalArgumentException: (.+)/);
+        if (match) {
+          errorMessage = match[1];
+        }
+      }
+
+      // 운영시간 관련 에러
+      if (errorMessage.includes('운영시간')) {
+        scheduleForm.setError('startTime', {
+          type: 'manual',
+          message: errorMessage,
+        });
+        scheduleForm.setError('endTime', {
+          type: 'manual',
+          message: errorMessage,
+        });
+      }
+      // 시간 중복 관련 에러
+      else if (errorMessage.includes('시간대가 겹치는')) {
+        scheduleForm.setError('startTime', {
+          type: 'manual',
+          message: errorMessage,
+        });
+        scheduleForm.setError('endTime', {
+          type: 'manual',
+          message: errorMessage,
+        });
+      }
+
+      toast({
+        variant: 'destructive',
+        title: '오류',
+        description: errorMessage,
+      });
+    }
+  };
+
+  // 타임슬롯 삭제 처리 함수
+  const handleTimeSlotDelete = async (slot: TimeSlotSimpleResponseDto) => {
+    setTimeSlotToDelete(slot);
+    setIsDeleteTimeSlotDialogOpen(true);
+  };
+
+  // 타임슬롯 삭제 확인
+  const handleDeleteTimeSlotConfirm = async () => {
+    if (!timeSlotToDelete) return;
 
     try {
       await client.DELETE(
@@ -879,9 +1009,9 @@ export default function FacilitiesPage() {
         {
           params: {
             path: {
-              facilityId: selectedFacility.id,
-              instructorId: selectedInstructor.id,
-              timeSlotId: selectedTimeSlot.timeSlotId,
+              facilityId: selectedFacility!.facilityId,
+              instructorId: selectedInstructor!.instructorId,
+              timeSlotId: timeSlotToDelete.timeSlotId,
             },
           },
         }
@@ -891,1036 +1021,652 @@ export default function FacilitiesPage() {
         title: '성공',
         description: '타임슬롯이 삭제되었습니다.',
       });
+
       setIsDeleteTimeSlotDialogOpen(false);
-      fetchTimeSlots(selectedFacility.id, selectedInstructor.id);
-    } catch (error: any) {
+      setTimeSlotToDelete(null);
+      fetchSchedules(selectedInstructor!.instructorId);
+    } catch (error) {
       console.error('타임슬롯 삭제 실패:', error);
       toast({
         variant: 'destructive',
-        title: '삭제 실패',
-        description: error?.response?.data || '타임슬롯 삭제에 실패했습니다.',
+        title: '오류',
+        description: '타임슬롯 삭제에 실패했습니다.',
       });
     }
   };
 
-  // searchDateRange가 변경될 때마다 타임슬롯을 다시 불러오는 useEffect 추가
+  // 날짜 범위 변경 시 타임슬롯 재조회
   useEffect(() => {
-    if (selectedFacility && selectedInstructor) {
-      fetchTimeSlots(selectedFacility.id, selectedInstructor.id);
+    if (selectedInstructor && (dateRange.from || dateRange.to)) {
+      fetchSchedules(selectedInstructor.instructorId);
     }
-  }, [searchDateRange.startDate, searchDateRange.endDate]);
+  }, [dateRange, selectedInstructor]);
 
   useEffect(() => {
-    fetchFacilities();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'reservations') {
-      fetchReservations();
+    if (activeTab === 'facilities') {
+      fetchFacilities();
     }
   }, [activeTab]);
 
-  // 예약 상세 조회 함수
-  const fetchReservationDetail = async (reservationId: number) => {
-    try {
-      const response = await client.GET(
-        '/api/v1/admin/facilities/reservations/{reservationId}',
-        {
-          params: {
-            path: {
-              reservationId,
-            },
-          },
-        }
+  useEffect(() => {
+    if (schedules.length > 0) {
+      const uniqueNames = Array.from(
+        new Set(schedules.map((slot) => slot.scheduleName))
       );
-
-      if (response?.data) {
-        const reservationDetail: ReservationDetail = {
-          reservationId: response.data.reservationId ?? 0,
-          applicantName: response.data.applicantName ?? '',
-          building: response.data.building ?? '',
-          unit: response.data.unit ?? '',
-          facilityName: response.data.facilityName ?? '',
-          instructorName: response.data.instructorName ?? '',
-          programName: response.data.programName ?? '',
-          reservationDateTime: response.data.reservationDateTime ?? '',
-          createdAt: response.data.createdAt
-            ? formatDateTime(response.data.createdAt)
-            : '',
-          status: response.data.status as ReservationStatus,
-        };
-
-        setSelectedReservation(reservationDetail);
-        setIsDetailModalOpen(true);
-      }
-    } catch (error) {
-      console.error('예약 상세 조회 실패:', error);
-      toast({
-        variant: 'destructive',
-        title: '오류',
-        description: '예약 상세 정보를 불러오는데 실패했습니다.',
-      });
+      setProgramNames(uniqueNames);
     }
-  };
+  }, [schedules]);
+
+  const filteredSchedules = useMemo(() => {
+    if (selectedProgramName === 'all') return schedules;
+    return schedules.filter(
+      (slot) => slot.scheduleName === selectedProgramName
+    );
+  }, [schedules, selectedProgramName]);
 
   return (
     <div className="container-fluid p-6 max-w-[2000px] mx-auto">
       {/* 페이지 헤더 */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">
-          공용시설 예약 및 확인
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">공용시설 관리</h1>
         <p className="text-muted-foreground mt-1">
           아파트 공용시설을 관리하고 예약 현황을 확인할 수 있습니다.
         </p>
       </div>
 
       {/* 탭 네비게이션 */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="grid w-[400px] grid-cols-2">
-          <TabsTrigger value="facilities" className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            시설 관리
-          </TabsTrigger>
-          <TabsTrigger value="reservations" className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4" />
-            예약 관리
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex space-x-2 mb-6">
+        <Button
+          variant={activeTab === 'facilities' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('facilities')}
+          className="flex items-center gap-2"
+        >
+          <Building2 className="w-4 h-4" />
+          시설 관리
+        </Button>
+        <Button
+          variant={activeTab === 'reservations' ? 'default' : 'outline'}
+          onClick={() => router.push('/admin/facilities/reservations')}
+          className="flex items-center gap-2"
+        >
+          <CalendarDays className="w-4 h-4" />
+          예약 관리
+        </Button>
+      </div>
 
-        <TabsContent value="facilities">
-          {/* 시설 관리 컨텐츠 */}
-          <div className="grid grid-cols-12 gap-6">
-            {/* 시설 목록 섹션 */}
-            <div
-              className={`${
-                selectedFacility ? 'col-span-5 lg:col-span-5' : 'col-span-12'
-              } transition-all duration-300`}
-            >
-              <Card className="h-full">
-                <CardHeader className="flex flex-row items-center justify-between">
+      {/* 시설 관리 컨텐츠 */}
+      {activeTab === 'facilities' && (
+        <div className="grid grid-cols-12 gap-6">
+          {/* 시설 목록 섹션 */}
+          <div
+            className={`${
+              selectedFacility ? 'col-span-5 lg:col-span-5' : 'col-span-12'
+            } transition-all duration-300`}
+          >
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
                   <CardTitle>시설 목록</CardTitle>
-                  <Button
-                    size="sm"
-                    onClick={() => setIsAddFacilityDialogOpen(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-1" /> 시설 추가
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2 mb-4">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="시설명으로 검색..."
-                        className="pl-8"
-                        value={facilitySearchTerm}
-                        onChange={(e) => setFacilitySearchTerm(e.target.value)}
-                      />
-                    </div>
+                  <CardDescription>
+                    공용시설 목록을 확인하고 관리할 수 있습니다.
+                  </CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => setIsAddFacilityDialogOpen(true)}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> 시설 추가
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="시설명으로 검색..."
+                      className="pl-8"
+                      value={facilitySearchTerm}
+                      onChange={handleFacilitySearch}
+                    />
                   </div>
 
-                  <div className="space-y-2">
-                    {facilities
-                      .filter((facility) =>
-                        facility.name
-                          .toLowerCase()
-                          .includes(facilitySearchTerm.toLowerCase())
-                      )
-                      .map((facility) => (
-                        <Card
-                          key={facility.id}
-                          className={`cursor-pointer hover:bg-accent ${
-                            selectedFacility?.id === facility.id
-                              ? 'border-primary bg-accent'
-                              : ''
-                          }`}
-                          onClick={() => handleFacilitySelect(facility)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-semibold">
-                                  {facility.name}
-                                </h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatOperatingHours(
-                                    facility.openTime,
-                                    facility.closeTime
-                                  )}
-                                </p>
-                              </div>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[80px] text-center">
+                            번호
+                          </TableHead>
+                          <TableHead>시설명</TableHead>
+                          <TableHead>설명</TableHead>
+                          <TableHead>운영 시간</TableHead>
+                          <TableHead className="w-[100px]">관리</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredFacilities.map((facility, index) => (
+                          <TableRow
+                            key={facility.facilityId}
+                            className={`cursor-pointer hover:bg-muted/50 ${
+                              selectedFacility?.facilityId ===
+                              facility.facilityId
+                                ? 'bg-muted/50'
+                                : ''
+                            }`}
+                            onClick={() => handleFacilitySelect(facility)}
+                          >
+                            <TableCell className="text-center">
+                              {index + 1}
+                            </TableCell>
+                            <TableCell>{facility.facilityName}</TableCell>
+                            <TableCell>{facility.description}</TableCell>
+                            <TableCell>
+                              {formatOperatingHours(
+                                facility.openTime,
+                                facility.closeTime
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  asChild
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="w-4 h-4" />
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent>
+                                <DropdownMenuContent align="end">
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setSelectedFacility(facility);
-                                      setIsEditFacilityDialogOpen(true);
+                                      handleFacilityEdit(facility);
                                     }}
                                   >
-                                    <Edit className="w-4 h-4 mr-2" /> 수정
+                                    <Pencil className="w-4 h-4 mr-2" />
+                                    수정
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
+                                    className="text-red-600"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setSelectedFacility(facility);
-                                      setIsDeleteFacilityDialogOpen(true);
+                                      handleFacilityDelete(facility);
                                     }}
                                   >
-                                    <Trash className="w-4 h-4 mr-2" /> 삭제
+                                    <Trash className="w-4 h-4 mr-2" />
+                                    삭제
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 강사 목록 섹션 */}
+          {selectedFacility && (
+            <div className="col-span-7 lg:col-span-7">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>강사 목록</CardTitle>
+                    <CardDescription>
+                      {selectedFacility.facilityName}의 강사 목록을 확인하고
+                      관리할 수 있습니다.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsAddInstructorDialogOpen(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> 강사 추가
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="강사명으로 검색..."
+                        className="pl-8"
+                        value={instructorSearchTerm}
+                        onChange={handleInstructorSearch}
+                      />
+                    </div>
+
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>강사명</TableHead>
+                            <TableHead>소개</TableHead>
+                            <TableHead className="w-[100px]">관리</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredInstructors.map((instructor) => (
+                            <React.Fragment key={instructor.instructorId}>
+                              <TableRow
+                                className={`cursor-pointer hover:bg-muted/50 ${
+                                  expandedInstructorId ===
+                                  instructor.instructorId
+                                    ? 'bg-muted/50'
+                                    : ''
+                                }`}
+                                onClick={() =>
+                                  handleInstructorRowClick(instructor)
+                                }
+                              >
+                                <TableCell>{instructor.name}</TableCell>
+                                <TableCell>{instructor.description}</TableCell>
+                                <TableCell>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger
+                                      asChild
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <MoreVertical className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleInstructorEdit(instructor);
+                                        }}
+                                      >
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        수정
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        className="text-red-600"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleInstructorDelete(instructor);
+                                        }}
+                                      >
+                                        <Trash className="w-4 h-4 mr-2" />
+                                        삭제
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            </React.Fragment>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
+          )}
 
-            {/* 강사 목록 섹션 */}
-            {selectedFacility && (
-              <div
-                className={`col-span-7 lg:col-span-7 transition-all duration-300`}
-              >
-                <Card className="h-full">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>강사 목록</CardTitle>
-                      <CardDescription>{selectedFacility.name}</CardDescription>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => setIsAddInstructorDialogOpen(true)}
-                    >
-                      <Plus className="w-4 h-4 mr-1" /> 강사 추가
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex gap-2 mb-4">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="강사명으로 검색..."
-                          className="pl-8"
-                          value={instructorSearchTerm}
-                          onChange={(e) =>
-                            setInstructorSearchTerm(e.target.value)
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {instructors
-                        .filter((instructor) =>
-                          instructor.name
-                            .toLowerCase()
-                            .includes(instructorSearchTerm.toLowerCase())
-                        )
-                        .map((instructor) => (
-                          <Card
-                            key={instructor.id}
-                            className={`cursor-pointer hover:bg-accent ${
-                              selectedInstructor?.id === instructor.id
-                                ? 'border-primary bg-accent'
-                                : ''
-                            }`}
-                            onClick={() => handleInstructorSelect(instructor)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h4 className="font-semibold">
-                                    {instructor.name}
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {instructor.description}
-                                  </p>
-                                </div>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger
-                                    asChild
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Button variant="ghost" size="icon">
-                                      <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent>
-                                    <DropdownMenuItem
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedInstructor(instructor);
-                                        setIsEditInstructorDialogOpen(true);
-                                      }}
-                                    >
-                                      <Edit className="w-4 h-4 mr-2" /> 수정
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedInstructor(instructor);
-                                        setIsDeleteInstructorDialogOpen(true);
-                                      }}
-                                    >
-                                      <Trash className="w-4 h-4 mr-2" /> 삭제
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* 타임슬롯 섹션 */}
-            {selectedFacility && selectedInstructor && (
-              <div className="col-span-12">
-                <Card className="h-full">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>스케줄 관리</CardTitle>
-                      <CardDescription>
-                        {selectedFacility.name} - {selectedInstructor.name}{' '}
-                        강사의 수업 일정
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={
-                          viewMode === 'calendar' ? 'default' : 'outline'
-                        }
-                        size="sm"
-                        onClick={() => setViewMode('calendar')}
-                      >
-                        <CalendarIcon className="w-4 h-4 mr-1" /> 캘린더
-                      </Button>
-                      <Button
-                        variant={viewMode === 'table' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setViewMode('table')}
-                      >
-                        <TableIcon className="w-4 h-4 mr-1" /> 테이블
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => setIsAddTimeSlotDialogOpen(true)}
-                      >
-                        <Plus className="w-4 h-4 mr-1" /> 일정 추가
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {viewMode === 'table' && (
-                      <div className="flex justify-end gap-4 mb-4">
-                        <div className="flex items-center gap-2">
-                          <Label className="whitespace-nowrap">조회기간</Label>
-                          <Input
-                            type="date"
-                            value={searchDateRange.startDate}
-                            onChange={(e) =>
-                              setSearchDateRange((prev) => ({
-                                ...prev,
-                                startDate: e.target.value,
-                              }))
-                            }
-                          />
-                          <span className="flex items-center">~</span>
-                          <Input
-                            type="date"
-                            value={searchDateRange.endDate}
-                            onChange={(e) =>
-                              setSearchDateRange((prev) => ({
-                                ...prev,
-                                endDate: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {viewMode === 'calendar' ? (
-                      <div className="h-[calc(100vh-300px)] min-h-[700px]">
-                        <style jsx global>{`
-                          .fc .fc-button,
-                          .fc .fc-today-button {
-                            background-color: transparent !important;
-                            border: 1px solid hsl(var(--border));
-                            color: hsl(var(--foreground));
-                            font-size: 0.875rem;
-                            height: 2.25rem;
-                            padding-left: 0.75rem;
-                            padding-right: 0.75rem;
-                            font-weight: 500;
-                          }
-                          .fc .fc-today-button {
-                            color: hsl(var(--foreground)) !important;
-                          }
-                          .fc .fc-button:hover,
-                          .fc .fc-today-button:hover {
-                            background-color: hsl(var(--accent)) !important;
-                            color: hsl(var(--accent-foreground));
-                            border-color: transparent !important;
-                          }
-                          .fc .fc-button.fc-button-active,
-                          .fc .fc-button-primary.fc-button-active {
-                            background-color: hsl(var(--primary)) !important;
-                            border-color: transparent !important;
-                            color: hsl(var(--primary-foreground)) !important;
-                          }
-                          .fc .fc-today-button.fc-button-active {
-                            background-color: transparent !important;
-                            border: 1px solid hsl(var(--primary)) !important;
-                            color: hsl(var(--foreground)) !important;
-                          }
-                          .fc .fc-button:disabled,
-                          .fc .fc-today-button:disabled {
-                            opacity: 0.5;
-                          }
-                          .fc .fc-button:focus,
-                          .fc .fc-today-button:focus {
-                            outline: none;
-                            box-shadow: 0 0 0 2px hsl(var(--background)),
-                              0 0 0 4px hsl(var(--primary));
-                          }
-                          .fc .fc-toolbar-title {
-                            font-size: 1.25rem !important;
-                            font-weight: 600;
-                          }
-                        `}</style>
-                        <FullCalendar
-                          plugins={[
-                            dayGridPlugin,
-                            timeGridPlugin,
-                            interactionPlugin,
-                          ]}
-                          initialView="timeGridWeek"
-                          locale={koLocale}
-                          headerToolbar={{
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay',
-                          }}
-                          events={timeSlots.map((slot) => ({
-                            id: String(slot.timeSlotId),
-                            title: slot.scheduleName,
-                            start: `${slot.date}T${slot.startTime}`,
-                            end: `${slot.date}T${slot.endTime}`,
-                            backgroundColor: slot.isFull
-                              ? '#ef4444'
-                              : '#fee2e2',
-                            textColor: slot.isFull ? '#ffffff' : '#000000',
-                            borderColor: slot.isFull ? '#dc2626' : '#fca5a5',
-                          }))}
-                          height="100%"
-                        />
-                      </div>
-                    ) : (
-                      <div className="rounded-md border">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[80px] text-center">
-                                No
-                              </TableHead>
-                              <TableHead className="text-center">
-                                프로그램명
-                              </TableHead>
-                              <TableHead className="text-center">
-                                일자
-                              </TableHead>
-                              <TableHead className="text-center">
-                                시간
-                              </TableHead>
-                              <TableHead className="text-center">
-                                예약현황
-                              </TableHead>
-                              <TableHead className="text-center">
-                                관리
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {timeSlots
-                              .sort(
-                                (a, b) =>
-                                  new Date(a.date).getTime() -
-                                  new Date(b.date).getTime()
-                              )
-                              .map((slot, index) => (
-                                <TableRow key={slot.timeSlotId}>
-                                  <TableCell className="text-center font-medium">
-                                    {index + 1}
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    {slot.scheduleName}
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    {formatDateWithDay(slot.date)}
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    {formatTimeRange(
-                                      slot.startTime,
-                                      slot.endTime
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    <div className="flex justify-center">
-                                      <Badge
-                                        className={`${
-                                          slot.isFull
-                                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                                            : ''
-                                        }`}
-                                        variant={
-                                          slot.isFull ? 'default' : 'secondary'
-                                        }
-                                      >
-                                        {slot.reservedCount}/{slot.maxCapacity}
-                                      </Badge>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    <div className="flex justify-center">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => {
-                                          setSelectedTimeSlot(slot);
-                                          setIsDeleteTimeSlotDialogOpen(true);
-                                        }}
-                                      >
-                                        <Trash className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="reservations">
-          {/* 예약 관리 컨텐츠 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>예약 현황</CardTitle>
-              <CardDescription>
-                공용시설 예약 현황을 확인하고 관리할 수 있습니다.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 mb-6">
-                <div className="flex gap-4 mb-6">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="신청자 이름, 주소로 검색..."
-                      className="pl-8"
-                      value={reservationSearchTerm}
-                      onChange={(e) => setReservationSearchTerm(e.target.value)}
-                    />
+          {/* 스케줄 관리 카드 */}
+          {selectedFacility && selectedInstructor && (
+            <div className="col-span-12">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>스케줄 목록</CardTitle>
+                    <CardDescription>
+                      {selectedFacility.facilityName} -{' '}
+                      {selectedInstructor.name} 강사의 스케줄을 관리할 수
+                      있습니다.
+                    </CardDescription>
                   </div>
-                  <select
-                    className="flex h-9 w-[200px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    value={facilityFilter}
-                    onChange={(e) => setFacilityFilter(e.target.value)}
-                  >
-                    <option value="ALL">전체 시설</option>
-                    {uniqueFacilities
-                      .filter((facility) => facility !== 'ALL')
-                      .map((facility) => (
-                        <option key={facility} value={facility}>
-                          {facility}
-                        </option>
-                      ))}
-                  </select>
-                  <select
-                    className="flex h-9 w-[200px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    value={statusFilter}
-                    onChange={(e) =>
-                      setStatusFilter(
-                        e.target.value as ReservationStatus | 'ALL'
-                      )
-                    }
-                  >
-                    <option value="ALL">전체 상태</option>
-                    <option value="PENDING">승인 대기</option>
-                    <option value="AGREE">승인 완료</option>
-                    <option value="REJECT">승인 거절</option>
-                    <option value="CANCEL">예약 취소</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px] text-center">
-                        번호
-                      </TableHead>
-                      <TableHead>신청자</TableHead>
-                      <TableHead>주소</TableHead>
-                      <TableHead>시설명</TableHead>
-                      <TableHead>강사명</TableHead>
-                      <TableHead className="text-center">예약 일시</TableHead>
-                      <TableHead className="text-center">상태</TableHead>
-                      <TableHead className="w-[100px] text-center">
-                        관리
-                      </TableHead>
-                      <TableHead className="w-[80px] text-center">
-                        상세
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reservations
-                      .filter((reservation) => {
-                        const searchLower = reservationSearchTerm.toLowerCase();
-                        const matchesSearch =
-                          reservation.applicantName
-                            .toLowerCase()
-                            .includes(searchLower) ||
-                          formatAddress(reservation.building, reservation.unit)
-                            .toLowerCase()
-                            .includes(searchLower);
-                        const matchesStatus =
-                          statusFilter === 'ALL' ||
-                          reservation.status === statusFilter;
-                        const matchesFacility =
-                          facilityFilter === 'ALL' ||
-                          reservation.facilityName === facilityFilter;
-                        return (
-                          matchesSearch && matchesStatus && matchesFacility
-                        );
-                      })
-                      .map((reservation, index) => (
-                        <TableRow key={reservation.reservationId}>
-                          <TableCell className="text-center">
-                            {index + 1}
-                          </TableCell>
-                          <TableCell>{reservation.applicantName}</TableCell>
-                          <TableCell>
-                            {formatAddress(
-                              reservation.building,
-                              reservation.unit
-                            )}
-                          </TableCell>
-                          <TableCell>{reservation.facilityName}</TableCell>
-                          <TableCell>{reservation.instructorName}</TableCell>
-                          <TableCell className="text-center">
-                            {reservation.reservationDateTime}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                getStatusBadgeStyle(reservation.status)
-                                  .className
-                              }`}
-                            >
-                              {getStatusBadgeStyle(reservation.status).label}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex justify-center items-center gap-2">
-                              {reservation.status === 'PENDING' && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={async () => {
-                                      try {
-                                        await client.PATCH(
-                                          '/api/v1/admin/facilities/reservations/{reservationId}/status',
-                                          {
-                                            params: {
-                                              path: {
-                                                reservationId:
-                                                  reservation.reservationId,
-                                              },
-                                            },
-                                            body: {
-                                              status: 'AGREE',
-                                            },
-                                          }
-                                        );
-                                        toast({
-                                          title: '성공',
-                                          description: '예약이 승인되었습니다.',
-                                          duration: 2000,
-                                        });
-                                        fetchReservations();
-                                      } catch (error) {
-                                        toast({
-                                          variant: 'destructive',
-                                          title: '오류',
-                                          description:
-                                            '예약 승인에 실패했습니다.',
-                                          duration: 2000,
-                                        });
-                                      }
-                                    }}
-                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={async () => {
-                                      try {
-                                        await client.PATCH(
-                                          '/api/v1/admin/facilities/reservations/{reservationId}/status',
-                                          {
-                                            params: {
-                                              path: {
-                                                reservationId:
-                                                  reservation.reservationId,
-                                              },
-                                            },
-                                            body: {
-                                              status: 'REJECT',
-                                            },
-                                          }
-                                        );
-                                        toast({
-                                          title: '성공',
-                                          description: '예약이 거절되었습니다.',
-                                          duration: 2000,
-                                        });
-                                        fetchReservations();
-                                      } catch (error) {
-                                        toast({
-                                          variant: 'destructive',
-                                          title: '오류',
-                                          description:
-                                            '예약 거절에 실패했습니다.',
-                                          duration: 2000,
-                                        });
-                                      }
-                                    }}
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-                              {reservation.status !== 'PENDING' &&
-                                reservation.status !== 'CANCEL' && (
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={async () => {
-                                        try {
-                                          await client.PATCH(
-                                            '/api/v1/admin/facilities/reservations/{reservationId}/status',
-                                            {
-                                              params: {
-                                                path: {
-                                                  reservationId:
-                                                    reservation.reservationId,
-                                                },
-                                              },
-                                              body: {
-                                                status: 'AGREE',
-                                              },
-                                            }
-                                          );
-                                          toast({
-                                            title: '성공',
-                                            description:
-                                              '예약 상태가 변경되었습니다.',
-                                            duration: 2000,
-                                          });
-                                          fetchReservations();
-                                        } catch (error) {
-                                          toast({
-                                            variant: 'destructive',
-                                            title: '오류',
-                                            description:
-                                              '상태 변경에 실패했습니다.',
-                                            duration: 2000,
-                                          });
-                                        }
-                                      }}
-                                      className={`text-green-600 hover:text-green-700 hover:bg-green-50 ${
-                                        reservation.status === 'AGREE'
-                                          ? 'bg-green-50'
-                                          : ''
-                                      }`}
-                                    >
-                                      <Check className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={async () => {
-                                        try {
-                                          await client.PATCH(
-                                            '/api/v1/admin/facilities/reservations/{reservationId}/status',
-                                            {
-                                              params: {
-                                                path: {
-                                                  reservationId:
-                                                    reservation.reservationId,
-                                                },
-                                              },
-                                              body: {
-                                                status: 'REJECT',
-                                              },
-                                            }
-                                          );
-                                          toast({
-                                            title: '성공',
-                                            description:
-                                              '예약 상태가 변경되었습니다.',
-                                            duration: 2000,
-                                          });
-                                          fetchReservations();
-                                        } catch (error) {
-                                          toast({
-                                            variant: 'destructive',
-                                            title: '오류',
-                                            description:
-                                              '상태 변경에 실패했습니다.',
-                                            duration: 2000,
-                                          });
-                                        }
-                                      }}
-                                      className={`text-red-600 hover:text-red-700 hover:bg-red-50 ${
-                                        reservation.status === 'REJECT'
-                                          ? 'bg-red-50'
-                                          : ''
-                                      }`}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                )}
-                              {reservation.status === 'CANCEL' && (
-                                <div className="flex items-center justify-center text-sm text-muted-foreground">
-                                  취소된 예약
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                fetchReservationDetail(
-                                  reservation.reservationId
-                                )
-                              }
-                            >
-                              <Search className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
+                  <Button onClick={() => setIsAddScheduleDialogOpen(true)}>
+                    <Plus className="w-4 h-4 mr-1" /> 스케줄 추가
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <Input
+                          type="date"
+                          value={
+                            dateRange.from
+                              ? format(dateRange.from, 'yyyy-MM-dd')
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const date = e.target.value
+                              ? new Date(e.target.value)
+                              : undefined;
+                            setDateRange((prev) => ({
+                              ...prev,
+                              from: date,
+                            }));
+                          }}
+                          className="w-[160px]"
+                        />
+                      </div>
+                      <span>~</span>
+                      <div>
+                        <Input
+                          type="date"
+                          value={
+                            dateRange.to
+                              ? format(dateRange.to, 'yyyy-MM-dd')
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const date = e.target.value
+                              ? new Date(e.target.value)
+                              : undefined;
+                            setDateRange((prev) => ({
+                              ...prev,
+                              to: date,
+                            }));
+                          }}
+                          className="w-[160px]"
+                        />
+                      </div>
+                      <select
+                        className="flex h-9 w-[160px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        value={selectedProgramName}
+                        onChange={(e) => setSelectedProgramName(e.target.value)}
+                      >
+                        <option value="all">전체 프로그램</option>
+                        {programNames.map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (selectedInstructor) {
+                            fetchSchedules(selectedInstructor.instructorId);
+                          }
+                        }}
+                      >
+                        조회
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[60px] text-center">
+                            번호
+                          </TableHead>
+                          <TableHead className="w-[200px]">
+                            프로그램명
+                          </TableHead>
+                          <TableHead className="w-[150px]">날짜</TableHead>
+                          <TableHead className="w-[150px]">시간</TableHead>
+                          <TableHead className="w-[120px] text-center">
+                            예약 인원
+                          </TableHead>
+                          <TableHead className="w-[100px] text-center">
+                            상태
+                          </TableHead>
+                          <TableHead className="w-[100px] text-center">
+                            관리
+                          </TableHead>
                         </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredSchedules.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center h-24">
+                              <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                <Clock className="w-8 h-8 mb-2 opacity-50" />
+                                <span>등록된 타임슬롯이 없습니다.</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredSchedules.map((slot, index) => (
+                            <TableRow key={slot.timeSlotId}>
+                              <TableCell className="text-center">
+                                {index + 1}
+                              </TableCell>
+                              <TableCell>{slot.scheduleName}</TableCell>
+                              <TableCell>
+                                {formatDateSafely(slot.date)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {formatTime(slot.startTime)} -{' '}
+                                {formatTime(slot.endTime)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span
+                                  className={slot.isFull ? 'text-red-500' : ''}
+                                >
+                                  {slot.reservedCount}/{slot.maxCapacity}명
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge
+                                  variant={
+                                    slot.isFull ? 'destructive' : 'default'
+                                  }
+                                  className={
+                                    slot.isFull
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-green-100 text-green-800'
+                                  }
+                                >
+                                  {slot.isFull ? '마감' : '예약 가능'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-center space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleTimeSlotDelete(slot)}
+                                  >
+                                    <Trash className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* 시설 추가 다이얼로그 */}
+      {/* 시설 추가 모달 */}
       <Dialog
         open={isAddFacilityDialogOpen}
         onOpenChange={setIsAddFacilityDialogOpen}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>시설 추가</DialogTitle>
-            <DialogDescription>새로운 시설을 추가합니다.</DialogDescription>
+            <DialogDescription>
+              새로운 공용시설의 정보를 입력해주세요.
+            </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">시설명</Label>
-              <Input
-                id="name"
-                value={newFacility.name}
-                onChange={(e) =>
-                  setNewFacility({ ...newFacility, name: e.target.value })
-                }
-                placeholder="시설명을 입력하세요"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">설명</Label>
-              <Textarea
-                id="description"
-                value={newFacility.description}
-                onChange={(e) =>
-                  setNewFacility({
-                    ...newFacility,
-                    description: e.target.value,
-                  })
-                }
-                placeholder="시설에 대한 설명을 입력하세요"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="openTime">운영 시작 시간</Label>
-                <Input
-                  id="openTime"
-                  type="time"
-                  value={newFacility.openTime}
-                  onChange={(e) =>
-                    setNewFacility({ ...newFacility, openTime: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="closeTime">운영 종료 시간</Label>
-                <Input
-                  id="closeTime"
-                  type="time"
-                  value={newFacility.closeTime}
-                  onChange={(e) =>
-                    setNewFacility({
-                      ...newFacility,
-                      closeTime: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsAddFacilityDialogOpen(false)}
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleAddFacility)}
+              className="space-y-4"
             >
-              취소
-            </Button>
-            <Button onClick={handleAddFacility}>추가</Button>
-          </DialogFooter>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>시설명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="수영장" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>시설 설명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="반드시 수영모를 씁시다" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="openTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>운영 시작 시간</FormLabel>
+                      <FormControl>
+                        <Input type="time" placeholder="09:00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="closeTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>운영 종료 시간</FormLabel>
+                      <FormControl>
+                        <Input type="time" placeholder="18:00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit">추가</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
-      {/* 시설 수정 다이얼로그 */}
+      {/* 시설 수정 모달 */}
       <Dialog
         open={isEditFacilityDialogOpen}
         onOpenChange={setIsEditFacilityDialogOpen}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>시설 수정</DialogTitle>
-            <DialogDescription>시설 정보를 수정합니다.</DialogDescription>
+            <DialogDescription>시설 정보를 수정해주세요.</DialogDescription>
           </DialogHeader>
-          {selectedFacility && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-name">시설명</Label>
-                <Input
-                  id="edit-name"
-                  value={selectedFacility.name}
-                  onChange={(e) =>
-                    setSelectedFacility({
-                      ...selectedFacility,
-                      name: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-description">설명</Label>
-                <Textarea
-                  id="edit-description"
-                  value={selectedFacility.description}
-                  onChange={(e) =>
-                    setSelectedFacility({
-                      ...selectedFacility,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-openTime">운영 시작 시간</Label>
-                  <Input
-                    id="edit-openTime"
-                    type="time"
-                    value={selectedFacility.openTime}
-                    onChange={(e) =>
-                      setSelectedFacility({
-                        ...selectedFacility,
-                        openTime: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-closeTime">운영 종료 시간</Label>
-                  <Input
-                    id="edit-closeTime"
-                    type="time"
-                    value={selectedFacility.closeTime}
-                    onChange={(e) =>
-                      setSelectedFacility({
-                        ...selectedFacility,
-                        closeTime: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditFacilityDialogOpen(false)}
+          <Form {...editForm}>
+            <form
+              onSubmit={editForm.handleSubmit(handleEditFacilitySubmit)}
+              className="space-y-4"
             >
-              취소
-            </Button>
-            <Button onClick={handleEditFacility}>저장</Button>
-          </DialogFooter>
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>시설명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="수영장" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>시설 설명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="반드시 수영모를 씁시다" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="openTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>운영 시작 시간</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="closeTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>운영 종료 시간</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsEditFacilityDialogOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button type="submit">수정</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
-      {/* 시설 삭제 다이얼로그 */}
+      {/* 시설 삭제 확인 모달 */}
       <Dialog
         open={isDeleteFacilityDialogOpen}
         onOpenChange={setIsDeleteFacilityDialogOpen}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>시설 삭제</DialogTitle>
             <DialogDescription>
-              {selectedFacility?.name} 시설을 삭제하시겠습니까? 이 작업은 되돌릴
-              수 없습니다.
+              정말로 이 시설을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1930,86 +1676,449 @@ export default function FacilitiesPage() {
             >
               취소
             </Button>
-            <Button variant="destructive" onClick={handleDeleteFacility}>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
               삭제
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 예약 상세 정보 모달 추가 */}
-      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* 강사 추가 모달 */}
+      <Dialog
+        open={isAddInstructorDialogOpen}
+        onOpenChange={setIsAddInstructorDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>예약 상세 정보</DialogTitle>
+            <DialogTitle>강사 추가</DialogTitle>
+            <DialogDescription>
+              새로운 강사 정보를 입력해주세요.
+            </DialogDescription>
           </DialogHeader>
-          {selectedReservation && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">신청자</Label>
-                <div className="col-span-3">
-                  {selectedReservation.applicantName}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">주소</Label>
-                <div className="col-span-3">
-                  {formatAddress(
-                    selectedReservation.building,
-                    selectedReservation.unit
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">시설명</Label>
-                <div className="col-span-3">
-                  {selectedReservation.facilityName}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">강사명</Label>
-                <div className="col-span-3">
-                  {selectedReservation.instructorName}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">프로그램명</Label>
-                <div className="col-span-3">
-                  {selectedReservation.programName}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">예약 일시</Label>
-                <div className="col-span-3">
-                  {selectedReservation.reservationDateTime}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">신청 일시</Label>
-                <div className="col-span-3">
-                  {formatDateTime(selectedReservation.createdAt)}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">상태</Label>
-                <div className="col-span-3">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      getStatusBadgeStyle(selectedReservation.status).className
-                    }`}
-                  >
-                    {getStatusBadgeStyle(selectedReservation.status).label}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          <Form {...instructorForm}>
+            <form
+              onSubmit={instructorForm.handleSubmit(handleAddInstructor)}
+              className="space-y-4"
+            >
+              <FormField
+                control={instructorForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>강사명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="홍길동" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={instructorForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>설명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="수영 전문 강사" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsAddInstructorDialogOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button type="submit">추가</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 강사 수정 모달 */}
+      <Dialog
+        open={isEditInstructorDialogOpen}
+        onOpenChange={setIsEditInstructorDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>강사 수정</DialogTitle>
+            <DialogDescription>강사 정보를 수정해주세요.</DialogDescription>
+          </DialogHeader>
+          <Form {...editInstructorForm}>
+            <form
+              onSubmit={editInstructorForm.handleSubmit(
+                handleEditInstructorSubmit
+              )}
+              className="space-y-4"
+            >
+              <FormField
+                control={editInstructorForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>강사명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="홍길동" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editInstructorForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>설명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="수영 전문 강사" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsEditInstructorDialogOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button type="submit">수정</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 강사 삭제 확인 모달 */}
+      <Dialog
+        open={isDeleteInstructorDialogOpen}
+        onOpenChange={setIsDeleteInstructorDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>강사 삭제</DialogTitle>
+            <DialogDescription>
+              정말로 이 강사를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsDetailModalOpen(false)}
+              onClick={() => setIsDeleteInstructorDialogOpen(false)}
             >
-              닫기
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteInstructorConfirm}
+            >
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 스케줄 추가 모달 */}
+      <Dialog
+        open={isAddScheduleDialogOpen}
+        onOpenChange={setIsAddScheduleDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>스케줄 추가</DialogTitle>
+            <DialogDescription>
+              {selectedFacility?.facilityName} - {selectedInstructor?.name}{' '}
+              강사의 새로운 스케줄을 추가합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...scheduleForm}>
+            <form
+              onSubmit={scheduleForm.handleSubmit(handleAddSchedule)}
+              className="space-y-4"
+            >
+              <FormField
+                control={scheduleForm.control}
+                name="scheduleName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>프로그램명</FormLabel>
+                    <FormControl>
+                      <Input placeholder="초보반" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={scheduleForm.control}
+                name="dayOfWeek"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>근무 요일</FormLabel>
+                    <FormControl>
+                      <select
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      >
+                        <option value="">요일 선택</option>
+                        <option value="MONDAY">월요일</option>
+                        <option value="TUESDAY">화요일</option>
+                        <option value="WEDNESDAY">수요일</option>
+                        <option value="THURSDAY">목요일</option>
+                        <option value="FRIDAY">금요일</option>
+                        <option value="SATURDAY">토요일</option>
+                        <option value="SUNDAY">일요일</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={scheduleForm.control}
+                  name="startTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>시작 시간</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="time"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            const endTime = scheduleForm.getValues('endTime');
+                            if (endTime && selectedFacility) {
+                              const isValid = isTimeInRange(
+                                e.target.value,
+                                endTime,
+                                selectedFacility.openTime,
+                                selectedFacility.closeTime
+                              );
+                              if (!isValid) {
+                                scheduleForm.setError('startTime', {
+                                  type: 'manual',
+                                  message: `운영시간(${selectedFacility.openTime}~${selectedFacility.closeTime}) 내에서만 설정 가능합니다.`,
+                                });
+                              } else {
+                                scheduleForm.clearErrors('startTime');
+                                // 시간 중복 체크
+                                const hasOverlap = checkTimeOverlap(
+                                  e.target.value,
+                                  endTime,
+                                  scheduleForm.getValues('dayOfWeek'),
+                                  instructorSchedules
+                                );
+                                if (hasOverlap) {
+                                  scheduleForm.setError('startTime', {
+                                    type: 'manual',
+                                    message:
+                                      '해당 요일 시간대가 겹치는 스케줄이 이미 존재합니다.',
+                                  });
+                                }
+                              }
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={scheduleForm.control}
+                  name="endTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>종료 시간</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="time"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            const startTime =
+                              scheduleForm.getValues('startTime');
+                            if (startTime && selectedFacility) {
+                              const isValid = isTimeInRange(
+                                startTime,
+                                e.target.value,
+                                selectedFacility.openTime,
+                                selectedFacility.closeTime
+                              );
+                              if (!isValid) {
+                                scheduleForm.setError('endTime', {
+                                  type: 'manual',
+                                  message: `운영시간(${selectedFacility.openTime}~${selectedFacility.closeTime}) 내에서만 설정 가능합니다.`,
+                                });
+                              } else {
+                                scheduleForm.clearErrors('endTime');
+                                // 시간 중복 체크
+                                const hasOverlap = checkTimeOverlap(
+                                  startTime,
+                                  e.target.value,
+                                  scheduleForm.getValues('dayOfWeek'),
+                                  instructorSchedules
+                                );
+                                if (hasOverlap) {
+                                  scheduleForm.setError('endTime', {
+                                    type: 'manual',
+                                    message:
+                                      '해당 요일 시간대가 겹치는 스케줄이 이미 존재합니다.',
+                                  });
+                                }
+                              }
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={scheduleForm.control}
+                  name="slotMinutes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>예약 단위 (분)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={scheduleForm.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>수용 인원</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={scheduleForm.control}
+                  name="periodStart"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>적용 시작일</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date() ||
+                              (scheduleForm.getValues('periodEnd') &&
+                                date > scheduleForm.getValues('periodEnd'))
+                            }
+                            initialFocus
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={scheduleForm.control}
+                  name="periodEnd"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>적용 종료일</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < scheduleForm.getValues('periodStart')
+                            }
+                            initialFocus
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit">추가</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 타임슬롯 삭제 확인 다이얼로그 */}
+      <Dialog
+        open={isDeleteTimeSlotDialogOpen}
+        onOpenChange={setIsDeleteTimeSlotDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>타임슬롯 삭제</DialogTitle>
+            <DialogDescription>
+              정말로 이 타임슬롯을 삭제하시겠습니까? 이 작업은 되돌릴 수
+              없습니다.
+              {timeSlotToDelete && (
+                <div className="mt-2 text-sm">
+                  <div>프로그램명: {timeSlotToDelete.scheduleName}</div>
+                  <div>날짜: {formatDateSafely(timeSlotToDelete.date)}</div>
+                  <div>
+                    시간: {formatTime(timeSlotToDelete.startTime)} -{' '}
+                    {formatTime(timeSlotToDelete.endTime)}
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteTimeSlotDialogOpen(false)}
+            >
+              취소
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteTimeSlotConfirm}>
+              삭제
             </Button>
           </DialogFooter>
         </DialogContent>

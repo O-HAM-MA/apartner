@@ -85,7 +85,7 @@ public class FacilityInstructorScheduleController {
     }
 
     @DeleteMapping("/timeslots/{timeSlotId}")
-    @Operation(summary = "스케쥴 타임슬롯 목록 조회")
+    @Operation(summary = "스케쥴 타임슬롯 단건 삭제")
     public ResponseEntity<Void> deleteTimeSlot(
             @PathVariable(name = "facilityId") Long facilityId,
             @PathVariable(name = "instructorId") Long instructorId,

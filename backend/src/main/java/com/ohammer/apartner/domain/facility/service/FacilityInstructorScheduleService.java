@@ -10,6 +10,7 @@ import com.ohammer.apartner.domain.facility.repository.FacilityInstructorSchedul
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,29 @@ public class FacilityInstructorScheduleService {
         if (!facility.getApartment().getId().equals(apartmentId) || !instructor.getFacility().getId()
                 .equals(facilityId)) {
             throw new IllegalArgumentException("본인 아파트의 시설/강사만 관리 가능");
+        }
+
+        // 스케줄 시작~종료 시간이 모두 운영시간 범위 내에 있는지 체크
+        LocalTime open = facility.getOpenTime();
+        LocalTime close = facility.getCloseTime();
+        LocalTime start = dto.getStartTime();
+        LocalTime end = dto.getEndTime();
+
+        boolean valid;
+        if (open.isBefore(close)) {
+            // 일반 운영(예: 09:00~23:00): "시작 >= open && 종료 <= close"
+            valid = !start.isBefore(open) && !end.isAfter(close);
+        } else {
+            // 자정 넘김(예: 23:00~05:00): 둘 다 open~23:59 또는 00:00~close 안에 포함
+            valid = (
+                    (!start.isBefore(open) || start.equals(open)) || (!start.isAfter(close) || start.equals(close))
+            ) && (
+                    (!end.isBefore(open) || end.equals(open)) || (!end.isAfter(close) || end.equals(close))
+            );
+        }
+        if (!valid) {
+            throw new IllegalArgumentException(
+                    "스케줄 시간은 시설 운영시간(" + open + "~" + close + ") 내에서만 등록할 수 있습니다.");
         }
 
         DayOfWeek dayOfWeek = DayOfWeek.valueOf(dto.getDayOfWeek());
