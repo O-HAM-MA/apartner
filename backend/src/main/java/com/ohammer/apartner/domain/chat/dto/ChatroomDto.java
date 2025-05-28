@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public record ChatroomDto(
     Long id,
     String title,
-    String category,
+    String categoryCode,
     Long apartmentId,
     Boolean hasNewMessage,
     Integer userCount,

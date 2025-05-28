@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.chat.service;
 
 import com.ohammer.apartner.domain.chat.entity.Chatroom;
 import com.ohammer.apartner.domain.chat.entity.UserChatroomMapping;
+import com.ohammer.apartner.domain.chat.enums.ChatCategory;
 import com.ohammer.apartner.domain.chat.repository.ChatroomRepository;
 import com.ohammer.apartner.domain.chat.repository.UserChatroomMappingRepository;
 import com.ohammer.apartner.domain.user.entity.User;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.ohammer.apartner.domain.chat.entity.Message;
 import com.ohammer.apartner.domain.chat.repository.MessageRepository;
 import com.ohammer.apartner.domain.chat.dto.ChatroomDto;
@@ -24,6 +26,7 @@ import com.ohammer.apartner.domain.chat.exception.ChatException;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import com.ohammer.apartner.domain.user.entity.Role;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,45 +42,59 @@ private final SimpMessagingTemplate simpMessagingTemplate;
 
 // 채팅방 생성
 @Transactional
-public ChatroomDto createChatRoom(User user, String title, String category, Long apartmentId){
+public ChatroomDto createChatRoom(User user, String title, String categoryCode, Long apartmentId, Long prevRoomId){
     if(title == null || title.trim().isEmpty()) {
         throw new BadRequestException("채팅방 제목은 비워둘 수 없습니다.");
     }
     
-    if(category == null || category.trim().isEmpty()) {
-        throw new BadRequestException("카테고리는 비워둘 수 없습니다.");
+    if(categoryCode == null || categoryCode.trim().isEmpty()) {
+        throw new BadRequestException("카테고리 코드는 비워둘 수 없습니다.");
     }
     
     if(apartmentId == null) {
         throw new BadRequestException("아파트 ID는 비워둘 수 없습니다.");
     }
 
-    // 이미 존재하는 같은 카테고리의 채팅방이 있는지 확인
-    List<UserChatroomMapping> userChatroomMappings = userChatroomMappingRepository.findAllByUserId(user.getId());
-    for (UserChatroomMapping mapping : userChatroomMappings) {
-        Chatroom existingChatroom = mapping.getChatroom();
-        if (existingChatroom.getCategory() != null && 
-            existingChatroom.getCategory().equals(category) && 
-            existingChatroom.getApartmentId() != null && 
-            existingChatroom.getApartmentId().equals(apartmentId)) {
+    if (prevRoomId != null) {
+        log.info("이전 채팅방 ID가 있습니다: {}", prevRoomId);
+        
+        Chatroom prevChatroom = chatroomRepository.findById(prevRoomId)
+                .orElse(null);
+        
+        if (prevChatroom != null && prevChatroom.getStatus() == Chatroom.Status.INACTIVE) {
+            log.info("이전 채팅방({})은 INACTIVE 상태입니다. 새 채팅방을 생성합니다.", prevRoomId);
+        } else if (prevChatroom != null && prevChatroom.getStatus() == Chatroom.Status.ACTIVE) {
+            log.info("이전 채팅방({})은 ACTIVE 상태입니다. 기존 채팅방을 반환합니다.", prevRoomId);
+            return createChatroomDto(prevChatroom);
+        }
+    } else {
+        List<UserChatroomMapping> userChatroomMappings = userChatroomMappingRepository.findAllByUserId(user.getId());
+        for (UserChatroomMapping mapping : userChatroomMappings) {
+            Chatroom existingChatroom = mapping.getChatroom();
+            boolean isSameCategory = false;
             
-            // 이미 존재하는 채팅방 반환
-            return new ChatroomDto(
-                existingChatroom.getId(),
-                existingChatroom.getTitle(),
-                existingChatroom.getCategory(),
-                existingChatroom.getApartmentId(),
-                existingChatroom.getHasNewMessage(),
-                null,
-                existingChatroom.getCreatedAt(),
-                existingChatroom.getStatus().name()
-            );
+            if (existingChatroom.getCategoryCode() != null) {
+                isSameCategory = categoryCode.equals(existingChatroom.getCategoryCode());
+            }
+            
+            if (isSameCategory && 
+                existingChatroom.getApartmentId() != null && 
+                existingChatroom.getApartmentId().equals(apartmentId)) {
+                
+                if (existingChatroom.getStatus() == Chatroom.Status.ACTIVE) {
+                    log.info("이미 존재하는 ACTIVE 채팅방 반환: {}", existingChatroom.getId());
+                    return createChatroomDto(existingChatroom);
+                } else {
+                    log.info("이미 존재하지만 INACTIVE 상태인 채팅방이 있습니다. 새로운 채팅방을 생성합니다.");
+                    break;
+                }
+            }
         }
     }
 
     Chatroom chatroom = Chatroom.builder()
             .title(title)
-            .category(category)
+            .categoryCode(categoryCode)
             .apartmentId(apartmentId)
             .status(Chatroom.Status.ACTIVE)
             .createdAt(LocalDateTime.now())
@@ -90,10 +107,14 @@ public ChatroomDto createChatRoom(User user, String title, String category, Long
 
     userChatroomMapping = userChatroomMappingRepository.save(userChatroomMapping);
 
+    return createChatroomDto(chatroom);
+}
+
+private ChatroomDto createChatroomDto(Chatroom chatroom) {
     return new ChatroomDto(
         chatroom.getId(),
         chatroom.getTitle(),
-        chatroom.getCategory(),
+        chatroom.getCategoryCode(),
         chatroom.getApartmentId(),
         chatroom.getHasNewMessage(),
         null,
@@ -102,15 +123,13 @@ public ChatroomDto createChatRoom(User user, String title, String category, Long
     );
 }
 
-
-// 채팅방 참여
 @Transactional
 public Boolean joinChatroom(User user, Long newChatroomId, Long currentChatroomId){
     if (user == null) {
         throw new BadRequestException("인증된 사용자만 채팅방에 참여할 수 있습니다.");
     }
 
-    if(currentChatroomId != null){ // 현재 참여한 채팅방이 있으면 조회 시간 업데이트
+    if(currentChatroomId != null){ 
         updateUserCheckedAt(user, currentChatroomId); 
     }
 
@@ -121,6 +140,11 @@ public Boolean joinChatroom(User user, Long newChatroomId, Long currentChatroomI
 
     Chatroom chatroom = chatroomRepository.findById(newChatroomId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + newChatroomId));
+    
+    if (Chatroom.Status.INACTIVE.equals(chatroom.getStatus())) {
+        log.warn("비활성화된 채팅방({})에 참여 시도. 사용자: {}", newChatroomId, user.getId());
+        throw new ForbiddenAccessException("비활성화된 채팅방에는 참여할 수 없습니다.");
+    }
 
     UserChatroomMapping userChatroomMapping = UserChatroomMapping.builder()
             .user(user)
@@ -134,7 +158,6 @@ public Boolean joinChatroom(User user, Long newChatroomId, Long currentChatroomI
     return true;
 }
 
-// 채팅방 조회 시간 업데이트
 private void updateUserCheckedAt(User user, Long currentChatroomId){
     UserChatroomMapping userChatroomMapping = userChatroomMappingRepository
             .findByUserIdAndChatroomId(user.getId(), currentChatroomId)
@@ -144,7 +167,6 @@ private void updateUserCheckedAt(User user, Long currentChatroomId){
     userChatroomMappingRepository.save(userChatroomMapping);
 }
 
-// 채팅방 나가기
 @Transactional
 public Boolean leaveChatroom(User user, Long chatroomId){
     if (user == null) {
@@ -156,9 +178,6 @@ public Boolean leaveChatroom(User user, Long chatroomId){
         throw new BadRequestException("참여하지 않은 채팅방은 나갈 수 없습니다.");
     }
 
-    userChatroomMappingRepository.deleteByUserIdAndChatroomId(user.getId(), chatroomId);
-
-    // 채팅방 상태를 INACTIVE로 변경
     Chatroom chatroom = chatroomRepository.findById(chatroomId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
     chatroom.setStatus(Chatroom.Status.INACTIVE);
@@ -167,7 +186,6 @@ public Boolean leaveChatroom(User user, Long chatroomId){
     return true;
 }
 
-// 사용자가 참여한 채팅방 목록
 @Transactional
 public List<ChatroomDto> getChatroomList(User user){
     if (user == null) {
@@ -177,8 +195,7 @@ public List<ChatroomDto> getChatroomList(User user){
     List<UserChatroomMapping> userChatroomMappingList = userChatroomMappingRepository.findAllByUserId(user.getId());
 
     return userChatroomMappingList.stream()
-        .map(userChatroomMapping ->
-        {
+        .map(userChatroomMapping -> {
             Chatroom chatroom = userChatroomMapping.getChatroom();
             LocalDateTime lastCheckTime = userChatroomMapping.getLastCheckAt();
             if (lastCheckTime == null) {
@@ -189,23 +206,18 @@ public List<ChatroomDto> getChatroomList(User user){
                         chatroom.getId(), lastCheckTime));
             }
             
-            return new ChatroomDto(
-                chatroom.getId(),
-                chatroom.getTitle(),
-                chatroom.getCategory(),
-                chatroom.getApartmentId(),
-                chatroom.getHasNewMessage(),
-                null,
-                chatroom.getCreatedAt(),
-                chatroom.getStatus().name()
-            );
+            return createChatroomDto(chatroom);
         })
-        .toList();
+        .collect(Collectors.toList());
 }
 
-// 메세지 저장
 @Transactional
 public Message saveMessage(User user, Long chatroomId, String content){
+    return saveMessage(user, chatroomId, content, null); 
+}
+
+@Transactional
+public Message saveMessage(User user, Long chatroomId, String content, String clientId){
     if (user == null) {
         throw new BadRequestException("인증된 사용자만 메시지를 보낼 수 있습니다.");
     }
@@ -217,6 +229,10 @@ public Message saveMessage(User user, Long chatroomId, String content){
     Chatroom chatroom = chatroomRepository.findById(chatroomId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
     
+    if (Chatroom.Status.INACTIVE.equals(chatroom.getStatus())) {
+        throw new ForbiddenAccessException("비활성화된 채팅방입니다. 메시지를 보낼 수 없습니다.");
+    }
+    
     if(!userChatroomMappingRepository.existsByUserIdAndChatroomId(user.getId(), chatroomId)){
         throw new ForbiddenAccessException("채팅방에 참여하지 않은 사용자는 메시지를 보낼 수 없습니다.");
     }
@@ -225,12 +241,12 @@ public Message saveMessage(User user, Long chatroomId, String content){
             .user(user)
             .chatroom(chatroom)
             .content(content)
+            .clientId(clientId)
             .build();
 
     return messageRepository.save(message);
 }
 
-// 메세지 조회
 @Transactional(readOnly = true)
 public List<ChatMessageDto> getMessageList(Long chatroomId){
     if (!chatroomRepository.existsById(chatroomId)) {
@@ -243,43 +259,23 @@ public List<ChatMessageDto> getMessageList(Long chatroomId){
         .toList();
 }
 
-// 모든 채팅방 조회
 @Transactional(readOnly = true)
 public List<ChatroomDto> getAllChatrooms(){
-    List<Chatroom> chatrooms = chatroomRepository.findAllByOrderByCreatedAtDesc();
-    return chatrooms.stream()
-        .map(chatroom -> new ChatroomDto(
-            chatroom.getId(),
-            chatroom.getTitle(),
-            chatroom.getCategory(),
-            chatroom.getApartmentId(),
-            chatroom.getHasNewMessage(),
-            null,
-            chatroom.getCreatedAt(),
-            chatroom.getStatus().name()
-        ))
-        .toList();
+    List<Chatroom> chatroomList = chatroomRepository.findAllByOrderByCreatedAtDesc();
+    
+    return chatroomList.stream()
+        .map(this::createChatroomDto)
+        .collect(Collectors.toList());
 }
 
-// 채팅방 상세 조회
 @Transactional(readOnly = true)
 public ChatroomDto getChatroomById(Long chatroomId){
     Chatroom chatroom = chatroomRepository.findById(chatroomId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
     
-    return new ChatroomDto(
-        chatroom.getId(),
-        chatroom.getTitle(),
-        chatroom.getCategory(),
-        chatroom.getApartmentId(),
-        chatroom.getHasNewMessage(),
-        null,
-        chatroom.getCreatedAt(),
-        chatroom.getStatus().name()
-    );
+    return createChatroomDto(chatroom);
 }
 
-// 사용자가 채팅방에 참여했는지 확인
 @Transactional(readOnly = true)
 public boolean isUserInChatroom(Long userId, Long chatroomId) {
     if (userId == null || chatroomId == null) {
@@ -288,16 +284,29 @@ public boolean isUserInChatroom(Long userId, Long chatroomId) {
     return userChatroomMappingRepository.existsByUserIdAndChatroomId(userId, chatroomId);
 }
 
-// 채팅 메시지를 처리하고 저장한 후 구독자에게 전달합니다.
+@Transactional(readOnly = true)
+public boolean isChatroomActive(Long chatroomId) {
+    Chatroom chatroom = chatroomRepository.findById(chatroomId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+    
+    return Chatroom.Status.ACTIVE.equals(chatroom.getStatus());
+}
+
 public ChatMessageDto handleChatMessage(Map<String, String> payload, Long chatroomId) {
     try {
         User currentUser = resolveCurrentUser(payload);
         
         String messageContent = validateAndGetMessage(payload);
         
+        if (!isChatroomActive(chatroomId)) {
+            throw new ChatException("비활성화된 채팅방입니다. 메시지를 보낼 수 없습니다.");
+        }
+        
         ensureUserInChatroom(currentUser, chatroomId);
         
-        return processAndSendMessage(currentUser, chatroomId, messageContent);
+        String clientId = payload.get("clientId");
+        
+        return processAndSendMessage(currentUser, chatroomId, messageContent, clientId);
     } catch (ChatException e) {
         log.error("메시지 처리 오류: {}", e.getMessage());
         return createErrorMessageDto(e.getMessage());
@@ -307,8 +316,6 @@ public ChatMessageDto handleChatMessage(Map<String, String> payload, Long chatro
     }
 }
 
-// 현재 사용자 정보를 조회합니다. 
-// SecurityUtil에서 인증 정보가 없으면 payload의 userId로 조회합니다.
 private User resolveCurrentUser(Map<String, String> payload) {
     User currentUser = securityUtil.getCurrentUser();
     
@@ -321,7 +328,6 @@ private User resolveCurrentUser(Map<String, String> payload) {
             .orElseThrow(() -> new ChatException("사용자를 찾을 수 없습니다: " + userId));
 }
 
-// payload에서 userId를 안전하게 추출합니다.
 private Long getUserIdFromPayload(Map<String, String> payload) {
     if (!payload.containsKey("userId") || payload.get("userId") == null) {
         throw new ChatException("메시지에 userId가 포함되어 있지 않습니다.");
@@ -339,7 +345,6 @@ private Long getUserIdFromPayload(Map<String, String> payload) {
     }
 }
 
-// payload에서 메시지 내용을 검증하고 가져옵니다.
 private String validateAndGetMessage(Map<String, String> payload) {
     String message = payload.get("message");
     if (message == null || message.trim().isEmpty()) {
@@ -348,7 +353,6 @@ private String validateAndGetMessage(Map<String, String> payload) {
     return message;
 }
 
-// 사용자가 채팅방에 참여 중인지 확인하고, 참여하지 않았다면 자동 참여시킵니다.
 private void ensureUserInChatroom(User user, Long chatroomId) {
     try {
         if (!isUserInChatroom(user.getId(), chatroomId)) {
@@ -359,33 +363,140 @@ private void ensureUserInChatroom(User user, Long chatroomId) {
     }
 }
 
-// 메시지를 저장하고 채팅방 업데이트 알림을 전송한 후 메시지 DTO를 반환합니다.
-private ChatMessageDto processAndSendMessage(User user, Long chatroomId, String messageContent) {
-    Message message = saveMessage(user, chatroomId, messageContent);
+private ChatMessageDto processAndSendMessage(User user, Long chatroomId, String messageContent, String clientId) {
+    Message message = saveMessage(user, chatroomId, messageContent, clientId);
     
     notifyChatroomUpdate(chatroomId);
     
     return ChatMessageDto.from(message);
 }
 
-// 채팅방 업데이트 알림을 전송합니다.
 private void notifyChatroomUpdate(Long chatroomId) {
     ChatroomDto chatroomDto = getChatroomById(chatroomId);
     simpMessagingTemplate.convertAndSend("/sub/chats/updates", chatroomDto);
 }
 
-// 오류 메시지를 담은 ChatMessageDto를 생성합니다.
 private ChatMessageDto createErrorMessageDto(String errorMessage) {
     return new ChatMessageDto(
-            1L, 
+            0L, 
             errorMessage, 
             "시스템", 
             null, 
             null, 
             null, 
             null, 
-            "", 
-            0L
+            java.time.LocalDateTime.now().toString(), 
+            0L,
+            null // clientId 필드 추가
     );
+}
+
+public boolean isAdminOrManager(User user) {
+    if (user == null) {
+        return false;
+    }
+    return user.getRoles().contains(Role.ADMIN) || user.getRoles().contains(Role.MANAGER);
+}
+
+@Transactional
+public Boolean closeChatroom(User user, Long chatroomId, String closeMessage) {
+    Chatroom chatroom = chatroomRepository.findById(chatroomId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+    
+    if (!isAdminOrManager(user)) {
+        throw new ForbiddenAccessException("관리자 권한이 필요합니다.");
+    }
+    
+    if (user.getRoles().contains(Role.MANAGER) && !user.getRoles().contains(Role.ADMIN)) {
+        if (user.getApartment() == null || !user.getApartment().getId().equals(chatroom.getApartmentId())) {
+            throw new ForbiddenAccessException("다른 아파트의 채팅방에 접근할 수 없습니다.");
+        }
+    }
+    
+    chatroom.setStatus(Chatroom.Status.INACTIVE);
+    chatroomRepository.save(chatroom);
+
+    if (closeMessage != null && !closeMessage.trim().isEmpty()) {
+        Message systemMessage = Message.builder()
+                .chatroom(chatroom)
+                .user(user)
+                .content(closeMessage)
+                .build();
+        messageRepository.save(systemMessage);
+    }
+    
+    return true;
+}
+
+@Transactional
+public Boolean markMessagesAsRead(User user, Long chatroomId) {
+    Chatroom chatroom = chatroomRepository.findById(chatroomId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+    
+    if (!isAdminOrManager(user)) {
+        throw new ForbiddenAccessException("관리자 권한이 필요합니다.");
+    }
+    
+    if (user.getRoles().contains(Role.MANAGER) && !user.getRoles().contains(Role.ADMIN)) {
+        if (user.getApartment() == null || !user.getApartment().getId().equals(chatroom.getApartmentId())) {
+            throw new ForbiddenAccessException("다른 아파트의 채팅방에 접근할 수 없습니다.");
+        }
+    }
+    
+    UserChatroomMapping mapping = userChatroomMappingRepository.findByUserIdAndChatroomId(user.getId(), chatroomId)
+            .orElse(null);
+    
+    if (mapping == null) {
+        mapping = UserChatroomMapping.builder()
+                .user(user)
+                .chatroom(chatroom)
+                .build();
+    }
+    
+    mapping.updateLastCheckAt(LocalDateTime.now());
+    userChatroomMappingRepository.save(mapping);
+    
+    return true;
+}
+
+@Transactional
+public Boolean assignAdmin(Long chatroomId, Long adminId) {
+    Chatroom chatroom = chatroomRepository.findById(chatroomId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+    
+    User admin = userRepository.findById(adminId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID: " + adminId));
+    
+    if (!isAdminOrManager(admin)) {
+        throw new BadRequestException("관리자 또는 매니저만 담당자로 지정할 수 있습니다.");
+    }
+    
+    if (admin.getRoles().contains(Role.MANAGER) && !admin.getRoles().contains(Role.ADMIN)) {
+        if (admin.getApartment() == null || !admin.getApartment().getId().equals(chatroom.getApartmentId())) {
+            throw new BadRequestException("다른 아파트의 채팅방에 담당자로 지정할 수 없습니다.");
+        }
+    }
+    
+    UserChatroomMapping mapping = userChatroomMappingRepository.findByUserIdAndChatroomId(adminId, chatroomId)
+            .orElse(null);
+    
+    if (mapping == null) {
+        mapping = UserChatroomMapping.builder()
+                .user(admin)
+                .chatroom(chatroom)
+                .build();
+    }
+    
+    mapping.updateLastCheckAt(LocalDateTime.now());
+    userChatroomMappingRepository.save(mapping);
+    
+    Message systemMessage = Message.builder()
+            .chatroom(chatroom)
+            .user(admin)
+            .content(admin.getUserName() + "님이 담당자로 지정되었습니다.")
+            .build();
+    messageRepository.save(systemMessage);
+    
+    return true;
 }
 }

@@ -2,17 +2,19 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  CategoryType,
-  useApartnerTalkContext,
-} from "@/contexts/ApartnerTalkContext";
+import { useApartnerTalkContext } from "@/contexts/ApartnerTalkContext";
 import { MessageSquare, Flag, Wrench, Shield, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  CategoryType,
+  CategoryCodeType,
+  CATEGORIES,
+} from "@/constants/categoryCode";
 
 const CategorySelection: React.FC = () => {
   const {
-    category,
-    setCategory,
+    categoryCode,
+    setCategoryCode,
     startChat,
     showChatHistory,
     hasActiveChat,
@@ -30,31 +32,24 @@ const CategorySelection: React.FC = () => {
     checkActiveChats();
   }, [checkActiveChats]);
 
-  const categories: {
-    type: CategoryType;
-    label: string;
-    icon: React.ReactNode;
-  }[] = [
-    { type: "민원", label: "민원", icon: <Flag className="h-5 w-5" /> },
-    {
-      type: "건의사항",
-      label: "건의사항",
-      icon: <MessageSquare className="h-5 w-5" />,
-    },
-    {
-      type: "수리/정비",
-      label: "수리/정비",
-      icon: <Wrench className="h-5 w-5" />,
-    },
-    {
-      type: "보안/안전",
-      label: "보안/안전",
-      icon: <Shield className="h-5 w-5" />,
-    },
-  ];
+  // 카테고리 아이콘 매핑
+  const getCategoryIcon = (iconName: string) => {
+    switch (iconName) {
+      case "Flag":
+        return <Flag className="h-5 w-5" />;
+      case "MessageSquare":
+        return <MessageSquare className="h-5 w-5" />;
+      case "Wrench":
+        return <Wrench className="h-5 w-5" />;
+      case "Shield":
+        return <Shield className="h-5 w-5" />;
+      default:
+        return <MessageSquare className="h-5 w-5" />;
+    }
+  };
 
   const handleStartChat = () => {
-    if (category) {
+    if (categoryCode) {
       setIsLoading(true);
       Promise.resolve(startChat()).finally(() => setIsLoading(false));
     }
@@ -97,8 +92,9 @@ const CategorySelection: React.FC = () => {
             </AlertTitle>
             <AlertDescription className="text-sm">
               <p className="mb-2">
-                {activeChat.category} 관련 문의({activeChat.title})가 이미 진행
-                중입니다. 새로운 문의를 시작하기 전에 기존 문의를 종료해주세요.
+                {activeChat.categoryDisplayName || "미분류"} 관련 문의(
+                {activeChat.title})가 이미 진행 중입니다. 새로운 문의를 시작하기
+                전에 기존 문의를 종료해주세요.
               </p>
               <div className="flex gap-2 mt-4">
                 <Button
@@ -126,26 +122,26 @@ const CategorySelection: React.FC = () => {
             </p>
 
             <div className="grid grid-cols-2 gap-3">
-              {categories.map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <Button
-                  key={cat.type}
-                  variant={category === cat.type ? "default" : "outline"}
+                  key={cat.code}
+                  variant={categoryCode === cat.code ? "default" : "outline"}
                   className={`h-20 flex flex-col justify-center items-center transition-all ${
-                    category === cat.type
+                    categoryCode === cat.code
                       ? "bg-pink-500 hover:bg-pink-600"
                       : "hover:border-pink-500"
                   }`}
-                  onClick={() => setCategory(cat.type)}
+                  onClick={() => setCategoryCode(cat.code as CategoryCodeType)}
                 >
-                  {cat.icon}
-                  <span className="mt-1">{cat.label}</span>
+                  {getCategoryIcon(cat.icon)}
+                  <span className="mt-1">{cat.name}</span>
                 </Button>
               ))}
             </div>
 
             <Button
               className="w-full mt-6 bg-pink-500 hover:bg-pink-600"
-              disabled={!category || isLoading}
+              disabled={!categoryCode || isLoading}
               onClick={handleStartChat}
             >
               문의하기

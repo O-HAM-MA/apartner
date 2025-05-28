@@ -4,6 +4,17 @@ export interface ChatroomType {
   hasNewMessage: boolean;
   userCount: number;
   createdAt: string;
+  status?: "ACTIVE" | "INACTIVE";
+  categoryCode?: string;
+  categoryName?: string;
+  apartmentId?: number;
+  apartmentName?: string;
+  lastMessageTime?: string;
+  assignedAdmin?: {
+    id: number;
+    userName: string;
+    profileImageUrl?: string;
+  };
 }
 
 export interface ChatMessageType {
@@ -20,4 +31,16 @@ export interface ChatMessageType {
   apartmentName?: string;
   buildingName?: string;
   unitNumber?: string;
+  clientId?: string;
+  isPreview?: boolean;
+  clientTimestamp?: number;
+}
+
+export interface ChatFilter {
+  status?: "ACTIVE" | "INACTIVE" | "ALL";
+  apartmentId?: number;
+  categoryCode?: string;
+  searchTerm?: string;
+  sortBy?: "lastMessageTime" | "createdAt";
+  sortOrder?: "asc" | "desc";
 }

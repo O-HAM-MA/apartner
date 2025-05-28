@@ -14,9 +14,12 @@ import java.util.List;
 @Repository
 public interface BuildingRepository extends JpaRepository<Building, Long> {
     List<Building> findByApartmentId(Long apartmentId);
+   
     Page<Building> findByApartmentId(Long apartmentId, Pageable pageable);
+   
     @Query("SELECT b FROM Building b JOIN FETCH b.apartment WHERE b.apartment.id = :apartmentId")
     List<Building> findBuildingsWithApartmentByApartmentId(@Param("apartmentId") Long apartmentId);
+   
     @Query("SELECT b FROM Building b WHERE b.apartment.id = :apartmentId")
     @EntityGraph(attributePaths = {"apartment"})
     Page<Building> findBuildingsWithApartmentByApartmentId(@Param("apartmentId") Long apartmentId, Pageable pageable);

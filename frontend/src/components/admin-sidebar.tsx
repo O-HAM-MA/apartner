@@ -239,7 +239,7 @@ export default function AdminSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed lg:static inset-0 z-30 lg:z-0 bg-background/80 backdrop-blur-sm lg:backdrop-blur-none lg:bg-transparent transform transition-transform duration-200 lg:translate-x-0",
+          "fixed lg:static inset-0 z-30 lg:z-0 lg:backdrop-blur-none lg:bg-transparent transform transition-transform duration-200 lg:translate-x-0",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -366,14 +366,6 @@ export default function AdminSidebar() {
           </div>
         </div>
       </div>
-
-      {/* Overlay for mobile */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
     </>
   );
 }
