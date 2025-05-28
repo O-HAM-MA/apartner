@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { components } from "@/lib/backend/apiV1/schema";
 import client from "@/lib/backend/client";
@@ -54,6 +54,17 @@ export default function GuestVehicleRegistration() {
     },
   });
 
+  const { data: foreignVehicles, isLoading } = useQuery({
+    queryKey: ["vehicles", "foreigns"],
+    queryFn: async () => {
+      const { data, error } = await client.GET(
+        "/api/v1/vehicles/registrationsForeignsWithStatus"
+      );
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     registerMutation.mutate(formData);
@@ -67,12 +78,85 @@ export default function GuestVehicleRegistration() {
     }));
   };
 
+  // 날짜 포맷 함수
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="container mx-auto px-4 py-8">
+        {/* 외부 차량 목록 테이블 추가 */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4">등록된 외부 차량 목록</h2>
+          {isLoading ? (
+            <div className="text-center py-4">데이터를 불러오는 중...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+                      차량 번호
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+                      차종
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+                      방문 사유
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+                      승인 상태
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+                      등록 시간
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {foreignVehicles?.map((vehicle) => (
+                    <tr key={vehicle.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 text-sm">
+                        {vehicle.vehicleNum}
+                      </td>
+                      <td className="px-4 py-4 text-sm">{vehicle.type}</td>
+                      <td className="px-4 py-4 text-sm">
+                        {vehicle.reason || "-"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <StatusBadge status={vehicle.status} />
+                      </td>
+                      <td className="px-4 py-4 text-sm">
+                        {formatDate(vehicle.createdAt)}
+                      </td>
+                    </tr>
+                  ))}
+                  {!foreignVehicles?.length && (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-4 py-8 text-center text-gray-500"
+                      >
+                        등록된 외부 차량이 없습니다.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* 기존 폼 유지 */}
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">외부 차량 등록</h1>
+          <h2 className="text-2xl font-bold mb-6">외부 차량 등록</h2>
           <div className="bg-white rounded-lg shadow-sm p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
@@ -183,3 +267,28 @@ export default function GuestVehicleRegistration() {
     </div>
   );
 }
+
+// 상태 배지 컴포넌트
+const StatusBadge = ({ status }: { status: string }) => {
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case "AGREE":
+        return { label: "승인됨", className: "bg-green-100 text-green-800" };
+      case "INAGREE":
+        return { label: "미승인", className: "bg-red-100 text-red-800" };
+      case "PENDING":
+        return { label: "대기중", className: "bg-yellow-100 text-yellow-800" };
+      case "INVITER_AGREE":
+        return { label: "초대자 승인", className: "bg-blue-100 text-blue-800" };
+      default:
+        return { label: "알 수 없음", className: "bg-gray-100 text-gray-800" };
+    }
+  };
+
+  const statusInfo = getStatusInfo(status);
+  return (
+    <span className={`px-2 py-1 text-sm rounded-full ${statusInfo.className}`}>
+      {statusInfo.label}
+    </span>
+  );
+};
