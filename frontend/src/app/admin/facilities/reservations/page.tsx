@@ -158,7 +158,6 @@ export default function ReservationsPage() {
         setUniqueFacilities(facilities);
       }
     } catch (error) {
-      console.error('예약 목록 조회 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -199,7 +198,6 @@ export default function ReservationsPage() {
         setIsDetailModalOpen(true);
       }
     } catch (error) {
-      console.error('예약 상세 조회 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',

@@ -39,7 +39,6 @@ export default function CreateNoticePage() {
         );
 
         if (error) {
-          console.error('공지사항 작성 실패:', error);
           alert('공지사항 작성에 실패했습니다. 다시 시도해주세요.');
           return;
         }
@@ -47,11 +46,9 @@ export default function CreateNoticePage() {
         if (data && typeof data === 'object' && 'noticeId' in data) {
           router.push(`/admin/notices/${data.noticeId}`);
         } else {
-          console.error('예상치 못한 응답 형식:', data);
           router.push('/admin/notices');
         }
       } catch (error) {
-        console.error('공지사항 작성 실패:', error);
         alert('공지사항 작성에 실패했습니다. 다시 시도해주세요.');
       } finally {
         setIsSubmitting(false);

@@ -174,7 +174,6 @@ export default function FacilitiesPage() {
       const [hours, minutes] = time.split(':');
       return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
     } catch (error) {
-      console.error('시간 포맷 에러:', error);
       return time;
     }
   };
@@ -203,7 +202,6 @@ export default function FacilitiesPage() {
       }
     } catch (err) {
       setError('시설 목록을 불러오는데 실패했습니다.');
-      console.error('Error fetching facilities:', err);
     } finally {
       setLoading(false);
     }
@@ -226,7 +224,6 @@ export default function FacilitiesPage() {
         setReservations(formattedReservations);
       }
     } catch (err) {
-      console.error('Error fetching reservations:', err);
       setReservationsError(
         '예약 내역을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.'
       );
@@ -253,7 +250,6 @@ export default function FacilitiesPage() {
         setIsDetailModalOpen(true);
       }
     } catch (err) {
-      console.error('Error fetching reservation detail:', err);
     } finally {
       setIsDetailLoading(false);
     }
@@ -288,7 +284,6 @@ export default function FacilitiesPage() {
       setCancelReason('');
       setCancelReservationId(null);
     } catch (err) {
-      console.error('Error cancelling reservation:', err);
     } finally {
       setIsCancelling(false);
     }
@@ -827,7 +822,6 @@ export default function FacilitiesPage() {
         setLocalCancelReason('');
         setCancelReservationId(null);
       } catch (err) {
-        console.error('예약 취소 중 오류 발생:', err);
         alert('예약 취소 중 오류가 발생했습니다. 다시 시도해주세요.');
       } finally {
         setIsCancelling(false);

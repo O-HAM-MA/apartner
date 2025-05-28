@@ -47,10 +47,6 @@ const processContent = async (
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = content;
 
-  // 디버깅용 로그
-  console.log('백엔드에서 받은 이미지 목록:', images);
-  console.log('백엔드에서 받은 파일 목록:', files);
-
   // 이미지 URL 수정 - ID 기반 매칭
   const imgElements = tempDiv.getElementsByTagName('img');
 
@@ -59,14 +55,12 @@ const processContent = async (
     const dataId = img.getAttribute('data-id');
 
     if (!dataId) {
-      console.log('이미지에 data-id가 없음:', img);
       continue;
     }
 
     // data-id를 숫자로 변환
     const imageId = Number(dataId);
     if (isNaN(imageId)) {
-      console.warn('유효하지 않은 이미지 ID:', dataId);
       continue;
     }
 
@@ -80,26 +74,18 @@ const processContent = async (
       );
 
       if (error) {
-        console.error('이미지 정보 조회 실패:', error);
         img.src = '/placeholder.jpg';
         img.alt = '이미지를 불러올 수 없습니다';
         continue;
       }
 
       if (data && data.url) {
-        console.log('이미지 매칭 성공:', {
-          id: imageId,
-          url: data.url,
-          originalName: data.originalName,
-        });
         img.src = data.url;
       } else {
-        console.warn('이미지 URL이 없음:', data);
         img.src = '/placeholder.jpg';
         img.alt = '이미지를 불러올 수 없습니다';
       }
     } catch (error) {
-      console.error('이미지 정보 조회 중 오류 발생:', error);
       img.src = '/placeholder.jpg';
       img.alt = '이미지를 불러올 수 없습니다';
     }
@@ -158,9 +144,6 @@ export default function NoticeDetailPage({
           );
         }
 
-        // 서버 응답 데이터 구조 확인
-        console.log('서버 응답 원본 데이터:', data);
-
         // 이미지 데이터 파싱
         let parsedImages: NoticeImage[] = [];
         if (Array.isArray(data.imageUrls)) {
@@ -201,15 +184,6 @@ export default function NoticeDetailPage({
             : [],
         };
 
-        console.log('변환된 데이터:', {
-          ...noticeData,
-          imageUrls: noticeData.imageUrls.map((img) => ({
-            id: img.id,
-            url: img.url,
-            originalName: img.originalName,
-          })),
-        });
-
         setNotice(noticeData);
 
         if (noticeData.content) {
@@ -221,12 +195,10 @@ export default function NoticeDetailPage({
             );
             setProcessedContent(processed);
           } catch (err) {
-            console.error('컨텐츠 처리 중 오류:', err);
             setError('컨텐츠를 처리하는 중 오류가 발생했습니다.');
           }
         }
       } catch (err) {
-        console.error('공지사항 불러오기 실패:', err);
         setError('공지사항을 불러오는 중 오류가 발생했습니다.');
       } finally {
         setIsLoading(false);
@@ -252,7 +224,6 @@ export default function NoticeDetailPage({
       });
       router.push('/admin/notices');
     } catch (error) {
-      console.error('공지사항 삭제 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',

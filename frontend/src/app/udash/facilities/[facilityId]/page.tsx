@@ -108,7 +108,6 @@ export default function InstructorsPage({
       }
       return time;
     } catch (error) {
-      console.error('시간 포맷 에러:', error);
       return time;
     }
   };
@@ -154,7 +153,6 @@ export default function InstructorsPage({
         setFacilityError('시설 정보를 불러올 수 없습니다.');
       }
     } catch (error: any) {
-      console.error('Error fetching facility:', error);
       if (error.response?.status === 403) {
         setFacilityError('접근 권한이 없습니다.');
       } else {
@@ -191,7 +189,6 @@ export default function InstructorsPage({
         setError('강사 목록을 불러올 수 없습니다.');
       }
     } catch (error: any) {
-      console.error('Error fetching instructors:', error);
       if (error.response?.status === 403) {
         setError('접근 권한이 없습니다.');
       } else {
@@ -238,7 +235,6 @@ export default function InstructorsPage({
         setSchedulesError('스케줄 정보를 불러올 수 없습니다.');
       }
     } catch (error: any) {
-      console.error('Error fetching instructor schedules:', error);
       if (error.response?.status === 403) {
         setSchedulesError('접근 권한이 없습니다.');
       } else {
@@ -323,10 +319,6 @@ export default function InstructorsPage({
         throw new Error('예약 처리 중 오류가 발생했습니다.');
       }
     } catch (error: any) {
-      console.error('예약 실패:', error);
-      //   console.error('에러 응답:', error.response);
-      //   console.error('에러 데이터:', error.response?.data);
-
       setShowConfirmModal(false);
 
       // 에러 메시지 추출 로직 수정
@@ -341,8 +333,6 @@ export default function InstructorsPage({
           errorMsg = error.response.data.error;
         }
       }
-
-      console.log('설정될 에러 메시지:', errorMsg);
 
       setErrorMessage(errorMsg);
       setShowErrorModal(true);

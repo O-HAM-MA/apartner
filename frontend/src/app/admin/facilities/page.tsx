@@ -385,7 +385,6 @@ export default function FacilitiesPage() {
       if (isNaN(date.getTime())) return dateString;
       return format(date, 'yyyy-MM-dd (EEE)', { locale: ko });
     } catch (error) {
-      console.error('날짜 포맷팅 오류:', error);
       return dateString;
     }
   };
@@ -407,7 +406,6 @@ export default function FacilitiesPage() {
         setFacilities(formattedFacilities);
       }
     } catch (error) {
-      console.error('시설 목록 조회 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -440,7 +438,6 @@ export default function FacilitiesPage() {
         setInstructors(formattedInstructors);
       }
     } catch (error) {
-      console.error('강사 목록 조회 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -512,7 +509,6 @@ export default function FacilitiesPage() {
       }
       return time;
     } catch (error) {
-      console.error('시간 포맷 에러:', error);
       return time;
     }
   };
@@ -538,7 +534,6 @@ export default function FacilitiesPage() {
 
       return `${formattedOpenTime} - ${formattedCloseTime}`;
     } catch (error) {
-      console.error('운영 시간 포맷 에러:', error);
       return `${openTime} - ${closeTime}`;
     }
   };
@@ -556,9 +551,6 @@ export default function FacilitiesPage() {
   // 타임슬롯 목록 조회
   const fetchSchedules = async (instructorId: number) => {
     try {
-      console.log('Fetching timeslots for instructor:', instructorId);
-      console.log('Selected facility:', selectedFacility);
-
       const startDate = dateRange.from
         ? format(dateRange.from, 'yyyy-MM-dd')
         : format(new Date(), 'yyyy-MM-dd');
@@ -566,8 +558,6 @@ export default function FacilitiesPage() {
       const endDate = dateRange.to
         ? format(dateRange.to, 'yyyy-MM-dd')
         : format(addMonths(new Date(), 3), 'yyyy-MM-dd');
-
-      console.log('Date range:', { startDate, endDate });
 
       const response = await client.GET(
         '/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules/timeslots',
@@ -585,8 +575,6 @@ export default function FacilitiesPage() {
         }
       );
 
-      console.log('API Response:', response);
-
       if (response.data) {
         const formattedTimeSlots = (
           response.data as TimeSlotSimpleResponseDto[]
@@ -600,14 +588,11 @@ export default function FacilitiesPage() {
           reservedCount: item.reservedCount,
           isFull: item.isFull,
         }));
-        console.log('Formatted timeslots:', formattedTimeSlots);
         setSchedules(formattedTimeSlots);
       } else {
-        console.log('No data in response');
         setSchedules([]);
       }
     } catch (error) {
-      console.error('타임슬롯 목록 조회 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -647,7 +632,6 @@ export default function FacilitiesPage() {
         setInstructorSchedules(formattedSchedules);
       }
     } catch (error) {
-      console.error('스케줄 목록 조회 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -700,7 +684,6 @@ export default function FacilitiesPage() {
       editForm.reset();
       fetchFacilities();
     } catch (error) {
-      console.error('시설 수정 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -735,7 +718,6 @@ export default function FacilitiesPage() {
       setFacilityToDelete(null);
       fetchFacilities();
     } catch (error) {
-      console.error('시설 삭제 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -770,7 +752,6 @@ export default function FacilitiesPage() {
       instructorForm.reset();
       fetchInstructors(selectedFacility!.facilityId);
     } catch (error) {
-      console.error('강사 추가 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -819,7 +800,6 @@ export default function FacilitiesPage() {
       editInstructorForm.reset();
       fetchInstructors(selectedFacility!.facilityId);
     } catch (error) {
-      console.error('강사 수정 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -858,7 +838,6 @@ export default function FacilitiesPage() {
       setInstructorToDelete(null);
       fetchInstructors(selectedFacility!.facilityId);
     } catch (error) {
-      console.error('강사 삭제 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -894,7 +873,6 @@ export default function FacilitiesPage() {
       form.reset();
       fetchFacilities();
     } catch (error) {
-      console.error('시설 추가 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
@@ -944,8 +922,6 @@ export default function FacilitiesPage() {
       scheduleForm.reset();
       fetchSchedules(selectedInstructor!.instructorId);
     } catch (error: any) {
-      console.error('스케줄 추가 실패:', error);
-
       // 서버에서 반환하는 에러 메시지 처리
       let errorMessage = '스케줄 추가에 실패했습니다.';
 
@@ -1026,7 +1002,6 @@ export default function FacilitiesPage() {
       setTimeSlotToDelete(null);
       fetchSchedules(selectedInstructor!.instructorId);
     } catch (error) {
-      console.error('타임슬롯 삭제 실패:', error);
       toast({
         variant: 'destructive',
         title: '오류',
