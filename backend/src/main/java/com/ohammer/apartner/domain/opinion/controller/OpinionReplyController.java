@@ -16,7 +16,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/opinion/reply")
+@RequestMapping("/api/v1/opinions/reply")
 @RequiredArgsConstructor
 @Tag(name = "의견 답변 API")
 public class OpinionReplyController {
@@ -24,7 +24,7 @@ public class OpinionReplyController {
     private final OpinionReplyService opinionReplyService;
 
     @GetMapping("/{opinionId}")
-    public ResponseEntity<?> getOpinionReply(@PathVariable Long opinionId) {
+    public ResponseEntity<?> getOpinionReply(@PathVariable(name = "opinionId") Long opinionId) {
 
         List<OpinionReplyResponseDto> response = opinionReplyService.getOpinionReply(opinionId);
 
@@ -32,7 +32,7 @@ public class OpinionReplyController {
     }
 
     @PostMapping("/{opinionId}")
-    public ResponseEntity<?> createOpinionReply(@PathVariable Long opinionId, @RequestBody CreateOpinionReplyRequestDto requestDto) throws AccessDeniedException {
+    public ResponseEntity<?> createOpinionReply(@PathVariable(name = "opinionId") Long opinionId, @RequestBody CreateOpinionReplyRequestDto requestDto) throws AccessDeniedException {
 
         CreateOpinionReplyResponseDto response = opinionReplyService.saveOpinionReply(opinionId, requestDto);
 
@@ -40,7 +40,7 @@ public class OpinionReplyController {
     }
 
     @PutMapping("/{replyId}")
-    public ResponseEntity<?> updateOpinionReply(@PathVariable Long replyId, @RequestBody UpdateOpinionReplyRequestDto requestDto) throws Exception {
+    public ResponseEntity<?> updateOpinionReply(@PathVariable(name = "replyId") Long replyId, @RequestBody UpdateOpinionReplyRequestDto requestDto) throws Exception {
 
         UpdateOpinionReplyResponseDto response = opinionReplyService.updateOpinionReply(replyId, requestDto);
 
@@ -48,7 +48,7 @@ public class OpinionReplyController {
     }
 
     @DeleteMapping("/{replyId}")
-    public ResponseEntity<?> deleteOpinionReply(@PathVariable Long replyId) throws Exception {
+    public ResponseEntity<?> deleteOpinionReply(@PathVariable(name = "replyId") Long replyId) throws Exception {
 
         opinionReplyService.deleteOpinionReply(replyId);
 

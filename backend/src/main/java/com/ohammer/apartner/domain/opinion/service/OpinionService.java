@@ -3,10 +3,12 @@ package com.ohammer.apartner.domain.opinion.service;
 import com.ohammer.apartner.domain.opinion.dto.request.CreateManagerOpinionRequestDto;
 import com.ohammer.apartner.domain.opinion.dto.response.AllManagerOpinionResponseDto;
 import com.ohammer.apartner.domain.opinion.dto.response.CreateManagerOpinionResponseDto;
+import com.ohammer.apartner.domain.opinion.dto.response.UpdateOpinionStatsResponseDto;
 import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.opinion.repository.OpinionRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -81,8 +83,45 @@ public class OpinionService {
                         .id(opinion.getId())
                         .title(opinion.getTitle())
                         .userName(opinion.getUser().getUserName())
+                        .content(opinion.getContent())
+                        .status(opinion.getStatus().name())
                         .build())
                         .collect(Collectors.toList());
+    }
+
+    public UpdateOpinionStatsResponseDto inactiveOpinion(Long opinionId) throws Exception {
+
+        User user = SecurityUtil.getCurrentUser();
+        if (user == null) {
+            throw new AccessDeniedException("로그인되지 않은 사용자입니다.");
+        }
+
+        Set<Role> userRoles = user.getRoles();
+
+        boolean hasRequiredRole = userRoles.stream()
+                .anyMatch(role -> role == Role.ADMIN);
+
+        if (!hasRequiredRole) {
+            throw new AccessDeniedException("의견 상태를 업데이트할 권한이 없습니다.");
+        }
+
+        Opinion opinion = opinionRepository.findById(opinionId).get();
+
+        if (opinion == null) {
+            throw new Exception("해당 ID 에 맞는 의견이 없습니다.");
+        }
+
+        opinion.setStatus(Status.INACTIVE);
+
+        UpdateOpinionStatsResponseDto responseDto = UpdateOpinionStatsResponseDto.builder()
+                .state(opinion.getStatus())
+                .opinionTitle(opinion.getTitle())
+                .content(opinion.getContent())
+                .build();
+
+        opinionRepository.save(opinion);
+
+        return responseDto;
     }
 
     public Opinion getOpinionById(Long id) {

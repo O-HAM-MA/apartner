@@ -19,7 +19,10 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
+import com.ohammer.apartner.domain.user.entity.UserLog;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
+import com.ohammer.apartner.security.dto.FindEmailRequest;
+import com.ohammer.apartner.security.dto.FindEmailResponse;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Map;
@@ -36,8 +39,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpHeaders;
-
-// import java.security.Principal; // Principal은 직접 사용하지 않으므로 주석 처리 또는 삭제 가능
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.ohammer.apartner.security.CustomUserDetails;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.validation.BindingResult;
+import jakarta.validation.Valid;
+import com.ohammer.apartner.domain.user.dto.PasswordResetRequestDTO;
+import com.ohammer.apartner.domain.user.service.UserFindService;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,6 +60,7 @@ public class ApiV1AuthController {
     private final JwtTokenizer jwtTokenizer;
     private final UserRegistService userRegistService; // UserRegistService 주입
     private final ApartmentService apartmentService;
+    private final UserFindService userFindService;
 
     //테스트용이라서 배포 전에 삭제할꺼임
     @GetMapping("/home")
@@ -101,11 +112,20 @@ public class ApiV1AuthController {
             String apartmentName = Optional.ofNullable(user.getApartment())
                     .map(Apartment::getName)
                     .orElse(null);
+            Long apartmentId = Optional.ofNullable(user.getApartment())
+                    .map(Apartment::getId)
+                    .orElse(null);
             String buildingName = Optional.ofNullable(user.getBuilding())
                     .map(Building::getBuildingNumber) 
                     .orElse(null);
             String unitNumber = Optional.ofNullable(user.getUnit())
                     .map(Unit::getUnitNumber)
+                    .orElse(null);
+            String zipcode = Optional.ofNullable(user.getApartment())
+                    .map(Apartment::getZipcode)
+                    .orElse(null);
+            String address = Optional.ofNullable(user.getApartment())
+                    .map(Apartment::getAddress)
                     .orElse(null);
 
             // 7. MeDto 생성 (프론트엔드로 보낼 데이터 객체 - 아파트 정보 포함)
@@ -118,9 +138,12 @@ public class ApiV1AuthController {
                     user.getModifiedAt(),
                     profileImageUrl,
                     apartmentName,
+                    apartmentId,
                     buildingName,
                     unitNumber,
-                    user.getSocialProvider()
+                    user.getSocialProvider(),
+                    zipcode,
+                    address
             );
             log.info("[/me] Successfully retrieved user info for userId: {}", userIdLong);
             log.info("[/me] Successfully retrieved 너의 핸드폰번호 : {}", meDto.getPhoneNum());
@@ -152,6 +175,9 @@ public class ApiV1AuthController {
                 return ResponseEntity.status(404).body("존재하지 않는 이메일입니다.");
             }
             if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
+                // 로그인 실패 로그 추가
+                authService.logLoginFailure(user, getClientIp());
+                
                 return ResponseEntity.status(401).body("비밀번호가 틀렸습니다.");
             }
             
@@ -162,24 +188,30 @@ public class ApiV1AuthController {
                     break;
                 case INACTIVE:
                     log.warn("[/login] INACTIVE user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비활성화된 계정입니다. 관리자에게 문의하세요.");
                 case PENDING:
                     log.warn("[/login] PENDING user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정이 정지되었습니다. 관리자에게 문의하세요.");
                 case WITHDRAWN:
                     log.warn("[/login] WITHDRAWN user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("이미 탈퇴한 계정입니다.");
                 default:
                     log.warn("[/login] Unknown status user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
+                    
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정 상태를 확인할 수 없습니다. 관리자에게 문의하세요.");
             }
 
-            // 로그인 성공 시 updatedAt 필드를 now()로 업데이트
+            // 로그인 성공 시 lastLoginAt 필드를 now()로 업데이트
             user.setLastLoginAt(LocalDateTime.now());
 
             String accessToken = authService.genAccessToken(user);
             String refreshToken = authService.genRefreshToken(user);
             authService.addRefreshToken(user, refreshToken);
+
+            authService.logLoginSuccess(user, getClientIp());
 
             LoginResponseDto loginResponseDto = new LoginResponseDto(accessToken, refreshToken, user.getId(), user.getUserName());
 
@@ -213,39 +245,22 @@ public class ApiV1AuthController {
 
     //로그아웃 만들어야지
     @DeleteMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) { // HttpServletRequest 추가
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         // 1. Access Token 가져오기 (쿠키에서)
         String accessToken = customRequest.getCookieValue("accessToken");
-
+        String ipAddress = getClientIp();
         if (accessToken != null && !accessToken.isEmpty()) {
-            try {
-                // 2. Access Token에서 사용자 ID 추출
-                Claims claims = jwtTokenizer.parseAccessToken(accessToken);
-                Long userId = ((Number) claims.get("userId")).longValue();
-
-                // 3. 토큰 무효화 (Redis 블랙리스트 및 DB Refresh Token 삭제)
-                userRegistService.logout(accessToken, userId);
-                log.info("[/logout] Token invalidated for userId: {}", userId);
-
-            } catch (ExpiredJwtException eje) {
-                log.warn("[/logout] AccessToken already expired during logout: {}", eje.getMessage());
-            } catch (Exception e) {
-                // 토큰 파싱 실패 또는 사용자 ID 추출 실패 등 예외 처리
-                log.error("[/logout] Error processing token during logout: {}", e.getMessage());
-                // 오류가 발생해도 쿠키 삭제 및 세션 무효화는 시도
-            }
+            authService.logout(accessToken, ipAddress);
         } else {
             log.warn("[/logout] AccessToken cookie not found during logout attempt");
         }
-
-        // 4. HTTP 세션 무효화
-        HttpSession session = request.getSession(false); // false: 기존 세션 없으면 새로 만들지 않음
+        // 2. HTTP 세션 무효화
+        HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
             log.info("[/logout] HTTP session invalidated");
         }
-
-        // 5. 쿠키 삭제 (직접 ResponseCookie 생성 - 혹시 모르니 유지)
+        // 3. 쿠키 삭제
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", "")
                 .path("/")
                 .sameSite("Strict")
@@ -254,7 +269,6 @@ public class ApiV1AuthController {
                 .maxAge(0)
                 .build();
         response.addHeader("Set-Cookie", accessTokenCookie.toString());
-
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
                 .path("/")
                 .sameSite("Strict")
@@ -263,11 +277,64 @@ public class ApiV1AuthController {
                 .maxAge(0)
                 .build();
         response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-
         log.info("[/logout] Logout process completed. Cookies cleared.");
-
         return ResponseEntity.ok("로그아웃 완료");
     }
 
- 
+
+    @PostMapping("/find-email")
+    public ResponseEntity<?> findEmail(@RequestBody FindEmailRequest request) {
+        FindEmailResponse response = userFindService.findEmail(request);
+        
+        if (response == null) {
+            return ResponseEntity.notFound().build(); // 404 응답
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequestDTO request, BindingResult bindingResult) {
+        log.info("[/reset-password] Received password reset request for email: {}", request.getEmail());
+
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("입력값이 올바르지 않습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+        }
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+        }
+
+        try {
+            userFindService.resetPassword(request);
+            return ResponseEntity.ok(Map.of("message", "비밀번호가 성공적으로 재설정되었습니다."));
+        } catch (Exception e) {
+            log.error("Password reset failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // 클라이언트 IP 주소 가져오는 유틸리티 메서드 추가
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attributes.getRequest();
+            
+            String forwardedHeader = request.getHeader("X-Forwarded-For");
+            if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
+                return forwardedHeader.split(",")[0].trim();
+            }
+            
+            return request.getRemoteAddr();
+        } catch (Exception e) {
+            log.warn("Failed to get client IP: {}", e.getMessage());
+            return "unknown";
+        }
+    }
+
+
 }

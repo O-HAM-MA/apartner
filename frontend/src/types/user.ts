@@ -1,17 +1,28 @@
 export enum UserStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  DELETED = 'DELETED'
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending",
+  WITHDRAWN = "withdrawn",
+  SUSPENDED = "suspended",
+  DELETED = "deleted",
 }
 
+export const UserStatusDisplay: Record<UserStatus, string> = {
+  [UserStatus.ACTIVE]: "활성",
+  [UserStatus.INACTIVE]: "비활성",
+  [UserStatus.PENDING]: "정지",
+  [UserStatus.WITHDRAWN]: "탈퇴",
+  [UserStatus.SUSPENDED]: "정지",
+  [UserStatus.DELETED]: "탈퇴",
+};
+
 export enum LogType {
-  LOGIN = 'LOGIN',
-  LOGIN_FAILED = 'LOGIN_FAILED',
-  LOGOUT = 'LOGOUT',
-  STATUS_CHANGE = 'STATUS_CHANGE',
-  ROLE_CHANGE = 'ROLE_CHANGE',
-  PASSWORD_CHANGE = 'PASSWORD_CHANGE'
+  LOGIN = "LOGIN",
+  LOGIN_FAILED = "LOGIN_FAILED",
+  LOGOUT = "LOGOUT",
+  STATUS_CHANGE = "STATUS_CHANGE",
+  ROLE_CHANGE = "ROLE_CHANGE",
+  PASSWORD_CHANGE = "PASSWORD_CHANGE",
 }
 
 export interface UserListItem {

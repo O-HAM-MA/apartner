@@ -1,5 +1,4 @@
 package com.ohammer.apartner.security.service;
-//이 부분은 테스트를 위한 것이며 추후 어딘가에 병합이 될 수 있음
 
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -13,6 +12,7 @@ import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 
 import com.ohammer.apartner.domain.user.repository.UserRepository;
+import com.ohammer.apartner.domain.user.repository.UserLogRepository;
 import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.jwt.JwtTokenizer;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +23,16 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.ohammer.apartner.domain.user.entity.UserLog;
 import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import com.amazonaws.SdkClientException;
-
+import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
 public class AuthService {
 
     @Value("${cloud.aws.s3.bucket}")
@@ -43,21 +42,25 @@ public class AuthService {
     private final ImageRepository imageRepository;
     private final JwtTokenizer jwtTokenizer;
     private final AmazonS3 amazonS3;
+    private final UserLogRepository userLogRepository;
 
+    @Transactional(readOnly = true)
     public Optional<User> findByIdWithRoles(Long id) {
         return userRepository.findByIdWithRoles(id);
     }
 
+    @Transactional(readOnly = true)
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     }
 
+    @Transactional(readOnly = true)
     public Optional<User> findById(Long userId) {
         return userRepository.findById(userId);
     }
 
-    // 소셜 로그인 정보로 사용자 찾기
+    @Transactional(readOnly = true)
     public Optional<User> findBySocialProviderAndSocialId(String socialProvider, String socialId) {
         return userRepository.findBySocialProviderAndSocialId(socialProvider, socialId);
     }
@@ -83,22 +86,18 @@ public class AuthService {
     @Transactional
     public void addRefreshToken(User user, String refreshToken) {
         user.setRefreshToken(refreshToken);
+        user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
     }
 
-    //소셜로그인에 가입한 유저를 새로 만들기
     @Transactional
     public User join(String username, String password, String profileImgUrl, String providerType,String socialId) {
-
         if (userRepository.existsBySocialId(socialId)) {
             throw new RuntimeException("해당 socialId은 이미 사용중입니다.");
         }
-
         Date currentDate = new Date();
-        //전화번호 난수 추가
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddmmss");
         String formattedDateTime = dateFormat.format(currentDate);
-        //나중에 프사 추가 하십셔
         User user = User.builder()
         .userName(username)
                 .password(password)
@@ -107,7 +106,6 @@ public class AuthService {
                 .phoneNum(providerType.toUpperCase().charAt(0) + "A" + formattedDateTime + (int) (Math.random() * 1000) + 1)
                 .status(Status.ACTIVE)
                 .build();
-
         userRepository.save(user);
         inputSocialProfileImage(user, profileImgUrl);
         return user;
@@ -263,16 +261,65 @@ public class AuthService {
     @Transactional
     public User modifyOrJoin(String username, String profileImgUrl, String providerType, String socialId) {
         User user = userRepository.findBySocialProviderAndSocialId(providerType, socialId).orElse(null);
-
-        //만약에 있다면 수정
         if (user != null) {
             inputSocialProfileImage(user, profileImgUrl);
             return user;
         }
-
-        //핸드폰 번호는 없다
-        //소셜로그인계정으로 로그인시 아이디,비밀번호를 까먹었다면 해당 소셜 서비스에서 바꾸는게 나을듯
-        //없으면 참가
         return join(username, "", profileImgUrl, providerType, socialId);
+    }
+
+    @Transactional
+    public void logout(String accessToken, String ipAddress) {
+        User user = null;
+        String logDescription = "로그아웃";
+        try {
+            var claims = jwtTokenizer.parseAccessToken(accessToken);
+            final Long userId = ((Number) claims.get("userId")).longValue();
+            user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + userId));
+            user.setRefreshToken(null);
+            userRepository.save(user);
+        } catch (Exception e) {
+            logDescription = "로그아웃 실패: " + e.getClass().getSimpleName() + " - " + e.getMessage();
+            log.warn("[AuthService.logout] accessToken 파싱 또는 로그아웃 처리 실패: {}", e.getMessage());
+        } finally {
+            if (user != null) {
+                UserLog logoutLog = UserLog.builder()
+                        .user(user)
+                        .logType(UserLog.LogType.LOGOUT)
+                        .description(logDescription)
+                        .ipAddress(ipAddress)
+                        .createdAt(java.time.LocalDateTime.now())
+                        .build();
+                userLogRepository.save(logoutLog);
+                log.info("[AuthService.logout] 로그아웃 로그 저장 완료: userId={}, ip={}", user.getId(), ipAddress);
+            } else {
+                log.warn("[AuthService.logout] 로그아웃 로그 저장 불가: 사용자 정보 없음 (토큰 파싱 실패)");
+            }
+        }
+    }
+
+    @Transactional
+    public void logLoginFailure(User user, String ipAddress) {
+        UserLog loginFailedLog = UserLog.builder()
+                .user(user)
+                .logType(UserLog.LogType.LOGIN_FAILED)
+                .description("로그인 실패")
+                .ipAddress(ipAddress)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
+        userLogRepository.save(loginFailedLog);
+    }
+
+    @Transactional
+    public void logLoginSuccess(User user, String ipAddress) {
+        UserLog loginSuccessLog = UserLog.builder()
+                .user(user)
+                .logType(UserLog.LogType.LOGIN)
+                .description("로그인 성공")
+                .ipAddress(ipAddress)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
+        userLogRepository.save(loginSuccessLog);
     }
 }

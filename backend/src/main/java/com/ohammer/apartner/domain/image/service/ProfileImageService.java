@@ -34,7 +34,7 @@ public class ProfileImageService {
 
     @Transactional
     public String uploadProfileImage(String userName, MultipartFile multipartFile) {
-        User user = userRepository.findByUserName(userName)
+        User user = userRepository.findByEmail(userName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자 없음"));
 
         // 기존 이미지가 있다면 삭제
@@ -57,8 +57,7 @@ public class ProfileImageService {
             objectMetadata.setContentType(contentType);
 
             //S3에 파일 업로드
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, permanentS3Key, multipartFile.getInputStream(), objectMetadata)
-                    .withCannedAcl(CannedAccessControlList.PublicRead);
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, permanentS3Key, multipartFile.getInputStream(), objectMetadata);
             amazonS3.putObject(putObjectRequest);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.");
@@ -75,7 +74,8 @@ public class ProfileImageService {
                 .contentType(contentType)
                 .size(multipartFile.getSize())
                 .isDeleted(false)
-                .isTemp(true) // 임시 파일 플래그
+                .isTemporary(false)
+                .s3Key(permanentS3Key)
                 .user(user)
                 .build();
 
@@ -90,7 +90,7 @@ public class ProfileImageService {
     // 프로필 사진 삭제
     @Transactional
     public void deleteProfileImage(String userName) {
-        User user = userRepository.findByUserName(userName)
+        User user = userRepository.findByEmail(userName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자 없음"));
 
         Image existingImage = user.getProfileImage();

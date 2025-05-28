@@ -1,5 +1,6 @@
 import FeatureCard from "@/components/feature-card";
 import NotificationItem from "@/components/notification-item";
+import client from "@/lib/backend/client";
 import {
   CalendarDays,
   Edit3,

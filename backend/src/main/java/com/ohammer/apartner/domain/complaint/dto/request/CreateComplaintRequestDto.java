@@ -3,7 +3,7 @@ package com.ohammer.apartner.domain.complaint.dto.request;
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import lombok.*;
 
-import static com.ohammer.apartner.domain.complaint.entity.Complaint.Status.PENDING;
+import static com.ohammer.apartner.domain.complaint.entity.Complaint.ComplaintStatus.PENDING;
 
 @NoArgsConstructor
 @AllArgsConstructor
