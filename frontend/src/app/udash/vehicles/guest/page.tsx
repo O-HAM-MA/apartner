@@ -31,6 +31,7 @@ export default function GuestVehicleRegistration() {
     unitNum: "",
   });
 
+  // 페이징 상태 추가
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -76,9 +77,15 @@ export default function GuestVehicleRegistration() {
     });
   };
 
+  // 페이지네이션 데이터 처리 함수
   const getPaginatedData = (data: VehicleRegistrationInfoDto[] = []) => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return data.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // 총 페이지 수 계산
+  const getTotalPages = (totalItems: number) => {
+    return Math.ceil(totalItems / itemsPerPage);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -107,42 +114,81 @@ export default function GuestVehicleRegistration() {
             {isLoading ? (
               <div className="text-center py-4">로딩중...</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4 font-medium">차량번호</th>
-                      <th className="text-left p-4 font-medium">차종</th>
-                      <th className="text-left p-4 font-medium">방문 사유</th>
-                      <th className="text-left p-4 font-medium">상태</th>
-                      <th className="text-left p-4 font-medium">등록시간</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {recentVehicles?.map((vehicle) => (
-                      <tr key={vehicle.id} className="hover:bg-gray-50">
-                        <td className="p-4">{vehicle.vehicleNum}</td>
-                        <td className="p-4">{vehicle.type}</td>
-                        <td className="p-4">{vehicle.reason || "-"}</td>
-                        <td className="p-4">
-                          <StatusBadge status={vehicle.status} />
-                        </td>
-                        <td className="p-4">{formatDate(vehicle.createdAt)}</td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-4 font-medium">차량번호</th>
+                        <th className="text-left p-4 font-medium">차종</th>
+                        <th className="text-left p-4 font-medium">방문 사유</th>
+                        <th className="text-left p-4 font-medium">상태</th>
+                        <th className="text-left p-4 font-medium">등록시간</th>
                       </tr>
-                    ))}
-                    {!recentVehicles?.length && (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="text-center py-8 text-gray-500"
-                        >
-                          24시간 내 등록된 외부 차량이 없습니다.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y">
+                      {getPaginatedData(recentVehicles)?.map((vehicle) => (
+                        <tr key={vehicle.id} className="hover:bg-gray-50">
+                          <td className="p-4">{vehicle.vehicleNum}</td>
+                          <td className="p-4">{vehicle.type}</td>
+                          <td className="p-4">{vehicle.reason || "-"}</td>
+                          <td className="p-4">
+                            <StatusBadge status={vehicle.status} />
+                          </td>
+                          <td className="p-4">
+                            {formatDate(vehicle.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                      {!recentVehicles?.length && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            24시간 내 등록된 외부 차량이 없습니다.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {/* 페이지네이션 컨트롤 */}
+                {recentVehicles && recentVehicles.length > itemsPerPage && (
+                  <div className="mt-4 flex justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={currentPage === 1}
+                    >
+                      이전
+                    </Button>
+                    <span className="mx-4 flex items-center">
+                      {currentPage} / {getTotalPages(recentVehicles.length)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) =>
+                          Math.min(
+                            getTotalPages(recentVehicles.length),
+                            prev + 1
+                          )
+                        )
+                      }
+                      disabled={
+                        currentPage === getTotalPages(recentVehicles.length)
+                      }
+                    >
+                      다음
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
