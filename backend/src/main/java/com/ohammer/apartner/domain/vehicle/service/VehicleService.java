@@ -138,24 +138,7 @@ public class VehicleService {
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getVehicleRegistrationInfo(Boolean isForeign) {
 
-        // 현재 로그인한 사용자 가져오기
-//        User currentUser = SecurityUtil.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new IllegalArgumentException("로그인이 필요합니다.");
-//        }
-//
-//        Set<Role> roles = currentUser.getRoles();
-//
-//        // Role 검사: MANAGER 또는 MODERATOR만 허용
-//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-//                role == Role.MANAGER || role == Role.MODERATOR);
-//
-//        if (!isManagerOrModerator) {
-//            throw new RuntimeException("관리자만 조회할 수 있습니다.");
-//        }
 
-        //checkRoleUtils.validateAdminAccess();
-        //checkAdminUtils.validateAdminAccess();
         checkRoleUtils.validateAdminAccess();
 
         List<EntryRecord> entryRecords;

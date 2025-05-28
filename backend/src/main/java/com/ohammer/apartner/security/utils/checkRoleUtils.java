@@ -21,7 +21,7 @@ public class checkRoleUtils {
 
 
         boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-                role.equals(Role.MANAGER) || role.equals(Role.MODERATOR));
+                role.equals(Role.MANAGER) || role.equals(Role.MODERATOR) || role.equals(Role.ADMIN));
 
         if (!isManagerOrModerator) {
             throw new RuntimeException("매니저만 접근할 수 있습니다.");
