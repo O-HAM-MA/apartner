@@ -47,6 +47,7 @@ public class OpinionService {
                 .user(user)
                 .title(opinion.getTitle())
                 .type(Opinion.Type.REPRESENTATIVE)
+                .status(Status.ACTIVE)
                 .build();
 
         opinionRepository.save(opinionEntity);
@@ -85,6 +86,7 @@ public class OpinionService {
                         .userName(opinion.getUser().getUserName())
                         .content(opinion.getContent())
                         .status(opinion.getStatus().name())
+                        .createdAt(opinion.getCreatedAt())
                         .build())
                         .collect(Collectors.toList());
     }
