@@ -8,6 +8,8 @@ import lombok.*;
 public class AllManagerOpinionResponseDto {
     private Long id;
     private String title;
+    private String content;
+    private String status;
 
     // 필요시에
     private String userName;

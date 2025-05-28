@@ -1,10 +1,10 @@
 package com.ohammer.apartner.domain.opinion.dto.request;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter@Setter@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class CreateOpinionReplyRequestDto {
 
     private String reply;

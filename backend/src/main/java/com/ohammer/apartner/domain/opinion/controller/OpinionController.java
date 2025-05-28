@@ -1,8 +1,10 @@
 package com.ohammer.apartner.domain.opinion.controller;
 
+import com.ohammer.apartner.domain.complaint.dto.response.UpdateStateResponseDto;
 import com.ohammer.apartner.domain.opinion.dto.request.CreateManagerOpinionRequestDto;
 import com.ohammer.apartner.domain.opinion.dto.response.AllManagerOpinionResponseDto;
 import com.ohammer.apartner.domain.opinion.dto.response.CreateManagerOpinionResponseDto;
+import com.ohammer.apartner.domain.opinion.dto.response.UpdateOpinionStatsResponseDto;
 import com.ohammer.apartner.domain.opinion.entity.Opinion;
 import com.ohammer.apartner.domain.opinion.service.OpinionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +19,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/opinion")
+@RequestMapping("/api/v1/opinions")
 @Tag(name = "의견 관리 API")
 public class OpinionController {
 
@@ -37,6 +39,14 @@ public class OpinionController {
     public ResponseEntity<?> getManagerOpinion() throws AccessDeniedException {
 
         List<AllManagerOpinionResponseDto> response = opinionService.getAllManagerOpinion();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{opinionId}/inactive")
+    public ResponseEntity<?> inactiveComplaint(@PathVariable(name = "opinionId") Long opinionId) throws Exception {
+
+        UpdateOpinionStatsResponseDto response = opinionService.inactiveOpinion(opinionId);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
