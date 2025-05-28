@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -365,6 +366,26 @@ public class VehicleService {
                     // 3) DTO로 변환
                     return VehicleRegistrationInfoDto.from(vehicle, er);
                 })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getForeignsVehicleRegistrationInfo() {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime yesterday = now.minusHours(24);
+
+
+
+
+
+        List<EntryRecord> entryRecords = entryRecordRepository.findByVehicleIsForeignWithVehicleAndUser(true);
+
+
+        return entryRecords.stream()
+                .filter(er -> er.getVehicle().getCreatedAt() != null
+                        && er.getVehicle().getCreatedAt().isAfter(yesterday))
+                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
                 .collect(Collectors.toList());
     }
 
