@@ -463,10 +463,14 @@ export default function VehicleManagement() {
           };
         case "INAGREE":
           return { label: "미승인", className: "bg-gray-100 text-gray-800" };
-        default:
+        case "PENDING":
           return {
             label: "대기중",
             className: "bg-yellow-100 text-yellow-800",
+          };
+        default:
+          return {
+            label: "알",
           };
       }
     };
