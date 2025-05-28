@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react"; // Add this import
 
 // 필요한 타입 정의
 type ParkingStatusDto = components["schemas"]["ParkingStatusDto"];
@@ -88,6 +89,34 @@ export default function AdminVehicleManagement() {
     }
     return buttons;
   };
+
+  // Add query for invited-approved vehicles
+  const { data: invitedVehicles } = useQuery<VehicleRegistrationInfoDto[]>({
+    queryKey: ["vehicles", "invited-approved"],
+    queryFn: async () => {
+      const { data, error } = await client.GET(
+        "/api/v1/vehicles/invited-approved"
+      );
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Add mutation for updating vehicle status
+  const updateVehicleStatus = useMutation({
+    mutationFn: async (vehicleId: number) => {
+      const { error } = await client.PUT(
+        `/api/v1/vehicles/${vehicleId}/status`,
+        {
+          json: { status: "AGREE" },
+        }
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+    },
+  });
 
   return (
     <div className="min-h-screen bg-white m-0 p-0">
@@ -177,6 +206,75 @@ export default function AdminVehicleManagement() {
                   : 0}
                 %
               </p>
+            </div>
+          </div>
+
+          {/* 입주민 승인 대기 차량 섹션 추가 */}
+          <div className="mt-8 mb-8">
+            <h2 className="text-xl font-semibold mb-4">
+              입주민 승인 대기 차량
+            </h2>
+            <div className="grid grid-cols-4 gap-4">
+              {invitedVehicles?.map((vehicle) => (
+                <div
+                  key={vehicle.id}
+                  className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="font-medium">{vehicle.vehicleNum}</p>
+                      <p className="text-sm text-gray-500">{vehicle.type}</p>
+                    </div>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      입주민 승인
+                    </span>
+                  </div>
+                  <div className="space-y-1 mb-4">
+                    <p className="text-sm">
+                      <span className="text-gray-500">방문사유:</span>{" "}
+                      {vehicle.reason || "-"}
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-gray-500">연락처:</span>{" "}
+                      {vehicle.userPhone}
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-gray-500">방문지:</span>{" "}
+                      {vehicle.buildingName} {vehicle.unitName}
+                    </p>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-1/2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Add reject logic here
+                      }}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      거부
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="w-1/2 bg-[#FF4081] hover:bg-[#ff679b]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateVehicleStatus.mutate(vehicle.id);
+                      }}
+                    >
+                      승인
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {invitedVehicles?.length === 0 && (
+                <div className="col-span-4 text-center py-8 text-gray-500">
+                  입주민 승인 대기중인 차량이 없습니다.
+                </div>
+              )}
             </div>
           </div>
 
