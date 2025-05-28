@@ -16,6 +16,9 @@ import { Badge } from "@/components/ui/badge";
 type ForeignVehicleRequestDto =
   components["schemas"]["ForeignVehicleRequestDto"];
 
+type VehicleRegistrationInfoDto =
+  components["schemas"]["VehicleRegistrationInfoDto"];
+
 export default function GuestVehicleRegistration() {
   const router = useRouter();
   const [formData, setFormData] = useState<ForeignVehicleRequestDto>({
@@ -48,32 +51,21 @@ export default function GuestVehicleRegistration() {
     },
   });
 
+  // 24시간 내 외부 차량 조회 쿼리
   const { data: recentVehicles, isLoading } = useQuery<
     VehicleRegistrationInfoDto[]
   >({
     queryKey: ["vehicles", "recent-foreigns"],
     queryFn: async () => {
       const { data, error } = await client.GET(
-        "/api/v1/vehicles/registrationsWithStatus"
+        "/api/v1/vehicles/ForeignsRegistrationsWithStatus"
       );
       if (error) throw error;
       return data;
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    registerMutation.mutate(formData);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
+  // 날짜 포맷 함수
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ko-KR", {
       year: "numeric",
@@ -89,11 +81,24 @@ export default function GuestVehicleRegistration() {
     return data.slice(startIndex, startIndex + itemsPerPage);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    registerMutation.mutate(formData);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        {/* Add Recent Foreign Vehicles Table */}
+        {/* 24시간 내 외부 차량 목록 테이블 */}
         <div className="max-w-2xl mx-auto mb-8">
           <h2 className="text-xl font-semibold mb-4">
             24시간 내 등록된 외부 차량
@@ -102,55 +107,42 @@ export default function GuestVehicleRegistration() {
             {isLoading ? (
               <div className="text-center py-4">로딩중...</div>
             ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-4 font-medium">차량번호</th>
-                        <th className="text-left p-4 font-medium">차종</th>
-                        <th className="text-left p-4 font-medium">상태</th>
-                        <th className="text-left p-4 font-medium">등록시간</th>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4 font-medium">차량번호</th>
+                      <th className="text-left p-4 font-medium">차종</th>
+                      <th className="text-left p-4 font-medium">방문 사유</th>
+                      <th className="text-left p-4 font-medium">상태</th>
+                      <th className="text-left p-4 font-medium">등록시간</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {recentVehicles?.map((vehicle) => (
+                      <tr key={vehicle.id} className="hover:bg-gray-50">
+                        <td className="p-4">{vehicle.vehicleNum}</td>
+                        <td className="p-4">{vehicle.type}</td>
+                        <td className="p-4">{vehicle.reason || "-"}</td>
+                        <td className="p-4">
+                          <StatusBadge status={vehicle.status} />
+                        </td>
+                        <td className="p-4">{formatDate(vehicle.createdAt)}</td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {getPaginatedData(recentVehicles)?.map((vehicle) => (
-                        <tr key={vehicle.id} className="hover:bg-gray-50">
-                          <td className="p-4">{vehicle.vehicleNum}</td>
-                          <td className="p-4">{vehicle.type}</td>
-                          <td className="p-4">
-                            <StatusBadge status={vehicle.status} />
-                          </td>
-                          <td className="p-4">
-                            {formatDate(vehicle.createdAt)}
-                          </td>
-                        </tr>
-                      ))}
-                      {!recentVehicles?.length && (
-                        <tr>
-                          <td
-                            colSpan={4}
-                            className="text-center py-8 text-gray-500"
-                          >
-                            24시간 내 등록된 외부 차량이 없습니다.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                {recentVehicles && recentVehicles.length > itemsPerPage && (
-                  <div className="mt-4 flex justify-center">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={Math.ceil(
-                        recentVehicles.length / itemsPerPage
-                      )}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                )}
-              </>
+                    ))}
+                    {!recentVehicles?.length && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="text-center py-8 text-gray-500"
+                        >
+                          24시간 내 등록된 외부 차량이 없습니다.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
@@ -269,7 +261,7 @@ export default function GuestVehicleRegistration() {
   );
 }
 
-// Add StatusBadge component
+// StatusBadge 컴포넌트
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusStyle = (status: string) => {
     switch (status) {
