@@ -9,12 +9,17 @@ import com.ohammer.apartner.domain.apartment.entity.Unit;
 import com.ohammer.apartner.domain.apartment.repository.ApartmentRepository;
 import com.ohammer.apartner.domain.apartment.repository.BuildingRepository;
 import com.ohammer.apartner.domain.apartment.repository.UnitRepository;
+import com.ohammer.apartner.domain.user.entity.Role;
+import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,5 +79,43 @@ public class ApartmentService {
         Unit unit = unitRepository.findById(unitId)
                 .orElseThrow(() -> new ResourceNotFoundException("호수를 찾을 수 없습니다. ID: " + unitId));
         return UnitResponseDto.fromEntity(unit);
+    }
+    
+
+    @Transactional
+    public List<Map<String, Object>> getApartmentListForAdmin(User currentUser) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        
+        if (currentUser == null) {
+            return result;
+        }
+        
+        // ADMIN은 모든 아파트 목록 조회
+        if (currentUser.getRoles().contains(Role.ADMIN)) {
+            List<Apartment> apartments = apartmentRepository.findAll();
+            return apartments.stream()
+                .map(apt -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", apt.getId());
+                    map.put("name", apt.getName());
+                    return map;
+                })
+                .collect(Collectors.toList());
+        }
+        
+        // MANAGER는 소속 아파트만 조회
+        if (currentUser.getRoles().contains(Role.MANAGER) && currentUser.getApartment() != null) {
+            Apartment apartment = apartmentRepository.findById(currentUser.getApartment().getId())
+                .orElse(null);
+                
+            if (apartment != null) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", apartment.getId());
+                map.put("name", apartment.getName());
+                result.add(map);
+            }
+        }
+        
+        return result;
     }
 } 

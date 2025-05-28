@@ -1,92 +1,73 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useApartnerTalkContext } from "@/contexts/ApartnerTalkContext";
-import { ArrowLeft, Clock, MessageSquare } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { Spinner } from "@/components/ui/spinner";
+import { ArrowLeft } from "lucide-react";
 import { getUserChatrooms } from "@/utils/api";
-
-type ChatroomType = {
-  id: number;
-  title: string;
-  status: string;
-  category: string;
-  lastMessage?: string;
-  lastMessageTimestamp?: string;
-  createdAt: string;
-};
+import { useApartnerTalkContext } from "@/contexts/ApartnerTalkContext";
+import { getCategoryNameByCode } from "@/constants/categoryCode";
 
 const ChatHistory: React.FC = () => {
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { enterChatroomById, showCategorySelection } = useApartnerTalkContext();
-  const [chatrooms, setChatrooms] = useState<ChatroomType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [enteringRoom, setEnteringRoom] = useState<number | null>(null);
 
   useEffect(() => {
-    loadChatHistory();
+    async function loadRooms() {
+      try {
+        const allRooms = await getUserChatrooms();
+        // 생성시간 내림차순 정렬
+        allRooms.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        // 카테고리코드를 카테고리 이름으로 변환하여 표시
+        const enhancedRooms = allRooms.map((room) => ({
+          ...room,
+          categoryDisplayName: room.categoryCode
+            ? getCategoryNameByCode(room.categoryCode)
+            : "미분류",
+        }));
+        setRooms(enhancedRooms);
+      } catch (error) {
+        console.error("채팅방 목록 로드 오류:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadRooms();
   }, []);
 
-  const loadChatHistory = async () => {
-    try {
-      setLoading(true);
-      const response = await getUserChatrooms();
-      console.log("[ChatHistory] 채팅방 목록 로드 완료:", response);
-
-      // 날짜 기준 내림차순 정렬 (최신순)
-      const sortedRooms = [...response].sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.modifiedAt || "");
-        const dateB = new Date(b.createdAt || b.modifiedAt || "");
-        return dateB.getTime() - dateA.getTime();
-      });
-
-      setChatrooms(sortedRooms);
-    } catch (error) {
-      console.error("[ChatHistory] 채팅방 목록 로드 실패:", error);
-      setChatrooms([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleEnterRoom = async (roomId: number) => {
-    setEnteringRoom(roomId);
+    setIsLoading(true);
     try {
-      await enterChatroomById(roomId);
+      await enterChatroomById(Number(roomId));
     } finally {
-      setEnteringRoom(null);
+      setIsLoading(false);
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "";
-    try {
-      return format(parseISO(dateString), "yyyy.MM.dd HH:mm");
-    } catch (error) {
-      return dateString;
-    }
-  };
-
-  // 채팅방 상태에 따른 배지 스타일
-  const getStatusBadge = (status: string) => {
+  const renderStatusBadge = (status: string) => {
     if (status === "ACTIVE") {
       return (
-        <span className="text-xs font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+        <span className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
           진행중
         </span>
       );
+    } else if (status === "INACTIVE") {
+      return (
+        <span className="ml-2 text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full">
+          종료됨
+        </span>
+      );
     }
-    return (
-      <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-        종료됨
-      </span>
-    );
+    return null;
   };
 
   return (
-    <Card className="w-full border-0 shadow-none h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center p-4 border-b">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -96,69 +77,43 @@ const ChatHistory: React.FC = () => {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="text-xl">채팅 내역</CardTitle>
+          <span className="font-bold">메시지 목록</span>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={loadChatHistory}
-          disabled={loading}
-        >
-          새로고침
-        </Button>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 overflow-y-auto pt-0">
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="flex flex-col items-center gap-2">
-              <Spinner className="h-8 w-8" />
-              <span className="text-sm text-muted-foreground">로딩 중...</span>
-            </div>
+      <div className="flex-1 overflow-y-auto p-2">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <span className="text-sm text-gray-500">로딩 중...</span>
           </div>
-        ) : chatrooms.length === 0 ? (
-          <div className="flex justify-center items-center h-64 text-muted-foreground">
-            채팅 내역이 없습니다.
+        ) : rooms.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            채팅방이 없습니다.
           </div>
         ) : (
-          <div className="space-y-3 mt-2">
-            {chatrooms.map((room) => (
-              <div
-                key={room.id}
-                className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors relative"
-                onClick={() => handleEnterRoom(room.id)}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium">
-                      {room.title || `${room.category} 문의`}
-                    </h3>
-                    {getStatusBadge(room.status)}
-                  </div>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {formatDate(room.createdAt)}
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 mt-2">
-                  <MessageSquare className="h-4 w-4 text-gray-400 mt-0.5" />
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {room.lastMessage || "메시지 내용이 없습니다."}
-                  </p>
-                </div>
-
-                {enteringRoom === room.id && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-lg">
-                    <Spinner className="h-6 w-6" />
-                  </div>
-                )}
+          rooms.map((room) => (
+            <Button
+              key={room.id}
+              className={`w-full mb-1 justify-between flex items-center ${
+                room.status === "INACTIVE" ? "opacity-70" : ""
+              }`}
+              variant="ghost"
+              onClick={() => handleEnterRoom(room.id)}
+            >
+              <div className="flex items-center">
+                <span>
+                  {room.categoryDisplayName} {room.title}
+                </span>
+                {renderStatusBadge(room.status)}
               </div>
-            ))}
-          </div>
+              <span className="text-xs text-gray-400">
+                {room.createdAt && new Date(room.createdAt).toLocaleString()}
+              </span>
+            </Button>
+          ))
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
