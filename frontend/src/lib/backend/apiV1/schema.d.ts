@@ -20,26 +20,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/notices/{noticeId}/update": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * 공지사항 게시글 수정
-         * @description 게시글 수정 작성사항: 제목, 내용, 파일
-         */
-        put: operations["updateNotice"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/complaints/{complaintId}": {
         parameters: {
             query?: never;
@@ -98,6 +78,26 @@ export interface paths {
         get?: never;
         /** 해당 입주민이 작성한 글 수정 */
         put: operations["update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/{noticeId}/update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 공지사항 게시글 수정
+         * @description 게시글 수정 작성사항: 제목, 내용, 파일
+         */
+        put: operations["updateNotice"];
         post?: never;
         delete?: never;
         options?: never;
@@ -487,26 +487,6 @@ export interface paths {
          * @description 공지사항에 첨부할 파일을 업로드합니다.
          */
         post: operations["uploadFiles"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/create": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 등록
-         * @description 게시글 작성사항: 제목, 내용, 파일
-         */
-        post: operations["createNotice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1013,6 +993,26 @@ export interface paths {
          * @description 새로운 관리자 계정을 등록합니다. (이메일, 사용자 이름, 비밀번호 필요)
          */
         post: operations["adminRegister"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 등록
+         * @description 게시글 작성사항: 제목, 내용, 파일
+         */
+        post: operations["createNotice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1581,50 +1581,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 매니저 권한/ 공지사항 게시글 목록 조회
-         * @description 매니저 권한 - 전체
-         */
-        get: operations["getNoticeList"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/{noticeId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 조회
-         * @description 게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일
-         */
-        get: operations["readNotice"];
-        put?: never;
-        post?: never;
-        /**
-         * 공지사항 게시글 삭제
-         * @description 게시글 삭제(INACTIVE 상태)
-         */
-        delete: operations["deleteNotice"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2319,6 +2275,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 매니저 권한/ 공지사항 게시글 목록 조회
+         * @description 매니저 권한 - 전체
+         */
+        get: operations["getNoticeList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/{noticeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 조회
+         * @description 게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일
+         */
+        get: operations["readNotice"];
+        put?: never;
+        post?: never;
+        /**
+         * 공지사항 게시글 삭제
+         * @description 게시글 삭제(INACTIVE 상태)
+         */
+        delete: operations["deleteNotice"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/menu/menus/list": {
         parameters: {
             query?: never;
@@ -2933,29 +2933,6 @@ export interface components {
         UpdateOpinionReplyRequestDto: {
             reply?: string;
         };
-        /** @description 공지사항 게시글 수정 요청 DTO */
-        NoticeUpdateRequestDto: {
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * @description tiptap에 삽입된 이미지 ID들
-             * @example []
-             */
-            imageIds?: number[];
-            /**
-             * @description tiptap에 삽입된 첨부파일 ID들
-             * @example []
-             */
-            fileIds?: number[];
-        };
         CreateComplaintRequestDto: {
             title?: string;
             content?: string;
@@ -2987,6 +2964,29 @@ export interface components {
             /** Format: int64 */
             id?: number;
             username?: string;
+        };
+        /** @description 공지사항 게시글 수정 요청 DTO */
+        NoticeUpdateRequestDto: {
+            /**
+             * @description 게시글 제목
+             * @example 엘레베이터 정기점검 안내
+             */
+            title?: string;
+            /**
+             * @description 게시글 내용
+             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
+             */
+            content?: string;
+            /**
+             * @description tiptap에 삽입된 이미지 ID들
+             * @example []
+             */
+            imageIds?: number[];
+            /**
+             * @description tiptap에 삽입된 첨부파일 ID들
+             * @example []
+             */
+            fileIds?: number[];
         };
         MenuDTO: {
             /** Format: int64 */
@@ -3313,35 +3313,6 @@ export interface components {
              * @example 사진1.png
              */
             originalName?: string;
-        };
-        /** @description 공지사항 게시글 등록 요청 DTO */
-        NoticeCreateRequestDto: {
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * Format: int64
-             * @description 게시글 대상: 전체/동별 선택 - buildingId
-             * @example 101동 / null일 경우 전체 공지
-             */
-            buildingId?: number;
-            /**
-             * @description tiptap에 삽입된 이미지 ID들
-             * @example []
-             */
-            imageIds?: number[];
-            /**
-             * @description tiptap에 삽입된 첨부파일 ID들
-             * @example []
-             */
-            fileIds?: number[];
         };
         /** @description 비밀번호 재설정 요청 DTO */
         ResetPasswordRequest: {
@@ -3799,6 +3770,35 @@ export interface components {
              */
             email?: string;
         };
+        /** @description 공지사항 게시글 등록 요청 DTO */
+        NoticeCreateRequestDto: {
+            /**
+             * @description 게시글 제목
+             * @example 엘레베이터 정기점검 안내
+             */
+            title?: string;
+            /**
+             * @description 게시글 내용
+             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
+             */
+            content?: string;
+            /**
+             * Format: int64
+             * @description 게시글 대상: 전체/동별 선택 - buildingId
+             * @example 101동 / null일 경우 전체 공지
+             */
+            buildingId?: number;
+            /**
+             * @description tiptap에 삽입된 이미지 ID들
+             * @example []
+             */
+            imageIds?: number[];
+            /**
+             * @description tiptap에 삽입된 첨부파일 ID들
+             * @example []
+             */
+            fileIds?: number[];
+        };
         /** @description 관리자 로그인 요청 DTO */
         AdminLoginRequest: {
             /**
@@ -3984,139 +3984,6 @@ export interface components {
             /** Format: int32 */
             remainingSpace?: number;
         };
-        /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
-        NoticeSummaryResponseDto: {
-            /**
-             * Format: int64
-             * @description 게시글 번호
-             * @example 1
-             */
-            noticeId?: number;
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 작성자
-             * @example 관리사무소
-             */
-            authorName?: string;
-            /**
-             * Format: int64
-             * @description 게시글 대상: 전체/동별 선택 - buildingId
-             * @example 1
-             */
-            buildingId?: number;
-            /**
-             * Format: date-time
-             * @description 게시글 작성일
-             * @example 2025-05-15 09:00
-             */
-            createdAt?: string;
-            /**
-             * Format: int64
-             * @description 게시글 조회수
-             * @example 0
-             */
-            viewCount?: number;
-        };
-        PageNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["NoticeSummaryResponseDto"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            empty?: boolean;
-        };
-        PageableObject: {
-            /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"];
-            paged?: boolean;
-            /** Format: int32 */
-            pageNumber?: number;
-            /** Format: int32 */
-            pageSize?: number;
-            unpaged?: boolean;
-        };
-        SortObject: {
-            empty?: boolean;
-            unsorted?: boolean;
-            sorted?: boolean;
-        };
-        NoticeFileDto: {
-            /** Format: int64 */
-            id?: number;
-            originalName?: string;
-            downloadUrl?: string;
-            /** Format: int64 */
-            size?: number;
-        };
-        NoticeImageDto: {
-            /** Format: int64 */
-            id?: number;
-            originalName?: string;
-            downloadUrl?: string;
-            /** Format: int64 */
-            size?: number;
-        };
-        /** @description 공지사항 게시글 조회 응답 DTO */
-        NoticeReadResponseDto: {
-            /**
-             * Format: int64
-             * @description 게시글 번호
-             * @example 1
-             */
-            noticeId?: number;
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * @description 게시글 작성자
-             * @example 관리사무소
-             */
-            authorName?: string;
-            /**
-             * Format: date-time
-             * @description 게시글 작성일
-             * @example 2025-05-15 09:00
-             */
-            createdAt?: string;
-            /**
-             * Format: int64
-             * @description 게시글 조회수
-             * @example 0
-             */
-            viewCount?: number;
-            /**
-             * @description 게시글 첨부 이미지
-             * @example 엘레베이터.jpg
-             */
-            imageUrls?: components["schemas"]["NoticeImageDto"][];
-            /**
-             * @description 게시글 첨부 파일
-             * @example 엘레베이터_점검_안내문.pdf
-             */
-            fileUrls?: components["schemas"]["NoticeFileDto"][];
-        };
         PageUserNoticeSummaryResponseDto: {
             /** Format: int32 */
             totalPages?: number;
@@ -4134,6 +4001,22 @@ export interface components {
             /** Format: int32 */
             numberOfElements?: number;
             empty?: boolean;
+        };
+        PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
+            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+        };
+        SortObject: {
+            empty?: boolean;
+            unsorted?: boolean;
+            sorted?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -4619,6 +4502,123 @@ export interface components {
             numberOfElements?: number;
             empty?: boolean;
         };
+        /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
+        NoticeSummaryResponseDto: {
+            /**
+             * Format: int64
+             * @description 게시글 번호
+             * @example 1
+             */
+            noticeId?: number;
+            /**
+             * @description 게시글 제목
+             * @example 엘레베이터 정기점검 안내
+             */
+            title?: string;
+            /**
+             * @description 게시글 작성자
+             * @example 관리사무소
+             */
+            authorName?: string;
+            /**
+             * Format: int64
+             * @description 게시글 대상: 전체/동별 선택 - buildingId
+             * @example 1
+             */
+            buildingId?: number;
+            /**
+             * Format: date-time
+             * @description 게시글 작성일
+             * @example 2025-05-15 09:00
+             */
+            createdAt?: string;
+            /**
+             * Format: int64
+             * @description 게시글 조회수
+             * @example 0
+             */
+            viewCount?: number;
+        };
+        PageNoticeSummaryResponseDto: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["NoticeSummaryResponseDto"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        NoticeFileDto: {
+            /** Format: int64 */
+            id?: number;
+            originalName?: string;
+            downloadUrl?: string;
+            /** Format: int64 */
+            size?: number;
+        };
+        NoticeImageDto: {
+            /** Format: int64 */
+            id?: number;
+            originalName?: string;
+            downloadUrl?: string;
+            /** Format: int64 */
+            size?: number;
+        };
+        /** @description 공지사항 게시글 조회 응답 DTO */
+        NoticeReadResponseDto: {
+            /**
+             * Format: int64
+             * @description 게시글 번호
+             * @example 1
+             */
+            noticeId?: number;
+            /**
+             * @description 게시글 제목
+             * @example 엘레베이터 정기점검 안내
+             */
+            title?: string;
+            /**
+             * @description 게시글 내용
+             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
+             */
+            content?: string;
+            /**
+             * @description 게시글 작성자
+             * @example 관리사무소
+             */
+            authorName?: string;
+            /**
+             * Format: date-time
+             * @description 게시글 작성일
+             * @example 2025-05-15 09:00
+             */
+            createdAt?: string;
+            /**
+             * Format: int64
+             * @description 게시글 조회수
+             * @example 0
+             */
+            viewCount?: number;
+            /**
+             * @description 게시글 첨부 이미지
+             * @example 엘레베이터.jpg
+             */
+            imageUrls?: components["schemas"]["NoticeImageDto"][];
+            /**
+             * @description 게시글 첨부 파일
+             * @example 엘레베이터_점검_안내문.pdf
+             */
+            fileUrls?: components["schemas"]["NoticeFileDto"][];
+        };
         ApiResponsePageMenuDTO: {
             success?: boolean;
             message?: string;
@@ -5101,34 +5101,6 @@ export interface operations {
             };
         };
     };
-    updateNotice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NoticeUpdateRequestDto"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: Record<string, never>;
-                    };
-                };
-            };
-        };
-    };
     updateComplaint: {
         parameters: {
             query?: never;
@@ -5247,6 +5219,34 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CommunityResponseDto"];
+                };
+            };
+        };
+    };
+    updateNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeUpdateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: Record<string, never>;
+                    };
                 };
             };
         };
@@ -6181,30 +6181,6 @@ export interface operations {
             };
         };
     };
-    createNotice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NoticeCreateRequestDto"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
     updateProfileImage: {
         parameters: {
             query?: never;
@@ -7063,6 +7039,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    createNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeCreateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
                 };
             };
         };
@@ -8015,79 +8015,6 @@ export interface operations {
             };
         };
     };
-    getNoticeList: {
-        parameters: {
-            query?: {
-                buildingId?: number;
-                startDate?: string;
-                endDate?: string;
-                page?: number;
-                size?: number;
-                sort?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PageNoticeSummaryResponseDto"];
-                };
-            };
-        };
-    };
-    readNotice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["NoticeReadResponseDto"];
-                };
-            };
-        };
-    };
-    deleteNotice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: Record<string, never>;
-                    };
-                };
-            };
-        };
-    };
     getUserNotices: {
         parameters: {
             query?: {
@@ -8977,6 +8904,79 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    getNoticeList: {
+        parameters: {
+            query?: {
+                buildingId?: number;
+                startDate?: string;
+                endDate?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageNoticeSummaryResponseDto"];
+                };
+            };
+        };
+    };
+    readNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeReadResponseDto"];
+                };
+            };
+        };
+    };
+    deleteNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: Record<string, never>;
+                    };
                 };
             };
         };

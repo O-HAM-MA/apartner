@@ -4,6 +4,16 @@ import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { components } from '@/lib/backend/apiV1/schema';
 import client from '@/lib/backend/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 // 백엔드 응답 타입 정의
 type NoticeImage = {
@@ -63,7 +73,7 @@ const processContent = async (
     try {
       // 이미지 정보를 API로 직접 조회
       const { data, error } = await client.GET(
-        '/api/v1/notices/media/images/{noticeImageId}',
+        '/api/v1/admin/notices/media/images/{noticeImageId}',
         {
           params: { path: { noticeImageId: imageId } },
         }
@@ -122,18 +132,23 @@ export default function NoticeDetailPage({
 }) {
   const router = useRouter();
   const { noticeId } = use(params);
+  const { toast } = useToast();
 
   const [notice, setNotice] = useState<NoticeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processedContent, setProcessedContent] = useState<string>('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchNoticeDetail = async () => {
       try {
-        const { data, error } = await client.GET('/api/v1/notices/{noticeId}', {
-          params: { path: { noticeId: Number(noticeId) } },
-        });
+        const { data, error } = await client.GET(
+          '/api/v1/admin/notices/{noticeId}',
+          {
+            params: { path: { noticeId: Number(noticeId) } },
+          }
+        );
 
         if (error || !data) {
           throw new Error(
@@ -222,24 +237,29 @@ export default function NoticeDetailPage({
   }, [noticeId]);
 
   const handleEdit = () => {
-    router.push(`/notice/${noticeId}/edit`);
+    router.push(`/admin/notices/${noticeId}/edit`);
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('정말로 이 공지사항을 삭제하시겠습니까?')) {
-      return;
-    }
-
     try {
-      await client.DELETE('/api/v1/notices/{noticeId}', {
+      await client.DELETE('/api/v1/admin/notices/{noticeId}', {
         params: { path: { noticeId: Number(noticeId) } },
       });
 
-      alert('공지사항이 성공적으로 삭제되었습니다.');
-      router.push('/notice');
+      toast({
+        title: '성공',
+        description: '공지사항이 성공적으로 삭제되었습니다.',
+      });
+      router.push('/admin/notices');
     } catch (error) {
       console.error('공지사항 삭제 실패:', error);
-      alert('공지사항 삭제에 실패했습니다. 다시 시도해주세요.');
+      toast({
+        variant: 'destructive',
+        title: '오류',
+        description: '공지사항 삭제에 실패했습니다. 다시 시도해주세요.',
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -259,7 +279,7 @@ export default function NoticeDetailPage({
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <button
-          onClick={() => router.push('/notice')}
+          onClick={() => router.push('/admin/notices')}
           className="text-gray-600 hover:text-gray-800"
         >
           ← 목록으로
@@ -272,7 +292,7 @@ export default function NoticeDetailPage({
             수정
           </button>
           <button
-            onClick={handleDelete}
+            onClick={() => setIsDeleteDialogOpen(true)}
             className="px-4 py-2 text-red-600 hover:text-red-800"
           >
             삭제
@@ -344,6 +364,30 @@ export default function NoticeDetailPage({
           )}
         </div>
       </article>
+
+      {/* 삭제 확인 모달 */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>공지사항 삭제</DialogTitle>
+            <DialogDescription>
+              정말로 이 공지사항을 삭제하시겠습니까? 이 작업은 되돌릴 수
+              없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              취소
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

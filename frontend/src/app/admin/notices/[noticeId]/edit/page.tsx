@@ -29,7 +29,7 @@ export default function EditNoticePage({
   useEffect(() => {
     const fetchNoticeDetail = async () => {
       try {
-        const response = await client.GET('/api/v1/notices/{noticeId}', {
+        const response = await client.GET('/api/v1/admin/notices/{noticeId}', {
           params: { path: { noticeId: Number(noticeId) } },
         });
         const notice = response.data as NoticeDetail;
@@ -69,12 +69,12 @@ export default function EditNoticePage({
         fileIds: currentFileIds,
       };
 
-      await client.PUT('/api/v1/notices/{noticeId}/update', {
+      await client.PUT('/api/v1/admin/notices/{noticeId}/update', {
         params: { path: { noticeId: Number(noticeId) } },
         body: updateData,
       });
 
-      router.push(`/notice/${noticeId}`);
+      router.push(`/notices/${noticeId}`);
     } catch (error) {
       console.error('공지사항 수정 실패:', error);
       alert('공지사항 수정에 실패했습니다. 다시 시도해주세요.');

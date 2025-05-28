@@ -30,13 +30,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/notices")
+@RequestMapping("/api/v1")
 @Tag(name = "공지사항 관리")
 public class NoticeController {
 
     private final NoticeService noticeService;
 
-    @PostMapping("/create")
+    @PostMapping("/admin/notices/create")
     @Operation(
             summary = "공지사항 게시글 등록",
             description = "게시글 작성사항: 제목, 내용, 파일"
@@ -52,7 +52,7 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{noticeId}")
+    @GetMapping("/admin/notices/{noticeId}")
     @Operation(
             summary = "공지사항 게시글 조회",
             description = "게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일"
@@ -63,7 +63,7 @@ public class NoticeController {
         return ResponseEntity.ok(noticeReadResponseDto);
     }
 
-    @PutMapping("/{noticeId}/update")
+    @PutMapping("/admin/notices/{noticeId}/update")
     @Operation(
             summary = "공지사항 게시글 수정",
             description = "게시글 수정 작성사항: 제목, 내용, 파일"
@@ -82,7 +82,7 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{noticeId}")
+    @DeleteMapping("/admin/notices/{noticeId}")
     @Operation(
             summary = "공지사항 게시글 삭제",
             description = "게시글 삭제(INACTIVE 상태)"
@@ -100,7 +100,7 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping
+    @GetMapping("/admin/notices")
     @Operation(
             summary = "매니저 권한/ 공지사항 게시글 목록 조회",
             description = "매니저 권한 - 전체"
@@ -119,7 +119,7 @@ public class NoticeController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/user/list")
+    @GetMapping("/notices/user/list")
     @Operation(
             summary = "사용자 권한/ 공지사항 게시글 목록 조회",
             description = "사용자 권한 - 전체공지와 사용자 동"

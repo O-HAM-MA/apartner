@@ -31,9 +31,12 @@ export default function CreateNoticePage() {
           fileIds,
         };
 
-        const { data, error } = await client.POST('/api/v1/notices/create', {
-          body: noticeCreateData,
-        });
+        const { data, error } = await client.POST(
+          '/api/v1/admin/notices/create',
+          {
+            body: noticeCreateData,
+          }
+        );
 
         if (error) {
           console.error('공지사항 작성 실패:', error);
@@ -42,10 +45,10 @@ export default function CreateNoticePage() {
         }
 
         if (data && typeof data === 'object' && 'noticeId' in data) {
-          router.push(`/notice/${data.noticeId}`);
+          router.push(`/admin/notices/${data.noticeId}`);
         } else {
           console.error('예상치 못한 응답 형식:', data);
-          router.push('/notice');
+          router.push('/admin/notices');
         }
       } catch (error) {
         console.error('공지사항 작성 실패:', error);
