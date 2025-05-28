@@ -37,7 +37,7 @@ public class checkRoleUtils {
 
         Set<Role> roles = currentUser.getRoles();
 
-        System.out.println("현재 유저 role들: ");
+        System.out.println("현재 유저 역할들: ");
         roles.forEach(role -> System.out.println(" - " + role.getValue()));
 
 
