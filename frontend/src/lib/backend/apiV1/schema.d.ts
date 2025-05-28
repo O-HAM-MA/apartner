@@ -475,26 +475,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/myInfos/update-profile-image": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 프로필 이미지 업데이트
-         * @description 사용자의 프로필 이미지를 업로드합니다.
-         */
-        post: operations["updateProfileImage"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+
     "/api/v1/myInfos/change-password": {
         parameters: {
             query?: never;
@@ -558,7 +539,9 @@ export interface paths {
          */
         post: operations["updateInspectionSchedule"];
         /**
-         * 해당 점검 내용을 지우고 싶을때 사용합니다, 그런데 지울 일이 있을까요?
+
+         * 해당 점검 내용을 지우고 싶을때 사용합니다
+
          * @description 해당 점검 일정을 삭제합니다
          */
         delete: operations["deleteInspectionSchedule"];
@@ -742,6 +725,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
+    "/api/v1/complaints/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 상태별 검색
+         * @description 민원 상태 별 조회
+         */
+        post: operations["searchComplaintByStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+
     "/api/v1/complaint-feedbacks": {
         parameters: {
             query?: never;
@@ -869,22 +874,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["resetPassword_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -901,22 +891,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/find-email": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["findEmail"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+
     "/api/v1/auth/check-phone": {
         parameters: {
             query?: never;
@@ -1223,22 +1198,7 @@ export interface paths {
         patch: operations["updateComplaintStatus"];
         trace?: never;
     };
-    "/api/v1/complaints/{complaintId}/inactive": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: operations["inactiveComplaint"];
-        trace?: never;
-    };
+
     "/api/v1/admin/users/{userId}/status": {
         parameters: {
             query?: never;
@@ -1406,6 +1366,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/vehicles/ForeignsRegistrationsWithStatus": {
         parameters: {
             query?: never;
@@ -1423,6 +1384,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/users/check-phonenum": {
         parameters: {
             query?: never;
@@ -1852,26 +1814,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaints/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 상태별 검색
-         * @description 민원 상태 별 조회
-         */
-        get: operations["searchComplaintByStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+
     "/api/v1/complaints/statistics/today": {
         parameters: {
             query?: never;
@@ -1892,26 +1835,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/complaints/statistics/today-rate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 어제자 민원 수 조회
-         * @description 어제자 민원 수를 조회
-         */
-        get: operations["getComplaintTodayRate"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+
     "/api/v1/complaints/statistics/status": {
         parameters: {
             query?: never;
@@ -2041,22 +1965,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/chats/category": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getChatroomsByCategory"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+
     "/api/v1/chats/all": {
         parameters: {
             query?: never;
@@ -3087,6 +2996,13 @@ export interface components {
              * @example CHECKED
              */
             result?: string;
+
+            /**
+             * @description 이름
+             * @example 홍길동
+             */
+            userName?: string;
+
         };
         /** @description 점검 일정에 대한 정보가 들어있는 DTO */
         InspectionRequestDto: {
@@ -3117,6 +3033,13 @@ export interface components {
              * @example 소방
              */
             type?: string;
+
+            /**
+             * @description 작성자
+             * @example 김아무개
+             */
+            userName?: string;
+
         };
         Apartment: {
             /** Format: int64 */
@@ -3226,7 +3149,7 @@ export interface components {
             /** Format: date-time */
             deletedAt?: string;
             profileImage?: components["schemas"]["Image"];
-            profileImageSafely?: components["schemas"]["Image"];
+
         };
         /** @description 이슈 등록/수정 요청 DTO */
         InspectionIssueDto: {
@@ -3245,6 +3168,13 @@ export interface components {
              *     아~ 피해가 너무 크다아아아아앜! / 으아아아아아아아!
              */
             description?: string;
+
+            /**
+             * @description 이슈 작성자
+             * @example 홍길동
+             */
+            userName?: string;
+
         };
         /** @description 공용시설 예약 요청 DTO */
         FacilityReservationRequestDto: {
@@ -3294,15 +3224,13 @@ export interface components {
             /** Format: int64 */
             id?: number;
             title?: string;
-            category?: string;
-            /** Format: int64 */
-            apartmentId?: number;
+
             hasNewMessage?: boolean;
             /** Format: int32 */
             userCount?: number;
             /** Format: date-time */
             createdAt?: string;
-            status?: string;
+
         };
         ApiResponseBoolean: {
             /** Format: int32 */
@@ -3358,37 +3286,12 @@ export interface components {
              */
             success?: boolean;
         };
-        /** @description 비밀번호 재설정 요청 DTO2 */
-        PasswordResetRequestDTO: {
-            /**
-             * @description 사용자 이메일
-             * @example user@example.com
-             */
-            email?: string;
-            /**
-             * @description 이메일 인증번호
-             * @example 123456
-             */
-            verificationCode?: string;
-            /**
-             * @description 새 비밀번호
-             * @example newPassword123!
-             */
-            password?: string;
-            /**
-             * @description 새 비밀번호 확인
-             * @example newPassword123!
-             */
-            confirmPassword?: string;
-        };
+
         LoginRequestDto: {
             email?: string;
             password?: string;
         };
-        FindEmailRequest: {
-            userName?: string;
-            phoneNum?: string;
-        };
+
         /** @description 휴대폰 번호 중복 확인 요청 DTO */
         PhoneCheckRequestDto: {
             /**
@@ -3502,10 +3405,12 @@ export interface components {
              */
             unitId?: number;
         };
+
         EntryRecordStatusUpdateRequestDto: {
             /** @enum {string} */
             status?: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
         };
+
         EntryRecordStatusDto: {
             /** Format: int64 */
             id?: number;
@@ -3524,8 +3429,10 @@ export interface components {
         VehicleRegistrationInfoDto: {
             /** Format: int64 */
             id?: number;
+
             /** Format: int64 */
             entryRecordId?: number;
+
             registerType?: string;
             applicantName?: string;
             apartmentName?: string;
@@ -3539,7 +3446,9 @@ export interface components {
             reason?: string;
             userPhone?: string;
             status?: string;
+
             vehicleStatus?: string;
+
         };
         ParkingStatusDto: {
             /** Format: int32 */
@@ -3587,21 +3496,25 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
+
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["NoticeSummaryResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+
             empty?: boolean;
         };
         PageableObject: {
@@ -3617,8 +3530,10 @@ export interface components {
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
+
             unsorted?: boolean;
+            sorted?: boolean;
+
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -3683,21 +3598,25 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
+
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["UserNoticeSummaryResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -3816,16 +3735,7 @@ export interface components {
              * @example Google
              */
             socialProvider?: string;
-            /**
-             * @description 아파트 우편번호
-             * @example 12345
-             */
-            zipcode?: string;
-            /**
-             * @description 아파트 주소
-             * @example 서울시 강남구 테헤란로 123
-             */
-            address?: string;
+
         };
         InspectionResponseDetailDto: {
             /** Format: int64 */
@@ -4057,23 +3967,35 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
-            /** Format: int64 */
-            totalElements?: number;
+
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["FacilityReservationManagerDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
             empty?: boolean;
         };
+        ComplaintHandlingRateResponseDto: {
+            /** Format: int64 */
+            totalCount?: number;
+            /** Format: int64 */
+            handledCount?: number;
+            /** Format: double */
+            handlingRate?: number;
+        };
+
         ApiResponseListChatroomDto: {
             /** Format: int32 */
             status?: number;
@@ -4121,8 +4043,7 @@ export interface components {
             deletedAt?: string;
             /** Format: date-time */
             lastLoginAt?: string;
-            /** Format: date-time */
-            modifiedAt?: string;
+
         };
         ApiResponsePageAdminUserListResponse: {
             /** Format: int32 */
@@ -4132,21 +4053,25 @@ export interface components {
             data?: components["schemas"]["PageAdminUserListResponse"];
         };
         PageAdminUserListResponse: {
-            /** Format: int64 */
-            totalElements?: number;
+
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminUserListResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+
             empty?: boolean;
         };
         AdminUserDetailResponse: {
@@ -4198,21 +4123,25 @@ export interface components {
             data?: components["schemas"]["PageObject"];
         };
         PageObject: {
-            /** Format: int64 */
-            totalElements?: number;
+
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: Record<string, never>[];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+
             empty?: boolean;
         };
         ApiResponsePageMenuDTO: {
@@ -4221,21 +4150,25 @@ export interface components {
             data?: components["schemas"]["PageMenuDTO"];
         };
         PageMenuDTO: {
-            /** Format: int64 */
-            totalElements?: number;
+
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["MenuDTO"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+
             empty?: boolean;
         };
         ApiResponseListMenuDTO: {
@@ -4254,75 +4187,85 @@ export interface components {
             data?: number[];
         };
         Page: {
-            /** Format: int64 */
-            totalElements?: number;
+
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: Record<string, never>[];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
             empty?: boolean;
         };
         PageBuildingResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["BuildingResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
             empty?: boolean;
         };
         PageUnitResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["UnitResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
             empty?: boolean;
         };
         PageAdminAccountResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminAccountResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+
             pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+
             empty?: boolean;
         };
         AdminGrade: {
@@ -5342,68 +5285,7 @@ export interface operations {
             };
         };
     };
-    updateProfileImage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    multipartFile: string;
-                };
-            };
-        };
-        responses: {
-            /** @description 이미지 업로드 성공 */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: string;
-                    };
-                };
-            };
-            /** @description 업로드 실패 */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: string;
-                    };
-                };
-            };
-            /** @description 인증 실패 (로그인 필요) */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: string;
-                    };
-                };
-            };
-            /** @description 사용자를 찾을 수 없음 */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: string;
-                    };
-                };
-            };
-        };
-    };
+
     changePassword: {
         parameters: {
             query?: never;
@@ -5557,7 +5439,11 @@ export interface operations {
     };
     deleteInspectionSchedule: {
         parameters: {
-            query?: never;
+
+            query: {
+                arg1: components["schemas"]["InspectionUpdateDto"];
+            };
+
             header?: never;
             path: {
                 id: number;
@@ -5603,7 +5489,11 @@ export interface operations {
     };
     compeleteInspection: {
         parameters: {
-            query?: never;
+
+            query: {
+                arg1: components["schemas"]["InspectionUpdateDto"];
+            };
+
             header?: never;
             path: {
                 id: number;
@@ -5813,6 +5703,30 @@ export interface operations {
             };
         };
     };
+
+    searchComplaintByStatus: {
+        parameters: {
+            query: {
+                status: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+
     saveComplaintFeedback: {
         parameters: {
             query?: never;
@@ -5927,8 +5841,7 @@ export interface operations {
         parameters: {
             query: {
                 title: string;
-                category: string;
-                apartmentId: number;
+
             };
             header?: never;
             path?: never;
@@ -6041,30 +5954,7 @@ export interface operations {
             };
         };
     };
-    resetPassword_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PasswordResetRequestDTO"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
+
     login: {
         parameters: {
             query?: never;
@@ -6089,30 +5979,7 @@ export interface operations {
             };
         };
     };
-    findEmail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FindEmailRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
+
     checkPhone: {
         parameters: {
             query?: never;
@@ -6561,18 +6428,22 @@ export interface operations {
     };
     updateEntryStatus: {
         parameters: {
+
             query?: never;
+
             header?: never;
             path: {
                 entryRecordId: number;
             };
             cookie?: never;
         };
+
         requestBody: {
             content: {
                 "application/json": components["schemas"]["EntryRecordStatusUpdateRequestDto"];
             };
         };
+
         responses: {
             /** @description OK */
             200: {
@@ -6609,28 +6480,7 @@ export interface operations {
             };
         };
     };
-    inactiveComplaint: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                complaintId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
+
     updateUserStatus: {
         parameters: {
             query?: never;
@@ -6847,26 +6697,7 @@ export interface operations {
             };
         };
     };
-    getRegistrations_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
-                };
-            };
-        };
-    };
+
     checkPhoneNum: {
         parameters: {
             query: {
@@ -7415,28 +7246,7 @@ export interface operations {
             };
         };
     };
-    searchComplaintByStatus: {
-        parameters: {
-            query: {
-                status: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
+
     getTodayStats: {
         parameters: {
             query?: never;
@@ -7457,26 +7267,7 @@ export interface operations {
             };
         };
     };
-    getComplaintTodayRate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
+
     getComplaintStatus: {
         parameters: {
             query?: never;
@@ -7512,7 +7303,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+
+                    "*/*": components["schemas"]["ComplaintHandlingRateResponseDto"];
+
                 };
             };
         };
@@ -7625,29 +7418,7 @@ export interface operations {
             };
         };
     };
-    getChatroomsByCategory: {
-        parameters: {
-            query: {
-                category: string;
-                apartmentId: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseListChatroomDto"];
-                };
-            };
-        };
-    };
+
     getAllChatrooms: {
         parameters: {
             query?: never;
@@ -7859,12 +7630,11 @@ export interface operations {
         parameters: {
             query: {
                 arg0?: string;
-                arg1?: string;
-                arg2?: string;
-                arg3?: string;
-                arg4?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg5?: "active" | "inactive" | "pending" | "withdrawn";
-                arg6: components["schemas"]["Pageable"];
+
+                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                arg2?: "active" | "inactive" | "pending" | "withdrawn";
+                arg3: components["schemas"]["Pageable"];
+
             };
             header?: never;
             path?: never;

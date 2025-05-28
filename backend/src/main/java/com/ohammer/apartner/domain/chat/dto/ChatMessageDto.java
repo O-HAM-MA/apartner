@@ -16,7 +16,8 @@ public record ChatMessageDto(
     String buildingName,
     String unitNumber,
     String timestamp,
-    Long messageId
+    Long messageId,
+    String clientId
 ) {
     public static ChatMessageDto from(Message message) {
         User user = message.getUser();
@@ -49,7 +50,8 @@ public record ChatMessageDto(
             bldgName,
             unitNum,
             message.getCreatedAt().toString(),
-            message.getId()
+            message.getId(),
+            message.getClientId()
         );
     }
 }

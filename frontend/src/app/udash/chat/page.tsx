@@ -12,7 +12,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 // 내부 컴포넌트: 컨텍스트를 사용하여 UI를 렌더링
 function ApartnerTalkContent() {
   const {
-    category,
+    categoryCode,
     connecting,
     connected,
     enterChatroomById,
@@ -21,16 +21,20 @@ function ApartnerTalkContent() {
     isInactiveChat,
     currentView,
     checkActiveChats,
+    showCategorySelection,
   } = useApartnerTalkContext();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [processedRoomId, setProcessedRoomId] = useState<string | null>(null);
   const isProcessingRef = useRef(false);
 
-  // 컴포넌트 마운트 시 활성화된 채팅방 확인
+  // 컴포넌트 마운트 시 최초 1회만 활성화된 채팅방 확인
+  // 이후 WebSocket 알림으로 상태 갱신
   useEffect(() => {
+    // 최초 1회 활성화된 채팅방 확인
     checkActiveChats();
-  }, [checkActiveChats]);
+    // 주기적인 폴링 없이 WebSocket 알림 기반으로 동작
+  }, []); // 빈 의존성 배열로 마운트 시 1회만 실행
 
   // URL 쿼리 파라미터에서 roomId 확인
   useEffect(() => {
@@ -46,37 +50,23 @@ function ApartnerTalkContent() {
       isProcessingRef.current = true;
 
       try {
-        console.log(
-          `[ApartnerTalkContent] 채팅방 진입 시도 (roomId: ${roomId})`
-        );
         const success = await enterChatroomById(Number(roomId));
 
-        // 처리 완료 표시
         setProcessedRoomId(roomId);
 
         if (success) {
-          console.log(
-            `[ApartnerTalkContent] 채팅방 진입 성공 (roomId: ${roomId}, status: ${roomStatus})`
-          );
-
-          // 비활성화된 채팅방인 경우 추가 메시지 표시 (필요시)
           if (roomStatus === "INACTIVE") {
-            console.log(
-              `[ApartnerTalkContent] 비활성화된 채팅방입니다. 메시지만 표시됩니다.`
-            );
           }
         } else {
-          // 채팅방 접근 실패 (예: 존재하지 않는 채팅방, 권한 없음 등)
-          console.log(
-            `[ApartnerTalkContent] 채팅방 접근 실패 (roomId: ${roomId})`
+          alert(
+            "접근할 수 없는 채팅방입니다. 본인이 생성한 채팅방만 접근 가능합니다."
           );
+          showCategorySelection();
           router.replace("/udash/chat", { scroll: false });
         }
       } catch (error) {
-        console.error(
-          `[ApartnerTalkContent] 채팅방 진입 오류 (roomId: ${roomId}):`,
-          error
-        );
+        alert("채팅방 접근 중 오류가 발생했습니다.");
+        showCategorySelection();
         router.replace("/udash/chat", { scroll: false });
       } finally {
         isProcessingRef.current = false;
@@ -84,7 +74,14 @@ function ApartnerTalkContent() {
     };
 
     handleRoomEntry();
-  }, [searchParams, enterChatroomById, router, processedRoomId, roomStatus]);
+  }, [
+    searchParams,
+    enterChatroomById,
+    router,
+    processedRoomId,
+    roomStatus,
+    showCategorySelection,
+  ]);
 
   // 화면 결정 로직
   const renderContent = () => {

@@ -41,17 +41,20 @@ export default function InspectionEditPage({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [types, setTypes] = useState<{ type_id: number; typeName: string }[]>([]);
+  const [typeLoading, setTypeLoading] = useState(true);
+  const [typeError, setTypeError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
-    type: "소방",
+    type: "",
     startDate: "",
     startTime: "",
     endDate: "",
     endTime: "",
     assignee: "",
     detail: "",
-    result: "NOTYET",
+    result: "",
   });
 
   const [editorContent, setEditorContent] = useState("");
@@ -59,53 +62,91 @@ export default function InspectionEditPage({
   // Load existing inspection data
   useEffect(() => {
     const loadInspectionData = async () => {
+      setIsLoading(true);
       try {
-        // Mock API call for demo purposes
-        console.log(`Loading inspection data for ID: ${params.id}`);
-
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Mock data (in real app, this would come from API)
-        const mockData = {
-          check_id: params.id,
-          title: "엘레베이터 1호기 정기 점검",
-          type: "소방",
-          start_at: "2023-05-15 09:00",
-          finish_at: "2023-05-15 11:30",
-          assignee: "김기술",
-          detail:
-            "엘레베이터 1호기에 대한 정기 점검을 실시하였습니다. 점검 결과, 모든 기능이 정상적으로 작동하고 있으며 안전 기준을 충족하고 있습니다.",
-          result: "CHECKED",
-        };
-
-        // Parse date and time
-        const startDateTime = new Date(mockData.start_at);
-        const endDateTime = new Date(mockData.finish_at);
-
-        setFormData({
-          title: mockData.title,
-          type: mockData.type,
-          startDate: startDateTime.toISOString().split("T")[0],
-          startTime: startDateTime.toTimeString().slice(0, 5),
-          endDate: endDateTime.toISOString().split("T")[0],
-          endTime: endDateTime.toTimeString().slice(0, 5),
-          assignee: mockData.assignee,
-          detail: mockData.detail,
-          result: mockData.result,
+        const id = params.id;
+        // 실제 API 호출로 변경
+        const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${id}`, {
+          credentials: "include", // 쿠키 포함 설정 추가
         });
 
-        setEditorContent(mockData.detail);
-      } catch (error) {
+        if (!res.ok) {
+          let errorMessage = "점검 데이터를 불러오지 못했습니다.";
+          try {
+            const text = await res.text();
+            if (text) {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorMessage;
+            }
+          } catch (e) {
+            // 파싱 에러 무시
+          }
+          throw new Error(errorMessage);
+        }
+
+        const data = await res.json();
+
+        // API 응답 데이터를 formData 상태에 맞게 파싱 및 설정
+        const startDateTime = new Date(data.startAt);
+        const endDateTime = new Date(data.finishAt);
+
+        setFormData({
+          title: data.title || "",
+          type: data.typeName || "",
+          startDate: data.startAt ? startDateTime.toISOString().split("T")[0] : "",
+          startTime: data.startAt ? startDateTime.toTimeString().slice(0, 5) : "",
+          endDate: data.finishAt ? endDateTime.toISOString().split("T")[0] : "",
+          endTime: data.finishAt ? endDateTime.toTimeString().slice(0, 5) : "",
+          assignee: data.userName || "",
+          detail: data.detail || "",
+          result: data.result || "",
+        });
+
+        setEditorContent(data.detail || "");
+      } catch (error: any) {
         console.error("Error loading inspection data:", error);
-        alert("점검 데이터를 불러오는 중 오류가 발생했습니다.");
+        alert(error.message || "점검 데이터를 불러오는 중 오류가 발생했습니다.");
+        // 에러 발생 시 폼 초기화 또는 다른 처리 필요
+        setFormData({
+          title: "",
+          type: "",
+          startDate: "",
+          startTime: "",
+          endDate: "",
+          endTime: "",
+          assignee: "",
+          detail: "",
+          result: "",
+        });
+        setEditorContent("");
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadInspectionData();
+    if (params.id) loadInspectionData();
   }, [params.id]);
+
+  // 점검 분류 목록 불러오기 (등록 페이지에서 복사)
+  useEffect(() => {
+    async function fetchTypes() {
+      setTypeLoading(true);
+      setTypeError(null);
+      try {
+        const res = await fetch("http://localhost:8090/api/v1/inspection/type", {
+          credentials: "include", // 쿠키 포함 설정 추가
+        });
+        if (!res.ok) throw new Error("분류 데이터를 불러오지 못했습니다.");
+        const data = await res.json();
+        setTypes(data);
+      } catch (e: any) {
+        setTypeError(e.message || "알 수 없는 에러가 발생했습니다.");
+      } finally {
+        setTypeLoading(false);
+      }
+    }
+    fetchTypes();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -126,27 +167,50 @@ export default function InspectionEditPage({
     setIsSubmitting(true);
 
     try {
-      // Combine date and time fields
-      const formattedData = {
-        ...formData,
-        start_at: `${formData.startDate} ${formData.startTime}`,
-        finish_at: `${formData.endDate} ${formData.endTime}`,
-        check_id: params.id,
+      // Combine date and time fields (ISO 8601 형식)
+      const startAt = `${formData.startDate}T${formData.startTime}`;
+      const finishAt = `${formData.endDate}T${formData.endTime}`;
+
+      const requestBody = {
+        startAt,
+        finishAt,
+        title: formData.title,
+        detail: formData.detail,
+        type: formData.type,
+        result: formData.result,
       };
 
-      // Mock API call for demo purposes
-      console.log("Updating inspection data:", formattedData);
+      // API 호출 (PUT 또는 PATCH 사용)
+      const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${params.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        credentials: "include",
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!res.ok) {
+        let errorMessage = "점검 기록 수정에 실패했습니다.";
+        try {
+          const text = await res.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (e) {
+          // 파싱 에러 무시
+        }
+        throw new Error(errorMessage);
+      }
 
       alert("점검 기록이 성공적으로 수정되었습니다.");
 
-      // Navigate back to inspection detail page
-      router.push("/inspection-detail");
-    } catch (error) {
+      // 수정 완료 후 상세 페이지로 이동
+      router.push(`/udash/inspections/${params.id}`);
+    } catch (error: any) {
       console.error("Error updating inspection:", error);
-      alert("점검 수정 중 오류가 발생했습니다.");
+      alert(error.message || "점검 수정 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -156,7 +220,7 @@ export default function InspectionEditPage({
     router.push(`/udash/inspections/${params.id}`);
   };
 
-  if (isLoading) {
+  if (isLoading || typeLoading) {
     return (
       <div className="flex min-h-screen bg-background overflow-hidden">
         <div className="flex flex-1 flex-col bg-background">
@@ -165,8 +229,24 @@ export default function InspectionEditPage({
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto mb-4"></div>
                 <p className="text-muted-foreground">
-                  점검 데이터를 불러오는 중...
+                  {isLoading ? "점검 데이터를 불러오는 중..." : "분류 데이터를 불러오는 중..."}
                 </p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (typeError) {
+    return (
+      <div className="flex min-h-screen bg-background overflow-hidden">
+        <div className="flex flex-1 flex-col bg-background">
+          <main className="flex-1 p-8 overflow-y-auto bg-background">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center text-red-500">
+                <p>{typeError}</p>
               </div>
             </div>
           </main>
@@ -197,8 +277,7 @@ export default function InspectionEditPage({
           {/* Back Button */}
           <div className="mb-6">
             <Link
-              href="/udash/inspections/[id]"
-              as={`/udash/inspections/${params.id}`}
+              href={`/udash/inspections/${params.id}`}
             >
               <Button
                 variant="outline"
@@ -243,7 +322,7 @@ export default function InspectionEditPage({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label
                           htmlFor="type"
@@ -251,23 +330,27 @@ export default function InspectionEditPage({
                         >
                           점검 분류
                         </Label>
-                        <Select
-                          value={formData.type}
-                          onValueChange={(value) =>
-                            handleSelectChange("type", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-1 w-full">
-                            <SelectValue placeholder="점검 분류 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="수도">수도</SelectItem>
-                            <SelectItem value="정수">정수</SelectItem>
-                            <SelectItem value="소방">소방</SelectItem>
-                            <SelectItem value="가스">가스</SelectItem>
-                            <SelectItem value="전기">전기</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {typeLoading ? (
+                          <div className="text-muted-foreground">로딩 중...</div>
+                        ) : typeError ? (
+                          <div className="text-red-500">{typeError}</div>
+                        ) : (
+                          <Select
+                            value={formData.type}
+                            onValueChange={(value) =>
+                              handleSelectChange("type", value)
+                            }
+                          >
+                            <SelectTrigger className="mt-1 w-full">
+                              <SelectValue placeholder="점검 분류 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {types.map((t) => (
+                                <SelectItem key={t.type_id} value={t.typeName}>{t.typeName}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                       <div>
                         <Label
@@ -276,38 +359,9 @@ export default function InspectionEditPage({
                         >
                           담당자
                         </Label>
-                        <Input
-                          id="assignee"
-                          name="assignee"
-                          value={formData.assignee}
-                          onChange={handleChange}
-                          placeholder="담당자 이름"
-                          className="mt-1 w-full"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label
-                          htmlFor="result"
-                          className="text-sm font-medium text-muted-foreground"
-                        >
-                          점검 상태
-                        </Label>
-                        <Select
-                          value={formData.result}
-                          onValueChange={(value) =>
-                            handleSelectChange("result", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-1 w-full">
-                            <SelectValue placeholder="점검 상태 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="NOTYET">예정됨</SelectItem>
-                            <SelectItem value="PENDING">진행 중</SelectItem>
-                            <SelectItem value="CHECKED">정상 완료</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="mt-1 w-full px-3 py-2 border border-border rounded bg-muted text-foreground">
+                          {formData.assignee || "-"}
+                        </div>
                       </div>
                     </div>
 
@@ -373,6 +427,32 @@ export default function InspectionEditPage({
                         </div>
                       </div>
                     </div>
+
+                    {/* 점검 결과 (Select) */}
+                    <div>
+                      <Label
+                        htmlFor="result"
+                        className="text-sm font-medium text-muted-foreground"
+                      >
+                        점검 결과
+                      </Label>
+                      <Select
+                        value={formData.result}
+                        onValueChange={(value) =>
+                          handleSelectChange("result", value)
+                        }
+                      >
+                        <SelectTrigger className="mt-1 w-full">
+                          <SelectValue placeholder="점검 결과 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CHECKED">정상 완료</SelectItem>
+                          <SelectItem value="PENDING">진행 중</SelectItem>
+                          <SelectItem value="NOTYET">예정됨</SelectItem>
+                          <SelectItem value="ISSUE">이슈 있음</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
@@ -381,7 +461,7 @@ export default function InspectionEditPage({
                   <h3 className="text-lg font-semibold text-card-foreground mb-4">
                     점검 내용
                   </h3>
-                  <div className="min-h-[400px]">
+                  <div className="min-h-[400px] border border-border rounded-lg">
                     <TiptapEditor
                       content={editorContent}
                       onChange={handleEditorChange}
@@ -390,28 +470,27 @@ export default function InspectionEditPage({
                 </div>
               </div>
 
-              {/* Right Column - Actions and Help (1/3 width on large screens) */}
+              {/* Right Column - Help and Actions (1/3 width on large screens) */}
               <div className="space-y-6">
                 {/* Action Buttons */}
                 <div className="bg-card rounded-lg border border-border p-6">
                   <h3 className="text-lg font-semibold text-card-foreground mb-4">
                     작업
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-5">
                     <Button
                       type="submit"
                       className="w-full bg-pink-500 hover:bg-pink-600 text-white flex items-center justify-center gap-2 dark:bg-pink-600 dark:hover:bg-pink-700 dark:text-white"
                       disabled={isSubmitting}
                     >
                       <Save size={16} />
-                      {isSubmitting ? "저장 중..." : "변경사항 저장"}
+                      {isSubmitting ? "저장 중..." : "점검 수정하기"}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full border-border text-foreground hover:bg-secondary flex items-center justify-center gap-2"
                       onClick={handleCancel}
-                      disabled={isSubmitting}
                     >
                       <X size={16} />
                       취소
@@ -422,35 +501,47 @@ export default function InspectionEditPage({
                 {/* Help Information */}
                 <div className="bg-card rounded-lg border border-border p-6">
                   <h3 className="text-lg font-semibold text-card-foreground mb-4">
-                    수정 안내
+                    도움말
                   </h3>
                   <div className="space-y-3 text-sm text-muted-foreground">
-                    <p className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 mt-0.5 text-green-600 dark:text-green-400" />
-                      <span>
-                        <strong className="text-foreground">점검 상태</strong>:
-                        현재 점검의 진행 상황을 업데이트할 수 있습니다.
-                      </span>
-                    </p>
                     <p className="flex items-start gap-2">
                       <Tag className="h-4 w-4 mt-0.5 text-muted-foreground" />
                       <span>
                         <strong className="text-foreground">점검 분류</strong>:
-                        점검 유형을 변경할 수 있습니다.
+                        점검의 유형을 선택하세요. 수도, 정수, 소방, 가스, 전기
+                        중에서 선택할 수 있습니다.
+                      </span>
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <Play className="h-4 w-4 mt-0.5 text-green-600 dark:text-green-400" />
+                      <span>
+                        <strong className="text-foreground">점검 시작</strong>:
+                        점검이 시작되는 날짜와 시간을 입력하세요.
+                      </span>
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <Square className="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
+                      <span>
+                        <strong className="text-foreground">점검 종료</strong>:
+                        점검이 종료될 것으로 예상되는 날짜와 시간을 입력하세요.
                       </span>
                     </p>
                     <p className="flex items-start gap-2">
                       <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
                       <span>
-                        <strong className="text-foreground">담당자 변경</strong>
-                        : 점검 담당자를 다른 사람으로 변경할 수 있습니다.
+                        <strong className="text-foreground">담당자</strong>:
+                        점검을 담당하는 사람의 이름을 입력하세요.
                       </span>
                     </p>
-                    <div className="border-t border-border pt-3 mt-3">
-                      <p className="text-amber-600 dark:text-amber-400 font-medium text-xs">
-                        ⚠️ 변경사항은 저장 후 즉시 적용됩니다.
-                      </p>
-                    </div>
+                    {/* 점검 결과 도움말 추가 */}
+                    <p className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <span>
+                        <strong className="text-foreground">점검 결과</strong>:
+                        점검 결과를 선택하세요. 정상 완료, 진행 중, 예정됨,
+                        이슈 있음 중에서 선택할 수 있습니다.
+                      </span>
+                    </p>
                   </div>
                 </div>
               </div>

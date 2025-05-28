@@ -13,7 +13,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ChatInterface: React.FC = () => {
   const {
-    category,
+    categoryCode,
+    getCategoryDisplayName,
     messages,
     connecting,
     connected,
@@ -164,13 +165,16 @@ const ChatInterface: React.FC = () => {
   // 채팅방 상태 메시지
   const getChatStatusMessage = () => {
     if (isInactiveChat()) {
-      return "이 대화는 종료되었습니다. 메시지를 보낼 수 없으며 이전 메시지만 확인 가능합니다.";
+      return "메시지를 보낼 수 없으며 이전 메시지만 확인 가능합니다.";
     }
     if (isActiveChat() && !connected) {
       return "서버에 연결 중입니다...";
     }
     return null;
   };
+
+  // 현재 카테고리 이름 가져오기
+  const categoryDisplayName = getCategoryDisplayName();
 
   return (
     <div className="flex flex-col h-full">
@@ -184,7 +188,9 @@ const ChatInterface: React.FC = () => {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-lg font-semibold">{category || ""} 문의</h2>
+          <h2 className="text-lg font-semibold">
+            {categoryDisplayName || categoryCode || ""} 문의
+          </h2>
         </div>
         <div className="flex items-center gap-2">
           {isActiveChat() && (
@@ -409,7 +415,7 @@ const ChatInterface: React.FC = () => {
         </Button>
         {isInactiveChat() ? (
           <div className="flex-1 flex items-center justify-center bg-gray-100 rounded h-10 px-3 text-gray-500">
-            이 채팅방은 비활성화되어 메시지를 보낼 수 없습니다.
+            종료된 대화입니다.
           </div>
         ) : (
           <>

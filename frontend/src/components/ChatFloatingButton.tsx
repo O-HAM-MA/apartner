@@ -22,6 +22,7 @@ function ChatHistory() {
   useEffect(() => {
     async function loadRooms() {
       try {
+        // 모든 채팅방(ACTIVE + INACTIVE 모두) 조회
         const allRooms = await getUserChatrooms();
         // 생성시간 내림차순 정렬
         allRooms.sort(
@@ -46,6 +47,24 @@ function ChatHistory() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 채팅방 상태에 따른 뱃지 렌더링
+  const renderStatusBadge = (status: string) => {
+    if (status === "ACTIVE") {
+      return (
+        <span className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+          진행중
+        </span>
+      );
+    } else if (status === "INACTIVE") {
+      return (
+        <span className="ml-2 text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full">
+          종료됨
+        </span>
+      );
+    }
+    return null;
   };
 
   return (
@@ -77,13 +96,18 @@ function ChatHistory() {
           rooms.map((room) => (
             <Button
               key={room.id}
-              className="w-full mb-1 justify-between flex"
+              className={`w-full mb-1 justify-between flex items-center ${
+                room.status === "INACTIVE" ? "opacity-70" : ""
+              }`}
               variant="ghost"
               onClick={() => handleEnterRoom(room.id)}
             >
-              <span>
-                [{room.category}] {room.title}
-              </span>
+              <div className="flex items-center">
+                <span>
+                  {room.categoryDisplayName} {room.title}
+                </span>
+                {renderStatusBadge(room.status)}
+              </div>
               <span className="text-xs text-gray-400">
                 {room.createdAt && new Date(room.createdAt).toLocaleString()}
               </span>
@@ -181,7 +205,16 @@ function ChatFloatingButtonWithContext({
   onClose: () => void;
   onToggle: () => void;
 }) {
-  const { hasUnreadMessages, markMessagesAsRead } = useApartnerTalkContext();
+  const {
+    hasUnreadMessages,
+    markMessagesAsRead,
+    checkActiveChats,
+    hasActiveChat,
+    activeChat,
+    currentView,
+    enterActiveChat,
+    showChatInterface,
+  } = useApartnerTalkContext();
 
   // 버튼 클릭 시 알림 상태 초기화
   const handleButtonClick = () => {
@@ -190,6 +223,27 @@ function ChatFloatingButtonWithContext({
     }
     onToggle();
   };
+
+  // 컴포넌트 마운트 시 최초 1회만 활성화된 채팅방 확인
+  // WebSocket 기반 푸시 알림으로 대체, 주기적인 폴링 없음
+  useEffect(() => {
+    const initializeChat = async () => {
+      // 최초 1회만 활성화된 채팅방 확인 - 이후 WebSocket 알림으로 자동 갱신
+      await checkActiveChats();
+
+      // 활성화된 채팅방이 있고 카드를 처음 열었을 때 채팅 인터페이스로 바로 이동
+      if (hasActiveChat && activeChat && currentView === "NONE" && isOpen) {
+        console.log("[ChatFloatingButton] 활성화된 채팅방으로 자동 진입");
+        enterActiveChat();
+        showChatInterface();
+      }
+    };
+
+    // 컴포넌트가 마운트되었을 때 한 번만 실행
+    if (isOpen) {
+      initializeChat();
+    }
+  }, [isOpen]); // 의존성 배열 간소화 - 초기 로드와 카드 열림 시에만 실행
 
   return (
     <>

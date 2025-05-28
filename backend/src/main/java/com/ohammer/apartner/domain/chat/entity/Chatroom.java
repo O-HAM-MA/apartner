@@ -20,8 +20,8 @@ public class Chatroom extends BaseEntity {
     @Column(name = "title", length = 50)
     String title; // 채팅방 제목
 
-    @Column(name = "category", length = 20)
-    String category; // 채팅 카테고리 (민원, 건의사항, 수리/정비, 보안/안전)
+    @Column(name = "category_code", length = 10, nullable = false)
+    String categoryCode; // 채팅 카테고리 코드 (A01, A02, A03, A04)
 
     @Column(name = "apartment_id")
     Long apartmentId; // 아파트 ID

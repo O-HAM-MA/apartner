@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type React from "react";
 
 import {
@@ -26,6 +26,8 @@ import {
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import TipTapEditor from "@/components/editor/TiptapEditor";
+import { useGlobalLoginMember } from "@/auth/loginMember";
+import { useRouter } from "next/navigation";
 
 interface InspectionFormProps {
   onSubmit?: (data: any) => void;
@@ -36,6 +38,8 @@ export default function InspectionForm({
   onSubmit,
   onCancel,
 }: InspectionFormProps) {
+  const { loginMember } = useGlobalLoginMember();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
     type: "소방",
@@ -49,6 +53,9 @@ export default function InspectionForm({
 
   const [editorContent, setEditorContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [types, setTypes] = useState<{ type_id: number; typeName: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -69,27 +76,56 @@ export default function InspectionForm({
     setIsSubmitting(true);
 
     try {
-      // Combine date and time fields
-      const formattedData = {
-        ...formData,
-        start_at: `${formData.startDate} ${formData.startTime}`,
-        finish_at: `${formData.endDate} ${formData.endTime}`,
-        // Add other necessary fields for API
-        result: "NOTYET", // Default status for new inspections
+      // 날짜와 시간 합치기 (ISO 8601 형식)
+      const startAt = `${formData.startDate}T${formData.startTime}`;
+      const finishAt = `${formData.endDate}T${formData.endTime}`;
+
+      // HTML에서 텍스트 추출
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(formData.detail, 'text/html');
+      const plainTextDetail = doc.body.textContent || "";
+
+      const requestBody = {
+        startAt,
+        finishAt,
+        title: formData.title,
+        detail: plainTextDetail,
+        type: formData.type,
+        userName: formData.assignee,
       };
 
-      // Here you would typically call your API
-      console.log("Submitting inspection data:", formattedData);
+      // API 호출
+      const res = await fetch("http://localhost:8090/api/v1/inspection/manager/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        credentials: "include",
+      });
 
-      // Call the onSubmit callback if provided
-      if (onSubmit) {
-        onSubmit(formattedData);
+      if (!res.ok) {
+        let errorMessage = "점검 등록에 실패했습니다.";
+        try {
+          const text = await res.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (e) {
+          // 파싱 에러 무시
+        }
+        throw new Error(errorMessage);
       }
 
-      // Redirect or show success message
-    } catch (error) {
+      // 성공 처리
+      if (onSubmit) {
+        onSubmit(requestBody);
+      }
+      router.push("/udash/inspections?success=1");
+    } catch (error: any) {
       console.error("Error submitting inspection:", error);
-      alert("점검 등록 중 오류가 발생했습니다.");
+      alert(error.message || "점검 등록 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -127,6 +163,32 @@ export default function InspectionForm({
         };
     }
   };
+
+  useEffect(() => {
+    async function fetchTypes() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("http://localhost:8090/api/v1/inspection/type", {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("분류 데이터를 불러오지 못했습니다.");
+        const data = await res.json();
+        setTypes(data);
+      } catch (e: any) {
+        setError(e.message || "알 수 없는 에러가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTypes();
+  }, []);
+
+  useEffect(() => {
+    if (loginMember && loginMember.userName) {
+      setFormData((prev) => ({ ...prev, assignee: loginMember.userName }));
+    }
+  }, [loginMember]);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -200,23 +262,27 @@ export default function InspectionForm({
                         >
                           점검 분류
                         </Label>
-                        <Select
-                          value={formData.type}
-                          onValueChange={(value) =>
-                            handleSelectChange("type", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-1 w-full">
-                            <SelectValue placeholder="점검 분류 선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="수도">수도</SelectItem>
-                            <SelectItem value="정수">정수</SelectItem>
-                            <SelectItem value="소방">소방</SelectItem>
-                            <SelectItem value="가스">가스</SelectItem>
-                            <SelectItem value="전기">전기</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {loading ? (
+                          <div className="text-muted-foreground mb-4">로딩 중...</div>
+                        ) : error ? (
+                          <div className="text-red-500 mb-4">{error}</div>
+                        ) : (
+                          <Select
+                            value={formData.type}
+                            onValueChange={(value) =>
+                              handleSelectChange("type", value)
+                            }
+                          >
+                            <SelectTrigger className="mt-1 w-full">
+                              <SelectValue placeholder="점검 분류 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {types.map((t) => (
+                                <SelectItem key={t.type_id} value={t.typeName}>{t.typeName}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                       <div>
                         <Label
@@ -225,15 +291,9 @@ export default function InspectionForm({
                         >
                           담당자
                         </Label>
-                        <Input
-                          id="assignee"
-                          name="assignee"
-                          value={formData.assignee}
-                          onChange={handleChange}
-                          placeholder="담당자 이름"
-                          className="mt-1 w-full"
-                          required
-                        />
+                        <div className="mt-1 w-full px-3 py-2 border border-border rounded bg-muted text-foreground">
+                          {formData.assignee || "-"}
+                        </div>
                       </div>
                     </div>
 

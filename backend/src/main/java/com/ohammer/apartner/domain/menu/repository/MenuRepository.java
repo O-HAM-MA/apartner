@@ -23,6 +23,6 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
     
     Page<Menu> findAll(Pageable pageable);
     
-    @Query("SELECT m FROM Menu m ORDER BY m.id DESC")
+    @Query("SELECT m FROM Menu m ORDER BY m.id ASC")
     List<Menu> findAllMenusOrderById();
 } 

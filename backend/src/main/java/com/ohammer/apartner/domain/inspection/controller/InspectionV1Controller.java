@@ -5,19 +5,22 @@ import com.ohammer.apartner.domain.inspection.dto.InspectionResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.dto.InspectionUpdateDto;
 import com.ohammer.apartner.domain.inspection.entity.Inspection;
 import com.ohammer.apartner.domain.inspection.service.InspectionService;
+import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.global.dto.ApiResponse;
 import com.ohammer.apartner.security.CustomUserDetailsService;
 import com.ohammer.apartner.security.OAuth.CustomRequest;
 import com.ohammer.apartner.security.jwt.JwtTokenizer;
+import com.ohammer.apartner.security.utils.SecurityUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/inspection/manager")
@@ -51,7 +54,7 @@ public class InspectionV1Controller {
         try {
             inspectionService.updateInspection(id, dto);
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
 
         return ResponseEntity.ok().build();
@@ -75,20 +78,20 @@ public class InspectionV1Controller {
 
     //전체 불러오기
     //그냥 여기서 제목만 불러와도 되는게 아닌가
-    //TODO 매니저랑 유저에 대한 컨트롤러 각각 나누기
     @GetMapping("")
     @Operation(
             summary = "점검 일정을 가져옵니다",
-            description = "점검 일정 목록을 가져옵니다, 주호야 페이징 처리해라"
+            description = "점검 일정 목록을 가져옵니다"
     )
     public ResponseEntity<List<InspectionResponseDetailDto>> showAllInspections() {
+        User user = SecurityUtil.getCurrentUser();
         return ResponseEntity.ok(inspectionService.showAllInspections());
     }
 
     //상세 보기 -> 추가 내용 볼려고?
     @GetMapping("/{id}")
     @Operation(
-            summary = "점검 일정에 대한 상세 내용을 봅니다, 그래봤자 detail 추가된거 뿐이지만요",
+            summary = "점검 일정에 대한 상세 내용을 봅니다",
             description = "해당 점검 일정에 대한 상세 내용을 볼 수 있음"
     )
     public ResponseEntity<InspectionResponseDetailDto> showInspection(@PathVariable(name = "id") Long id) {
@@ -104,11 +107,16 @@ public class InspectionV1Controller {
     //제거
     @DeleteMapping("/{id}")
     @Operation(
-            summary = "해당 점검 내용을 지우고 싶을때 사용합니다, 그런데 지울 일이 있을까요?",
+            summary = "해당 점검 내용을 지우고 싶을때 사용합니다",
             description = "해당 점검 일정을 삭제합니다"
     )
     public ResponseEntity<?> deleteInspectionSchedule(@PathVariable("id") Long id) {
-        inspectionService.deleteInspection(id);
+        try {
+            inspectionService.deleteInspection(id);
+        } catch (RuntimeException e) {
+            ResponseEntity.badRequest().body("삭제에 실패했습니다");
+        }
+
         return ResponseEntity.ok().build();
     }
 }
