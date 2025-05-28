@@ -120,8 +120,8 @@ export default function AdminVehicleManagement() {
                     </p>
                     <p className="text-sm">
                       <span className="text-gray-500">방문지:</span>{" "}
-                      {vehicle.apartmentName} {vehicle.buildingName}{" "}
-                      {vehicle.unitName}
+                      {vehicle.apartmentName} {vehicle.buildingName}동{" "}
+                      {vehicle.unitName}호
                     </p>
                   </div>
                   <div className="flex justify-between gap-2">

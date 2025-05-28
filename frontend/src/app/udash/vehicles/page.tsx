@@ -813,7 +813,7 @@ export default function VehicleManagement() {
                             type: e.target.value,
                           })
                         }
-                        placeholder="예: 승용차"
+                        placeholder="예 : 소나타"
                       />
                     </div>
                   </div>
@@ -873,7 +873,7 @@ export default function VehicleManagement() {
                             prev ? { ...prev, type: e.target.value } : null
                           )
                         }
-                        placeholder="예: 승용차"
+                        placeholder="예: 소나타"
                       />
                     </div>
                   </div>

@@ -150,9 +150,7 @@ export default function AdminVehicleManagement() {
               <span className="text-gray-500 text-xl"></span>
             </div>
             <div>
-              <h2 className="font-bold text-lg text-[#FF4081]">
-                
-              </h2>
+              <h2 className="font-bold text-lg text-[#FF4081]"></h2>
               <p className="text-sm text-gray-600"></p>
             </div>
           </div>
@@ -266,8 +264,8 @@ export default function AdminVehicleManagement() {
                     </p>
                     <p className="text-sm">
                       <span className="text-gray-500">방문지:</span>{" "}
-                      {vehicle.apartmentName} {vehicle.buildingName}{" "}
-                      {vehicle.unitName}
+                      {vehicle.apartmentName} {vehicle.buildingName}동{" "}
+                      {vehicle.unitName}호
                     </p>
                   </div>
                   <div className="flex justify-between gap-2">
