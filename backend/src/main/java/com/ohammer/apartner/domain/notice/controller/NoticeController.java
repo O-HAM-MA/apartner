@@ -143,4 +143,15 @@ public class NoticeController {
         );
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/notices/user/{noticeId}")
+    @Operation(
+            summary = "공지사항 게시글 조회 [사용자]",
+            description = "게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일"
+    )
+    public ResponseEntity<NoticeReadResponseDto> readNoticeUser(@PathVariable(name = "noticeId") Long noticeId) {
+        NoticeReadResponseDto noticeReadResponseDto = noticeService.readNotice(noticeId);
+
+        return ResponseEntity.ok(noticeReadResponseDto);
+    }
 }

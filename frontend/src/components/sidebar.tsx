@@ -67,7 +67,7 @@ const Sidebar = () => {
     {
       href: '/udash/facilities',
       icon: Building,
-      label: '공용시설 예약/확인',
+      label: '공용시설',
     },
     { href: '/udash/vehicles', icon: UserCircle, label: '차량 관리' },
     {
