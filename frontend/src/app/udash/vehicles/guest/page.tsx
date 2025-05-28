@@ -43,6 +43,7 @@ export default function GuestVehicleRegistration() {
   const itemsPerPage = 5;
 
   const [isEnterDialogOpen, setIsEnterDialogOpen] = useState(false);
+  const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] =
     useState<VehicleRegistrationInfoDto | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -100,6 +101,28 @@ export default function GuestVehicleRegistration() {
     },
   });
 
+  // 출차 mutation 추가
+  const exitMutation = useMutation({
+    mutationFn: (data: { phone: string }) => {
+      return client.POST("/api/v1/entry-records/exit", {
+        body: data,
+      });
+    },
+    onSuccess: () => {
+      alert("출차가 완료되었습니다.");
+      setIsExitDialogOpen(false);
+      setPhoneNumber("");
+      // 데이터 리프레시
+      queryClient.invalidateQueries({
+        queryKey: ["vehicles", "recent-foreigns"],
+      });
+    },
+    onError: (error) => {
+      console.error("출차 실패:", error);
+      alert("출차에 실패했습니다.");
+    },
+  });
+
   // 날짜 포맷 함수
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ko-KR", {
@@ -150,6 +173,15 @@ export default function GuestVehicleRegistration() {
     enterMutation.mutate({ phone: phoneNumber });
   };
 
+  // 출차 처리 함수
+  const handleExit = () => {
+    if (!phoneNumber) {
+      alert("전화번호를 입력해주세요.");
+      return;
+    }
+    exitMutation.mutate({ phone: phoneNumber });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -174,6 +206,7 @@ export default function GuestVehicleRegistration() {
                         <th className="text-left p-4 font-medium">상태</th>
                         <th className="text-left p-4 font-medium">등록시간</th>
                         <th className="text-left p-4 font-medium">입차</th>
+                        <th className="text-left p-4 font-medium">출차</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -190,16 +223,28 @@ export default function GuestVehicleRegistration() {
                           </td>
                           <td className="p-4">
                             {vehicle.status === "AGREE" && (
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setIsEnterDialogOpen(true);
-                                  setSelectedVehicle(vehicle);
-                                }}
-                                className="bg-blue-500 hover:bg-blue-600 text-white"
-                              >
-                                입차
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    setIsEnterDialogOpen(true);
+                                    setSelectedVehicle(vehicle);
+                                  }}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                                >
+                                  입차
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    setIsExitDialogOpen(true);
+                                    setSelectedVehicle(vehicle);
+                                  }}
+                                  className="bg-red-500 hover:bg-red-600 text-white"
+                                >
+                                  출차
+                                </Button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -207,7 +252,7 @@ export default function GuestVehicleRegistration() {
                       {!recentVehicles?.length && (
                         <tr>
                           <td
-                            colSpan={6}
+                            colSpan={7}
                             className="text-center py-8 text-gray-500"
                           >
                             24시간 내 등록된 외부 차량이 없습니다.
@@ -398,6 +443,48 @@ export default function GuestVehicleRegistration() {
                 취소
               </Button>
               <Button onClick={handleEnter} disabled={enterMutation.isPending}>
+                확인
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 출차 다이얼로그 추가 */}
+        <Dialog open={isExitDialogOpen} onOpenChange={setIsExitDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>출차 전화번호 확인</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>차량 번호: {selectedVehicle?.vehicleNum}</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">전화번호</Label>
+                <Input
+                  id="phone"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="전화번호를 입력하세요"
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsExitDialogOpen(false);
+                  setPhoneNumber("");
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleExit}
+                disabled={exitMutation.isPending}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
                 확인
               </Button>
             </div>
