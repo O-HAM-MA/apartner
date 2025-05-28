@@ -116,7 +116,11 @@ export default function VehicleDetailPage({
 
             {/* 주소 정보 */}
             <div>
-              <h2 className="text-lg font-semibold mb-4">주소 정보</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                {vehicle?.registerType === "거주자"
+                  ? "입주민 주소 정보"
+                  : "방문 주소 정보"}
+              </h2>
               <div className="space-y-3">
                 <p>
                   <span className="font-medium">아파트:</span>{" "}
@@ -176,9 +180,9 @@ export default function VehicleDetailPage({
                         }`}
                       >
                         {record.status === "AGREE"
-                          ? "승인완료"
+                          ? " 최종 승인"
                           : record.status === "INVITER_AGREE"
-                          ? "1차승인"
+                          ? "입주민 승인"
                           : "미승인"}
                       </span>
                     </td>
