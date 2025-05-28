@@ -470,7 +470,7 @@ export default function VehicleManagement() {
           };
         default:
           return {
-            label: "알",
+            label: "d",
           };
       }
     };
@@ -1155,7 +1155,7 @@ export default function VehicleManagement() {
                                 {vehicle.status === "AGREE"
                                   ? "관리자가 최종 승인했습니다"
                                   : vehicle.status === "INVITER_AGREE"
-                                  ? "관리자 승인 대기중입니다"
+                                  ? "관리자 승인 ㅇㅇㅇ대기중입니다"
                                   : "방문자 출입을 승인하려면 켜세요"}
                               </span>
                             </div>
