@@ -746,13 +746,11 @@ export default function VehicleManagement() {
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-              <span className="text-gray-500 text-xl">백</span>
+              <span className="text-gray-500 text-xl"></span>
             </div>
             <div>
-              <h2 className="font-bold text-lg text-[#FF4081]">
-                백선영 입주민
-              </h2>
-              <p className="text-sm text-gray-600">삼성아파트 101동 102호</p>
+              <h2 className="font-bold text-lg text-[#FF4081]"></h2>
+              <p className="text-sm text-gray-600"></p>
             </div>
           </div>
           <Link href="/dashboard">
