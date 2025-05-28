@@ -20,6 +20,22 @@ type VehicleRegistrationInfoDto =
 export default function AdminVehicleManagement() {
   const router = useRouter();
   const [slidingVehicleId, setSlidingVehicleId] = useState<number | null>(null);
+  // 페이징 상태 추가
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // 페이지네이션 데이터 처리 함수
+  const getPaginatedData = (data: VehicleRegistrationInfoDto[] = []) => {
+    // 최신순 정렬
+    const sortedData = [...data].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedData.slice(startIndex, startIndex + itemsPerPage);
+  };
+
   // Add query for invited-approved vehicles
   const { data: invitedVehicles } = useQuery<VehicleRegistrationInfoDto[]>({
     queryKey: ["vehicles", "invited-approved"],
@@ -228,7 +244,7 @@ export default function AdminVehicleManagement() {
                         </td>
                       </tr>
                     ) : activeVehicles?.length ? (
-                      activeVehicles.map((vehicle) => (
+                      getPaginatedData(activeVehicles).map((vehicle) => (
                         <tr
                           key={vehicle.id}
                           className="hover:bg-gray-50 cursor-pointer transition-colors"
@@ -272,6 +288,44 @@ export default function AdminVehicleManagement() {
                   </tbody>
                 </table>
               </div>
+
+              {/* 페이지네이션 컨트롤 추가 */}
+              {activeVehicles && activeVehicles.length > itemsPerPage && (
+                <div className="flex justify-center items-center gap-2 py-4 bg-gray-50">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    이전
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    {currentPage} /{" "}
+                    {Math.ceil(activeVehicles.length / itemsPerPage)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(
+                          Math.ceil(activeVehicles.length / itemsPerPage),
+                          prev + 1
+                        )
+                      )
+                    }
+                    disabled={
+                      currentPage ===
+                      Math.ceil(activeVehicles.length / itemsPerPage)
+                    }
+                  >
+                    다음
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
