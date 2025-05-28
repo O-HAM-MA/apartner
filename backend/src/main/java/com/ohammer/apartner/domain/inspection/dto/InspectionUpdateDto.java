@@ -14,20 +14,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Schema(description = "점검 항목을 업데이트 위한 DTO")
 public class InspectionUpdateDto {
-    @NotBlank(message = "시작 시간은 필수요소 입니다")
     @Schema(description = "시작 시간", example = "2025-05-25T00:00")
     private LocalDateTime startAt;
 
-    @NotBlank(message = "종료 시간은 필수요소 입니다")
     @Schema(description = "종료 시간", example = "2025-05-26T00:00")
     private LocalDateTime finishAt;
 
     //아무래도 공지사항에 등록할려면 이걸 추가해야 할 것 같음
-    @NotBlank(message = "점검 제목을 적어주세요")
     @Schema(description = "점검 제목", example = "아이스크림 스타스크림")
     private String title;
 
-    @NotBlank(message = "점검 내용을 적어주세요")
     @Schema(description = "점검 상세 내용", example = "ルビィちゃん！[「はーい！」] 何が好き？\n" +
             "루비쨩 나니가 스키\n" +
             "루비쨩! 어떤 게 좋아?\n" +
@@ -61,7 +57,6 @@ public class InspectionUpdateDto {
             "당연히 제일 좋아하는 건 AiScReam")
     private String detail;
 
-    @NotBlank(message = "점검 분류를 적어주세요")
     @Schema(description = "점검 분류", example = "소방")
     private String type;
 

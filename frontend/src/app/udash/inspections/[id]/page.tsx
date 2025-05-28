@@ -23,33 +23,44 @@ import {
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useState, ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, ChangeEvent, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
+import { useGlobalLoginMember } from "@/auth/loginMember";
 
 export default function InspectionDetail() {
   const router = useRouter();
+  const params = useParams();
+  const { loginMember } = useGlobalLoginMember();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newIssueComment, setNewIssueComment] = useState("");
+  const [inspectionData, setInspectionData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchInspection() {
+      setLoading(true);
+      setError(null);
+      try {
+        const id = params.id;
+        const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${id}`, {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("점검 데이터를 불러오지 못했습니다.");
+        const data = await res.json();
+        setInspectionData(data);
+      } catch (e: any) {
+        setError(e.message || "알 수 없는 에러가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (params.id) fetchInspection();
+  }, [params.id]);
 
   // Database-driven inspection data (would be replaced with API call in production)
-  const inspectionData = {
-    check_id: "FAC-001",
-    user_id: "USER-123",
-    created_at: "2023-05-10",
-    updated_at: "2023-05-15",
-    start_at: "2023-05-15 09:00",
-    finish_at: "2023-05-15 11:30",
-    type: "소방",
-    detail:
-      "엘레베이터 1호기에 대한 정기 점검을 실시하였습니다. 점검 결과, 모든 기능이 정상적으로 작동하고 있으며 안전 기준을 충족하고 있습니다.",
-    result: "CHECKED",
-    userName: "김기술",
-    title: "엘레베이터 1호기 정기 점검",
-  };
-
-  // Inspection issues data (would be replaced with API call in production)
   const issueData = [
     {
       wrong_id: "ISSUE-001",
@@ -96,32 +107,43 @@ export default function InspectionDetail() {
     }
   };
 
-  const statusStyle = getStatusStyle(inspectionData.result);
+  const statusStyle = getStatusStyle(inspectionData?.result);
 
   // Handle edit button click
   const handleEdit = () => {
     // Navigate to edit page with inspection ID
-    router.push(`/inspection-edit/${inspectionData.check_id}`);
+    router.push(`/udash/inspections/${inspectionData?.inspectionId}/edit`);
   };
 
   // Handle delete button click
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      // Mock API call for demo purposes
-      console.log(`Deleting inspection with ID: ${inspectionData.check_id}`);
+      const id = params.id;
+      const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!res.ok) {
+        let errorMessage = "점검 기록 삭제에 실패했습니다.";
+        try {
+          const text = await res.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (e) {
+          // 파싱 에러 무시
+        }
+        throw new Error(errorMessage);
+      }
 
-      // Show success message (in real app, you might use a toast notification)
-      alert("점검 기록이 성공적으로 삭제되었습니다.");
-
-      // Navigate back to inspection list
-      router.push("/admin-dashboard");
-    } catch (error) {
+      // 삭제 성공 후 점검 목록 페이지로 리다이렉트하며 성공 상태 전달
+      router.push("/udash/inspections?deleted=1");
+    } catch (error: any) {
       console.error("Error deleting inspection:", error);
-      alert("점검 기록 삭제 중 오류가 발생했습니다.");
+      alert(error.message || "점검 기록 삭제 중 오류가 발생했습니다.");
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -140,6 +162,19 @@ export default function InspectionDetail() {
     alert("새로운 이슈 추가 기능은 준비 중입니다. 입력한 코멘트: " + newIssueComment);
     setNewIssueComment("");
   };
+
+  // 날짜 포맷 함수 추가
+  function formatDateTime(dt?: string) {
+    if (!dt) return "-";
+    // ISO 형식: 2025-05-28T15:30:00
+    const [date, time] = dt.split("T");
+    if (!date || !time) return dt;
+    const [hh, mm] = time.split(":");
+    return `${date}  ${hh}:${mm}`;
+  }
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">로딩 중...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
     <div className="flex min-h-screen bg-background overflow-hidden">
@@ -160,7 +195,7 @@ export default function InspectionDetail() {
 
           {/* Back Button */}
           <div className="mb-6">
-            <Link href="/admin-dashboard">
+            <Link href="/udash/inspections">
               <Button
                 variant="outline"
                 className="flex items-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:text-pink-400 dark:border-pink-900/30 dark:hover:bg-pink-950/30 dark:hover:text-pink-300"
@@ -180,37 +215,35 @@ export default function InspectionDetail() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <span>점검 ID: {inspectionData.check_id}</span>
+                      <span>점검 ID: {inspectionData?.inspectionId}</span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-xs font-medium">
                         <Tag size={12} />
-                        {inspectionData.type}
+                        {inspectionData?.typeName}
                       </span>
                     </div>
                     <h1 className="text-2xl font-bold text-foreground">
-                      {inspectionData.title}
+                      {inspectionData?.title}
                     </h1>
                   </div>
                   <div className="mt-4 md:mt-0 flex items-center gap-3">
                     <span
-                      className={`inline-flex items-center rounded-full ${statusStyle.bgColor} px-3 py-1 text-sm font-medium ${statusStyle.textColor}`}
+                      className={`inline-flex items-center rounded-full ${statusStyle?.bgColor} px-3 py-1 text-sm font-medium ${statusStyle?.textColor}`}
                     >
-                      {statusStyle.icon}
-                      {statusStyle.text}
+                      {statusStyle?.icon}
+                      {statusStyle?.text}
                     </span>
                     {/* Edit and Delete Buttons */}
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/udash/inspections/${inspectionData.check_id}/edit`}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:border-blue-900/30 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
+                        onClick={handleEdit}
+                        disabled={!inspectionData}
                       >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:border-blue-900/30 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
-                        >
-                          <Edit size={16} />
-                          <span>편집</span>
-                        </Button>
-                      </Link>
+                        <Edit size={16} />
+                        <span>편집</span>
+                      </Button>
                       <Button
                         onClick={() => setShowDeleteDialog(true)}
                         variant="outline"
@@ -232,7 +265,7 @@ export default function InspectionDetail() {
                         점검 시작
                       </div>
                       <div className="font-medium text-foreground">
-                        {inspectionData.start_at}
+                        {formatDateTime(inspectionData?.startAt)}
                       </div>
                     </div>
                   </div>
@@ -243,7 +276,7 @@ export default function InspectionDetail() {
                         점검 종료
                       </div>
                       <div className="font-medium text-foreground">
-                        {inspectionData.finish_at}
+                        {formatDateTime(inspectionData?.finishAt)}
                       </div>
                     </div>
                   </div>
@@ -254,7 +287,7 @@ export default function InspectionDetail() {
                         담당자
                       </div>
                       <div className="font-medium text-foreground">
-                        {inspectionData.userName}
+                        {inspectionData?.userName}
                       </div>
                     </div>
                   </div>
@@ -267,26 +300,13 @@ export default function InspectionDetail() {
                   점검 내용
                 </h2>
                 <div className="space-y-4">
-                  <p className="text-foreground">{inspectionData.detail}</p>
-                  <div className="border-t border-border pt-4">
-                    <h3 className="font-medium text-foreground mb-2">
-                      점검 항목
-                    </h3>
-                    <ul className="list-disc pl-5 space-y-2 text-foreground">
-                      <li>엘레베이터 작동 상태 확인</li>
-                      <li>안전장치 작동 여부 확인</li>
-                      <li>비상 통신 시스템 점검</li>
-                      <li>도어 센서 및 개폐 시스템 점검</li>
-                      <li>케이블 및 기계 장치 점검</li>
-                      <li>소음 및 진동 상태 확인</li>
-                    </ul>
-                  </div>
+                  <div className="text-foreground" dangerouslySetInnerHTML={{ __html: inspectionData?.detail || '' }} />
                 </div>
               </div>
             </div>
 
-            {/* Right Column - Results and Metadata (1/3 width on large screens) */}
-            <div className="space-y-6">
+            {/* Right Column - Results */}
+            <div className="space-y-6 lg:col-span-1">
               {/* Inspection Results */}
               <div className="bg-card rounded-lg border border-border p-6">
                 <h2 className="text-lg font-semibold text-foreground mb-4">
@@ -349,39 +369,6 @@ export default function InspectionDetail() {
                   )}
                 </div>
               </div>
-
-              {/* Metadata */}
-              <div className="bg-card rounded-lg border border-border p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  점검 메타데이터
-                </h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-border">
-                    <span className="text-muted-foreground">생성일</span>
-                    <span className="text-foreground font-medium">
-                      {inspectionData.created_at}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-border">
-                    <span className="text-muted-foreground">최종 수정일</span>
-                    <span className="text-foreground font-medium">
-                      {inspectionData.updated_at}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-border">
-                    <span className="text-muted-foreground">점검자 ID</span>
-                    <span className="text-foreground font-medium">
-                      {inspectionData.user_id}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-muted-foreground">점검 상태</span>
-                    <span className={`${statusStyle.textColor} font-medium`}>
-                      {statusStyle.text}
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </main>
@@ -404,9 +391,9 @@ export default function InspectionDetail() {
               정말로 이 점검 기록을 삭제하시겠습니까?
               <br />
               <br />
-              <strong>점검 ID:</strong> {inspectionData.check_id}
+              <strong>점검 ID:</strong> {inspectionData?.check_id}
               <br />
-              <strong>점검 제목:</strong> {inspectionData.title}
+              <strong>점검 제목:</strong> {inspectionData?.title}
               <br />
               <br />
               <span className="text-red-600 dark:text-red-400 font-medium">

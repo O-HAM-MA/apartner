@@ -1,5 +1,6 @@
 package com.ohammer.apartner.domain.inspection.service;
 
+import com.ohammer.apartner.domain.inspection.dto.InspectionIssueDto;
 import com.ohammer.apartner.domain.inspection.dto.IssueResponseDetailDto;
 import com.ohammer.apartner.domain.inspection.entity.Inspection;
 import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
@@ -22,24 +23,26 @@ public class InspectionIssueService {
 
     //생성
     @Transactional
-    public InspectionIssue makeInspectionIssue(Long id, String description) {
+    public InspectionIssue makeInspectionIssue(Long id, InspectionIssueDto dto) {
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
+        if (!inspectionService.itIsYou(inspection))
+            throw new RuntimeException("본인만 이슈 생성이 가능합니다");
         inspection.setResult(Result.ISSUE);
 
         InspectionIssue inspectionIssue = InspectionIssue.builder()
                 .inspection(inspection)
                 .user(inspection.getUser())
-                .description(description)
+                .description(dto.getDescription())
                 .createdAt(LocalDateTime.now())
-                .modifiedAt(null)
+                .modifiedAt(LocalDateTime.now())
                 .build();
 
-        inspectionService.IssueInspection(id);
+        // inspectionService.IssueInspection(inspection, dto);
         inspectionRepository.save(inspection);
         return issueRepository.save(inspectionIssue);
     }
 
-    //조회(전체조회는 굳이 없어도 될듯)
+    //조회
     public IssueResponseDetailDto showInspectionIssue(Long id) {
         InspectionIssue issue = issueRepository.findById(id).orElseThrow();
         Inspection inspection = issue.getInspection();
