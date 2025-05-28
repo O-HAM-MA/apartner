@@ -1,6 +1,5 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
-import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.*;
@@ -10,7 +9,7 @@ import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
 import com.ohammer.apartner.security.utils.SecurityUtil;
-import com.ohammer.apartner.security.utils.checkAdminUtils;
+
 import com.ohammer.apartner.security.utils.checkRoleUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 
-import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -157,7 +155,8 @@ public class VehicleService {
 //        }
 
         //checkRoleUtils.validateAdminAccess();
-        checkAdminUtils.validateAdminAccess();
+        //checkAdminUtils.validateAdminAccess();
+        checkRoleUtils.validateAdminAccess();
 
         List<EntryRecord> entryRecords;
 
@@ -294,7 +293,7 @@ public class VehicleService {
     public List<VehicleRegistrationInfoDto> getInvitedApprovedVehicles() {
         List<EntryRecord> approvedRecords = entryRecordRepository.findByStatus(EntryRecord.Status.INVITER_AGREE);
 
-        checkRoleUtils.validateAdminAccess();
+        checkRoleUtils.validateManagerAccess();
 
         return approvedRecords.stream()
                 .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
@@ -320,7 +319,7 @@ public class VehicleService {
 //            throw new RuntimeException("관리자만 조회할 수 있습니다.");
 //        }
 
-        checkRoleUtils.validateAdminAccess();
+        checkRoleUtils.validateManagerAccess();
 
 
 
@@ -348,6 +347,8 @@ public class VehicleService {
 
     // 전체 주차장 현황 반환 DTO
     public ParkingStatusDto getParkingStatus() {
+
+        checkRoleUtils.validateAdminAccess();
         long activeCount = countActiveVehicles();
         return ParkingStatusDto.builder()
                 .totalCapacity(MAX_CAPACITY)
