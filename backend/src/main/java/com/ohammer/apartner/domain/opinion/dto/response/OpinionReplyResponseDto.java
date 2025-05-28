@@ -11,7 +11,7 @@ public class OpinionReplyResponseDto {
 
     private Long id;
     private String userName;
-    private String content;
+    private String reply;
     private LocalDateTime createdAt;
 
 }

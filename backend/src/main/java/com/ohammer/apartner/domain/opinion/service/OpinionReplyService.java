@@ -13,6 +13,7 @@ import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -26,13 +27,14 @@ public class OpinionReplyService {
     private final OpinionReplyRepository opinionReplyRepository;
     private final OpinionService opinionService;
 
+    @Transactional
     public List<OpinionReplyResponseDto> getOpinionReply(Long opinionId) {
 
         List<OpinionReply> opinionReplies = opinionReplyRepository.findByOpinionId(opinionId);
 
         return opinionReplies.stream().map(reply -> OpinionReplyResponseDto.builder()
                         .id(reply.getId())
-                        .content(reply.getReply())
+                        .reply(reply.getReply())
                         .userName(reply.getUser().getUserName())
                         .createdAt(reply.getCreatedAt())
                         .build()
