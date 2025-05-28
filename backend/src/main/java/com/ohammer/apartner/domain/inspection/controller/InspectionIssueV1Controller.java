@@ -33,8 +33,8 @@ public class InspectionIssueV1Controller {
     public ResponseEntity<?> makeInspectionIssue(@PathVariable(name = "id")Long id,
                                                  @RequestBody InspectionIssueDto dto) {
         try {
-            inspectionIssueService.makeInspectionIssue(id, dto.getDescription());
-            inspectionService.IssueInspection(id);
+            inspectionIssueService.makeInspectionIssue(id, dto);
+            //inspectionService.IssueInspection(id, dto);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("이슈 생성 실패");

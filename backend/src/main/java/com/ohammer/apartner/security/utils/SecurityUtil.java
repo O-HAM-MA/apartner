@@ -64,6 +64,8 @@ public class SecurityUtil {
     public static User getCurrentUser() {
         if (!isLoggedIn()) return null;
         Object principal = getAuthentication().getPrincipal();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" + authentication);
         if (principal instanceof CustomUserDetails) {
             return ((CustomUserDetails) principal).getUser();
         }

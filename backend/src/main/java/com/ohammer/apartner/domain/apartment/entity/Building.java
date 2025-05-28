@@ -35,6 +35,6 @@ public class Building extends BaseEntity {
     private String buildingNumber;
 
     @OneToMany(mappedBy = "building", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore // JSON 직렬화 시 units 컬렉션을 무시하여 순환 참조 방지
+    @JsonIgnore 
     private List<Unit> units = new ArrayList<>();
 }

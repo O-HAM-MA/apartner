@@ -187,3 +187,22 @@
   outline: 2px solid hsl(var(--primary));
   box-shadow: 0 0 0 1px hsl(var(--border));
 }
+
+/*
+Radix Sheet/Drawer/Dialog Overlay 완전 제거 (admin sidebar Sheet에서만 제거, 전역에서는 주석처리)
+*/
+[data-radix-dialog-overlay],
+[data-radix-dialog-overlay=""] {
+  display: none !important;
+  background: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+/* Radix Sheet/Drawer/Dialog Overlay 완전 제거 (Tailwind 동적 클래스 대응) */
+.fixed.inset-0.z-30.bg-background\\\/80.backdrop-blur-sm {
+  display: none !important;
+  background: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
