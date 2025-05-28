@@ -17,10 +17,21 @@ type ParkingStatusDto = components["schemas"]["ParkingStatusDto"];
 type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
 
+type EntryRecordStatusUpdateRequestDto =
+  components["schemas"]["EntryRecordStatusUpdateRequestDto"];
+
+type EditingEntryRecordStatus = {
+  id: number;
+  status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+};
+
 export default function AdminVehicleManagement() {
   // 페이징 상태 추가
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  // 사라지는 차량 ID를 추적하기 위한 상태 추가
+  const [slidingVehicleId, setSlidingVehicleId] = useState<number | null>(null);
 
   // React Query Client 인스턴스
   const queryClient = useQueryClient();
@@ -103,18 +114,27 @@ export default function AdminVehicleManagement() {
   });
 
   // Add mutation for updating vehicle status
-  const updateVehicleStatus = useMutation({
-    mutationFn: async (vehicleId: number) => {
-      const { error } = await client.PUT(
-        `/api/v1/vehicles/${vehicleId}/status`,
-        {
-          json: { status: "AGREE" },
-        }
-      );
-      if (error) throw error;
+  // 상태 변경을 위한 mutation 추가
+  const updateVehicleStatusMutation = useMutation({
+    mutationFn: ({
+      entryRecordId,
+      status,
+    }: {
+      entryRecordId: number;
+      status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+    }) => {
+      return client.PATCH(`/api/v1/entry-records/${entryRecordId}/status`, {
+        body: { status },
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      // 데이터 리프레시
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+    },
+    onError: (error) => {
+      console.error("승인 상태 변경 실패:", error);
+      alert("승인 상태 변경에 실패했습니다.");
+      setSlidingVehicleId(null);
     },
   });
 
@@ -217,8 +237,14 @@ export default function AdminVehicleManagement() {
             <div className="grid grid-cols-4 gap-4">
               {invitedVehicles?.map((vehicle) => (
                 <div
-                  key={vehicle.id}
-                  className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
+                  key={vehicle.entryRecordId} // entryRecordId를 사용하여 고유성 보장
+                  className={`bg-white p-4 rounded-lg border border-gray-200 shadow-sm 
+                    transform transition-all duration-500 ease-in-out
+                    ${
+                      slidingVehicleId === vehicle.entryRecordId
+                        ? "translate-x-full opacity-0"
+                        : ""
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -240,7 +266,8 @@ export default function AdminVehicleManagement() {
                     </p>
                     <p className="text-sm">
                       <span className="text-gray-500">방문지:</span>{" "}
-                      {vehicle.buildingName} {vehicle.unitName}
+                      {vehicle.apartmentName} {vehicle.buildingName}{" "}
+                      {vehicle.unitName}
                     </p>
                   </div>
                   <div className="flex justify-between gap-2">
@@ -250,7 +277,12 @@ export default function AdminVehicleManagement() {
                       className="w-1/2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Add reject logic here
+                        if (!slidingVehicleId && vehicle.entryRecordId) {
+                          updateVehicleStatusMutation.mutate({
+                            entryRecordId: vehicle.entryRecordId,
+                            status: "INAGREE",
+                          });
+                        }
                       }}
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
@@ -261,7 +293,12 @@ export default function AdminVehicleManagement() {
                       className="w-1/2 bg-[#FF4081] hover:bg-[#ff679b]"
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateVehicleStatus.mutate(vehicle.id);
+                        if (!slidingVehicleId && vehicle.entryRecordId) {
+                          updateVehicleStatusMutation.mutate({
+                            entryRecordId: vehicle.entryRecordId,
+                            status: "AGREE",
+                          });
+                        }
                       }}
                     >
                       승인
@@ -343,7 +380,7 @@ export default function AdminVehicleManagement() {
                   <tbody className="divide-y divide-gray-200">
                     {paginatedVehicles?.map((vehicle) => (
                       <tr
-                        key={`${vehicle.id}-${vehicle.vehicleNum}`}
+                        key={vehicle.id} // vehicle.id만 사용하여 고유성 보장
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => {
                           router.push(`/admin/addash/vehicles/${vehicle.id}`);
