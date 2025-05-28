@@ -61,27 +61,16 @@ public class EntryRecordService {
         // 유저가 가진 역할들
         Set<Role> roles = currentUser.getRoles();
         boolean isMG = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR);
+        boolean isAD = roles.contains(Role.ADMIN);
 
 
 
-        // 소유자 확인 (출입기록 → 차량 → 소유자)
-//        Long currentUserId = SecurityUtil.getCurrentUserId();
-//        if (!record.getVehicle().getUser().getId().equals(currentUserId)) {
-//            throw new IllegalArgumentException("본인의 차량에 대한 요청만 처리할 수 있습니다.");
-//        }
 
-        // 소유자 확인 (관리자 계열이 아니면 본인 차량인지 검사)
-        if (!isMG && !record.getVehicle().getUser().getId().equals(currentUser.getId())) {
+        if (!isMG && !isAD && !record.getVehicle().getUser().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("본인의 차량에 대한 요청만 처리할 수 있습니다.");
         }
 
-        // 소유자 확인
 
-
-        // 유저가 가진 역할들
-        //Set<Role> roles = currentUser.getRoles(); // 복수형! Set<Role>
-
-        // “관리자 계열” 역할 셋 정의
         Set<Role> adminRoles = Set.of(Role.MANAGER, Role.MODERATOR);
 
         // 역할에 따라 허용된 상태 모음 구성
@@ -91,6 +80,10 @@ public class EntryRecordService {
             allowedStatuses.addAll(Set.of(EntryRecord.Status.INVITER_AGREE, EntryRecord.Status.INAGREE));
         }
         if (isMG) {
+            allowedStatuses.addAll(Set.of(EntryRecord.Status.INAGREE, EntryRecord.Status.AGREE));
+        }
+
+        if (isAD) {
             allowedStatuses.addAll(Set.of(EntryRecord.Status.INAGREE, EntryRecord.Status.AGREE));
         }
 
