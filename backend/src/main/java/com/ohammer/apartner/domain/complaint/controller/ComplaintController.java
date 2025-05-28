@@ -4,6 +4,7 @@ import com.ohammer.apartner.domain.complaint.dto.request.CreateComplaintRequestD
 import com.ohammer.apartner.domain.complaint.dto.response.AllComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.CreateComplaintResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintStatusResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.UpdateStateResponseDto;
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.service.ComplaintService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,14 +80,24 @@ public class ComplaintController {
         return new ResponseEntity<>("민원이 삭제되었습니다.",HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping("/status")
+    @GetMapping("/status")
     @Operation(summary = "상태별 검색", description = "민원 상태 별 조회")
     public ResponseEntity<?> searchComplaintByStatus(@RequestParam(name = "status") Long status) throws Exception {
 
-        List<AllComplaintResponseDto> response= complaintService.getAllComplaintsByStatus(status);
+        List<AllComplaintResponseDto> response = complaintService.getAllComplaintsByStatus(status);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PatchMapping("/{complaintId}/inactive")
+    public ResponseEntity<?> inactiveComplaint(@PathVariable(name = "complaintId") Long complainId) throws Exception {
+
+        UpdateStateResponseDto response = complaintService.inactiveComplaint(complainId);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
 
 
 }

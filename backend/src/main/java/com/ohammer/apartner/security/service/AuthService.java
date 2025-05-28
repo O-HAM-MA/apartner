@@ -29,7 +29,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import com.amazonaws.SdkClientException;
-
+import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -86,6 +86,7 @@ public class AuthService {
     @Transactional
     public void addRefreshToken(User user, String refreshToken) {
         user.setRefreshToken(refreshToken);
+        user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
     }
 

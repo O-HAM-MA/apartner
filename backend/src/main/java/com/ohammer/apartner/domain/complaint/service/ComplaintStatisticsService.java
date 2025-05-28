@@ -2,6 +2,7 @@ package com.ohammer.apartner.domain.complaint.service;
 
 import com.ohammer.apartner.domain.complaint.dto.response.ComplaintCountByStatusResponseDto;
 import com.ohammer.apartner.domain.complaint.dto.response.ComplaintHandlingRateResponseDto;
+import com.ohammer.apartner.domain.complaint.dto.response.ComplaintIncreaseRateResponseDto;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
@@ -105,6 +106,51 @@ public class ComplaintStatisticsService {
                 .totalCount(totalCount)
                 .handledCount(handledCount)
                 .handlingRate(Math.round(handlingRate * 10.0) / 10.0) // 소수점 1자리
+                .build();
+    }
+
+    // 어제 민원 수를 가져오는 메서드 추가
+    private Long getYesterdayTotalComplaintCount() throws AccessDeniedException {
+         User user = SecurityUtil.getCurrentUser();
+         if (user == null || !user.getRoles().stream().anyMatch(role -> role == Role.ADMIN)) {
+             throw new AccessDeniedException("권한이 없습니다.");
+         }
+
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDateTime startOfYesterday = yesterday.atStartOfDay();
+        LocalDateTime endOfYesterday = yesterday.plusDays(1).atStartOfDay();
+
+        return complaintRepository.countByCreatedAtBetween(startOfYesterday, endOfYesterday);
+    }
+
+    public ComplaintIncreaseRateResponseDto getComplaintIncreaseRateFromYesterday() throws AccessDeniedException {
+        User user = SecurityUtil.getCurrentUser();
+        if (user == null || !user.getRoles().stream().anyMatch(role -> role == Role.ADMIN)) {
+            throw new AccessDeniedException("통계를 확인할 권한이 없습니다.");
+        }
+
+        Long todayCount = getTodayTotalComplaintCount(); // 내부 메서드 호출 (권한 체크 포함)
+
+        Long yesterdayCount = getYesterdayTotalComplaintCount(); // 내부 메서드 호출
+
+        double increaseRate = 0.0;
+
+        if (yesterdayCount == 0) {
+            if (todayCount > 0) {
+                increaseRate = todayCount > 0 ? 100.0 : 0.0;
+            } else {
+                increaseRate = 0.0;
+            }
+        } else {
+            increaseRate = ((double) (todayCount - yesterdayCount) / yesterdayCount) * 100.0;
+        }
+
+        increaseRate = Math.round(increaseRate * 10.0) / 10.0;
+
+        return ComplaintIncreaseRateResponseDto.builder()
+                .todayCount(todayCount)
+                .yesterdayCount(yesterdayCount)
+                .increaseRate(increaseRate)
                 .build();
     }
 

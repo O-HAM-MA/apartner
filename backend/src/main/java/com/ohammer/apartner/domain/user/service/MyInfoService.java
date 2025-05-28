@@ -99,6 +99,7 @@ public class MyInfoService {
         
         if (requestDto.getPhoneNum() != null && !requestDto.getPhoneNum().isEmpty()) {
              log.warn("휴대폰 번호 변경 요청됨: {} -> {}. 인증 절차 필요.", user.getPhoneNum(), requestDto.getPhoneNum());
+             user.setPhoneNum(requestDto.getPhoneNum());
         }
 
         if (requestDto.getApartmentId() != null) {

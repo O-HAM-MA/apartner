@@ -19,6 +19,10 @@ const userStatusToBackendStatus = (status: UserStatus): string => {
       return "PENDING";
     case UserStatus.WITHDRAWN:
       return "WITHDRAWN";
+    case UserStatus.SUSPENDED:
+      return "SUSPENDED";
+    case UserStatus.DELETED:
+      return "DELETED";
     default:
       return status;
   }
@@ -31,6 +35,8 @@ const userStatusToBackendStatus = (status: UserStatus): string => {
 export const getAdminUserList = async (
   searchTerm?: string,
   searchField?: string,
+  role?: string,
+  status?: UserStatus,
   page: number = 0,
   size: number = 20,
   sort: string = "lastLoginAt,desc"
@@ -49,6 +55,14 @@ export const getAdminUserList = async (
       // 통합 검색의 경우 searchTerm 파라미터 사용
       queryParams.append("searchTerm", searchTerm);
     }
+  }
+
+  // role과 status 파라미터 추가
+  if (role) {
+    queryParams.append("role", role);
+  }
+  if (status) {
+    queryParams.append("status", userStatusToBackendStatus(status));
   }
 
   queryParams.append("page", page.toString());
@@ -139,6 +153,8 @@ export const getUserLogs = async (
 export const exportUsers = (
   searchTerm?: string,
   searchField?: string,
+  role?: string,
+  status?: UserStatus,
   format: "csv" | "excel" = "csv"
 ): string => {
   const queryParams = new URLSearchParams();
@@ -155,6 +171,14 @@ export const exportUsers = (
       // all 또는 기타 경우, 통합 검색어로 처리
       queryParams.append("searchTerm", searchTerm);
     }
+  }
+
+  // role과 status 파라미터 추가
+  if (role) {
+    queryParams.append("role", role);
+  }
+  if (status) {
+    queryParams.append("status", userStatusToBackendStatus(status));
   }
 
   queryParams.append("format", format);

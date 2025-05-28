@@ -362,6 +362,14 @@ const MyPage: React.FC = () => {
       setPhoneCheckMessage({ text: "", color: "" });
       setIsPhoneChecked(true);
     }
+
+    // 디버깅 로그 추가
+    console.log("[DEBUG] Phone number change detected:", {
+      phoneNumber,
+      originalPhoneNumber,
+      isPhoneNumberChanged: changed,
+      isPhoneChecked: changed ? false : true,
+    });
   }, [phoneNumber, originalPhoneNumber]);
 
   // "수정 완료" 버튼 활성화 조건
@@ -788,9 +796,42 @@ const MyPage: React.FC = () => {
       alert("변경된 이메일의 인증을 완료해주세요.");
       return;
     }
+
+    // 전화번호가 변경되었지만 중복확인이 되지 않은 경우 자동으로 중복확인 시도
     if (isPhoneNumberChanged && !isPhoneChecked) {
-      alert("변경된 휴대폰 번호의 중복 확인을 완료해주세요.");
-      return;
+      console.log(
+        "[DEBUG] handleSubmit: 전화번호 변경 감지, 자동 중복확인 시도"
+      );
+      try {
+        setIsLoadingPhoneCheck(true);
+        const response = await post<{ message: string }>(
+          "/api/v1/auth/check-phone",
+          {
+            phoneNumber,
+          }
+        );
+        console.log("[DEBUG] 전화번호 자동 중복확인 성공:", response);
+        setPhoneCheckMessage({
+          text: "사용 가능한 휴대폰 번호입니다.",
+          color: "text-green-500",
+        });
+        setIsPhoneChecked(true);
+      } catch (error: any) {
+        const backendErrorMessage = error?.response?.data?.message;
+        setPhoneCheckMessage({
+          text:
+            backendErrorMessage ||
+            "이미 등록되었거나 사용할 수 없는 번호입니다.",
+          color: "text-red-500",
+        });
+        alert(
+          "변경된 휴대폰 번호의 중복 확인에 실패했습니다. 다른 번호를 입력해주세요."
+        );
+        setIsLoadingPhoneCheck(false);
+        return;
+      } finally {
+        setIsLoadingPhoneCheck(false);
+      }
     }
 
     if (!confirm("정보를 수정하시겠습니까?")) {
@@ -831,6 +872,15 @@ const MyPage: React.FC = () => {
     if (isPhoneNumberChanged && isPhoneChecked) {
       updatedData.phoneNum = phoneNumber;
     }
+
+    // 디버깅 로그 추가
+    console.log("[DEBUG] Submit data preparation:", {
+      isPhoneNumberChanged,
+      isPhoneChecked,
+      phoneNumber,
+      phoneNumIncluded: isPhoneNumberChanged && isPhoneChecked,
+      updatedData,
+    });
 
     try {
       await patch("/api/v1/myInfos/update", updatedData);

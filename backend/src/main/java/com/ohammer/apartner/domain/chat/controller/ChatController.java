@@ -32,14 +32,16 @@ public class ChatController {
     // 채팅방 생성
     @PostMapping
     public ResponseEntity<ApiResponse<ChatroomDto>> createChatroom(
-            @RequestParam(name = "title") String title) {
+            @RequestParam(name = "title") String title,
+            @RequestParam(name = "category") String category,
+            @RequestParam(name = "apartmentId") Long apartmentId) {
         User currentUser = SecurityUtil.getCurrentUser();
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증 정보가 유효하지 않습니다."));
         }
 
-        ChatroomDto chatroom = chatService.createChatRoom(currentUser, title);
+        ChatroomDto chatroom = chatService.createChatRoom(currentUser, title, category, apartmentId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(chatroom, "채팅방이 성공적으로 생성되었습니다."));
@@ -115,5 +117,31 @@ public class ChatController {
             @PathVariable(name = "chatroomId") Long chatroomId) {
         ChatroomDto chatroomDto = chatService.getChatroomById(chatroomId);
         return ResponseEntity.ok(ApiResponse.success(chatroomDto, "채팅방 정보를 성공적으로 조회했습니다."));
+    }
+
+    // 카테고리별 채팅방 조회
+    @GetMapping("/category")
+    public ResponseEntity<ApiResponse<List<ChatroomDto>>> getChatroomsByCategory(
+            @RequestParam(name = "category") String category,
+            @RequestParam(name = "apartmentId") Long apartmentId) {
+        try {
+            User currentUser = SecurityUtil.getCurrentUser();
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증 정보가 유효하지 않습니다."));
+            }
+            
+            List<ChatroomDto> chatroomList = chatService.getChatroomList(currentUser);
+            // 카테고리와 아파트ID로 필터링
+            chatroomList = chatroomList.stream()
+                    .filter(chatroom -> category.equals(chatroom.category()) && apartmentId.equals(chatroom.apartmentId()))
+                    .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(ApiResponse.success(chatroomList, "카테고리별 채팅방 목록을 성공적으로 조회했습니다."));
+        } catch (Exception e) {
+            log.error("카테고리별 채팅방 목록 조회 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "채팅방 목록 조회 중 오류가 발생했습니다."));
+        }
     }
 }
