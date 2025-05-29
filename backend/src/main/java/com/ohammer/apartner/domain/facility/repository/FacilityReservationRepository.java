@@ -16,35 +16,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface FacilityReservationRepository extends JpaRepository<FacilityReservation, Long> {
 
-    // 특정 시설의 중복 예약 검사 (날짜 + 시간 겹침 여부)
-    @Query("""
-                SELECT fr FROM FacilityReservation fr
-                WHERE fr.facility.id = :facilityId
-                  AND fr.date = :date
-                  AND fr.status <> 'CANCEL'
-                  AND (
-                        (fr.startTime < :endTime AND fr.endTime > :startTime)
-                      )
-            """)
-    List<FacilityReservation> findOverlappingReservations(
-            @Param("facilityId") Long facilityId,
-            @Param("date") LocalDate date,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
-    );
-
-    @Query("SELECT r FROM FacilityReservation r " +
-            "WHERE r.user.id = :userId " +
-            "AND (:date IS NULL OR r.date = :date) " +
-            "AND (:facilityId IS NULL OR r.facility.id = :facilityId) " +
-            "AND (:status IS NULL OR r.status = :status) " +
-            "ORDER BY r.date ASC")
-    List<FacilityReservation> findByUserWithFilter(
-            @Param("userId") Long userId,
-            @Param("date") LocalDate date,
-            @Param("facilityId") Long facilityId,
-            @Param("status") FacilityReservation.Status status
-    );
+    Long countByTimeSlot_IdAndStatus(Long timeSlotId, FacilityReservation.Status status);
 
     @Query("SELECT r FROM FacilityReservation r " +
             "JOIN FETCH r.user u " +
@@ -58,6 +30,26 @@ public interface FacilityReservationRepository extends JpaRepository<FacilityRes
             @Param("status") FacilityReservation.Status status,
             Pageable pageable
     );
+
+    // 시간대 중복 예약 체크
+    @Query("""
+                SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END
+                FROM FacilityReservation r
+                WHERE r.user.id = :userId
+                  AND r.status IN (com.ohammer.apartner.domain.facility.entity.FacilityReservation.Status.AGREE, 
+                              com.ohammer.apartner.domain.facility.entity.FacilityReservation.Status.PENDING)
+                  AND (
+                        (r.startTime < :endTime AND r.endTime > :startTime)
+                  )
+            """)
+    boolean existsTimeConflict(@Param("userId") Long userId,
+                               @Param("startTime") LocalDateTime startTime,
+                               @Param("endTime") LocalDateTime endTime);
+
+    // 같은 아파트 사용자 예약 전체 조회 (최신순)
+    List<FacilityReservation> findByFacility_Apartment_IdOrderByStartTimeDesc(Long apartmentId);
+
+    List<FacilityReservation> findByUserIdOrderByStartTimeDesc(Long userId);
 
     // 시설별 이용 횟수
     @Query("SELECT new com.ohammer.apartner.domain.facility.dto.statistics.FacilityUsageCountDto(fr.facility.name, COUNT(fr)) "

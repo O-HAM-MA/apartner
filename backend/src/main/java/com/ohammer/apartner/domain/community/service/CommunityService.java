@@ -97,7 +97,7 @@ public class CommunityService {
     @Transactional
     public CommunityResponseDto pin(Long id) {
 
-        checkRoleUtils.validateAdminAccess();
+        checkRoleUtils.validateManagerAccess();
 
         Community comm = communityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Not found"));

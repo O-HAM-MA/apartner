@@ -20,26 +20,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/notices/{noticeId}/update": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * 공지사항 게시글 수정
-         * @description 게시글 수정 작성사항: 제목, 내용, 파일
-         */
-        put: operations["updateNotice"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/complaints/{complaintId}": {
         parameters: {
             query?: never;
@@ -98,6 +78,26 @@ export interface paths {
         get?: never;
         /** 해당 입주민이 작성한 글 수정 */
         put: operations["update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/{noticeId}/update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 공지사항 게시글 수정
+         * @description 게시글 수정 작성사항: 제목, 내용, 파일
+         */
+        put: operations["updateNotice"];
         post?: never;
         delete?: never;
         options?: never;
@@ -164,6 +164,44 @@ export interface paths {
         put: operations["assignMenusWithOrderToGrade"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/{facilityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 공용시설 단건 조회 [관리자] */
+        get: operations["getFacility"];
+        /** 공용시설 수정 */
+        put: operations["updateFacility"];
+        post?: never;
+        /** 시설 삭제(비활성화) */
+        delete: operations["deleteFacility"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 강사 단건 조회 */
+        get: operations["getInstructor"];
+        /** 강사 정보 수정 */
+        put: operations["updateInstructor"];
+        post?: never;
+        /** 강사 삭제 (비활성화) */
+        delete: operations["deleteInstructor"];
         options?: never;
         head?: never;
         patch?: never;
@@ -415,66 +453,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/notices/media/images/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 이미지 등록
-         * @description 공지사항 에디터에 사용될 이미지를 업로드합니다.
-         */
-        post: operations["uploadImages"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/media/files/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 파일 등록
-         * @description 공지사항에 첨부할 파일을 업로드합니다.
-         */
-        post: operations["uploadFiles"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/create": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 등록
-         * @description 게시글 작성사항: 제목, 내용, 파일
-         */
-        post: operations["createNotice"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/myInfos/update-profile-image": {
         parameters: {
             query?: never;
@@ -647,20 +625,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/{facilityId}/reserve": {
+    "/api/v1/facilities/reservations": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * 유저 예약 조회
+         * @description 유저가 예약한 공용시설 예약 목록 조회
+         */
+        get: operations["getMyReservations"];
         put?: never;
         /**
          * 유저 공용시설 예약하기
          * @description 유저가 등록된 공용시설을 예약하기
          */
-        post: operations["reserveFacility"];
+        post: operations["reservationFacility"];
         delete?: never;
         options?: never;
         head?: never;
@@ -977,6 +959,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/notices/media/images/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 이미지 등록
+         * @description 공지사항 에디터에 사용될 이미지를 업로드합니다.
+         */
+        post: operations["uploadImages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/media/files/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 파일 등록
+         * @description 공지사항에 첨부할 파일을 업로드합니다.
+         */
+        post: operations["uploadFiles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 등록
+         * @description 게시글 작성사항: 제목, 내용, 파일
+         */
+        post: operations["createNotice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/menu/menus": {
         parameters: {
             query?: never;
@@ -1023,6 +1065,108 @@ export interface paths {
          * @description 관리자 아이디(이메일)와 비밀번호로 로그인하고 JWT 토큰을 발급받습니다.
          */
         post: operations["adminLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 공용시설 목록 조회 [관리자] */
+        get: operations["getFacilityList"];
+        put?: never;
+        /** 공용시설 등록 */
+        post: operations["createFacility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/{facilityId}/instructors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 강사 목록 조회 */
+        get: operations["getInstructorList"];
+        put?: never;
+        /** 강사 등록 */
+        post: operations["createInstructor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 강사 스케줄 목록 조회 */
+        get: operations["getScheduleList"];
+        put?: never;
+        /** 강사 스케줄(타임슬롯) 등록 */
+        post: operations["createSchedules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chats/{chatroomId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markMessagesAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chats/{chatroomId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["closeChatroom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chats/{chatroomId}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["assignAdmin"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1162,46 +1306,6 @@ export interface paths {
         patch: operations["updateMyInfo"];
         trace?: never;
     };
-    "/api/v1/facilities/{facilityReservationId}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * 유저 예약 취소
-         * @description 유저가 예약한 공용시설을 예약 취소하기
-         */
-        patch: operations["cancelReservation"];
-        trace?: never;
-    };
-    "/api/v1/facilities/manager/reservations/{facilityReservationId}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * 유저들의 예약 상태 변경
-         * @description 유저들의 예약 상태 pending/agree/reject로 변경하기
-         */
-        patch: operations["changeReservationStatus"];
-        trace?: never;
-    };
     "/api/v1/entry-records/{entryRecordId}/status": {
         parameters: {
             query?: never;
@@ -1285,6 +1389,26 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["updateUserRoles"];
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/reservations/{reservationId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * 유저들의 예약 상태 변경
+         * @description 유저들의 예약 상태 pending/agree/reject로 변경하기
+         */
+        patch: operations["updateReservationStatus"];
         trace?: never;
     };
     "/api/v1/admin/accounts/{id}/status": {
@@ -1422,6 +1546,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vehicles/ForeignsRegistrationsWithStatus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 24시간 이내 등록된  모든 외부인 차량 조회 */
+        get: operations["getRegistrations_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/check-phonenum": {
         parameters: {
             query?: never;
@@ -1462,7 +1603,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/notices": {
+    "/api/v1/notices/user/{noticeId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1470,37 +1611,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 매니저 권한/ 공지사항 게시글 목록 조회
-         * @description 매니저 권한 - 전체
+         * 공지사항 게시글 조회 [사용자]
+         * @description 게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일
          */
-        get: operations["getNoticeList"];
+        get: operations["readNoticeUser"];
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/{noticeId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 조회
-         * @description 게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일
-         */
-        get: operations["readNotice"];
-        put?: never;
-        post?: never;
-        /**
-         * 공지사항 게시글 삭제
-         * @description 게시글 삭제(INACTIVE 상태)
-         */
-        delete: operations["deleteNotice"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1521,54 +1638,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/media/images/{noticeImageId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 이미지 정보 조회
-         * @description 게시글에 첨부된 이미지를 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
-         */
-        get: operations["getImageInfo"];
-        put?: never;
-        post?: never;
-        /**
-         * 임시 이미지 삭제
-         * @description 사용자가 업로드한 임시 이미지를 삭제합니다. S3와 DB 모두에서 제거
-         */
-        delete: operations["deleteImage"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/notices/media/files/{noticeFileId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 파일 정보 조회
-         * @description 게시글에 첨부된 파일을 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
-         */
-        get: operations["getFileInfo"];
-        put?: never;
-        post?: never;
-        /**
-         * 임시 파일 삭제
-         * @description 사용자가 업로드한 임시 파일을 삭제합니다. S3와 DB 모두에서 제거
-         */
-        delete: operations["deleteFile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1643,9 +1712,9 @@ export interface paths {
         };
         /**
          * 공용시설 목록 조회
-         * @description 등록된 공용시설 목록 조희
+         * @description 등록된(활성화 중) 공용시설 목록 조희
          */
-        get: operations["getAllFacilities"];
+        get: operations["getFacilityList_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1654,18 +1723,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/statistics/user-usage": {
+    "/api/v1/facilities/{facilityId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 사용자별 이용 횟수 통계
-         * @description 사용자 기준으로 이용 횟수를 집계하여 순위별로 제공합니다.
-         */
-        get: operations["getUserUsageCount"];
+        /** 공용시설 단건 조회 */
+        get: operations["getFacility_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1674,18 +1740,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/statistics/time-period": {
+    "/api/v1/facilities/{facilityId}/instructors": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 시간대별 이용 통계
-         * @description 시간대(오전/오후/저녁/야간) 기준으로 이용 건수를 분석합니다. 시간대 기준::: 오전: 05~12시, 오후: 12~17시, 저녁: 17~23시, 야간: 23~05시
-         */
-        get: operations["getTimePeriodCount"];
+        /** 시설별 강사 목록 조회 */
+        get: operations["getInstructorList_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1694,18 +1757,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/statistics/reservation-status": {
+    "/api/v1/facilities/{facilityId}/instructors/{instructorId}/schedules": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 예약 상태별 현황
-         * @description AGREE, REJECT, CANCEL, PENDING 상태별 예약 건수를 조회합니다.
-         */
-        get: operations["getReservationStatusCounts"];
+        /** 강사별 캘린더 타임슬롯 조회 */
+        get: operations["getInstructorTimeSlots"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1714,121 +1774,21 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/facilities/statistics/facility-usage": {
+    "/api/v1/facilities/reservations/{facilityReservationId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 시설별 이용 횟수 통계
-         * @description 가장 많이 이용된 시설부터 순위대로 반환합니다.
-         */
-        get: operations["getFacilityUsageCount"];
+        get: operations["getMyReservationDetail"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/day-of-week": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         /**
-         * 요일별 이용 통계
-         * @description 요일 기준으로 이용 건수를 분석합니다.
+         * 유저 예약 취소
+         * @description 유저가 예약한 공용시설을 예약 취소하기
          */
-        get: operations["getDayOfWeekCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/cancellation-ratio": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 예약 취소율
-         * @description status=CANCEL / 전체 예약 (%)
-         */
-        get: operations["getCancellationRatio"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/statistics/building-usage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 동별 이용 횟수 통계
-         * @description 동(건물번호) 기준으로 이용 횟수를 집계하여 제공합니다.
-         */
-        get: operations["getBuildingUsageCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/reservations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 유저 예약 조회
-         * @description 유저가 예약한 공용시설 예약 조회(전체보기, 시설, 예약 상태, 날짜 필터링 가능)
-         */
-        get: operations["getUserReservations"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/facilities/manager/reservations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 유저들의 예약 목록 조회
-         * @description 유저들의 예약 목록 조희 - 전체보기, 시설별, 예약상태별, 날짜별
-         */
-        get: operations["getReservations"];
-        put?: never;
-        post?: never;
-        delete?: never;
+        delete: operations["cancelReservation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2040,14 +2000,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/chats/category": {
+    "/api/v1/chats/my": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getChatroomsByCategory"];
+        get: operations["getMyChatrooms"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2056,14 +2016,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/chats/all": {
+    "/api/v1/chats/filter": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getAllChatrooms"];
+        get: operations["getChatroomsByFilter"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2304,6 +2264,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 매니저 권한/ 공지사항 게시글 목록 조회
+         * @description 매니저 권한 - 전체
+         */
+        get: operations["getNoticeList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/{noticeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 조회
+         * @description 게시글 조회사항: 제목, 작성자, 작성일, 조회수, 내용, 파일
+         */
+        get: operations["readNotice"];
+        put?: never;
+        post?: never;
+        /**
+         * 공지사항 게시글 삭제
+         * @description 게시글 삭제(INACTIVE 상태)
+         */
+        delete: operations["deleteNotice"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/media/images/{noticeImageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 이미지 정보 조회
+         * @description 게시글에 첨부된 이미지를 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getImageInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 이미지 삭제
+         * @description 사용자가 업로드한 임시 이미지를 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notices/media/files/{noticeFileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 파일 정보 조회
+         * @description 게시글에 첨부된 파일을 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getFileInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 파일 삭제
+         * @description 사용자가 업로드한 임시 파일을 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteFile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/menu/menus/list": {
         parameters: {
             query?: never;
@@ -2372,6 +2424,197 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules/timeslots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 스케쥴 타임슬롯 목록 조회 */
+        get: operations["getTimeSlots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/user-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 사용자별 이용 횟수 통계
+         * @description 사용자 기준으로 이용 횟수를 집계하여 순위별로 제공합니다.
+         */
+        get: operations["getUserUsageCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/time-period": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 시간대별 이용 통계
+         * @description 시간대(오전/오후/저녁/야간) 기준으로 이용 건수를 분석합니다. 시간대 기준::: 오전: 05~12시, 오후: 12~17시, 저녁: 17~23시, 야간: 23~05시
+         */
+        get: operations["getTimePeriodCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/reservation-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 예약 상태별 현황
+         * @description AGREE, REJECT, CANCEL, PENDING 상태별 예약 건수를 조회합니다.
+         */
+        get: operations["getReservationStatusCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/facility-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 시설별 이용 횟수 통계
+         * @description 가장 많이 이용된 시설부터 순위대로 반환합니다.
+         */
+        get: operations["getFacilityUsageCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/day-of-week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 요일별 이용 통계
+         * @description 요일 기준으로 이용 건수를 분석합니다.
+         */
+        get: operations["getDayOfWeekCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/cancellation-ratio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 예약 취소율
+         * @description status=CANCEL / 전체 예약 (%)
+         */
+        get: operations["getCancellationRatio"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/statistics/building-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 동별 이용 횟수 통계
+         * @description 동(건물번호) 기준으로 이용 횟수를 집계하여 제공합니다.
+         */
+        get: operations["getBuildingUsageCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 유저들의 예약 목록 조회 */
+        get: operations["getReservationsByApartment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/reservations/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 유저들의 예약 상세 조회 */
+        get: operations["getReservationDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/check": {
         parameters: {
             query?: never;
@@ -2384,6 +2627,86 @@ export interface paths {
          * @description 현재 인증된 관리자의 상태 또는 특정 정보를 확인합니다.
          */
         get: operations["adminCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminChatroomList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chats/{chatroomId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminChatroomById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chats/{chatroomId}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAdminChatMessages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chat/apartments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getApartments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/chat-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChatCategories"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2606,35 +2929,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules/{scheduleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 공용시설 강사 스케줄 삭제 (한 건씩 삭제) */
+        delete: operations["deleteSchedule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/facilities/{facilityId}/instructors/{instructorId}/schedules/timeslots/{timeSlotId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 스케쥴 타임슬롯 단건 삭제 */
+        delete: operations["deleteTimeSlot"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         UpdateOpinionReplyRequestDto: {
             reply?: string;
-        };
-        /** @description 공지사항 게시글 수정 요청 DTO */
-        NoticeUpdateRequestDto: {
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * @description tiptap에 삽입된 이미지 ID들
-             * @example []
-             */
-            imageIds?: number[];
-            /**
-             * @description tiptap에 삽입된 첨부파일 ID들
-             * @example []
-             */
-            fileIds?: number[];
         };
         CreateComplaintRequestDto: {
             title?: string;
@@ -2667,6 +3001,29 @@ export interface components {
             /** Format: int64 */
             id?: number;
             username?: string;
+        };
+        /** @description 공지사항 게시글 수정 요청 DTO */
+        NoticeUpdateRequestDto: {
+            /**
+             * @description 게시글 제목
+             * @example 엘레베이터 정기점검 안내
+             */
+            title?: string;
+            /**
+             * @description 게시글 내용
+             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
+             */
+            content?: string;
+            /**
+             * @description tiptap에 삽입된 이미지 ID들
+             * @example []
+             */
+            imageIds?: number[];
+            /**
+             * @description tiptap에 삽입된 첨부파일 ID들
+             * @example []
+             */
+            fileIds?: number[];
         };
         MenuDTO: {
             /** Format: int64 */
@@ -2706,6 +3063,42 @@ export interface components {
             success?: boolean;
             message?: string;
             data?: Record<string, never>;
+        };
+        /** @description 공용시설 수정 요청 DTO */
+        FacilityUpdateRequestDto: {
+            /**
+             * @description 공용시설 이름
+             * @example 헬스장
+             */
+            name?: string;
+            /**
+             * @description 공용시설 설명
+             * @example 강습도 가능한 아주 좋은 피트니스 센터
+             */
+            description?: string;
+            /**
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
+             */
+            openTime?: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 23:00
+             */
+            closeTime?: string;
+        };
+        /** @description 공용시설 강사 수정 요청 DTO */
+        InstructorUpdateRequestDto: {
+            /**
+             * @description 강사 이름
+             * @example 박태환
+             */
+            name?: string;
+            /**
+             * @description 강사 소개/설명
+             * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
+             */
+            description?: string;
         };
         /** @description 아파트 생성/수정 요청 DTO */
         ApartmentRequestDto: {
@@ -2938,54 +3331,6 @@ export interface components {
         CreateManagerOpinionRequestDto: {
             title?: string;
             content?: string;
-        };
-        /** @description 공지사항 게시글 첨부파일 업로드 응답 DTO */
-        MediaUploadResponseDto: {
-            /**
-             * Format: int64
-             * @description 첨부파일/이미지 ID
-             * @example 23
-             */
-            id?: number;
-            /**
-             * @description S3 업로드 URL 또는 접근 URL
-             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
-             */
-            url?: string;
-            /**
-             * @description 원본 파일명
-             * @example 사진1.png
-             */
-            originalName?: string;
-        };
-        /** @description 공지사항 게시글 등록 요청 DTO */
-        NoticeCreateRequestDto: {
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * Format: int64
-             * @description 게시글 대상: 전체/동별 선택 - buildingId
-             * @example 101동 / null일 경우 전체 공지
-             */
-            buildingId?: number;
-            /**
-             * @description tiptap에 삽입된 이미지 ID들
-             * @example []
-             */
-            imageIds?: number[];
-            /**
-             * @description tiptap에 삽입된 첨부파일 ID들
-             * @example []
-             */
-            fileIds?: number[];
         };
         /** @description 비밀번호 재설정 요청 DTO */
         ResetPasswordRequest: {
@@ -3248,21 +3593,16 @@ export interface components {
         /** @description 공용시설 예약 요청 DTO */
         FacilityReservationRequestDto: {
             /**
-             * Format: date
-             * @description 예약할 날짜
-             * @example 2025-05-15
+             * Format: int64
+             * @description 타임슬롯 ID
+             * @example 1001
              */
-            date?: string;
+            timeSlotId?: number;
             /**
-             * @description 예약 시작 시간
-             * @example 09:00:00
+             * @description 사용자 요청사항
+             * @example (선택) 요청사항 입력
              */
-            startTime?: string;
-            /**
-             * @description 예약 종료 시간
-             * @example 11:00:00
-             */
-            endTime?: string;
+            requestMessage?: string;
         };
         EntryRecordResponseDto: {
             /** Format: int64 */
@@ -3293,7 +3633,7 @@ export interface components {
             /** Format: int64 */
             id?: number;
             title?: string;
-            category?: string;
+            categoryCode?: string;
             /** Format: int64 */
             apartmentId?: number;
             hasNewMessage?: boolean;
@@ -3448,6 +3788,54 @@ export interface components {
              */
             email?: string;
         };
+        /** @description 공지사항 게시글 첨부파일 업로드 응답 DTO */
+        MediaUploadResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
+        };
+        /** @description 공지사항 게시글 등록 요청 DTO */
+        NoticeCreateRequestDto: {
+            /**
+             * @description 게시글 제목
+             * @example 엘레베이터 정기점검 안내
+             */
+            title?: string;
+            /**
+             * @description 게시글 내용
+             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
+             */
+            content?: string;
+            /**
+             * Format: int64
+             * @description 게시글 대상: 전체/동별 선택 - buildingId
+             * @example 101동 / null일 경우 전체 공지
+             */
+            buildingId?: number;
+            /**
+             * @description tiptap에 삽입된 이미지 ID들
+             * @example []
+             */
+            imageIds?: number[];
+            /**
+             * @description tiptap에 삽입된 첨부파일 ID들
+             * @example []
+             */
+            fileIds?: number[];
+        };
         /** @description 관리자 로그인 요청 DTO */
         AdminLoginRequest: {
             /**
@@ -3460,6 +3848,89 @@ export interface components {
              * @example password123
              */
             password?: string;
+        };
+        /** @description 공용시설 등록 요청 DTO */
+        FacilityCreateRequestDto: {
+            /**
+             * @description 등록할 공용시설 이름
+             * @example 수영장
+             */
+            name: string;
+            /**
+             * @description 공용시설 설명
+             * @example 반드시 수영모를 씁시다
+             */
+            description: string;
+            /**
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
+             */
+            openTime: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 22:00
+             */
+            closeTime: string;
+        };
+        /** @description 공용시설 강사 등록 요청 DTO */
+        InstructorCreateRequestDto: {
+            /**
+             * @description 강사 이름
+             * @example 박태환
+             */
+            name?: string;
+            /**
+             * @description 강사 소개/설명
+             * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
+             */
+            description?: string;
+        };
+        /** @description 공용시설 강사 일정 등록 요청 DTO */
+        InstructorScheduleCreateRequestDto: {
+            /**
+             * @description 프로그램명
+             * @example 초보반
+             */
+            scheduleName?: string;
+            /**
+             * @description 근무 요일
+             * @example TUESDAY
+             */
+            dayOfWeek?: string;
+            /**
+             * @description 근무 시작 시간
+             * @example 15:00
+             */
+            startTime?: string;
+            /**
+             * @description 근무 종료 시간
+             * @example 18:00
+             */
+            endTime?: string;
+            /**
+             * Format: int64
+             * @description 예약 단위(분)
+             * @example 60
+             */
+            slotMinutes?: number;
+            /**
+             * Format: int64
+             * @description 한 슬롯(타임)당 최대 수용 가능 인원
+             * @example 20
+             */
+            capacity?: number;
+            /**
+             * Format: date
+             * @description 적용 시작일
+             * @example 2025-06-01
+             */
+            periodStart?: string;
+            /**
+             * Format: date
+             * @description 적용 종료일
+             * @example 2025-06-30
+             */
+            periodEnd?: string;
         };
         VehicleUpdateRequestDto: {
             vehicleNum?: string;
@@ -3501,6 +3972,10 @@ export interface components {
              */
             unitId?: number;
         };
+        EntryRecordStatusUpdateRequestDto: {
+            /** @enum {string} */
+            status?: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+        };
         EntryRecordStatusDto: {
             /** Format: int64 */
             id?: number;
@@ -3516,9 +3991,20 @@ export interface components {
         AdminUserRoleUpdateRequest: {
             roles?: ("ADMIN" | "USER" | "MODERATOR" | "MANAGER")[];
         };
+        /** @description 공용시설 예약 상태 변경 요청 DTO */
+        FacilityReservationStatusUpdateDto: {
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             * @enum {string}
+             */
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+        };
         VehicleRegistrationInfoDto: {
             /** Format: int64 */
             id?: number;
+            /** Format: int64 */
+            entryRecordId?: number;
             registerType?: string;
             applicantName?: string;
             apartmentName?: string;
@@ -3532,6 +4018,7 @@ export interface components {
             reason?: string;
             userPhone?: string;
             status?: string;
+            vehicleStatus?: string;
         };
         ParkingStatusDto: {
             /** Format: int32 */
@@ -3540,77 +4027,6 @@ export interface components {
             activeCount?: number;
             /** Format: int32 */
             remainingSpace?: number;
-        };
-        /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
-        NoticeSummaryResponseDto: {
-            /**
-             * Format: int64
-             * @description 게시글 번호
-             * @example 1
-             */
-            noticeId?: number;
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 작성자
-             * @example 관리사무소
-             */
-            authorName?: string;
-            /**
-             * Format: int64
-             * @description 게시글 대상: 전체/동별 선택 - buildingId
-             * @example 1
-             */
-            buildingId?: number;
-            /**
-             * Format: date-time
-             * @description 게시글 작성일
-             * @example 2025-05-15 09:00
-             */
-            createdAt?: string;
-            /**
-             * Format: int64
-             * @description 게시글 조회수
-             * @example 0
-             */
-            viewCount?: number;
-        };
-        PageNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["NoticeSummaryResponseDto"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            empty?: boolean;
-        };
-        PageableObject: {
-            /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
-            paged?: boolean;
-            /** Format: int32 */
-            pageNumber?: number;
-            /** Format: int32 */
-            pageSize?: number;
-        };
-        SortObject: {
-            empty?: boolean;
-            sorted?: boolean;
-            unsorted?: boolean;
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -3675,10 +4091,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -3687,10 +4103,26 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
+        };
+        PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
+            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+        };
+        SortObject: {
+            empty?: boolean;
+            sorted?: boolean;
+            unsorted?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -3722,36 +4154,6 @@ export interface components {
              * @example 0
              */
             viewCount?: number;
-        };
-        /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
-        MediaInfoResponseDto: {
-            /**
-             * Format: int64
-             * @description 첨부파일/이미지 ID
-             * @example 23
-             */
-            id?: number;
-            /**
-             * @description S3 업로드 URL 또는 접근 URL
-             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
-             */
-            url?: string;
-            /**
-             * @description 원본 파일명
-             * @example 사진1.png
-             */
-            originalName?: string;
-            /**
-             * @description 임시 파일 여부
-             * @example false
-             */
-            isTemp?: boolean;
-            /**
-             * Format: date-time
-             * @description 임시 파일 만료일시
-             * @example 2025-05-23T09:00:00
-             */
-            expiresAt?: string;
         };
         /** @description 사용자 정보 응답 DTO */
         MyInfoResponseDto: {
@@ -3851,18 +4253,494 @@ export interface components {
             /** Format: date-time */
             modifiedAt?: string;
         };
-        /** @description 공용시설 목록 응답 DTO */
-        FacilityResponseDto: {
+        /** @description 공용시설 목록 조회 [관리자] 응답 DTO */
+        FacilitySimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 공용시설 id
+             * @example 1
+             */
+            facilityId?: number;
             /**
              * @description 공용시설 이름
-             * @example 헬스장
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 공용시설 설명
+             * @example 반드시 수영모를 씁시다
+             */
+            description?: string;
+            /**
+             * @description 공용시설 운영 시작 시간
+             * @example 06:00
+             */
+            openTime?: string;
+            /**
+             * @description 공용시설 운영 종료 시간
+             * @example 22:00
+             */
+            closeTime?: string;
+        };
+        /** @description 공용시설 강사 목록 조회 응답 DTO */
+        InstructorSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 강사 ID
+             * @example 1
+             */
+            instructorId?: number;
+            /**
+             * @description 강사 이름
+             * @example 박태환
              */
             name?: string;
             /**
-             * @description 공용시설 설명
-             * @example 24시간 이용가능한 피트니스 센터
+             * @description 강사 소개/설명
+             * @example 올림픽 메달리스트의 차원이 다른 수영 강습을 받아보세요
              */
             description?: string;
+        };
+        /** @description 타임슬롯 조회 응답 DTO */
+        TimeSlotSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 타임슬롯 ID
+             * @example 123
+             */
+            timeSlotId?: number;
+            /**
+             * @description 프로그램명
+             * @example 초보반
+             */
+            scheduleName?: string;
+            /**
+             * Format: date
+             * @description 날짜
+             * @example 2025-06-10
+             */
+            date?: string;
+            /**
+             * @description 시작 시간
+             * @example 10:00
+             */
+            startTime?: string;
+            /**
+             * @description 종료 시간
+             * @example 11:00
+             */
+            endTime?: string;
+            /**
+             * Format: int64
+             * @description 최대 예약 가능 인원
+             * @example 10
+             */
+            maxCapacity?: number;
+            /**
+             * Format: int64
+             * @description 현재 예약 인원
+             * @example 4
+             */
+            reservedCount?: number;
+            /**
+             * @description 마감 여부
+             * @example false
+             */
+            isFull?: boolean;
+        };
+        /** @description 공용시설 예약 목록 조회 [사용자] 응답 DTO */
+        FacilityReservationSimpleUserDto: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
+             */
+            reservationId?: number;
+            /**
+             * @description 예약한 공용시설 이름
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 예약한 공용시설 강사 이름
+             * @example 박태환
+             */
+            instructorName?: string;
+            /**
+             * @description 예약한 공용시설 프로그램 이름
+             * @example 자유형 기초
+             */
+            programName?: string;
+            /**
+             * @description 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             * @enum {string}
+             */
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+        };
+        /** @description 공용시설 예약 단건 조회 [사용자] 응답 DTO */
+        FacilityReservationUserDto: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
+             */
+            reservationId?: number;
+            /**
+             * @description 예약한 공용시설 이름
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 예약한 공용시설 강사 이름
+             * @example 박태환
+             */
+            instructorName?: string;
+            /**
+             * @description 예약한 공용시설 프로그램 이름
+             * @example 자유형 기초
+             */
+            programName?: string;
+            /**
+             * @description 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
+            /**
+             * Format: date-time
+             * @description 예약 신청 일시
+             * @example 2025-05-27 13:30
+             */
+            createdAt?: string;
+            /**
+             * @description 예약시 요청사항
+             * @example (선택사항)
+             */
+            requestMessage?: string;
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             * @enum {string}
+             */
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+        };
+        ApiResponseListChatroomDto: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["ChatroomDto"][];
+        };
+        ApiResponseListChatMessageDto: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["ChatMessageDto"][];
+        };
+        ChatMessageDto: {
+            /** Format: int64 */
+            userId?: number;
+            message?: string;
+            userName?: string;
+            profileImageUrl?: string;
+            apartmentName?: string;
+            buildingName?: string;
+            unitNumber?: string;
+            timestamp?: string;
+            /** Format: int64 */
+            messageId?: number;
+            clientId?: string;
+        };
+        Pageable: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            sort?: string[];
+        };
+        AdminUserListResponse: {
+            /** Format: int64 */
+            id?: number;
+            userName?: string;
+            email?: string;
+            phoneNum?: string;
+            socialProvider?: string;
+            apartmentName?: string;
+            buildingName?: string;
+            unitNumber?: string;
+            roles?: string[];
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status?: "active" | "inactive" | "pending" | "withdrawn";
+            /** Format: date-time */
+            deletedAt?: string;
+            /** Format: date-time */
+            lastLoginAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
+        };
+        ApiResponsePageAdminUserListResponse: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageAdminUserListResponse"];
+        };
+        PageAdminUserListResponse: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["AdminUserListResponse"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            empty?: boolean;
+        };
+        AdminUserDetailResponse: {
+            /** Format: int64 */
+            id?: number;
+            userName?: string;
+            email?: string;
+            phoneNum?: string;
+            socialProvider?: string;
+            socialId?: string;
+            /** Format: int64 */
+            apartmentId?: number;
+            apartmentName?: string;
+            /** Format: int64 */
+            buildingId?: number;
+            buildingNumber?: string;
+            /** Format: int64 */
+            unitId?: number;
+            unitNumber?: string;
+            roles?: string[];
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status?: "active" | "inactive" | "pending" | "withdrawn";
+            leaveReason?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
+            /** Format: date-time */
+            lastLoginAt?: string;
+            /** Format: date-time */
+            deletedAt?: string;
+            profileImageUrl?: string;
+        };
+        ApiResponseAdminUserDetailResponse: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["AdminUserDetailResponse"];
+        };
+        ApiResponsePageObject: {
+            /** Format: int32 */
+            status?: number;
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageObject"];
+        };
+        PageObject: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: Record<string, never>[];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            empty?: boolean;
+        };
+        /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
+        NoticeSummaryResponseDto: {
+            /**
+             * Format: int64
+             * @description 게시글 번호
+             * @example 1
+             */
+            noticeId?: number;
+            /**
+             * @description 게시글 제목
+             * @example 엘레베이터 정기점검 안내
+             */
+            title?: string;
+            /**
+             * @description 게시글 작성자
+             * @example 관리사무소
+             */
+            authorName?: string;
+            /**
+             * Format: int64
+             * @description 게시글 대상: 전체/동별 선택 - buildingId
+             * @example 1
+             */
+            buildingId?: number;
+            /**
+             * Format: date-time
+             * @description 게시글 작성일
+             * @example 2025-05-15 09:00
+             */
+            createdAt?: string;
+            /**
+             * Format: int64
+             * @description 게시글 조회수
+             * @example 0
+             */
+            viewCount?: number;
+        };
+        PageNoticeSummaryResponseDto: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["NoticeSummaryResponseDto"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            empty?: boolean;
+        };
+        /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
+        MediaInfoResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
+            /**
+             * @description 임시 파일 여부
+             * @example false
+             */
+            isTemp?: boolean;
+            /**
+             * Format: date-time
+             * @description 임시 파일 만료일시
+             * @example 2025-05-23T09:00:00
+             */
+            expiresAt?: string;
+        };
+        ApiResponsePageMenuDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageMenuDTO"];
+        };
+        PageMenuDTO: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["MenuDTO"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            empty?: boolean;
+        };
+        ApiResponseListMenuDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["MenuDTO"][];
+        };
+        ApiResponseListAdminGradeDTO: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["AdminGradeDTO"][];
+        };
+        ApiResponseListLong: {
+            success?: boolean;
+            message?: string;
+            data?: number[];
+        };
+        /** @description 강사 스케줄 목록 조회 응답 DTO */
+        InstructorScheduleSimpleResponseDto: {
+            /**
+             * Format: int64
+             * @description 스케쥴 ID
+             * @example 1
+             */
+            scheduleId?: number;
+            /**
+             * @description 프로그램명
+             * @example 초보반
+             */
+            scheduleName?: string;
+            /**
+             * @description 근무 요일
+             * @example TUESDAY
+             */
+            dayOfWeek?: string;
+            /**
+             * @description 근무 시작 시간
+             * @example 15:00
+             */
+            startTime?: string;
+            /**
+             * @description 근무 종료 시간
+             * @example 18:00
+             */
+            endTime?: string;
+            /**
+             * Format: int64
+             * @description 예약 단위(분)
+             * @example 60
+             */
+            slotMinutes?: number;
+            /**
+             * Format: int64
+             * @description 한 슬롯(타임)당 최대 수용 가능 인원
+             * @example 20
+             */
+            capacity?: number;
         };
         /** @description 공용시설 사용자별 이용 횟수 DTO */
         UserUsageCountDto: {
@@ -3980,43 +4858,19 @@ export interface components {
              */
             reservationCount?: number;
         };
-        /** @description 공용시설 예약 조회 [사용자] 응답 DTO */
-        FacilityReservationSummaryDto: {
+        /** @description 공용시설 사용자 예약 목록 조회 [관리자] 응답 DTO */
+        FacilityReservationSimpleManagerDto: {
             /**
-             * @description 예약한 공용시설 이름
-             * @example 헬스장
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
              */
-            facilityName?: string;
-            /**
-             * @description 예약 일시
-             * @example 2025-05-15 09:00-11:00
-             */
-            reservationTime?: string;
-            /**
-             * @description 신청 일시
-             * @example 2025-05-13 10:10
-             */
-            createdAt?: string;
-            /**
-             * @description 예약 상태
-             * @example PENDING
-             */
-            status?: string;
-        };
-        Pageable: {
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
-            sort?: string[];
-        };
-        /** @description 공용시설 예약 조회 [관리자] 응답 DTO */
-        FacilityReservationManagerDto: {
+            reservationId?: number;
             /**
              * @description 신청자 이름
              * @example 신짱구
              */
-            userName?: string;
+            applicantName?: string;
             /**
              * @description 신청자 주소(동)
              * @example 101동
@@ -4028,16 +4882,72 @@ export interface components {
              */
             unit?: string;
             /**
-             * @description 예약한 공용시설 이름
-             * @example 헬스장
+             * @description 신청한 공용시설 이름
+             * @example 수영장
              */
             facilityName?: string;
             /**
-             * @description 예약 일시
-             * @example 2025-05-15 09:00-11:00
+             * @description 신청한 공용시설 강사 이름
+             * @example 박태환
              */
-            reservationTime?: string;
+            instructorName?: string;
             /**
+             * @description 신청한 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
+            /**
+             * @description 예약 상태
+             * @example PENDING
+             * @enum {string}
+             */
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+        };
+        /** @description 공용시설 사용자 예약 상세 조회 [관리자] 응답 DTO */
+        FacilityReservationManagerDto: {
+            /**
+             * Format: int64
+             * @description 예약 ID
+             * @example 1
+             */
+            reservationId?: number;
+            /**
+             * @description 신청자 이름
+             * @example 신짱구
+             */
+            applicantName?: string;
+            /**
+             * @description 신청자 주소(동)
+             * @example 101동
+             */
+            building?: string;
+            /**
+             * @description 신청자 주소(호수)
+             * @example 202호
+             */
+            unit?: string;
+            /**
+             * @description 신청한 공용시설 이름
+             * @example 수영장
+             */
+            facilityName?: string;
+            /**
+             * @description 신청한 공용시설 강사 이름
+             * @example 박태환
+             */
+            instructorName?: string;
+            /**
+             * @description 신청한 공용시설 프로그램 이름
+             * @example 자유형 초보
+             */
+            programName?: string;
+            /**
+             * @description 신청한 예약 일시
+             * @example 2025-05-28 14:00~15:00
+             */
+            reservationDateTime?: string;
+            /**
+             * Format: date-time
              * @description 신청 일시
              * @example 2025-05-13 10:10
              */
@@ -4045,211 +4955,33 @@ export interface components {
             /**
              * @description 예약 상태
              * @example PENDING
-             */
-            status?: string;
-        };
-        PageFacilityReservationManagerDto: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["FacilityReservationManagerDto"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            empty?: boolean;
-        };
-        ApiResponseListChatroomDto: {
-            /** Format: int32 */
-            status?: number;
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["ChatroomDto"][];
-        };
-        ApiResponseListChatMessageDto: {
-            /** Format: int32 */
-            status?: number;
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["ChatMessageDto"][];
-        };
-        ChatMessageDto: {
-            /** Format: int64 */
-            userId?: number;
-            message?: string;
-            userName?: string;
-            profileImageUrl?: string;
-            apartmentName?: string;
-            buildingName?: string;
-            unitNumber?: string;
-            timestamp?: string;
-            /** Format: int64 */
-            messageId?: number;
-        };
-        AdminUserListResponse: {
-            /** Format: int64 */
-            id?: number;
-            userName?: string;
-            email?: string;
-            phoneNum?: string;
-            socialProvider?: string;
-            apartmentName?: string;
-            buildingName?: string;
-            unitNumber?: string;
-            roles?: string[];
-            /**
-             * @description 상태
              * @enum {string}
              */
-            status?: "active" | "inactive" | "pending" | "withdrawn";
-            /** Format: date-time */
-            deletedAt?: string;
-            /** Format: date-time */
-            lastLoginAt?: string;
-            /** Format: date-time */
-            modifiedAt?: string;
+            status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
         };
-        ApiResponsePageAdminUserListResponse: {
+        ApiResponseListMapStringObject: {
             /** Format: int32 */
             status?: number;
             success?: boolean;
             message?: string;
-            data?: components["schemas"]["PageAdminUserListResponse"];
+            data?: {
+                [key: string]: Record<string, never>;
+            }[];
         };
-        PageAdminUserListResponse: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["AdminUserListResponse"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            empty?: boolean;
-        };
-        AdminUserDetailResponse: {
-            /** Format: int64 */
-            id?: number;
-            userName?: string;
-            email?: string;
-            phoneNum?: string;
-            socialProvider?: string;
-            socialId?: string;
-            /** Format: int64 */
-            apartmentId?: number;
-            apartmentName?: string;
-            /** Format: int64 */
-            buildingId?: number;
-            buildingNumber?: string;
-            /** Format: int64 */
-            unitId?: number;
-            unitNumber?: string;
-            roles?: string[];
-            /**
-             * @description 상태
-             * @enum {string}
-             */
-            status?: "active" | "inactive" | "pending" | "withdrawn";
-            leaveReason?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            modifiedAt?: string;
-            /** Format: date-time */
-            lastLoginAt?: string;
-            /** Format: date-time */
-            deletedAt?: string;
-            profileImageUrl?: string;
-        };
-        ApiResponseAdminUserDetailResponse: {
+        ApiResponseListMapStringString: {
             /** Format: int32 */
             status?: number;
             success?: boolean;
             message?: string;
-            data?: components["schemas"]["AdminUserDetailResponse"];
-        };
-        ApiResponsePageObject: {
-            /** Format: int32 */
-            status?: number;
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["PageObject"];
-        };
-        PageObject: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            content?: Record<string, never>[];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            empty?: boolean;
-        };
-        ApiResponsePageMenuDTO: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["PageMenuDTO"];
-        };
-        PageMenuDTO: {
-            /** Format: int32 */
-            totalPages?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
-            size?: number;
-            content?: components["schemas"]["MenuDTO"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
-            empty?: boolean;
-        };
-        ApiResponseListMenuDTO: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["MenuDTO"][];
-        };
-        ApiResponseListAdminGradeDTO: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["AdminGradeDTO"][];
-        };
-        ApiResponseListLong: {
-            success?: boolean;
-            message?: string;
-            data?: number[];
+            data?: {
+                [key: string]: string;
+            }[];
         };
         Page: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4258,16 +4990,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageBuildingResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4276,16 +5008,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageUnitResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4294,16 +5026,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageAdminAccountResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4312,9 +5044,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminGrade: {
@@ -4341,6 +5073,20 @@ export interface components {
              * @example 서비스 불만
              */
             leaveReason?: string;
+        };
+        /** @description 공용시설 예약 취소 요청 DTO */
+        FacilityReservationCancelDto: {
+            /**
+             * @description 예약 취소 사유 선택
+             * @example 잘못 예약함
+             * @enum {string}
+             */
+            cancelReasonType?: "PERSONAL_REASON" | "SCHEDULE_CONFLICT" | "ILLNESS" | "MISTAKE" | "OTHER";
+            /**
+             * @description 취소 사유 입력
+             * @example '기타'선택시 입력
+             */
+            cancelReason?: string;
         };
     };
     responses: never;
@@ -4395,34 +5141,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
-    updateNotice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NoticeUpdateRequestDto"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: Record<string, never>;
-                    };
                 };
             };
         };
@@ -4545,6 +5263,34 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CommunityResponseDto"];
+                };
+            };
+        };
+    };
+    updateNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeUpdateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: Record<string, never>;
+                    };
                 };
             };
         };
@@ -4765,11 +5511,148 @@ export interface operations {
             };
         };
     };
+    getFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"];
+                };
+            };
+        };
+    };
+    updateFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityUpdateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InstructorSimpleResponseDto"];
+                };
+            };
+        };
+    };
+    updateInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstructorUpdateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getApartmentById: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4789,7 +5672,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -4813,7 +5698,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4831,7 +5718,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4851,7 +5740,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -4875,7 +5766,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4893,7 +5786,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4913,7 +5808,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -4937,7 +5834,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4955,7 +5854,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4975,7 +5876,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -4999,7 +5902,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5017,7 +5922,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5252,82 +6159,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CreateManagerOpinionRequestDto"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
-    uploadImages: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    files: string[];
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
-                };
-            };
-        };
-    };
-    uploadFiles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    files: string[];
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
-                };
-            };
-        };
-    };
-    createNotice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NoticeCreateRequestDto"];
             };
         };
         responses: {
@@ -5675,13 +6506,31 @@ export interface operations {
             };
         };
     };
-    reserveFacility: {
+    getMyReservations: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                facilityId: number;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityReservationSimpleUserDto"][];
+                };
             };
+        };
+    };
+    reservationFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -5696,7 +6545,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": number;
                 };
             };
         };
@@ -5927,8 +6776,9 @@ export interface operations {
         parameters: {
             query: {
                 title: string;
-                category: string;
-                apartmentId: number;
+                categoryCode?: string;
+                apartmentId?: number;
+                prevRoomId?: number;
             };
             header?: never;
             path?: never;
@@ -6185,10 +7035,86 @@ export interface operations {
             };
         };
     };
+    uploadImages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
+                };
+            };
+        };
+    };
+    uploadFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
+                };
+            };
+        };
+    };
+    createNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeCreateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     getAllMenus: {
         parameters: {
             query: {
-                arg0: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -6299,16 +7225,236 @@ export interface operations {
             };
         };
     };
+    getFacilityList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    createFacility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityCreateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": number;
+                };
+            };
+        };
+    };
+    getInstructorList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InstructorSimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    createInstructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstructorCreateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": number;
+                };
+            };
+        };
+    };
+    getScheduleList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InstructorScheduleSimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    createSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstructorScheduleCreateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": number;
+                };
+            };
+        };
+    };
+    markMessagesAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseBoolean"];
+                };
+            };
+        };
+    };
+    closeChatroom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseBoolean"];
+                };
+            };
+        };
+    };
+    assignAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: number;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseBoolean"];
+                };
+            };
+        };
+    };
     getAllApartments: {
         parameters: {
             query: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
-                arg3: components["schemas"]["Pageable"];
+                zipcode?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -6535,64 +7681,20 @@ export interface operations {
             };
         };
     };
-    cancelReservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                facilityReservationId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": Record<string, never>;
-                };
-            };
-        };
-    };
-    changeReservationStatus: {
-        parameters: {
-            query: {
-                status: string;
-            };
-            header?: never;
-            path: {
-                facilityReservationId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-        };
-    };
     updateEntryStatus: {
         parameters: {
-            query: {
-                status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
-            };
+            query?: never;
             header?: never;
             path: {
                 entryRecordId: number;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntryRecordStatusUpdateRequestDto"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -6655,7 +7757,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6679,7 +7783,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6699,11 +7805,37 @@ export interface operations {
             };
         };
     };
+    updateReservationStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityReservationStatusUpdateDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     changeAccountStatus: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6867,6 +7999,26 @@ export interface operations {
             };
         };
     };
+    getRegistrations_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VehicleRegistrationInfoDto"][];
+                };
+            };
+        };
+    };
     checkPhoneNum: {
         parameters: {
             query: {
@@ -6929,34 +8081,7 @@ export interface operations {
             };
         };
     };
-    getNoticeList: {
-        parameters: {
-            query?: {
-                buildingId?: number;
-                startDate?: string;
-                endDate?: string;
-                page?: number;
-                size?: number;
-                sort?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PageNoticeSummaryResponseDto"];
-                };
-            };
-        };
-    };
-    readNotice: {
+    readNoticeUser: {
         parameters: {
             query?: never;
             header?: never;
@@ -6974,30 +8099,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["NoticeReadResponseDto"];
-                };
-            };
-        };
-    };
-    deleteNotice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: Record<string, never>;
-                    };
                 };
             };
         };
@@ -7026,90 +8127,6 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["PageUserNoticeSummaryResponseDto"];
                 };
-            };
-        };
-    };
-    getImageInfo: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeImageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaInfoResponseDto"];
-                };
-            };
-        };
-    };
-    deleteImage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeImageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getFileInfo: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeFileId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaInfoResponseDto"];
-                };
-            };
-        };
-    };
-    deleteFile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeFileId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
@@ -7184,172 +8201,10 @@ export interface operations {
             };
         };
     };
-    getAllFacilities: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FacilityResponseDto"][];
-                };
-            };
-        };
-    };
-    getUserUsageCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UserUsageCountDto"][];
-                };
-            };
-        };
-    };
-    getTimePeriodCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["TimePeriodUsageDto"][];
-                };
-            };
-        };
-    };
-    getReservationStatusCounts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ReservationStatusCountDto"][];
-                };
-            };
-        };
-    };
-    getFacilityUsageCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["FacilityUsageCountDto"][];
-                };
-            };
-        };
-    };
-    getDayOfWeekCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["DayOfWeekUsageDto"][];
-                };
-            };
-        };
-    };
-    getCancellationRatio: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["CancellationRatioDto"];
-                };
-            };
-        };
-    };
-    getBuildingUsageCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["BuildingUsageCountDto"][];
-                };
-            };
-        };
-    };
-    getUserReservations: {
+    getFacilityList_1: {
         parameters: {
             query?: {
-                date?: string;
-                facilityId?: number;
-                status?: "AGREE" | "PENDING" | "REJECT" | "CANCEL";
+                keyword?: string;
             };
             header?: never;
             path?: never;
@@ -7363,21 +8218,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["FacilityReservationSummaryDto"][];
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"][];
                 };
             };
         };
     };
-    getReservations: {
+    getFacility_1: {
         parameters: {
-            query: {
-                date?: string;
-                facilityId?: number;
-                status?: string;
-                arg3: components["schemas"]["Pageable"];
-            };
+            query?: never;
             header?: never;
-            path?: never;
+            path: {
+                facilityId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7388,8 +8240,102 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PageFacilityReservationManagerDto"];
+                    "*/*": components["schemas"]["FacilitySimpleResponseDto"];
                 };
+            };
+        };
+    };
+    getInstructorList_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InstructorSimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    getInstructorTimeSlots: {
+        parameters: {
+            query: {
+                startDate: string;
+                endDate: string;
+            };
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TimeSlotSimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    getMyReservationDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityReservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityReservationUserDto"];
+                };
+            };
+        };
+    };
+    cancelReservation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityReservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityReservationCancelDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -7625,12 +8571,9 @@ export interface operations {
             };
         };
     };
-    getChatroomsByCategory: {
+    getMyChatrooms: {
         parameters: {
-            query: {
-                category: string;
-                apartmentId: number;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -7648,9 +8591,13 @@ export interface operations {
             };
         };
     };
-    getAllChatrooms: {
+    getChatroomsByFilter: {
         parameters: {
-            query?: never;
+            query?: {
+                categoryCode?: string;
+                apartmentId?: number;
+                status?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -7732,11 +8679,11 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
+                zipcode?: string;
             };
             header?: never;
             path?: never;
@@ -7759,7 +8706,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7779,7 +8728,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7799,7 +8750,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7819,7 +8772,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7839,7 +8794,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7858,13 +8815,13 @@ export interface operations {
     getUserList: {
         parameters: {
             query: {
-                arg0?: string;
-                arg1?: string;
-                arg2?: string;
-                arg3?: string;
-                arg4?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg5?: "active" | "inactive" | "pending" | "withdrawn";
-                arg6: components["schemas"]["Pageable"];
+                searchTerm?: string;
+                userName?: string;
+                email?: string;
+                apartmentName?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -7887,7 +8844,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7906,11 +8865,13 @@ export interface operations {
     getUserLogs: {
         parameters: {
             query: {
-                arg1?: string;
-                arg2: components["schemas"]["Pageable"];
+                logType?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7929,10 +8890,10 @@ export interface operations {
     exportUsers: {
         parameters: {
             query?: {
-                arg0?: string;
-                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg2?: "active" | "inactive" | "pending" | "withdrawn";
-                arg3?: string;
+                searchTerm?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                format?: string;
             };
             header?: never;
             path?: never;
@@ -7948,6 +8909,163 @@ export interface operations {
                 content: {
                     "*/*": string;
                 };
+            };
+        };
+    };
+    getNoticeList: {
+        parameters: {
+            query?: {
+                buildingId?: number;
+                startDate?: string;
+                endDate?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageNoticeSummaryResponseDto"];
+                };
+            };
+        };
+    };
+    readNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NoticeReadResponseDto"];
+                };
+            };
+        };
+    };
+    deleteNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: Record<string, never>;
+                    };
+                };
+            };
+        };
+    };
+    getImageInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getFileInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -8033,6 +9151,214 @@ export interface operations {
             };
         };
     };
+    getTimeSlots: {
+        parameters: {
+            query: {
+                startDate: string;
+                endDate: string;
+            };
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TimeSlotSimpleResponseDto"][];
+                };
+            };
+        };
+    };
+    getUserUsageCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserUsageCountDto"][];
+                };
+            };
+        };
+    };
+    getTimePeriodCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TimePeriodUsageDto"][];
+                };
+            };
+        };
+    };
+    getReservationStatusCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReservationStatusCountDto"][];
+                };
+            };
+        };
+    };
+    getFacilityUsageCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityUsageCountDto"][];
+                };
+            };
+        };
+    };
+    getDayOfWeekCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DayOfWeekUsageDto"][];
+                };
+            };
+        };
+    };
+    getCancellationRatio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CancellationRatioDto"];
+                };
+            };
+        };
+    };
+    getBuildingUsageCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BuildingUsageCountDto"][];
+                };
+            };
+        };
+    };
+    getReservationsByApartment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityReservationSimpleManagerDto"][];
+                };
+            };
+        };
+    };
+    getReservationDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reservationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FacilityReservationManagerDto"];
+                };
+            };
+        };
+    };
     adminCheck: {
         parameters: {
             query?: never;
@@ -8053,13 +9379,123 @@ export interface operations {
             };
         };
     };
-    getBuildingsByApartment_1: {
+    getAdminChatroomList: {
         parameters: {
-            query: {
-                arg1: components["schemas"]["Pageable"];
+            query?: {
+                apartmentId?: number;
+                categoryCode?: string;
+                status?: string;
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListChatroomDto"];
+                };
+            };
+        };
+    };
+    getAdminChatroomById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseChatroomDto"];
+                };
+            };
+        };
+    };
+    getAdminChatMessages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListChatMessageDto"];
+                };
+            };
+        };
+    };
+    getApartments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListMapStringObject"];
+                };
+            };
+        };
+    };
+    getChatCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListMapStringString"];
+                };
+            };
+        };
+    };
+    getBuildingsByApartment_1: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8078,10 +9514,12 @@ export interface operations {
     getUnitsByBuilding_1: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8100,10 +9538,10 @@ export interface operations {
     getAdminAccountsByPage: {
         parameters: {
             query?: {
-                arg0?: number;
-                arg1?: number;
-                arg2?: string;
-                arg3?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+                direction?: string;
             };
             header?: never;
             path?: never;
@@ -8166,7 +9604,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8324,6 +9764,50 @@ export interface operations {
                 content: {
                     "*/*": Record<string, never>;
                 };
+            };
+        };
+    };
+    deleteSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+                scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteTimeSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facilityId: number;
+                instructorId: number;
+                timeSlotId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

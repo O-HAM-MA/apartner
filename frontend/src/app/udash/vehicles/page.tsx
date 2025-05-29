@@ -26,6 +26,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // useGlobalLoginMember 훅 import
+import { Switch } from "@/components/ui/switch"; // shadcn/ui의 Switch 컴포넌트
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type VehicleRegistrationInfoDto =
   components["schemas"]["VehicleRegistrationInfoDto"];
@@ -333,6 +341,11 @@ type EditingVehicle = {
   type: string;
 };
 
+type EditingEntryRecordStatus = {
+  id: number;
+  status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+};
+
 // 페이징 관련 타입 추가
 type PagingState = {
   currentPage: number;
@@ -355,6 +368,9 @@ export default function VehicleManagement() {
   const [currentVehicle, setCurrentVehicle] = useState<EditingVehicle | null>(
     null
   );
+  const [currentEntryRecord, setCurrentEntryRecord] =
+    useState<EditingEntryRecordStatus | null>(null);
+
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null
   ); // 입차할 차량 ID 상태 추가
@@ -387,15 +403,6 @@ export default function VehicleManagement() {
   });
 
   // 주차장 현황 조회 쿼리 추가
-  const { data: parkingStatus } = useQuery<ParkingStatusDto>({
-    queryKey: ["parking", "status"],
-    queryFn: async () => {
-      const { data, error } = await client.GET("/api/v1/vehicles/status");
-      if (error) throw error;
-      return data;
-    },
-    enabled: isLogin,
-  });
 
   // 차량 등록 mutation 수정
   const addVehicleMutation = useMutation({
@@ -440,31 +447,63 @@ export default function VehicleManagement() {
     },
   });
 
-  // 차량 상태 수정 mutation 수정
+  // 승인 상태 표시를 위한 컴포넌트
+  const StatusBadge = ({ status }: { status: string }) => {
+    const getStatusInfo = (status: string) => {
+      switch (status) {
+        case "INVITER_AGREE":
+          return {
+            label: "1차 승인됨",
+            className: "bg-blue-100 text-blue-800",
+          };
+        case "AGREE":
+          return {
+            label: "최종 승인됨",
+            className: "bg-green-100 text-green-800",
+          };
+        case "INAGREE":
+          return { label: "미승인", className: "bg-gray-100 text-gray-800" };
+        case "PENDING":
+          return {
+            label: "대기중",
+            className: "bg-yellow-100 text-yellow-800",
+          };
+        default:
+          return {
+            label: "d",
+          };
+      }
+    };
+
+    const statusInfo = getStatusInfo(status);
+    return (
+      <Badge
+        className={`${statusInfo.className} hover:${statusInfo.className}`}
+      >
+        {statusInfo.label}
+      </Badge>
+    );
+  };
+
+  // 상태 변경 mutation 수정
   const updateVehicleStatusMutation = useMutation({
     mutationFn: ({
       entryRecordId,
       status,
     }: {
       entryRecordId: number;
-      status: EntryRecordStatusUpdateRequestDto["status"];
+      status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
     }) => {
-      console.log("API 호출 시도:", { entryRecordId, status });
-
-      // 템플릿 리터럴로 URL 생성
       return client.PATCH(`/api/v1/entry-records/${entryRecordId}/status`, {
-        json: {
-          status: status,
-        },
+        body: { status },
       });
     },
     onSuccess: () => {
-      alert("승인 상태가 수정되었습니다.");
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
     },
     onError: (error) => {
       console.error("승인 상태 변경 실패:", error);
-      alert("승인 상태 수정에 실패했습니다.");
+      alert("승인 상태 변경에 실패했습니다.");
     },
   });
 
@@ -544,7 +583,9 @@ export default function VehicleManagement() {
   // mutation 추가
   const requestParkingMutation = useMutation({
     mutationFn: () => {
-      return client.POST("/api/v1/entry-records/request", {});
+      return client.POST(`/api/v1/entry-records/request/{vehicleId}`, {
+        body: {}, // 빈 객체를 보내도 됩니다. 백엔드에서 자동으로 처리
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
@@ -639,6 +680,63 @@ export default function VehicleManagement() {
   if (isLoading) return <div>차량 정보를 불러오는 중...</div>;
   if (error) return <div>에러가 발생했습니다.</div>;
 
+  // vehicles 테이블 내부에 상태 변경 컴포넌트 추가
+  const StatusSelector = ({
+    entryRecordId,
+    currentStatus,
+  }: {
+    entryRecordId: number;
+    currentStatus: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+  }) => {
+    const queryClient = useQueryClient();
+
+    const updateStatusMutation = useMutation({
+      mutationFn: async ({
+        entryRecordId,
+        status,
+      }: {
+        entryRecordId: number;
+        status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+      }) => {
+        const { data, error } = await client.PATCH(
+          `/api/v1/entry-records/${entryRecordId}/status`,
+          {
+            body: { status },
+          }
+        );
+        if (error) throw error;
+        return data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+        alert("차량 승인 상태가 변경되었습니다.");
+      },
+      onError: (error) => {
+        console.error("상태 변경 실패:", error);
+        alert("상태 변경에 실패했습니다.");
+      },
+    });
+
+    return (
+      <Select
+        defaultValue={currentStatus}
+        onValueChange={(
+          value: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE"
+        ) => {
+          updateStatusMutation.mutate({ entryRecordId, status: value });
+        }}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="승인 상태 선택" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="INVITER_AGREE">입주민 승인</SelectItem>
+          <SelectItem value="INAGREE">미승인</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+  };
+
   return (
     <div
       className="min-h-screen bg-white m-0 p-0"
@@ -652,13 +750,11 @@ export default function VehicleManagement() {
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-              <span className="text-gray-500 text-xl">백</span>
+              <span className="text-gray-500 text-xl"></span>
             </div>
             <div>
-              <h2 className="font-bold text-lg text-[#FF4081]">
-                백선영 입주민
-              </h2>
-              <p className="text-sm text-gray-600">삼성아파트 101동 102호</p>
+              <h2 className="font-bold text-lg text-[#FF4081]"></h2>
+              <p className="text-sm text-gray-600"></p>
             </div>
           </div>
           <Link href="/dashboard">
@@ -674,68 +770,6 @@ export default function VehicleManagement() {
         <div className="bg-white rounded-lg shadow-sm p-6">
           {/* 주차장 현황 섹션과 차량 관리 제목 부분 수정 */}
           <div>
-            {/* 주차장 현황 섹션 */}
-            <div className="mb-6 p-6 bg-white rounded-lg border border-gray-200 w-full">
-              <h2 className="text-lg font-semibold mb-4">주차장 현황</h2>
-              <div className="grid grid-cols-3 gap-10 max-w-[1200px] mx-auto">
-                <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-600 mb-2">전체 주차공간</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {parkingStatus?.totalCapacity || 0}
-                    <span className="text-base font-normal text-gray-600 ml-1">
-                      면
-                    </span>
-                  </p>
-                </div>
-                <div className="text-center p-6 bg-pink-50 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-600 mb-2">현재 주차</p>
-                  <p className="text-3xl font-bold text-[#FF4081]">
-                    {parkingStatus?.activeCount || 0}
-                    <span className="text-base font-normal text-gray-600 ml-1">
-                      대
-                    </span>
-                  </p>
-                </div>
-                <div className="text-center p-6 bg-green-50 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-600 mb-2">남은 공간</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {parkingStatus?.remainingSpace || 0}
-                    <span className="text-base font-normal text-gray-600 ml-1">
-                      면
-                    </span>
-                  </p>
-                </div>
-              </div>
-              {/* 주차장 사용률 프로그레스 바 */}
-              <div className="mt-8 max-w-[1200px] mx-auto">
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-[#FF4081] h-3 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${
-                        parkingStatus
-                          ? (parkingStatus.activeCount /
-                              parkingStatus.totalCapacity) *
-                            100
-                          : 0
-                      }%`,
-                    }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-500 mt-3 text-center">
-                  주차장 사용률:{" "}
-                  {parkingStatus
-                    ? Math.round(
-                        (parkingStatus.activeCount /
-                          parkingStatus.totalCapacity) *
-                          100
-                      )
-                    : 0}
-                  %
-                </p>
-              </div>
-            </div>
-
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h1 className="text-2xl font-bold">차량 관리</h1>
@@ -783,7 +817,7 @@ export default function VehicleManagement() {
                             type: e.target.value,
                           })
                         }
-                        placeholder="예: 승용차"
+                        placeholder="예 : 소나타"
                       />
                     </div>
                   </div>
@@ -843,7 +877,7 @@ export default function VehicleManagement() {
                             prev ? { ...prev, type: e.target.value } : null
                           )
                         }
-                        placeholder="예: 승용차"
+                        placeholder="예: 소나타"
                       />
                     </div>
                   </div>
@@ -1023,7 +1057,7 @@ export default function VehicleManagement() {
                 className="bg-blue-500 hover:bg-blue-600 px-12 py-6 text-lg"
                 onClick={() => requestParkingMutation.mutate()}
               >
-                <Car className="mr-2 h-6 w-6" />
+                <Car className="mr-2 h-6 w-4" />
                 주차 재신청
               </Button>
             </div>
@@ -1069,15 +1103,7 @@ export default function VehicleManagement() {
                         </td>
                         <td className="px-4 py-4">{vehicle.type}</td>
                         <td className="px-4 py-4">
-                          <Badge
-                            className={
-                              vehicle.status === "주차중"
-                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                            }
-                          >
-                            {vehicle.status}
-                          </Badge>
+                          <StatusBadge status={vehicle.status} />
                         </td>
                         <td className="px-4 py-4 text-sm">
                           <div className="space-y-1">
@@ -1091,24 +1117,48 @@ export default function VehicleManagement() {
                             </p>
                           </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs"
-                              onClick={() => handleEditClick(vehicle)}
-                            >
-                              수정
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 text-xs"
-                              onClick={() => handleDeleteVehicle(vehicle.id)}
-                            >
-                              삭제
-                            </Button>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-4">
+                            <div className="flex flex-col items-start gap-2">
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={vehicle.status !== "INAGREE"}
+                                  className={
+                                    vehicle.status === "AGREE"
+                                      ? "bg-green-500"
+                                      : vehicle.status === "INVITER_AGREE"
+                                      ? "bg-blue-500"
+                                      : ""
+                                  }
+                                  onCheckedChange={(checked) => {
+                                    if (!vehicle.entryRecordId) {
+                                      alert("출입 기록 ID가 없습니다.");
+                                      return;
+                                    }
+                                    updateVehicleStatusMutation.mutate({
+                                      entryRecordId: vehicle.entryRecordId,
+                                      status: checked
+                                        ? "INVITER_AGREE"
+                                        : "INAGREE",
+                                    });
+                                  }}
+                                />
+                                <span className="text-sm">
+                                  {vehicle.status === "AGREE"
+                                    ? "최종 승인됨"
+                                    : vehicle.status === "INVITER_AGREE"
+                                    ? "1차 승인됨"
+                                    : "미승인"}
+                                </span>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {vehicle.status === "AGREE"
+                                  ? "관리자가 최종 승인했습니다"
+                                  : vehicle.status === "INVITER_AGREE"
+                                  ? "관리자 승인 대기중입니다"
+                                  : "방문자 출입을 승인하려면 켜세요"}
+                              </span>
+                            </div>
                           </div>
                         </td>
                       </tr>
