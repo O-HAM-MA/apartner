@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class VehicleRegistrationInfoDto {
 
     private Long id; // 신청번호
+    private Long entryRecordId;     // 추가: 최신 출입기록 ID
     private String registerType; // 등록 구분 (거주자/방문자)
     private String applicantName; // 신청자 이름 또는 택배, 손님 등
     private String apartmentName;
@@ -31,8 +32,15 @@ public class VehicleRegistrationInfoDto {
     private String userPhone;  // 연락처 (거주자는 user에서, 외부인은 직접 입력)
 
     private String status; // EntryRecord의 상태
+    private String vehicleStatus;  // Vehicle 자체 상태 ← 추가됨
 
     public static VehicleRegistrationInfoDto from(Vehicle vehicle, EntryRecord entryRecord) {
+
+        String vehicleStatus = vehicle.getStatus() != null ? vehicle.getStatus().name() : null;
+        Long erId = entryRecord.getId();  // 최신 출입기록 id
+        String erStatus = entryRecord.getStatus() != null
+                ? entryRecord.getStatus().name()
+                : null;
         boolean isForeign = Boolean.TRUE.equals(vehicle.getIsForeign());
 
         String registerType = isForeign ? "방문자" : "거주자";
@@ -112,6 +120,7 @@ public class VehicleRegistrationInfoDto {
 
         return VehicleRegistrationInfoDto.builder()
                 .id(vehicle.getId())
+                .entryRecordId(erId)           // 빌더에 추가
                 .registerType(registerType)
                 .applicantName(applicantName)
                 .apartmentName(apartment)
@@ -127,6 +136,7 @@ public class VehicleRegistrationInfoDto {
                 //.userPhone(!isForeign ? phone : null)
                 .userPhone(phone) // ✅ 무조건 phone을 넣자
                 .status(entryRecord.getStatus() != null ? entryRecord.getStatus().name() : null) // ✅ 이 부분
+                .vehicleStatus(vehicleStatus) // ✅ 여기에 추가
                 .build();
     }
 }
