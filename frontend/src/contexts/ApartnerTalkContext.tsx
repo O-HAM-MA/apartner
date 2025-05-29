@@ -15,6 +15,7 @@ import {
   getActiveUserChatrooms,
   closeChatroom,
   joinChatroom,
+  markMessagesAsRead as markMessagesAsReadApi,
 } from "@/utils/api";
 import { useGlobalLoginMember } from "@/auth/loginMember";
 import {
@@ -161,6 +162,10 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
   // 활성화된 채팅방 관련 상태
   const [hasActiveChat, setHasActiveChat] = useState<boolean>(false);
   const [activeChat, setActiveChat] = useState<any | null>(null);
+  // 전역 WebSocket 클라이언트
+  const [globalStompClient, setGlobalStompClient] = useState<Client | null>(
+    null
+  );
 
   // 로그인 멤버 정보 context에서 바로 사용
   const { loginMember, isLogin } = useGlobalLoginMember();
@@ -249,13 +254,18 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
   }, [isLogin, userId]);
 
   // 메시지 읽음 처리 함수 - 백엔드의 updateUserCheckedAt과 동일한 역할
-  const markMessagesAsRead = useCallback(() => {
+  const markMessagesAsRead = useCallback(async () => {
     if (!chatroomId) return;
 
-    const now = new Date();
-    setHasUnreadMessages(false);
-    setUnreadCount(0);
-    setLastCheckAt(now);
+    try {
+      await markMessagesAsReadApi(chatroomId);
+      const now = new Date();
+      setHasUnreadMessages(false);
+      setUnreadCount(0);
+      setLastCheckAt(now);
+    } catch (error) {
+      console.error("[ChatFloatingButton] 메시지 읽음 처리 실패:", error);
+    }
   }, [chatroomId]);
 
   // 카드 화면 관리 유틸리티 함수
@@ -294,6 +304,9 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       if (!isCurrentChatroom && !isFromMe) {
         setHasUnreadMessages(true);
         setUnreadCount((prev) => prev + 1);
+        console.log(
+          "[알림] 새 메시지 도착! hasUnreadMessages=true, unreadCount 증가"
+        );
       }
 
       receivedMsg.isMyMessage = isFromMe;
@@ -344,6 +357,9 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         if (updatedChatroom.hasNewMessage) {
           setHasUnreadMessages(true);
           setUnreadCount((prev) => prev + 1);
+          console.log(
+            "[알림] 채팅방 업데이트로 새 메시지 감지! hasUnreadMessages=true, unreadCount 증가"
+          );
         }
       }
 
@@ -435,6 +451,7 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
   // 웹소켓 연결
   const connectWebSocket = useCallback(
     (roomId: number) => {
+      console.log("[디버그] connectWebSocket 호출", roomId);
       if (roomStatus === "INACTIVE") {
         setConnecting(false);
         setConnected(false);
@@ -453,6 +470,7 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         heartbeatOutgoing: 4000,
       });
       client.onConnect = () => {
+        console.log("[디버그] WebSocket 연결 성공", roomId);
         client.subscribe(`/sub/chats/${roomId}`, (message) => {
           try {
             const receivedMsg = JSON.parse(message.body);
@@ -472,9 +490,11 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         markMessagesAsRead();
       };
       client.onDisconnect = () => {
+        console.log("[디버그] WebSocket 연결 해제", roomId);
         setConnected(false);
       };
       client.onStompError = (frame) => {
+        console.error("[디버그] WebSocket STOMP 에러", frame);
         setConnecting(false);
       };
       client.activate();
@@ -779,6 +799,74 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
     },
     [userId, connectWebSocket, showChatInterface]
   );
+
+  // 채팅방 상태와 무관하게 실시간 메시지 업데이트를 위한 전역 WebSocket 연결
+  useEffect(() => {
+    if (!isLogin || !userId) {
+      return;
+    }
+
+    console.log("[ApartnerTalkContext] 전역 WebSocket 연결 시도");
+
+    const socket = new SockJS(`/stomp/chats`);
+    const client = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    client.onConnect = () => {
+      console.log("[ApartnerTalkContext] 전역 WebSocket 연결 성공");
+
+      // 채팅방 업데이트만 구독 (모든 채팅방의 업데이트를 받기 위함)
+      client.subscribe(`/sub/chats/updates`, (message) => {
+        try {
+          const chatroomUpdate = JSON.parse(message.body);
+          console.log(
+            "[ApartnerTalkContext] 전역 구독으로 채팅방 업데이트 수신:",
+            chatroomUpdate
+          );
+
+          // 새 메시지가 있는 경우 알림 상태 업데이트
+          if (chatroomUpdate.hasNewMessage) {
+            setHasUnreadMessages(true);
+            setUnreadCount((prev) => prev + 1);
+            console.log(
+              "[ApartnerTalkContext] 전역 구독으로 새 메시지 감지: hasUnreadMessages=true, unreadCount 증가"
+            );
+
+            // 활성화된 채팅방 목록 갱신
+            checkActiveChats();
+          }
+        } catch (error) {
+          console.error(
+            "[ApartnerTalkContext] 전역 WebSocket 메시지 처리 오류:",
+            error
+          );
+        }
+      });
+    };
+
+    client.onDisconnect = () => {
+      console.log("[ApartnerTalkContext] 전역 WebSocket 연결 해제");
+    };
+
+    client.onStompError = (frame) => {
+      console.error("[ApartnerTalkContext] 전역 WebSocket STOMP 에러:", frame);
+    };
+
+    client.activate();
+    setGlobalStompClient(client);
+
+    // 컴포넌트 언마운트 시 연결 해제
+    return () => {
+      if (client.connected) {
+        console.log("[ApartnerTalkContext] 전역 WebSocket 연결 정리");
+        client.deactivate();
+      }
+    };
+  }, [isLogin, userId]); // 로그인 상태나 사용자 ID가 변경될 때만 재연결
 
   return (
     <ApartnerTalkContext.Provider
