@@ -1,4 +1,6 @@
 "use client";
+
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -16,61 +18,25 @@ import {
   MessageSquare,
   ImageIcon,
 } from "lucide-react";
+import client from "@/lib/backend/client";
+import { components } from "@/lib/backend/apiV1/schema";
 
-// Mock data for demonstration since we don't have the actual API client
-const mockPosts = [
-  {
-    id: 1,
-    title: "아파트 주차장 이용 안내",
-    content:
-      "주차장 이용 시 주의사항과 새로운 규정에 대해 안내드립니다. 모든 입주민분들께서는 반드시 확인해주시기 바랍니다.",
-    authorName: "관리사무소",
-    viewCount: 245,
-    createdAt: "2024-01-15T10:30:00Z",
-    hasImage: true,
-  },
-  {
-    id: 2,
-    title: "엘리베이터 점검 일정 공지",
-    content:
-      "정기 점검을 위해 엘리베이터 운행이 일시 중단됩니다. 불편을 드려 죄송합니다.",
-    authorName: "김관리",
-    viewCount: 189,
-    createdAt: "2024-01-14T14:20:00Z",
-    hasImage: false,
-  },
-  {
-    id: 3,
-    title: "아이들 놀이터 새 시설 설치 완료",
-    content:
-      "아이들이 더욱 안전하고 즐겁게 놀 수 있도록 새로운 놀이기구를 설치했습니다. 많은 이용 부탁드립니다.",
-    authorName: "이주민",
-    viewCount: 156,
-    createdAt: "2024-01-13T16:45:00Z",
-    hasImage: true,
-  },
-  {
-    id: 4,
-    title: "분리수거 요일 변경 안내",
-    content:
-      "환경부 정책 변경에 따라 분리수거 요일이 변경됩니다. 새로운 일정을 확인해주세요.",
-    authorName: "박환경",
-    viewCount: 203,
-    createdAt: "2024-01-12T09:15:00Z",
-    hasImage: false,
-  },
-];
+type CommunityResponseDto = components["schemas"]["CommunityResponseDto"];
 
 export default function CommunityPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Mock query for demonstration
-  const { data: posts, isLoading } = {
-    data: mockPosts,
-    isLoading: false,
-  };
+  // API 연동을 위한 쿼리 추가
+  const { data: posts, isLoading } = useQuery<CommunityResponseDto[]>({
+    queryKey: ["community", "posts"],
+    queryFn: async () => {
+      const { data, error } = await client.GET("/api/v1/community");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Format date helper function
   const formatDate = (dateString: string) => {
@@ -134,7 +100,7 @@ export default function CommunityPage() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {posts.map((post, index) => (
+                {posts.map((post) => (
                   <Card
                     key={post.id}
                     className="border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white"
