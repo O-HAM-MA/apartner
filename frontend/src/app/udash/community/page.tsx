@@ -74,45 +74,56 @@ export default function CommunityPage() {
   ) => (
     <Card
       key={post.id}
-      className={`border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white ${
-        isReply ? "ml-8 border-l-4 border-l-pink-200" : ""
+      className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white ${
+        isReply
+          ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
+          : ""
       }`}
       onClick={() => router.push(`/udash/community/${post.id}`)}
     >
-      <CardContent className="p-6">
+      <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
         <div className="flex justify-between items-start gap-4">
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-2">
             {/* Title with reply indicator */}
             <div className="flex items-center gap-2">
-              {isReply && <ChevronRight className="w-4 h-4 text-pink-400" />}
-              <h3 className="text-xl font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2">
+              {isReply && (
+                <div className="flex items-center text-pink-400">
+                  <ChevronRight className="w-4 h-4" />
+                  <span className="text-xs font-medium">답글</span>
+                </div>
+              )}
+              <h3
+                className={`font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2 ${
+                  isReply ? "text-base" : "text-xl"
+                }`}
+              >
                 {post.title}
               </h3>
             </div>
 
-            {/* Content preview */}
-            <p className="text-gray-600 line-clamp-2 leading-relaxed">
+            {/* Content preview - 답글일 경우 더 간단하게 표시 */}
+            <p
+              className={`text-gray-600 line-clamp-2 leading-relaxed ${
+                isReply ? "text-sm" : ""
+              }`}
+            >
               {post.content}
             </p>
 
             {/* Meta information */}
-            <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
               <div className="flex items-center gap-1 text-gray-500">
-                <User className="w-4 h-4" />
-                <span className="font-medium">{post.authorName}</span>
+                <User className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+                <span className="font-medium text-xs">{post.authorName}</span>
               </div>
               <div className="flex items-center gap-1 text-gray-500">
-                <Eye className="w-4 h-4" />
-                <span>조회 {post.viewCount}</span>
-              </div>
-              <div className="flex items-center gap-1 text-gray-500">
-                <Calendar className="w-4 h-4" />
-                <span>{formatDate(post.createdAt)}</span>
+                <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+                <span className="text-xs">{formatDate(post.createdAt)}</span>
               </div>
               {post.hasImage && (
                 <Badge
                   variant="secondary"
-                  className="bg-pink-100 text-pink-700 hover:bg-pink-200"
+                  className="bg-pink-50 text-pink-600 hover:bg-pink-100 text-xs py-0"
                 >
                   <ImageIcon className="w-3 h-3 mr-1" />
                   이미지
@@ -121,18 +132,24 @@ export default function CommunityPage() {
             </div>
           </div>
 
-          {/* Image placeholder */}
+          {/* Image placeholder - 답글일 경우 더 작게 표시 */}
           {post.hasImage && (
             <div className="flex-shrink-0">
-              <div className="w-24 h-24 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl flex items-center justify-center group-hover:from-pink-200 group-hover:to-rose-200 transition-all duration-200">
-                <ImageIcon className="w-8 h-8 text-pink-500" />
+              <div
+                className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg flex items-center justify-center ${
+                  isReply ? "w-16 h-16" : "w-24 h-24"
+                }`}
+              >
+                <ImageIcon
+                  className={`text-pink-400 ${isReply ? "w-6 h-6" : "w-8 h-8"}`}
+                />
               </div>
             </div>
           )}
         </div>
 
         {/* Hover indicator */}
-        <div className="mt-4 h-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+        <div className="mt-2 h-px bg-gradient-to-r from-pink-300 to-rose-300 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
       </CardContent>
     </Card>
   );
