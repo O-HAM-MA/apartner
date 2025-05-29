@@ -124,7 +124,7 @@ export default function LoginPage() {
         <div className="w-full max-w-lg space-y-2 bg-white dark:bg-gray-800 rounded-2xl py-16 px-8 shadow-xl">
           <div>
             <h1 className="text-center text-5xl font-bold tracking-tight text-pink-500 dark:text-pink-400 mb-10 max-w-sm mx-auto">
-              APTner
+              LOGIN
             </h1>
           </div>
           <form className="space-y-5 max-w-sm mx-auto" onSubmit={handleSubmit}>
