@@ -131,6 +131,13 @@ public class VehicleController {
         return ResponseEntity.ok(list);
     }
 
+    @Operation(summary = "24시간 이내 등록된  모든 외부인 차량 조회")
+    @GetMapping("/ForeignsRegistrationsWithStatus")
+    public ResponseEntity<List<VehicleRegistrationInfoDto>> getRegistrations() {
+        List<VehicleRegistrationInfoDto> registrations = vehicleService.getForeignsVehicleRegistrationInfo();
+        return ResponseEntity.ok(registrations);
+    }
+
 
 
 

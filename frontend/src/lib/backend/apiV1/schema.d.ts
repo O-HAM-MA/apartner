@@ -475,6 +475,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/myInfos/change-password": {
         parameters: {
             query?: never;
@@ -538,7 +539,9 @@ export interface paths {
          */
         post: operations["updateInspectionSchedule"];
         /**
+
          * 해당 점검 내용을 지우고 싶을때 사용합니다
+
          * @description 해당 점검 일정을 삭제합니다
          */
         delete: operations["deleteInspectionSchedule"];
@@ -722,6 +725,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/complaints/status": {
         parameters: {
             query?: never;
@@ -742,6 +746,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/complaint-feedbacks": {
         parameters: {
             query?: never;
@@ -869,6 +874,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -885,6 +891,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/auth/check-phone": {
         parameters: {
             query?: never;
@@ -1191,6 +1198,7 @@ export interface paths {
         patch: operations["updateComplaintStatus"];
         trace?: never;
     };
+
     "/api/v1/admin/users/{userId}/status": {
         parameters: {
             query?: never;
@@ -1358,6 +1366,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
+    "/api/v1/vehicles/ForeignsRegistrationsWithStatus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 24시간 이내 등록된  모든 외부인 차량 조회 */
+        get: operations["getRegistrations_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+
     "/api/v1/users/check-phonenum": {
         parameters: {
             query?: never;
@@ -1787,6 +1814,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/complaints/statistics/today": {
         parameters: {
             query?: never;
@@ -1807,6 +1835,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/complaints/statistics/status": {
         parameters: {
             query?: never;
@@ -1936,6 +1965,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+
     "/api/v1/chats/all": {
         parameters: {
             query?: never;
@@ -2966,11 +2996,13 @@ export interface components {
              * @example CHECKED
              */
             result?: string;
+
             /**
              * @description 이름
              * @example 홍길동
              */
             userName?: string;
+
         };
         /** @description 점검 일정에 대한 정보가 들어있는 DTO */
         InspectionRequestDto: {
@@ -3001,11 +3033,13 @@ export interface components {
              * @example 소방
              */
             type?: string;
+
             /**
              * @description 작성자
              * @example 김아무개
              */
             userName?: string;
+
         };
         Apartment: {
             /** Format: int64 */
@@ -3115,6 +3149,7 @@ export interface components {
             /** Format: date-time */
             deletedAt?: string;
             profileImage?: components["schemas"]["Image"];
+
         };
         /** @description 이슈 등록/수정 요청 DTO */
         InspectionIssueDto: {
@@ -3133,11 +3168,13 @@ export interface components {
              *     아~ 피해가 너무 크다아아아아앜! / 으아아아아아아아!
              */
             description?: string;
+
             /**
              * @description 이슈 작성자
              * @example 홍길동
              */
             userName?: string;
+
         };
         /** @description 공용시설 예약 요청 DTO */
         FacilityReservationRequestDto: {
@@ -3187,11 +3224,13 @@ export interface components {
             /** Format: int64 */
             id?: number;
             title?: string;
+
             hasNewMessage?: boolean;
             /** Format: int32 */
             userCount?: number;
             /** Format: date-time */
             createdAt?: string;
+
         };
         ApiResponseBoolean: {
             /** Format: int32 */
@@ -3247,10 +3286,12 @@ export interface components {
              */
             success?: boolean;
         };
+
         LoginRequestDto: {
             email?: string;
             password?: string;
         };
+
         /** @description 휴대폰 번호 중복 확인 요청 DTO */
         PhoneCheckRequestDto: {
             /**
@@ -3364,6 +3405,12 @@ export interface components {
              */
             unitId?: number;
         };
+
+        EntryRecordStatusUpdateRequestDto: {
+            /** @enum {string} */
+            status?: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
+        };
+
         EntryRecordStatusDto: {
             /** Format: int64 */
             id?: number;
@@ -3382,6 +3429,10 @@ export interface components {
         VehicleRegistrationInfoDto: {
             /** Format: int64 */
             id?: number;
+
+            /** Format: int64 */
+            entryRecordId?: number;
+
             registerType?: string;
             applicantName?: string;
             apartmentName?: string;
@@ -3395,6 +3446,9 @@ export interface components {
             reason?: string;
             userPhone?: string;
             status?: string;
+
+            vehicleStatus?: string;
+
         };
         ParkingStatusDto: {
             /** Format: int32 */
@@ -3442,21 +3496,25 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
+
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["NoticeSummaryResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+
             empty?: boolean;
         };
         PageableObject: {
@@ -3472,8 +3530,10 @@ export interface components {
         };
         SortObject: {
             empty?: boolean;
+
             unsorted?: boolean;
             sorted?: boolean;
+
         };
         NoticeFileDto: {
             /** Format: int64 */
@@ -3538,21 +3598,25 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
+
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["UserNoticeSummaryResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -3671,6 +3735,7 @@ export interface components {
              * @example Google
              */
             socialProvider?: string;
+
         };
         InspectionResponseDetailDto: {
             /** Format: int64 */
@@ -3902,18 +3967,21 @@ export interface components {
             status?: string;
         };
         PageFacilityReservationManagerDto: {
+
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["FacilityReservationManagerDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
@@ -3927,6 +3995,7 @@ export interface components {
             /** Format: double */
             handlingRate?: number;
         };
+
         ApiResponseListChatroomDto: {
             /** Format: int32 */
             status?: number;
@@ -3974,6 +4043,7 @@ export interface components {
             deletedAt?: string;
             /** Format: date-time */
             lastLoginAt?: string;
+
         };
         ApiResponsePageAdminUserListResponse: {
             /** Format: int32 */
@@ -3983,21 +4053,25 @@ export interface components {
             data?: components["schemas"]["PageAdminUserListResponse"];
         };
         PageAdminUserListResponse: {
+
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminUserListResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+
             empty?: boolean;
         };
         AdminUserDetailResponse: {
@@ -4049,21 +4123,25 @@ export interface components {
             data?: components["schemas"]["PageObject"];
         };
         PageObject: {
+
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: Record<string, never>[];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+
             empty?: boolean;
         };
         ApiResponsePageMenuDTO: {
@@ -4072,21 +4150,25 @@ export interface components {
             data?: components["schemas"]["PageMenuDTO"];
         };
         PageMenuDTO: {
+
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["MenuDTO"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+
             empty?: boolean;
         };
         ApiResponseListMenuDTO: {
@@ -4105,18 +4187,21 @@ export interface components {
             data?: number[];
         };
         Page: {
+
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: Record<string, never>[];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
@@ -4129,12 +4214,14 @@ export interface components {
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["BuildingResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
@@ -4147,12 +4234,14 @@ export interface components {
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["UnitResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
@@ -4165,15 +4254,18 @@ export interface components {
             totalElements?: number;
             first?: boolean;
             last?: boolean;
+
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminAccountResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+
             pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+
             empty?: boolean;
         };
         AdminGrade: {
@@ -5193,6 +5285,7 @@ export interface operations {
             };
         };
     };
+
     changePassword: {
         parameters: {
             query?: never;
@@ -5346,9 +5439,11 @@ export interface operations {
     };
     deleteInspectionSchedule: {
         parameters: {
+
             query: {
                 arg1: components["schemas"]["InspectionUpdateDto"];
             };
+
             header?: never;
             path: {
                 id: number;
@@ -5394,9 +5489,11 @@ export interface operations {
     };
     compeleteInspection: {
         parameters: {
+
             query: {
                 arg1: components["schemas"]["InspectionUpdateDto"];
             };
+
             header?: never;
             path: {
                 id: number;
@@ -5606,6 +5703,7 @@ export interface operations {
             };
         };
     };
+
     searchComplaintByStatus: {
         parameters: {
             query: {
@@ -5628,6 +5726,7 @@ export interface operations {
             };
         };
     };
+
     saveComplaintFeedback: {
         parameters: {
             query?: never;
@@ -5742,6 +5841,7 @@ export interface operations {
         parameters: {
             query: {
                 title: string;
+
             };
             header?: never;
             path?: never;
@@ -5854,6 +5954,7 @@ export interface operations {
             };
         };
     };
+
     login: {
         parameters: {
             query?: never;
@@ -5878,6 +5979,7 @@ export interface operations {
             };
         };
     };
+
     checkPhone: {
         parameters: {
             query?: never;
@@ -6326,16 +6428,22 @@ export interface operations {
     };
     updateEntryStatus: {
         parameters: {
-            query: {
-                status: "AGREE" | "INAGREE" | "PENDING" | "INVITER_AGREE";
-            };
+
+            query?: never;
+
             header?: never;
             path: {
                 entryRecordId: number;
             };
             cookie?: never;
         };
-        requestBody?: never;
+
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntryRecordStatusUpdateRequestDto"];
+            };
+        };
+
         responses: {
             /** @description OK */
             200: {
@@ -6372,6 +6480,7 @@ export interface operations {
             };
         };
     };
+
     updateUserStatus: {
         parameters: {
             query?: never;
@@ -6588,6 +6697,7 @@ export interface operations {
             };
         };
     };
+
     checkPhoneNum: {
         parameters: {
             query: {
@@ -7136,6 +7246,7 @@ export interface operations {
             };
         };
     };
+
     getTodayStats: {
         parameters: {
             query?: never;
@@ -7156,6 +7267,7 @@ export interface operations {
             };
         };
     };
+
     getComplaintStatus: {
         parameters: {
             query?: never;
@@ -7191,7 +7303,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+
                     "*/*": components["schemas"]["ComplaintHandlingRateResponseDto"];
+
                 };
             };
         };
@@ -7304,6 +7418,7 @@ export interface operations {
             };
         };
     };
+
     getAllChatrooms: {
         parameters: {
             query?: never;
@@ -7515,9 +7630,11 @@ export interface operations {
         parameters: {
             query: {
                 arg0?: string;
+
                 arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
                 arg2?: "active" | "inactive" | "pending" | "withdrawn";
                 arg3: components["schemas"]["Pageable"];
+
             };
             header?: never;
             path?: never;

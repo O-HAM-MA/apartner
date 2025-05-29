@@ -121,7 +121,7 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{complaintsCount}</div>
             <p className="text-xs text-muted-foreground">
-              어제 대비 {complaintsIncrease.increaseRate}%
+              어제 대비 {complaintsIncrease?.increaseRate ?? 0}%
             </p>
           </CardContent>
         </Card>
