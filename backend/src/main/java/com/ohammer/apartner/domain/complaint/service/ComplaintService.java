@@ -84,16 +84,25 @@ public class ComplaintService {
         List<Complaint> complaints = complaintRepository.findAll();
 
         return complaints.stream()
-                .map(complaint -> AllComplaintResponseDto.builder()
-                        .id(complaint.getId())
-                        .title(complaint.getTitle())
-                        .category(complaint.getCategory())
-                        .status(complaint.getStatus().name())
-                        .content(complaint.getContent())
-                        .complaintStatus(complaint.getComplaintStatus().name())
-                        .createdAt(complaint.getCreatedAt())
-                        .userName(complaint.getUser().getUserName())
-                        .build())
+                .map(complaint -> {
+                    User complaintUser = complaint.getUser();
+                    String userRole = complaintUser.getRoles().stream()
+                            .findFirst()
+                            .map(Role::name)
+                            .orElse(null);
+
+                    return AllComplaintResponseDto.builder()
+                            .id(complaint.getId())
+                            .title(complaint.getTitle())
+                            .category(complaint.getCategory())
+                            .status(complaint.getStatus().name())
+                            .content(complaint.getContent())
+                            .complaintStatus(complaint.getComplaintStatus().name())
+                            .createdAt(complaint.getCreatedAt())
+                            .userName(complaintUser.getUserName())
+                            .userRole(userRole)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 

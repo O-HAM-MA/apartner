@@ -9,10 +9,12 @@ import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintFeedbac
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.entity.ComplaintFeedback;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintFeedbackRepository;
+import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -25,6 +27,7 @@ public class ComplaintFeedbackService {
     private final ComplaintService complaintService;
 
     // Read
+    @Transactional
     public List<AllComplaintFeedbackResponseDto> findComplaintFeedbackByComplaintId(Long complaintId) throws AccessDeniedException {
         List<ComplaintFeedback> complaintFeedbackList = complaintFeedbackRepository.findByComplaintId(complaintId);
 
@@ -35,12 +38,21 @@ public class ComplaintFeedbackService {
         }
 
         return complaintFeedbackList.stream()
-                .map(feedback->AllComplaintFeedbackResponseDto.builder()
-                        .feedbackId(feedback.getId())
-                        .content(feedback.getContent())
-                        .userName(user.getUserName())
-                        .createAt(feedback.getCreatedAt())
-                        .build())
+                .map(feedback -> {
+                    User feedbackUser = feedback.getUser();
+                    String userRole = feedbackUser.getRoles().stream()
+                            .findFirst()
+                            .map(Role::name)
+                            .orElse(null);
+
+                    return AllComplaintFeedbackResponseDto.builder()
+                            .feedbackId(feedback.getId())
+                            .content(feedback.getContent())
+                            .userName(feedbackUser.getUserName())
+                            .userRole(userRole)
+                            .createAt(feedback.getCreatedAt())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
