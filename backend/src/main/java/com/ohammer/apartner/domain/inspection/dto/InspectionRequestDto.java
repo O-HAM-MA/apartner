@@ -4,13 +4,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Schema(description = "점검 일정에 대한 정보가 들어있는 DTO")
 public class InspectionRequestDto {
     @NotBlank(message = "시작 시간은 필수요소 입니다")
