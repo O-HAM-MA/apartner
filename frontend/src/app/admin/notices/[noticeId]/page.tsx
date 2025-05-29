@@ -4,6 +4,16 @@ import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { components } from '@/lib/backend/apiV1/schema';
 import client from '@/lib/backend/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 // 백엔드 응답 타입 정의
 type NoticeImage = {
@@ -37,10 +47,6 @@ const processContent = async (
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = content;
 
-  // 디버깅용 로그
-  console.log('백엔드에서 받은 이미지 목록:', images);
-  console.log('백엔드에서 받은 파일 목록:', files);
-
   // 이미지 URL 수정 - ID 기반 매칭
   const imgElements = tempDiv.getElementsByTagName('img');
 
@@ -49,47 +55,37 @@ const processContent = async (
     const dataId = img.getAttribute('data-id');
 
     if (!dataId) {
-      console.log('이미지에 data-id가 없음:', img);
       continue;
     }
 
     // data-id를 숫자로 변환
     const imageId = Number(dataId);
     if (isNaN(imageId)) {
-      console.warn('유효하지 않은 이미지 ID:', dataId);
       continue;
     }
 
     try {
       // 이미지 정보를 API로 직접 조회
       const { data, error } = await client.GET(
-        '/api/v1/notices/media/images/{noticeImageId}',
+        '/api/v1/admin/notices/media/images/{noticeImageId}',
         {
           params: { path: { noticeImageId: imageId } },
         }
       );
 
       if (error) {
-        console.error('이미지 정보 조회 실패:', error);
         img.src = '/placeholder.jpg';
         img.alt = '이미지를 불러올 수 없습니다';
         continue;
       }
 
       if (data && data.url) {
-        console.log('이미지 매칭 성공:', {
-          id: imageId,
-          url: data.url,
-          originalName: data.originalName,
-        });
         img.src = data.url;
       } else {
-        console.warn('이미지 URL이 없음:', data);
         img.src = '/placeholder.jpg';
         img.alt = '이미지를 불러올 수 없습니다';
       }
     } catch (error) {
-      console.error('이미지 정보 조회 중 오류 발생:', error);
       img.src = '/placeholder.jpg';
       img.alt = '이미지를 불러올 수 없습니다';
     }
@@ -122,18 +118,23 @@ export default function NoticeDetailPage({
 }) {
   const router = useRouter();
   const { noticeId } = use(params);
+  const { toast } = useToast();
 
   const [notice, setNotice] = useState<NoticeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processedContent, setProcessedContent] = useState<string>('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchNoticeDetail = async () => {
       try {
-        const { data, error } = await client.GET('/api/v1/notices/{noticeId}', {
-          params: { path: { noticeId: Number(noticeId) } },
-        });
+        const { data, error } = await client.GET(
+          '/api/v1/admin/notices/{noticeId}',
+          {
+            params: { path: { noticeId: Number(noticeId) } },
+          }
+        );
 
         if (error || !data) {
           throw new Error(
@@ -142,9 +143,6 @@ export default function NoticeDetailPage({
               : '공지사항을 불러오는데 실패했습니다.'
           );
         }
-
-        // 서버 응답 데이터 구조 확인
-        console.log('서버 응답 원본 데이터:', data);
 
         // 이미지 데이터 파싱
         let parsedImages: NoticeImage[] = [];
@@ -186,15 +184,6 @@ export default function NoticeDetailPage({
             : [],
         };
 
-        console.log('변환된 데이터:', {
-          ...noticeData,
-          imageUrls: noticeData.imageUrls.map((img) => ({
-            id: img.id,
-            url: img.url,
-            originalName: img.originalName,
-          })),
-        });
-
         setNotice(noticeData);
 
         if (noticeData.content) {
@@ -206,12 +195,10 @@ export default function NoticeDetailPage({
             );
             setProcessedContent(processed);
           } catch (err) {
-            console.error('컨텐츠 처리 중 오류:', err);
             setError('컨텐츠를 처리하는 중 오류가 발생했습니다.');
           }
         }
       } catch (err) {
-        console.error('공지사항 불러오기 실패:', err);
         setError('공지사항을 불러오는 중 오류가 발생했습니다.');
       } finally {
         setIsLoading(false);
@@ -222,24 +209,28 @@ export default function NoticeDetailPage({
   }, [noticeId]);
 
   const handleEdit = () => {
-    router.push(`/notice/${noticeId}/edit`);
+    router.push(`/admin/notices/${noticeId}/edit`);
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('정말로 이 공지사항을 삭제하시겠습니까?')) {
-      return;
-    }
-
     try {
-      await client.DELETE('/api/v1/notices/{noticeId}', {
+      await client.DELETE('/api/v1/admin/notices/{noticeId}', {
         params: { path: { noticeId: Number(noticeId) } },
       });
 
-      alert('공지사항이 성공적으로 삭제되었습니다.');
-      router.push('/notice');
+      toast({
+        title: '성공',
+        description: '공지사항이 성공적으로 삭제되었습니다.',
+      });
+      router.push('/admin/notices');
     } catch (error) {
-      console.error('공지사항 삭제 실패:', error);
-      alert('공지사항 삭제에 실패했습니다. 다시 시도해주세요.');
+      toast({
+        variant: 'destructive',
+        title: '오류',
+        description: '공지사항 삭제에 실패했습니다. 다시 시도해주세요.',
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -259,7 +250,7 @@ export default function NoticeDetailPage({
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <button
-          onClick={() => router.push('/notice')}
+          onClick={() => router.push('/admin/notices')}
           className="text-gray-600 hover:text-gray-800"
         >
           ← 목록으로
@@ -272,7 +263,7 @@ export default function NoticeDetailPage({
             수정
           </button>
           <button
-            onClick={handleDelete}
+            onClick={() => setIsDeleteDialogOpen(true)}
             className="px-4 py-2 text-red-600 hover:text-red-800"
           >
             삭제
@@ -344,6 +335,30 @@ export default function NoticeDetailPage({
           )}
         </div>
       </article>
+
+      {/* 삭제 확인 모달 */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>공지사항 삭제</DialogTitle>
+            <DialogDescription>
+              정말로 이 공지사항을 삭제하시겠습니까? 이 작업은 되돌릴 수
+              없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              취소
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

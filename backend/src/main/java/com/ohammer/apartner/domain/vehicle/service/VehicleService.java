@@ -1,6 +1,5 @@
 package com.ohammer.apartner.domain.vehicle.service;
 
-import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.*;
@@ -10,6 +9,7 @@ import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
 import com.ohammer.apartner.security.utils.SecurityUtil;
+
 import com.ohammer.apartner.security.utils.checkRoleUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 
-import java.nio.file.AccessDeniedException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -139,21 +139,6 @@ public class VehicleService {
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getVehicleRegistrationInfo(Boolean isForeign) {
 
-        // 현재 로그인한 사용자 가져오기
-//        User currentUser = SecurityUtil.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new IllegalArgumentException("로그인이 필요합니다.");
-//        }
-//
-//        Set<Role> roles = currentUser.getRoles();
-//
-//        // Role 검사: MANAGER 또는 MODERATOR만 허용
-//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-//                role == Role.MANAGER || role == Role.MODERATOR);
-//
-//        if (!isManagerOrModerator) {
-//            throw new RuntimeException("관리자만 조회할 수 있습니다.");
-//        }
 
         checkRoleUtils.validateAdminAccess();
 
@@ -170,34 +155,6 @@ public class VehicleService {
                 .collect(Collectors.toList());
     }
 
-
-    private VehicleRegistrationInfoDto convertToDto(Vehicle vehicle) {
-        // 외부인과 거주자의 구분에 따라 DTO를 매핑
-        if (vehicle.getIsForeign()) {
-            return VehicleRegistrationInfoDto.builder()
-                    .vehicleNum(vehicle.getVehicleNum())
-                    .type(vehicle.getType())
-                    .reason(vehicle.getReason()) // 외부인만 reason
-                    .phone(vehicle.getPhone()) // 외부인만 phone
-                    .build();
-        } else {
-            User user = vehicle.getUser();
-            return VehicleRegistrationInfoDto.builder()
-                    .vehicleNum(vehicle.getVehicleNum())
-                    .type(vehicle.getType())
-                    .userPhone(user.getPhoneNum()) // 거주자일 경우 phone은 user에서 가져옴
-                    .apartmentName(user.getApartment().getName())
-                    .buildingName(user.getBuilding().getBuildingNumber())
-                    .unitName(user.getUnit().getUnitNumber())
-                    .build();
-        }
-    }
-
-    public List<VehicleRegistrationInfoDto> getAll() {
-        return entryRecordRepository.findAllWithVehicleAndUser().stream()
-                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
-                .collect(Collectors.toList());
-    }
 
 
     @Transactional
@@ -320,7 +277,7 @@ public class VehicleService {
     public List<VehicleRegistrationInfoDto> getInvitedApprovedVehicles() {
         List<EntryRecord> approvedRecords = entryRecordRepository.findByStatus(EntryRecord.Status.INVITER_AGREE);
 
-        checkRoleUtils.validateAdminAccess();
+        checkRoleUtils.validateManagerAccess();
 
         return approvedRecords.stream()
                 .map(record -> VehicleRegistrationInfoDto.from(record.getVehicle(), record))
@@ -346,7 +303,7 @@ public class VehicleService {
 //            throw new RuntimeException("관리자만 조회할 수 있습니다.");
 //        }
 
-        checkRoleUtils.validateAdminAccess();
+        checkRoleUtils.validateManagerAccess();
 
 
 
@@ -374,6 +331,8 @@ public class VehicleService {
 
     // 전체 주차장 현황 반환 DTO
     public ParkingStatusDto getParkingStatus() {
+
+        checkRoleUtils.validateAdminAccess();
         long activeCount = countActiveVehicles();
         return ParkingStatusDto.builder()
                 .totalCapacity(MAX_CAPACITY)
@@ -407,6 +366,26 @@ public class VehicleService {
                     // 3) DTO로 변환
                     return VehicleRegistrationInfoDto.from(vehicle, er);
                 })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VehicleRegistrationInfoDto> getForeignsVehicleRegistrationInfo() {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime yesterday = now.minusHours(24);
+
+
+
+
+
+        List<EntryRecord> entryRecords = entryRecordRepository.findByVehicleIsForeignWithVehicleAndUser(true);
+
+
+        return entryRecords.stream()
+                .filter(er -> er.getVehicle().getCreatedAt() != null
+                        && er.getVehicle().getCreatedAt().isAfter(yesterday))
+                .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
                 .collect(Collectors.toList());
     }
 

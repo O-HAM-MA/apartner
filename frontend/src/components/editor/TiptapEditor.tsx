@@ -663,7 +663,7 @@ const TiptapEditor = ({
       }),
       Underline,
       Placeholder.configure({
-        placeholder: "당신의 이야기를 적어보세요...",
+        placeholder: "내용을 적어주세요...",
         emptyEditorClass: "is-editor-empty",
         emptyNodeClass: "is-empty",
         showOnlyCurrent: true,

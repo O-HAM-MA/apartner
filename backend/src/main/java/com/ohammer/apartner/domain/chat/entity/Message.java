@@ -31,4 +31,7 @@ public class Message extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+    
+    @Column(name = "client_id", length = 100)
+    private String clientId; // 클라이언트에서 생성한 고유 ID
 }

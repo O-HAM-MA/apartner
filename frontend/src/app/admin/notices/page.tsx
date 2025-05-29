@@ -19,6 +19,7 @@ export default function NoticeListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // 게시글 목록 조회
   useEffect(() => {
     const fetchNotices = async () => {
       setIsLoading(true);
@@ -26,7 +27,7 @@ export default function NoticeListPage() {
         const page = currentPage;
         const size = 10;
         const sort = 'desc';
-        const response = await client.GET('/api/v1/notices', {
+        const response = await client.GET('/api/v1/admin/notices', {
           params: {
             query: {
               page,
@@ -61,9 +62,9 @@ export default function NoticeListPage() {
     <div className="max-w-6xl mx-auto px-4 py-8 bg-white rounded-lg shadow">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">공지사항</h1>
-        <Link href="/notice/new">
+        <Link href="/admin/notices/new">
           <button className="bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600 transition-colors">
-            글작성
+            글 작성
           </button>
         </Link>
       </div>
@@ -122,7 +123,7 @@ export default function NoticeListPage() {
                   <td className="py-3">{currentPage * 10 + idx + 1}</td>
                   <td className="py-3 text-left">
                     <Link
-                      href={`/notice/${notice.noticeId}`}
+                      href={`/admin/notices/${notice.noticeId}`}
                       className="text-blue-600 hover:underline cursor-pointer"
                     >
                       {notice.title}

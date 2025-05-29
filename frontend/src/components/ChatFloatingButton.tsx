@@ -4,10 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MessageCircle, X, ArrowLeft } from "lucide-react";
-import {
-  ApartnerTalkProvider,
-  useApartnerTalkContext,
-} from "@/contexts/ApartnerTalkContext";
+import { useApartnerTalkContext } from "@/contexts/ApartnerTalkContext";
 import CategorySelection from "@/app/udash/chat/CategorySelection";
 import ChatInterface from "@/app/udash/chat/ChatInterface";
 import { getUserChatrooms } from "@/utils/api";
@@ -22,6 +19,7 @@ function ChatHistory() {
   useEffect(() => {
     async function loadRooms() {
       try {
+        // 모든 채팅방(ACTIVE + INACTIVE 모두) 조회
         const allRooms = await getUserChatrooms();
         // 생성시간 내림차순 정렬
         allRooms.sort(
@@ -46,6 +44,24 @@ function ChatHistory() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 채팅방 상태에 따른 뱃지 렌더링
+  const renderStatusBadge = (status: string) => {
+    if (status === "ACTIVE") {
+      return (
+        <span className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+          진행중
+        </span>
+      );
+    } else if (status === "INACTIVE") {
+      return (
+        <span className="ml-2 text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full">
+          종료됨
+        </span>
+      );
+    }
+    return null;
   };
 
   return (
@@ -77,13 +93,18 @@ function ChatHistory() {
           rooms.map((room) => (
             <Button
               key={room.id}
-              className="w-full mb-1 justify-between flex"
+              className={`w-full mb-1 justify-between flex items-center ${
+                room.status === "INACTIVE" ? "opacity-70" : ""
+              }`}
               variant="ghost"
               onClick={() => handleEnterRoom(room.id)}
             >
-              <span>
-                [{room.category}] {room.title}
-              </span>
+              <div className="flex items-center">
+                <span>
+                  {room.categoryDisplayName} {room.title}
+                </span>
+                {renderStatusBadge(room.status)}
+              </div>
               <span className="text-xs text-gray-400">
                 {room.createdAt && new Date(room.createdAt).toLocaleString()}
               </span>
@@ -161,13 +182,11 @@ export function ChatFloatingButton() {
   };
 
   return (
-    <ApartnerTalkProvider>
-      <ChatFloatingButtonWithContext
-        isOpen={isOpen}
-        onClose={handleClose}
-        onToggle={handleToggle}
-      />
-    </ApartnerTalkProvider>
+    <ChatFloatingButtonWithContext
+      isOpen={isOpen}
+      onClose={handleClose}
+      onToggle={handleToggle}
+    />
   );
 }
 
@@ -181,15 +200,39 @@ function ChatFloatingButtonWithContext({
   onClose: () => void;
   onToggle: () => void;
 }) {
-  const { hasUnreadMessages, markMessagesAsRead } = useApartnerTalkContext();
+  const {
+    hasUnreadMessages,
+    markMessagesAsRead,
+    checkActiveChats,
+    showCategorySelection,
+  } = useApartnerTalkContext();
 
-  // 버튼 클릭 시 알림 상태 초기화
+  // 버튼 클릭 시 무조건 카테고리 선택 화면으로 이동
   const handleButtonClick = () => {
-    if (hasUnreadMessages) {
-      markMessagesAsRead();
-    }
+    showCategorySelection();
     onToggle();
   };
+
+  // 컴포넌트 마운트 시 최초 1회만 활성화된 채팅방 확인
+  useEffect(() => {
+    const initializeChat = async () => {
+      console.log("[ChatFloatingButton] fetchChatrooms called - 초기 마운트");
+      await checkActiveChats();
+    };
+
+    initializeChat();
+  }, [checkActiveChats]);
+
+  // 카드가 열리거나 닫힐 때 동작
+  useEffect(() => {
+    if (isOpen) {
+      console.log("[ChatFloatingButton] 카드 열림 - 메시지 읽음 처리");
+      markMessagesAsRead();
+    } else {
+      console.log("[ChatFloatingButton] fetchChatrooms called - 카드 닫힘");
+      checkActiveChats();
+    }
+  }, [isOpen, markMessagesAsRead, checkActiveChats]);
 
   return (
     <>
@@ -204,7 +247,13 @@ function ChatFloatingButtonWithContext({
 
         {/* 새 메시지 알림 표시 (빨간 점) */}
         {hasUnreadMessages && (
-          <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full border-2 border-white z-50 animate-pulse"></div>
+          <div
+            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full border-2 border-white z-50 animate-pulse"
+            onClick={(e) => {
+              e.stopPropagation();
+              markMessagesAsRead();
+            }}
+          />
         )}
       </div>
     </>

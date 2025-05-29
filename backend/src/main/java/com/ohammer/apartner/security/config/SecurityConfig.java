@@ -62,7 +62,7 @@ public class SecurityConfig {
 
                                 //암시로 넣어야징
 
-                                "/api/v1/inspection/**",
+                                //"/api/v1/inspection/**",
                                 
                                 // WebSocket 엔드포인트 추가
                                 "/stomp/**",

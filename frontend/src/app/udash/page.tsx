@@ -12,67 +12,62 @@ import {
   UserCircle,
   Car,
   CarFront,
-} from "lucide-react";
+} from 'lucide-react';
 
 const DashboardPage = () => {
   const featureCards = [
     {
-      title: "공용시설 예약",
-      description: "헬스장, 독서실 등 공용시설 예약",
-      icon: "CalendarDays",
-      actionIcon: "Edit3",
-      iconBgColor: "bg-blue-100",
-      iconColor: "text-blue-600",
+      title: '공용시설 예약',
+      description: '헬스장, 독서실 등 공용시설 예약',
+      icon: 'CalendarDays',
+      actionIcon: 'Edit3',
+      href: '/udash/facilities',
     },
     {
-      title: "차량관리",
-      description: "입주민 차량 등록 및 관리",
-      icon: "CarFront",
-      actionIcon: "Zap",
-      iconBgColor: "bg-green-100",
-      iconColor: "text-green-600",
+      title: '차량관리',
+      description: '입주민 차량 등록 및 관리',
+      icon: 'CarFront',
+      actionIcon: 'Zap',
+      href: '/udash/vehicles',
     },
     {
-      title: "점검관리",
-      description: "시설 점검 일정 및 이력 관리",
-      icon: "FileText",
-      actionIcon: "Edit3",
-      iconBgColor: "bg-yellow-100",
-      iconColor: "text-yellow-600",
+      title: '점검관리',
+      description: '시설 점검 일정 및 이력 관리',
+      icon: 'FileText',
+      actionIcon: 'Edit3',
+      href: '/udash/inspections',
     },
     {
-      title: "민원관리",
-      description: "민원 신청 및 처리 현황",
-      icon: "MessageCircle",
-      actionIcon: "Edit3",
-      iconBgColor: "bg-purple-100",
-      iconColor: "text-purple-600",
+      title: '민원관리',
+      description: '민원 신청 및 처리 현황',
+      icon: 'MessageCircle',
+      actionIcon: 'Edit3',
+      href: '/udash/complaints',
     },
     {
-      title: "공지사항",
-      description: "아파트 주요 공지 및 안내사항",
-      icon: "Megaphone",
-      actionIcon: "Megaphone",
-      iconBgColor: "bg-red-100",
-      iconColor: "text-red-600",
+      title: '공지사항',
+      description: '아파트 주요 공지 및 안내사항',
+      icon: 'Megaphone',
+      actionIcon: 'Megaphone',
+      href: '/udash/notices',
     },
   ] as const;
 
   const notifications = [
     {
-      title: "헬스장 예약이 승인되었습니다.",
-      details: "2024-03-20 14:00-16:00",
-      time: "1시간 전",
+      title: '헬스장 예약이 승인되었습니다.',
+      details: '2024-03-20 14:00-16:00',
+      time: '1시간 전',
     },
     {
-      title: "3월 관리비 고지서가 발행되었습니다.",
-      details: "납부 마감일: 2024-03-25",
-      time: "3시간 전",
+      title: '3월 관리비 고지서가 발행되었습니다.',
+      details: '납부 마감일: 2024-03-25',
+      time: '3시간 전',
     },
     {
-      title: "커뮤니티센터 대청소 안내",
-      details: "내일 오전 10시부터",
-      time: "5시간 전",
+      title: '커뮤니티센터 대청소 안내',
+      details: '내일 오전 10시부터',
+      time: '5시간 전',
     },
   ];
 
@@ -99,40 +94,36 @@ const DashboardPage = () => {
               title={card.title}
               description={card.description}
               icon={card.icon}
+              href={card.href}
             />
           ))}
           <FeatureCard
-            key={featureCards[3].title} // 민원관리
+            key={featureCards[3].title}
             title={featureCards[3].title}
             description={featureCards[3].description}
             icon={featureCards[3].icon}
+            href={featureCards[3].href}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {featureCards.slice(2, 3).map(
-            (
-              card // 점검관리
-            ) => (
-              <FeatureCard
-                key={card.title}
-                title={card.title}
-                description={card.description}
-                icon={card.icon}
-              />
-            )
-          )}
-          {featureCards.slice(4, 5).map(
-            (
-              card // 공지사항
-            ) => (
-              <FeatureCard
-                key={card.title}
-                title={card.title}
-                description={card.description}
-                icon={card.icon}
-              />
-            )
-          )}
+          {featureCards.slice(2, 3).map((card) => (
+            <FeatureCard
+              key={card.title}
+              title={card.title}
+              description={card.description}
+              icon={card.icon}
+              href={card.href}
+            />
+          ))}
+          {featureCards.slice(4, 5).map((card) => (
+            <FeatureCard
+              key={card.title}
+              title={card.title}
+              description={card.description}
+              icon={card.icon}
+              href={card.href}
+            />
+          ))}
         </div>
 
         {/* Recent Notifications Section */}

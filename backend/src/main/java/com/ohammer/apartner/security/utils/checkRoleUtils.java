@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class checkRoleUtils {
 
-    public static void validateAdminAccess() {
+    public static void validateManagerAccess() {
         User currentUser = SecurityUtil.getCurrentUser();
         if (currentUser == null) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
@@ -21,7 +21,28 @@ public class checkRoleUtils {
 
 
         boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-                role.equals(Role.MANAGER) || role.equals(Role.MODERATOR));
+                role.equals(Role.MANAGER) || role.equals(Role.MODERATOR) || role.equals(Role.ADMIN));
+
+        if (!isManagerOrModerator) {
+            throw new RuntimeException("매니저만 접근할 수 있습니다.");
+        }
+    }
+
+
+    public static void validateAdminAccess() {
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        Set<Role> roles = currentUser.getRoles();
+
+        System.out.println("현재 유저 역할들: ");
+        roles.forEach(role -> System.out.println(" - " + role.getValue()));
+
+
+        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
+                role.equals(Role.ADMIN));
 
         if (!isManagerOrModerator) {
             throw new RuntimeException("관리자만 접근할 수 있습니다.");

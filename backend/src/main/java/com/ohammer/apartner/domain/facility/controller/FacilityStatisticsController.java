@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/facilities/statistics")
+@RequestMapping("/api/v1/admin/facilities/statistics")
 @Tag(name = "공용시설 이용 통계")
 public class FacilityStatisticsController {
 

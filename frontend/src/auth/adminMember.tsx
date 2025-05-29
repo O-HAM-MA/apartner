@@ -10,6 +10,7 @@ type AdminMember = {
   createdAt: string;
   modifiedAt: string;
   profileImageUrl: string | null;
+  apartmentId: number | null;
   apartmentName: string | null;
   buildingName: string | null;
   unitNumber: string | null;
@@ -46,6 +47,7 @@ function createEmptyAdminMember(): AdminMember {
     createdAt: "",
     modifiedAt: "",
     profileImageUrl: null,
+    apartmentId: null,
     apartmentName: null,
     buildingName: null,
     unitNumber: null,

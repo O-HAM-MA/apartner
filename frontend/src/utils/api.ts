@@ -421,26 +421,26 @@ export async function checkAuth<T = any>(isAdminPath: boolean): Promise<T> {
  */
 export async function getUserChatrooms<T = any[]>(): Promise<T> {
   try {
-    // 모든 채팅방 목록 API 직접 사용
-    console.log("[getUserChatrooms] 전체 채팅방 목록 API 조회 시도");
-    const allChatroomsResponse = await get<any>("/api/v1/chats/all", {}, true);
+    // 사용자 본인의 채팅방 목록만 조회하는 API 사용
+    console.log("[getUserChatrooms] 사용자 채팅방 목록 API 조회 시도");
+    const userChatroomsResponse = await get<any>("/api/v1/chats/my", {}, true);
 
     // ApiResponse 형태로 응답이 왔는지 확인
-    if (allChatroomsResponse && allChatroomsResponse.data) {
+    if (userChatroomsResponse && userChatroomsResponse.data) {
       console.log(
-        "[getUserChatrooms] 전체 채팅방 목록:",
-        allChatroomsResponse.data
+        "[getUserChatrooms] 사용자 채팅방 목록:",
+        userChatroomsResponse.data
       );
-      return allChatroomsResponse.data as T;
+      return userChatroomsResponse.data as T;
     }
 
     // 응답 자체가 배열인 경우
-    if (Array.isArray(allChatroomsResponse)) {
+    if (Array.isArray(userChatroomsResponse)) {
       console.log(
-        "[getUserChatrooms] 전체 채팅방 배열 응답:",
-        allChatroomsResponse
+        "[getUserChatrooms] 사용자 채팅방 배열 응답:",
+        userChatroomsResponse
       );
-      return allChatroomsResponse as T;
+      return userChatroomsResponse as T;
     }
 
     return [] as unknown as T;
@@ -513,7 +513,25 @@ export async function leaveUserChatroom<T = any>(
  * [관리자] 채팅방 목록 조회
  */
 export async function getAdminChatrooms<T = any>(): Promise<T> {
-  return await get<T>("/api/v1/chats", {}, true);
+  try {
+    const response = await get<any>("/api/v1/admin/chats", {}, true);
+
+    // ApiResponse 형태로 응답이 왔는지 확인
+    if (response && typeof response === "object" && "data" in response) {
+      return response.data as T;
+    }
+
+    // 응답 자체가 배열인 경우
+    if (Array.isArray(response)) {
+      return response as T;
+    }
+
+    console.error("잘못된 응답 형식:", response);
+    return [] as unknown as T;
+  } catch (error) {
+    console.error("관리자 채팅방 목록 조회 중 오류:", error);
+    return [] as unknown as T;
+  }
 }
 
 /**
@@ -523,7 +541,26 @@ export async function getAdminChatrooms<T = any>(): Promise<T> {
 export async function getAdminChatMessages<T = any>(
   chatroomId: number
 ): Promise<T> {
-  return await get<T>(`/api/v1/chats/${chatroomId}/messages`, {}, true);
+  try {
+    // 관리자용 API 경로 사용
+    const response = await get<any>(
+      `/api/v1/admin/chats/${chatroomId}/messages`,
+      {},
+      true
+    );
+
+    // ApiResponse 형태로 응답이 왔는지 확인
+    if (response && typeof response === "object" && "data" in response) {
+      return response.data as T;
+    }
+
+    return response as T;
+  } catch (error) {
+    console.error("관리자 채팅방 메시지 조회 중 오류:", error);
+    // 관리자용 API가 실패할 경우 일반 API로 폴백
+    console.log("일반 채팅방 메시지 API로 폴백 시도");
+    return await get<T>(`/api/v1/chats/${chatroomId}/messages`, {}, true);
+  }
 }
 
 /**
@@ -533,7 +570,25 @@ export async function getAdminChatMessages<T = any>(
 export async function getAdminChatroom<T = any>(
   chatroomId: number
 ): Promise<T> {
-  return await get<T>(`/api/v1/chats/${chatroomId}`, {}, true);
+  try {
+    const response = await get<any>(
+      `/api/v1/admin/chats/${chatroomId}`,
+      {},
+      true
+    );
+
+    // ApiResponse 형태로 응답이 왔는지 확인
+    if (response && typeof response === "object" && "data" in response) {
+      return response.data as T;
+    }
+
+    return response as T;
+  } catch (error) {
+    console.error("관리자 채팅방 상세 조회 중 오류:", error);
+    // 관리자용 API가 실패할 경우 일반 API로 폴백
+    console.log("일반 채팅방 API로 폴백 시도");
+    return await get<T>(`/api/v1/chats/${chatroomId}`, {}, true);
+  }
 }
 
 /**
@@ -671,7 +726,7 @@ export async function closeChatroom<T = any>(chatroomId: number): Promise<T> {
 export async function getActiveUserChatrooms<T = any[]>(): Promise<T> {
   try {
     console.log("[getActiveUserChatrooms] 활성화된 채팅방 목록 조회 시도");
-    const allChatrooms = await getUserChatrooms();
+    const allChatrooms = await getUserChatrooms(); // 이미 사용자 본인의 채팅방만 조회
 
     // 상태가 ACTIVE인 채팅방만 필터링
     const activeChatrooms = Array.isArray(allChatrooms)
@@ -689,4 +744,10 @@ export async function getActiveUserChatrooms<T = any[]>(): Promise<T> {
     );
     return [] as unknown as T;
   }
+}
+
+export async function markMessagesAsRead<T = any>(
+  chatroomId: number
+): Promise<T> {
+  return await post<T>(`/api/v1/chats/${chatroomId}/read`);
 }
