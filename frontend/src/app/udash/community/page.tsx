@@ -77,6 +77,9 @@ export default function CommunityPage() {
     return format(new Date(dateString), "yyyy.MM.dd HH:mm", { locale: ko });
   };
 
+  // 상태 관리 부분에 답글 작성을 위한 상태 추가
+  const [replyToPost, setReplyToPost] = useState<number | null>(null);
+
   // 게시글 카드 렌더링 부분 수정
   const renderPostCard = (
     post: CommunityResponseDto,
@@ -158,8 +161,27 @@ export default function CommunityPage() {
           )}
         </div>
 
-        {/* Hover indicator */}
-        <div className="mt-2 h-px bg-gradient-to-r from-pink-300 to-rose-300 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+        {/* Meta information 섹션 끝에 답글 버튼 추가 */}
+        <div className="flex justify-between items-center mt-4">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            {/* ...existing meta information... */}
+          </div>
+          {!isReply && ( // 답글에는 답글 버튼 표시하지 않음
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-pink-500 hover:text-pink-600 hover:bg-pink-50"
+              onClick={(e) => {
+                e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+                setReplyToPost(post.id);
+                setIsWriteModalOpen(true);
+              }}
+            >
+              <MessageSquare className="w-4 h-4 mr-1" />
+              답글 작성
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -292,22 +314,35 @@ export default function CommunityPage() {
       <Footer />
 
       {/* 새 글 작성 모달 */}
-      <Dialog open={isWriteModalOpen} onOpenChange={setIsWriteModalOpen}>
+      <Dialog
+        open={isWriteModalOpen}
+        onOpenChange={(open) => {
+          setIsWriteModalOpen(open);
+          if (!open) setReplyToPost(null); // 모달이 닫힐 때 replyToPost 초기화
+        }}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-gray-900">
-              새 글 작성
+              {replyToPost ? "답글 작성" : "새 글 작성"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitPost} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">내용</label>
+              <label className="text-sm font-medium text-gray-700">
+                {replyToPost ? "답글 내용" : "내용"}
+              </label>
               <Textarea
                 value={newPost.content}
                 onChange={(e) =>
-                  setNewPost({ ...newPost, content: e.target.value })
+                  setNewPost({
+                    content: e.target.value,
+                    parentId: replyToPost, // 답글 작성 시 parentId 설정
+                  })
                 }
-                placeholder="내용을 입력하세요"
+                placeholder={
+                  replyToPost ? "답글을 입력하세요" : "내용을 입력하세요"
+                }
                 className="min-h-[200px] resize-none"
                 required
               />
@@ -316,7 +351,10 @@ export default function CommunityPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsWriteModalOpen(false)}
+                onClick={() => {
+                  setIsWriteModalOpen(false);
+                  setReplyToPost(null);
+                }}
               >
                 취소
               </Button>
