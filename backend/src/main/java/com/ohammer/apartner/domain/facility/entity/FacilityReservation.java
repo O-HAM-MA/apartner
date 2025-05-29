@@ -28,29 +28,39 @@ import lombok.Setter;
 public class FacilityReservation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "facility_id")
+    @JoinColumn(name = "facility_id", nullable = false)
     private Facility facility;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "date")  // 예약 날짜
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "facility_time_slot_id")
+    private FacilityTimeSlot timeSlot;
+
+    @Column(name = "date", nullable = false)
     private LocalDate date;
 
-    @Column(name = "start_time")  // 시작 시간
+    @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 
-    @Column(name = "end_time")  // 종료 시간
+    @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private Status status;
+    @Column(name = "request_message")
+    private String requestMessage; // 사용자 요청사항 (optional)
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "usage_status")
-//    private UsageStatus usageStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancel_reason_type")
+    private CancelReasonType cancelReasonType; // 취소사유
+
+    @Column(name = "cancel_reason_detail")
+    private String cancelReasonDetail; // 기타 등 상세 내용 입력
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private Status status;
 
     // Enum for status
     public enum Status {
@@ -58,7 +68,12 @@ public class FacilityReservation extends BaseEntity {
         // 승인 완료, 승인 대기, 승인 거절, 예약 취소
     }
 
-//    public enum UsageStatus {
-//        NOT_STARTED, IN_USE, COMPLETED
-//    }
+    public enum CancelReasonType {
+        PERSONAL_REASON,     // 개인사정
+        SCHEDULE_CONFLICT,   // 일정 중복
+        ILLNESS,             // 질병/건강 문제
+        MISTAKE,             // 잘못 예약함
+        OTHER                // 기타
+    }
+
 } 
