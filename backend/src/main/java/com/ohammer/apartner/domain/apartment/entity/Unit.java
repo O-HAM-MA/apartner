@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Unit extends BaseEntity {
 
   
@@ -30,6 +31,4 @@ public class Unit extends BaseEntity {
     @Column(name = "unit_number", length = 10, nullable = false)
     private String unitNumber;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 } 
