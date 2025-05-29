@@ -66,7 +66,7 @@ export default function InspectionEditPage({
       try {
         const id = params.id;
         // 실제 API 호출로 변경
-        const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${id}`, {
+        const res = await fetch(`/api/v1/inspection/manager/${id}`, {
           credentials: "include", // 쿠키 포함 설정 추가
         });
 
@@ -133,7 +133,7 @@ export default function InspectionEditPage({
       setTypeLoading(true);
       setTypeError(null);
       try {
-        const res = await fetch("http://localhost:8090/api/v1/inspection/type", {
+        const res = await fetch("/api/v1/inspection/type", {
           credentials: "include", // 쿠키 포함 설정 추가
         });
         if (!res.ok) throw new Error("분류 데이터를 불러오지 못했습니다.");
@@ -181,7 +181,7 @@ export default function InspectionEditPage({
       };
 
       // API 호출 (PUT 또는 PATCH 사용)
-      const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${params.id}`, {
+      const res = await fetch(`/api/v1/inspection/manager/${params.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -27,6 +27,7 @@ import { useState, ChangeEvent, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { useGlobalLoginMember } from "@/auth/loginMember";
+import { Badge } from "@/components/ui/badge";
 
 export default function InspectionDetail() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function InspectionDetail() {
       setError(null);
       try {
         const id = params.id;
-        const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${id}`, {
+        const res = await fetch(`api/v1/inspection/manager/${id}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("점검 데이터를 불러오지 못했습니다.");
@@ -120,7 +121,7 @@ export default function InspectionDetail() {
     setIsDeleting(true);
     try {
       const id = params.id;
-      const res = await fetch(`http://localhost:8090/api/v1/inspection/manager/${id}`, {
+      const res = await fetch(`/api/v1/inspection/manager/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -215,11 +216,11 @@ export default function InspectionDetail() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <span>점검 ID: {inspectionData?.inspectionId}</span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-xs font-medium">
-                        <Tag size={12} />
-                        {inspectionData?.typeName}
-                      </span>
+                      <Badge variant="secondary" className="mb-2 dark:text-foreground">
+                        점검 ID: {inspectionData?.inspectionId}
+                      </Badge>
+                      <Tag size={16} className="mr-1 text-muted-foreground dark:text-foreground" />
+                      <span className="text-muted-foreground dark:text-foreground">{inspectionData?.typeName || "분류 미지정"}</span>
                     </div>
                     <h1 className="text-2xl font-bold text-foreground">
                       {inspectionData?.title}
@@ -258,38 +259,23 @@ export default function InspectionDetail() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border pt-4">
-                  <div className="flex items-center gap-2">
-                    <Play className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    <div>
-                      <div className="text-sm text-muted-foreground">
-                        점검 시작
-                      </div>
-                      <div className="font-medium text-foreground">
-                        {formatDateTime(inspectionData?.startAt)}
-                      </div>
-                    </div>
+                  <div className="flex items-center text-sm text-muted-foreground dark:text-foreground">
+                    <Play size={16} className="mr-1 flex-shrink-0" />
+                    <span>
+                      {formatDateTime(inspectionData?.startAt)}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Square className="h-5 w-5 text-red-600 dark:text-red-400" />
-                    <div>
-                      <div className="text-sm text-muted-foreground">
-                        점검 종료
-                      </div>
-                      <div className="font-medium text-foreground">
-                        {formatDateTime(inspectionData?.finishAt)}
-                      </div>
-                    </div>
+                  <div className="flex items-center text-sm text-muted-foreground dark:text-foreground">
+                    <Square size={16} className="mr-1 flex-shrink-0" />
+                    <span>
+                      {formatDateTime(inspectionData?.finishAt)}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <div className="text-sm text-muted-foreground">
-                        담당자
-                      </div>
-                      <div className="font-medium text-foreground">
-                        {inspectionData?.userName}
-                      </div>
-                    </div>
+                  <div className="flex items-center text-sm text-muted-foreground dark:text-foreground">
+                    <User size={16} className="mr-1 flex-shrink-0" />
+                    <span>
+                      {inspectionData?.userName || "-"}
+                    </span>
                   </div>
                 </div>
               </div>
