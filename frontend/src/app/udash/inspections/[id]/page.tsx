@@ -46,7 +46,7 @@ export default function InspectionDetail() {
       setError(null);
       try {
         const id = params.id;
-        const res = await fetch(`api/v1/inspection/manager/${id}`, {
+        const res = await fetch(`/api/v1/inspection/manager/${id}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("점검 데이터를 불러오지 못했습니다.");
