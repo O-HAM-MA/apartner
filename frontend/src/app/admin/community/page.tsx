@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -22,20 +22,10 @@ import {
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
 
-// 먼저 Dialog 컴포넌트 import 추가
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-  } from "@/components/ui/dialog";
-  import { Textarea } from "@/components/ui/textarea";
-
 type CommunityResponseDto = components["schemas"]["CommunityResponseDto"];
 
 export default function CommunityPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -164,46 +154,6 @@ export default function CommunityPage() {
     </Card>
   );
 
-  // 모달 상태 관리
-  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
-  const [newPost, setNewPost] = useState<components["schemas"]["CommunityRequestDto"]>({
-    content: "",
-    parentId: null,
-  });
-
-  // 글 작성 mutation
-  const createPostMutation = useMutation<
-    components["schemas"]["CommunityResponseDto"],
-    Error,
-    components["schemas"]["CommunityRequestDto"]
-  >({
-    mutationFn: async (data) => {
-      const { data: response, error } = await client.POST("/api/v1/community", {
-        body: data,
-      });
-      if (error) throw error;
-      return response;
-    },
-    onSuccess: () => {
-      setIsWriteModalOpen(false);
-      setNewPost({ content: "", parentId: null });
-      queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
-    },
-    onError: (error) => {
-      console.error("글 작성 실패:", error);
-      alert("글 작성에 실패했습니다.");
-    },
-  });
-
-  const handleSubmitPost = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPost.content.trim()) {
-      alert("내용을 입력해주세요.");
-      return;
-    }
-    createPostMutation.mutate(newPost);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-rose-50">
       <Header />
@@ -219,9 +169,8 @@ export default function CommunityPage() {
                 우리 아파트 입주민들과 소통해보세요
               </p>
             </div>
-            {/* 새 글 작성 버튼 수정 */}
             <Button
-              onClick={() => setIsWriteModalOpen(true)}
+              onClick={() => router.push("/udash/community/write")}
               className="bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
               size="lg"
             >
@@ -251,10 +200,10 @@ export default function CommunityPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-xl font-semibold text-gray-700">
-                        아직 게시글이 없거나 귀하는 로그인 중이 아닙니다.
+                        아직 게시글이 없거나 귀하는 로그인 한 회원이 아닙니다.
                       </h3>
                       <p className="text-gray-500">
-                        회원 가입을 하거나 첫 번째 글을 작성해보세요!
+                        회원 가입을 하시거나 첫 번째 글을 작성해보세요!
                       </p>
                     </div>
                   </div>
@@ -290,45 +239,6 @@ export default function CommunityPage() {
         </div>
       </main>
       <Footer />
-
-      {/* 새 글 작성 모달 */}
-      <Dialog open={isWriteModalOpen} onOpenChange={setIsWriteModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-900">새 글 작성</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmitPost} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                내용
-              </label>
-              <Textarea
-                value={newPost.content}
-                onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                placeholder="내용을 입력하세요"
-                className="min-h-[200px] resize-none"
-                required
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsWriteModalOpen(false)}
-              >
-                취소
-              </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white"
-                disabled={createPostMutation.isPending}
-              >
-                {createPostMutation.isPending ? "작성 중..." : "작성 완료"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
