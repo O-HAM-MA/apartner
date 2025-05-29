@@ -18,6 +18,8 @@ import {
   MessageSquare,
   ImageIcon,
   ChevronRight,
+  Trash2,
+  Edit,
 } from "lucide-react";
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
@@ -28,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useGlobalLoginMember } from "@/auth/loginMember";
 
 // 타입 선언
 type CommunityRequestDto = components["schemas"]["CommunityRequestDto"];
@@ -80,118 +83,15 @@ export default function CommunityPage() {
   // 상태 관리 부분에 답글 작성을 위한 상태 추가
   const [replyToPost, setReplyToPost] = useState<number | null>(null);
 
-  // 게시글 카드 렌더링 부분 수정
-  const renderPostCard = (
-    post: CommunityResponseDto,
-    isReply: boolean = false
-  ) => (
-    <Card
-      key={post.id}
-      className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white ${
-        isReply
-          ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
-          : ""
-      }`}
-      onClick={() => router.push(`/udash/community/${post.id}`)}
-    >
-      <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-1 space-y-2">
-            {/* Title with reply indicator */}
-            <div className="flex items-center gap-2">
-              {isReply && (
-                <div className="flex items-center text-pink-400">
-                  <ChevronRight className="w-4 h-4" />
-                  <span className="text-xs font-medium">답글</span>
-                </div>
-              )}
-              <h3
-                className={`font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2 ${
-                  isReply ? "text-base" : "text-xl"
-                }`}
-              >
-                {post.title}
-              </h3>
-            </div>
-
-            {/* Content preview - 답글일 경우 더 간단하게 표시 */}
-            <p
-              className={`text-gray-600 line-clamp-2 leading-relaxed ${
-                isReply ? "text-sm" : ""
-              }`}
-            >
-              {post.content}
-            </p>
-
-            {/* Meta information */}
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <div className="flex items-center gap-1 text-gray-500">
-                <User className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-                <span className="font-medium text-xs">{post.authorName}</span>
-              </div>
-              <div className="flex items-center gap-1 text-gray-500">
-                <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-                <span className="text-xs">{formatDate(post.createdAt)}</span>
-              </div>
-              {post.hasImage && (
-                <Badge
-                  variant="secondary"
-                  className="bg-pink-50 text-pink-600 hover:bg-pink-100 text-xs py-0"
-                >
-                  <ImageIcon className="w-3 h-3 mr-1" />
-                  이미지
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Image placeholder - 답글일 경우 더 작게 표시 */}
-          {post.hasImage && (
-            <div className="flex-shrink-0">
-              <div
-                className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg flex items-center justify-center ${
-                  isReply ? "w-16 h-16" : "w-24 h-24"
-                }`}
-              >
-                <ImageIcon
-                  className={`text-pink-400 ${isReply ? "w-6 h-6" : "w-8 h-8"}`}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Meta information 섹션 끝에 답글 버튼 추가 */}
-        <div className="flex justify-between items-center mt-4">
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            {/* ...existing meta information... */}
-          </div>
-          {!isReply && ( // 답글에는 답글 버튼 표시하지 않음
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-pink-500 hover:text-pink-600 hover:bg-pink-50"
-              onClick={(e) => {
-                e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
-                setReplyToPost(post.id);
-                setIsWriteModalOpen(true);
-              }}
-            >
-              <MessageSquare className="w-4 h-4 mr-1" />
-              답글 작성
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   // 모달 상태 관리
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [newPost, setNewPost] = useState<CommunityRequestDto>({
     content: "",
     parentId: null,
   });
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const { loginMember } = useGlobalLoginMember();
 
   // 글 작성 mutation
   const createPostMutation = useMutation<
@@ -229,6 +129,24 @@ export default function CommunityPage() {
     },
   });
 
+  // 삭제 mutation 추가
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: number) => {
+      const { error } = await client.DELETE(
+        `/api/v1/community/delete/${postId}`
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["community", "replies"] });
+    },
+    onError: (error) => {
+      console.error("글 삭제 실패:", error);
+      alert("글 삭제에 실패했습니다.");
+    },
+  });
+
   const handleSubmitPost = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPost.content.trim()) {
@@ -236,6 +154,156 @@ export default function CommunityPage() {
       return;
     }
     createPostMutation.mutate(newPost);
+  };
+
+  // 삭제 핸들러 추가
+  const handleDelete = async (e: React.MouseEvent, postId: number) => {
+    e.stopPropagation();
+    if (confirm("정말 삭제하시겠습니까?")) {
+      deletePostMutation.mutate(postId);
+    }
+  };
+
+  // 게시글 카드 렌더링 부분 수정
+  const renderPostCard = (
+    post: CommunityResponseDto,
+    isReply: boolean = false
+  ) => {
+    // 디버깅을 위한 로그 추가
+    console.log("Current user ID:", loginMember?.id);
+    console.log("Post author ID:", post.author?.id);
+    console.log("Are IDs equal?:", loginMember?.id === post.author?.id);
+
+    return (
+      <Card
+        key={post.id}
+        className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white ${
+          isReply
+            ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
+            : ""
+        }`}
+        onClick={() => router.push(`/udash/community/${post.id}`)}
+      >
+        <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1 space-y-2">
+              {/* Title with reply indicator */}
+              <div className="flex items-center gap-2">
+                {isReply && (
+                  <div className="flex items-center text-pink-400">
+                    <ChevronRight className="w-4 h-4" />
+                    <span className="text-xs font-medium">답글</span>
+                  </div>
+                )}
+                <h3
+                  className={`font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2 ${
+                    isReply ? "text-base" : "text-xl"
+                  }`}
+                >
+                  {post.title}
+                </h3>
+              </div>
+
+              {/* Content preview - 답글일 경우 더 간단하게 표시 */}
+              <p
+                className={`text-gray-600 line-clamp-2 leading-relaxed ${
+                  isReply ? "text-sm" : ""
+                }`}
+              >
+                {post.content}
+              </p>
+
+              {/* Meta information */}
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <div className="flex items-center gap-1 text-gray-500">
+                  <User className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+                  <span className="font-medium text-xs">{post.authorName}</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-500">
+                  <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+                  <span className="text-xs">{formatDate(post.createdAt)}</span>
+                </div>
+                {post.hasImage && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-pink-50 text-pink-600 hover:bg-pink-100 text-xs py-0"
+                  >
+                    <ImageIcon className="w-3 h-3 mr-1" />
+                    이미지
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Image placeholder - 답글일 경우 더 작게 표시 */}
+            {post.hasImage && (
+              <div className="flex-shrink-0">
+                <div
+                  className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg flex items-center justify-center ${
+                    isReply ? "w-16 h-16" : "w-24 h-24"
+                  }`}
+                >
+                  <ImageIcon
+                    className={`text-pink-400 ${isReply ? "w-6 h-6" : "w-8 h-8"}`}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Meta information 섹션 끝에 답글 버튼 추가 */}
+          <div className="flex justify-between items-center mt-4">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              {/* ...existing meta information... */}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* 작성자 체크 로직 수정 - 명시적 타입 변환 추가 */}
+              {Number(loginMember?.id) === Number(post.author?.id) && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("Edit clicked");
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    수정
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={(e) => handleDelete(e, post.id)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    삭제
+                  </Button>
+                </>
+              )}
+              {/* 기존 답글 버튼 */}
+              {!isReply && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-pink-500 hover:text-pink-600 hover:bg-pink-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setReplyToPost(post.id);
+                    setIsWriteModalOpen(true);
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  답글 작성
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
