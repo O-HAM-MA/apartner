@@ -17,6 +17,7 @@ import {
   Calendar,
   MessageSquare,
   ImageIcon,
+  ChevronRight,
 } from "lucide-react";
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
@@ -38,10 +39,103 @@ export default function CommunityPage() {
     },
   });
 
+  // 답글 목록을 가져오는 쿼리 추가
+  const { data: replies } = useQuery<{ [key: string]: CommunityResponseDto[] }>(
+    {
+      queryKey: ["community", "replies"],
+      queryFn: async () => {
+        if (!posts) return {};
+
+        // 모든 게시글의 답글을 병렬로 가져오기
+        const repliesMap: { [key: string]: CommunityResponseDto[] } = {};
+        await Promise.all(
+          posts.map(async (post) => {
+            const { data } = await client.GET(`/api/v1/community/${post.id}`);
+            if (data && data.length > 0) {
+              repliesMap[post.id] = data;
+            }
+          })
+        );
+        return repliesMap;
+      },
+      enabled: !!posts, // posts가 있을 때만 실행
+    }
+  );
+
   // Format date helper function
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "yyyy.MM.dd HH:mm", { locale: ko });
   };
+
+  // 게시글 카드 렌더링 부분 수정
+  const renderPostCard = (
+    post: CommunityResponseDto,
+    isReply: boolean = false
+  ) => (
+    <Card
+      key={post.id}
+      className={`border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white ${
+        isReply ? "ml-8 border-l-4 border-l-pink-200" : ""
+      }`}
+      onClick={() => router.push(`/udash/community/${post.id}`)}
+    >
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1 space-y-3">
+            {/* Title with reply indicator */}
+            <div className="flex items-center gap-2">
+              {isReply && <ChevronRight className="w-4 h-4 text-pink-400" />}
+              <h3 className="text-xl font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2">
+                {post.title}
+              </h3>
+            </div>
+
+            {/* Content preview */}
+            <p className="text-gray-600 line-clamp-2 leading-relaxed">
+              {post.content}
+            </p>
+
+            {/* Meta information */}
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-1 text-gray-500">
+                <User className="w-4 h-4" />
+                <span className="font-medium">{post.authorName}</span>
+              </div>
+              <div className="flex items-center gap-1 text-gray-500">
+                <Eye className="w-4 h-4" />
+                <span>조회 {post.viewCount}</span>
+              </div>
+              <div className="flex items-center gap-1 text-gray-500">
+                <Calendar className="w-4 h-4" />
+                <span>{formatDate(post.createdAt)}</span>
+              </div>
+              {post.hasImage && (
+                <Badge
+                  variant="secondary"
+                  className="bg-pink-100 text-pink-700 hover:bg-pink-200"
+                >
+                  <ImageIcon className="w-3 h-3 mr-1" />
+                  이미지
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Image placeholder */}
+          {post.hasImage && (
+            <div className="flex-shrink-0">
+              <div className="w-24 h-24 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl flex items-center justify-center group-hover:from-pink-200 group-hover:to-rose-200 transition-all duration-200">
+                <ImageIcon className="w-8 h-8 text-pink-500" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Hover indicator */}
+        <div className="mt-4 h-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-rose-50">
@@ -101,66 +195,15 @@ export default function CommunityPage() {
             ) : (
               <div className="grid gap-4">
                 {posts.map((post) => (
-                  <Card
-                    key={post.id}
-                    className="border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white"
-                    onClick={() => router.push(`/udash/community/${post.id}`)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1 space-y-3">
-                          {/* Title */}
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2">
-                            {post.title}
-                          </h3>
+                  <div key={post.id} className="space-y-2">
+                    {/* 원본 게시글 */}
+                    {renderPostCard(post)}
 
-                          {/* Content preview */}
-                          <p className="text-gray-600 line-clamp-2 leading-relaxed">
-                            {post.content}
-                          </p>
-
-                          {/* Meta information */}
-                          <div className="flex flex-wrap items-center gap-4 text-sm">
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <User className="w-4 h-4" />
-                              <span className="font-medium">
-                                {post.authorName}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <Eye className="w-4 h-4" />
-                              <span>조회 {post.viewCount}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <Calendar className="w-4 h-4" />
-                              <span>{formatDate(post.createdAt)}</span>
-                            </div>
-                            {post.hasImage && (
-                              <Badge
-                                variant="secondary"
-                                className="bg-pink-100 text-pink-700 hover:bg-pink-200"
-                              >
-                                <ImageIcon className="w-3 h-3 mr-1" />
-                                이미지
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Image placeholder */}
-                        {post.hasImage && (
-                          <div className="flex-shrink-0">
-                            <div className="w-24 h-24 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl flex items-center justify-center group-hover:from-pink-200 group-hover:to-rose-200 transition-all duration-200">
-                              <ImageIcon className="w-8 h-8 text-pink-500" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Hover indicator */}
-                      <div className="mt-4 h-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                    </CardContent>
-                  </Card>
+                    {/* 답글 목록 */}
+                    {replies?.[post.id]?.map((reply) =>
+                      renderPostCard(reply, true)
+                    )}
+                  </div>
                 ))}
               </div>
             )}
