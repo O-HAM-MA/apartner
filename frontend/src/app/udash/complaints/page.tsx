@@ -183,7 +183,12 @@ export default function ComplaintsPage() {
 
       // 목록 업데이트
       if (data) {
-        setComplaints([...complaints, data as Complaint]);
+        const normalizedComplaint = {
+          ...data,
+          complaintStatus: data.complaintStatus?.toLowerCase() || "pending",
+          user: data.userName || "",
+        };
+        setComplaints([...complaints, normalizedComplaint]);
       }
       setIsCreateModalOpen(false);
       setEditedComplaint(null);
@@ -243,29 +248,26 @@ export default function ComplaintsPage() {
     { value: "status", label: "상태" },
   ];
 
-  const filteredComplaints = complaints
-    .filter((complaint) => complaint.status !== "inactive")
-    .filter((complaint) => {
-      const searchValue = searchQuery.toLowerCase();
-      switch (searchCategory) {
-        case "title":
-          return complaint.title.toLowerCase().includes(searchValue);
-        case "status":
-          return complaint.complaintStatus.toLowerCase().includes(searchValue);
-        default:
-          return true;
-      }
-    });
+  const filteredComplaints = complaints.filter((complaint) => {
+    const searchValue = searchQuery.toLowerCase();
+    switch (searchCategory) {
+      case "title":
+        return complaint.title.toLowerCase().includes(searchValue);
+      case "status":
+        const statusLabel = getStatusLabel(
+          complaint.complaintStatus
+        ).toLowerCase();
+        return (
+          statusLabel.includes(searchValue) ||
+          complaint.complaintStatus.toLowerCase().includes(searchValue)
+        );
+      default:
+        return true;
+    }
+  });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">내 민원 관리</h1>
-        <p className="text-muted-foreground">
-          민원 신청 및 처리 현황을 확인할 수 있습니다.
-        </p>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>내 민원 목록</CardTitle>
