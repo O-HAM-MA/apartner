@@ -209,7 +209,19 @@ export default function CommunityPage() {
     onSuccess: () => {
       setIsWriteModalOpen(false);
       setNewPost({ content: "", parentId: null });
+      // 전체 게시글 목록과 답글 목록 모두 갱신
       queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["community", "replies"] });
+
+      // 특정 게시글의 답글만 갱신 (최적화)
+      if (replyToPost) {
+        queryClient.invalidateQueries({
+          queryKey: ["community", replyToPost.toString()],
+        });
+      }
+
+      // replyToPost 초기화
+      setReplyToPost(null);
     },
     onError: (error) => {
       console.error("글 작성 실패:", error);
