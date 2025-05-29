@@ -745,3 +745,9 @@ export async function getActiveUserChatrooms<T = any[]>(): Promise<T> {
     return [] as unknown as T;
   }
 }
+
+export async function markMessagesAsRead<T = any>(
+  chatroomId: number
+): Promise<T> {
+  return await post<T>(`/api/v1/chats/${chatroomId}/read`);
+}

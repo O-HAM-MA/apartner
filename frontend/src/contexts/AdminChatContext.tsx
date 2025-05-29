@@ -307,6 +307,7 @@ export function AdminChatProvider({ children }: AdminChatProviderProps) {
 
   // 채팅방 목록 가져오기
   const fetchChatrooms = async () => {
+    console.log("fetchChatrooms called");
     try {
       const response = await getAdminChatrooms();
       let apiChatrooms = response;
