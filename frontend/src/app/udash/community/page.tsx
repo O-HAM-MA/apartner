@@ -21,16 +21,16 @@ import {
 } from "lucide-react";
 import client from "@/lib/backend/client";
 import { components } from "@/lib/backend/apiV1/schema";
-
-// 먼저 Dialog 컴포넌트 import 추가
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-  } from "@/components/ui/dialog";
-  import { Textarea } from "@/components/ui/textarea";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
+// 타입 선언
+type CommunityRequestDto = components["schemas"]["CommunityRequestDto"];
 type CommunityResponseDto = components["schemas"]["CommunityResponseDto"];
 
 export default function CommunityPage() {
@@ -166,18 +166,18 @@ export default function CommunityPage() {
 
   // 모달 상태 관리
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
-  const [newPost, setNewPost] = useState<components["schemas"]["CommunityRequestDto"]>({
+  const [newPost, setNewPost] = useState<CommunityRequestDto>({
     content: "",
     parentId: null,
   });
 
   // 글 작성 mutation
   const createPostMutation = useMutation<
-    components["schemas"]["CommunityResponseDto"],
+    CommunityResponseDto,
     Error,
-    components["schemas"]["CommunityRequestDto"]
+    CommunityRequestDto
   >({
-    mutationFn: async (data) => {
+    mutationFn: async (data: CommunityRequestDto) => {
       const { data: response, error } = await client.POST("/api/v1/community", {
         body: data,
       });
@@ -295,16 +295,18 @@ export default function CommunityPage() {
       <Dialog open={isWriteModalOpen} onOpenChange={setIsWriteModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-900">새 글 작성</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              새 글 작성
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitPost} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                내용
-              </label>
+              <label className="text-sm font-medium text-gray-700">내용</label>
               <Textarea
                 value={newPost.content}
-                onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                onChange={(e) =>
+                  setNewPost({ ...newPost, content: e.target.value })
+                }
                 placeholder="내용을 입력하세요"
                 className="min-h-[200px] resize-none"
                 required
