@@ -260,11 +260,27 @@ public List<ChatMessageDto> getMessageList(Long chatroomId){
 }
 
 @Transactional(readOnly = true)
-public List<ChatroomDto> getAllChatrooms(){
-    List<Chatroom> chatroomList = chatroomRepository.findAllByOrderByCreatedAtDesc();
-    
-    return chatroomList.stream()
-        .map(this::createChatroomDto)
+public List<ChatroomDto> getAllChatrooms() {
+    User currentUser = securityUtil.getCurrentUser();
+    if (currentUser == null) {
+        throw new BadRequestException("인증된 사용자만 채팅방 목록을 조회할 수 있습니다.");
+    }
+
+    List<UserChatroomMapping> userChatroomMappingList = userChatroomMappingRepository.findAllByUserId(currentUser.getId());
+
+    return userChatroomMappingList.stream()
+        .map(userChatroomMapping -> {
+            Chatroom chatroom = userChatroomMapping.getChatroom();
+            LocalDateTime lastCheckTime = userChatroomMapping.getLastCheckAt();
+            if (lastCheckTime == null) {
+                chatroom.setHasNewMessage(true);
+            } else {
+                chatroom.setHasNewMessage(
+                    messageRepository.existsByChatroomIdAndCreatedAtAfter(
+                        chatroom.getId(), lastCheckTime));
+            }
+            return createChatroomDto(chatroom);
+        })
         .collect(Collectors.toList());
 }
 
@@ -272,6 +288,28 @@ public List<ChatroomDto> getAllChatrooms(){
 public ChatroomDto getChatroomById(Long chatroomId){
     Chatroom chatroom = chatroomRepository.findById(chatroomId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+    
+    User currentUser = securityUtil.getCurrentUser();
+    if (currentUser != null) {
+        UserChatroomMapping mapping = userChatroomMappingRepository
+                .findByUserIdAndChatroomId(currentUser.getId(), chatroomId)
+                .orElse(null);
+        
+        if (mapping != null) {
+            LocalDateTime lastCheckTime = mapping.getLastCheckAt();
+            if (lastCheckTime == null) {
+                chatroom.setHasNewMessage(true);
+            } else {
+                chatroom.setHasNewMessage(
+                    messageRepository.existsByChatroomIdAndCreatedAtAfter(
+                        chatroomId, lastCheckTime));
+            }
+        } else {
+            chatroom.setHasNewMessage(false);
+        }
+    } else {
+        chatroom.setHasNewMessage(false);
+    }
     
     return createChatroomDto(chatroom);
 }
@@ -373,7 +411,20 @@ private ChatMessageDto processAndSendMessage(User user, Long chatroomId, String 
 
 private void notifyChatroomUpdate(Long chatroomId) {
     ChatroomDto chatroomDto = getChatroomById(chatroomId);
-    simpMessagingTemplate.convertAndSend("/sub/chats/updates", chatroomDto);
+    
+    ChatroomDto updatedDto = new ChatroomDto(
+        chatroomDto.id(),
+        chatroomDto.title(),
+        chatroomDto.categoryCode(),
+        chatroomDto.apartmentId(),
+        true,
+        chatroomDto.userCount(),
+        chatroomDto.createdAt(),
+        chatroomDto.status()
+    );
+    
+    log.info("채팅방 업데이트 알림 전송: 채팅방 ID={}, hasNewMessage=true", chatroomId);
+    simpMessagingTemplate.convertAndSend("/sub/chats/updates", updatedDto);
 }
 
 private ChatMessageDto createErrorMessageDto(String errorMessage) {
@@ -441,6 +492,31 @@ public Boolean markMessagesAsRead(User user, Long chatroomId) {
         if (user.getApartment() == null || !user.getApartment().getId().equals(chatroom.getApartmentId())) {
             throw new ForbiddenAccessException("다른 아파트의 채팅방에 접근할 수 없습니다.");
         }
+    }
+    
+    UserChatroomMapping mapping = userChatroomMappingRepository.findByUserIdAndChatroomId(user.getId(), chatroomId)
+            .orElse(null);
+    
+    if (mapping == null) {
+        mapping = UserChatroomMapping.builder()
+                .user(user)
+                .chatroom(chatroom)
+                .build();
+    }
+    
+    mapping.updateLastCheckAt(LocalDateTime.now());
+    userChatroomMappingRepository.save(mapping);
+    
+    return true;
+}
+
+@Transactional
+public Boolean markMessagesAsReadUser(User user, Long chatroomId) {
+    Chatroom chatroom = chatroomRepository.findById(chatroomId)
+            .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 채팅방입니다. ID: " + chatroomId));
+
+    if (!isUserInChatroom(user.getId(), chatroomId)) {
+        throw new ForbiddenAccessException("채팅방에 참여하지 않은 사용자는 메시지를 읽을 수 없습니다.");
     }
     
     UserChatroomMapping mapping = userChatroomMappingRepository.findByUserIdAndChatroomId(user.getId(), chatroomId)

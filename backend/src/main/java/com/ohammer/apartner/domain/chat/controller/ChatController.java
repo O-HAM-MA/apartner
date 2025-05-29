@@ -179,4 +179,17 @@ public class ChatController {
         
         return ResponseEntity.ok(ApiResponse.success(chatrooms, "필터링된 채팅방 목록을 성공적으로 조회했습니다."));
     }
+
+    @PostMapping("/{chatroomId}/read")
+    public ResponseEntity<ApiResponse<Boolean>> markMessagesAsReadUser(
+            @PathVariable(name = "chatroomId") Long chatroomId) {
+        User currentUser = securityUtil.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED, "인증 정보가 유효하지 않습니다."));
+        }
+        
+        Boolean result = chatService.markMessagesAsReadUser(currentUser, chatroomId);
+        return ResponseEntity.ok(ApiResponse.success(result, "메시지를 읽음으로 표시했습니다."));
+    }
 }
