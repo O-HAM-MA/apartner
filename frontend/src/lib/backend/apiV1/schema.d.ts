@@ -4121,8 +4121,8 @@ export interface components {
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
