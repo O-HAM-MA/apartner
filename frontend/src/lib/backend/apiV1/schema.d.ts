@@ -811,6 +811,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/chats/{chatroomId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markMessagesAsReadUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/verify-code": {
         parameters: {
             query?: never;
@@ -6822,6 +6838,28 @@ export interface operations {
         };
     };
     leaveChatroom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseBoolean"];
+                };
+            };
+        };
+    };
+    markMessagesAsReadUser: {
         parameters: {
             query?: never;
             header?: never;
