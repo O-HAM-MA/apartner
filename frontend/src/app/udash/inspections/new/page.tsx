@@ -95,7 +95,7 @@ export default function InspectionForm({
       };
 
       // API 호출
-      const res = await fetch("http://localhost:8090/api/v1/inspection/manager/create", {
+      const res = await fetch("/api/v1/inspection/manager/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,7 +169,7 @@ export default function InspectionForm({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("http://localhost:8090/api/v1/inspection/type", {
+        const res = await fetch("/api/v1/inspection/type", {
           credentials: "include",
         });
         if (!res.ok) throw new Error("분류 데이터를 불러오지 못했습니다.");
