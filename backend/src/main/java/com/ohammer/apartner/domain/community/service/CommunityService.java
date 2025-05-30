@@ -52,7 +52,7 @@ public class CommunityService {
 
         Set<Role> roles = currentUser.getRoles();
         boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-                role == Role.MANAGER || role == Role.MODERATOR);
+                role == Role.MANAGER || role == Role.MODERATOR || role == Role.ADMIN);
 
         List<Community> list = communityRepository.findByStatusAndParentIsNullOrderByCreatedAtDesc(Status.ACTIVE);
         return list.stream()
@@ -125,11 +125,11 @@ public class CommunityService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommunityResponseDto> listBranchPosts(Boolean isAdmin, Long parentId) {
+    public List<CommunityResponseDto> listBranchPosts(Long parentId) {
         List<Community> list = communityRepository.findByParentId(parentId);
         //list = communityRepository.findByStatusAndParentIsNullOrderByCreatedAtDesc(Status.ACTIVE);
         return list.stream()
-                .map(c -> toDto(c, isAdmin))
+                .map(c -> toDto(c, true))
                 .collect(Collectors.toList());
     }
 }
