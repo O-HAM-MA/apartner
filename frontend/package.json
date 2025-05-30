@@ -89,8 +89,8 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "autoprefixer": "^10.4.21",
     "critters": "^0.0.23",
     "openapi-typescript": "^7.8.0",
