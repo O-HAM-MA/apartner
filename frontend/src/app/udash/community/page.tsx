@@ -169,10 +169,13 @@ export default function CommunityPage() {
     post: CommunityResponseDto,
     isReply: boolean = false
   ) => {
-    // 디버깅을 위한 로그 추가
-    console.log("Current user ID:", loginMember?.id);
-    console.log("Post author ID:", post.author?.id);
-    console.log("Are IDs equal?:", loginMember?.id === post.author?.id);
+    // 작성자 체크 로직 추가
+    const isAuthor = loginMember?.id === post.author?.id;
+
+    // 디버깅용 로그
+    console.log("Current post:", post);
+    console.log("Login member:", loginMember);
+    console.log("Is author:", isAuthor);
 
     return (
       <Card
@@ -187,7 +190,13 @@ export default function CommunityPage() {
         <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
           <div className="flex justify-between items-start gap-4">
             <div className="flex-1 space-y-2">
-              {/* Title with reply indicator */}
+              {/* 작성자 정보 표시 - 제목 위에 추가 */}
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <User className="w-4 h-4" />
+                <span>{post.author?.username || "알 수 없음"}</span>
+              </div>
+
+              {/* 제목 */}
               <div className="flex items-center gap-2">
                 {isReply && (
                   <div className="flex items-center text-pink-400">
@@ -200,38 +209,16 @@ export default function CommunityPage() {
                     isReply ? "text-base" : "text-xl"
                   }`}
                 >
-                  {post.title}
+                  {post.content}
                 </h3>
               </div>
 
-              {/* Content preview - 답글일 경우 더 간단하게 표시 */}
-              <p
-                className={`text-gray-600 line-clamp-2 leading-relaxed ${
-                  isReply ? "text-sm" : ""
-                }`}
-              >
-                {post.content}
-              </p>
-
-              {/* Meta information */}
+              {/* 하단 메타 정보 */}
               <div className="flex flex-wrap items-center gap-3 text-sm">
-                <div className="flex items-center gap-1 text-gray-500">
-                  <User className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-                  <span className="font-medium text-xs">{post.authorName}</span>
-                </div>
                 <div className="flex items-center gap-1 text-gray-500">
                   <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
                   <span className="text-xs">{formatDate(post.createdAt)}</span>
                 </div>
-                {post.hasImage && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-pink-50 text-pink-600 hover:bg-pink-100 text-xs py-0"
-                  >
-                    <ImageIcon className="w-3 h-3 mr-1" />
-                    이미지
-                  </Badge>
-                )}
               </div>
             </div>
 
@@ -244,21 +231,22 @@ export default function CommunityPage() {
                   }`}
                 >
                   <ImageIcon
-                    className={`text-pink-400 ${isReply ? "w-6 h-6" : "w-8 h-8"}`}
+                    className={`text-pink-400 ${
+                      isReply ? "w-6 h-6" : "w-8 h-8"
+                    }`}
                   />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Meta information 섹션 끝에 답글 버튼 추가 */}
+          {/* Meta information 섹션 수정 */}
           <div className="flex justify-between items-center mt-4">
             <div className="flex flex-wrap items-center gap-3 text-sm">
               {/* ...existing meta information... */}
             </div>
             <div className="flex items-center gap-2">
-              {/* 작성자 체크 로직 수정 - 명시적 타입 변환 추가 */}
-              {Number(loginMember?.id) === Number(post.author?.id) && (
+              {isAuthor && (
                 <>
                   <Button
                     variant="ghost"
