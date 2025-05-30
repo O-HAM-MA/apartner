@@ -193,12 +193,18 @@ export default function CommunityPage() {
     },
   });
 
-  // Add pin mutation after other mutations
-  const pinPostMutation = useMutation<CommunityResponseDto, Error, number>({
-    mutationFn: async (postId: number) => {
-      const { data, error } = await client.POST(
-        `/api/v1/community/${postId}/pin`
-      );
+  // pinPostMutation 수정
+  const pinPostMutation = useMutation<
+    CommunityResponseDto,
+    Error,
+    { id: number; pinned: boolean }
+  >({
+    mutationFn: async ({ id, pinned }) => {
+      // pinned가 true면 고정, false면 해제
+      const endpoint = pinned
+        ? `/api/v1/community/${id}/pin`
+        : `/api/v1/community/${id}/unpin`;
+      const { data, error } = await client.POST(endpoint);
       if (error) throw error;
       return data;
     },
@@ -206,8 +212,8 @@ export default function CommunityPage() {
       queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
     },
     onError: (error) => {
-      console.error("글 고정 실패:", error);
-      alert("글 고정에 실패했습니다.");
+      console.error("글 고정/해제 실패:", error);
+      alert("작업에 실패했습니다.");
     },
   });
 
@@ -261,13 +267,20 @@ export default function CommunityPage() {
     return (
       <Card
         key={post.id}
-        className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group 
-          ${post.pinned ? "bg-pink-50/80 border-l-4 border-l-pink-400" : "bg-white/80"}
-          backdrop-blur-sm hover:bg-white ${
+        className={`
+          border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group
+          ${
+            post.pinned
+              ? "bg-gradient-to-r from-pink-50/90 to-white border-l-4 border-l-pink-300"
+              : "bg-white/80"
+          }
+          backdrop-blur-sm hover:bg-white 
+          ${
             isReply
               ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
               : ""
-          }`}
+          }
+        `}
         onClick={() => router.push(`/udash/community/${post.id}`)}
       >
         <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
@@ -277,9 +290,10 @@ export default function CommunityPage() {
               {post.pinned && (
                 <Badge
                   variant="secondary"
-                  className="mb-2 bg-pink-100 text-pink-600 hover:bg-pink-200"
+                  className="mb-2 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-600 border border-pink-200 shadow-sm"
                 >
-                  📌 고정된 글
+                  <span className="mr-1 opacity-75">📌</span>
+                  고정된 글
                 </Badge>
               )}
 
@@ -337,17 +351,30 @@ export default function CommunityPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`${
-                    post.pinned
-                      ? "text-pink-600 hover:text-pink-700 hover:bg-pink-50"
-                      : "text-gray-500 hover:text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`
+                    transition-all duration-200 flex items-center gap-1
+                    ${
+                      post.pinned
+                        ? "text-pink-600 hover:text-pink-700 hover:bg-pink-50 font-medium"
+                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                    }
+                  `}
                   onClick={(e) => {
                     e.stopPropagation();
-                    pinPostMutation.mutate(post.id);
+                    pinPostMutation.mutate({
+                      id: post.id,
+                      pinned: !post.pinned,
+                    });
                   }}
                 >
-                  📌 {post.pinned ? "고정 해제" : "고정"}
+                  <span
+                    className={`transform transition-transform duration-200 ${
+                      post.pinned ? "rotate-45" : ""
+                    }`}
+                  >
+                    📌
+                  </span>
+                  {post.pinned ? "고정 해제" : "고정"}
                 </Button>
               )}
 
@@ -463,7 +490,9 @@ export default function CommunityPage() {
                   .map((post) => (
                     <div key={post.id} className="space-y-2">
                       {renderPostCard(post)}
-                      {replies?.[post.id]?.map((reply) => renderPostCard(reply, true))}
+                      {replies?.[post.id]?.map((reply) =>
+                        renderPostCard(reply, true)
+                      )}
                     </div>
                   ))}
               </div>
