@@ -240,14 +240,6 @@ export default function CommunityPage() {
     post: CommunityResponseDto,
     isReply: boolean = false
   ) => {
-    // 작성자 체크 로직 추가
-    const isAuthor = loginMember?.id === post.author?.id;
-
-    // 디버깅용 로그
-    console.log("Current post:", post);
-    console.log("Login member:", loginMember);
-    console.log("Is author:", isAuthor);
-
     return (
       <Card
         key={post.id}
@@ -261,13 +253,13 @@ export default function CommunityPage() {
         <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
           <div className="flex justify-between items-start gap-4">
             <div className="flex-1 space-y-2">
-              {/* 작성자 정보 표시 - 제목 위에 추가 */}
+              {/* 작성자 정보 표시 */}
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <User className="w-4 h-4" />
                 <span>{post.author?.username || "알 수 없음"}</span>
               </div>
 
-              {/* 제목 */}
+              {/* 제목과 내용 */}
               <div className="flex items-center gap-2">
                 {isReply && (
                   <div className="flex items-center text-pink-400">
@@ -283,17 +275,9 @@ export default function CommunityPage() {
                   {post.content}
                 </h3>
               </div>
-
-              {/* 하단 메타 정보 */}
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <div className="flex items-center gap-1 text-gray-500">
-                  <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-                  <span className="text-xs">{formatDate(post.createdAt)}</span>
-                </div>
-              </div>
             </div>
 
-            {/* Image placeholder - 답글일 경우 더 작게 표시 */}
+            {/* Image placeholder */}
             {post.hasImage && (
               <div className="flex-shrink-0">
                 <div
@@ -311,16 +295,13 @@ export default function CommunityPage() {
             )}
           </div>
 
-          {/* Meta information 섹션 수정 - isAuthor 조건 제거 */}
+          {/* 하단 메타 정보와 버튼 */}
           <div className="flex justify-between items-center mt-4">
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <div className="flex items-center gap-1 text-gray-500">
-                <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-                <span className="text-xs">{formatDate(post.createdAt)}</span>
-              </div>
+            <div className="flex items-center gap-1 text-gray-500">
+              <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+              <span className="text-xs">{formatDate(post.createdAt)}</span>
             </div>
             <div className="flex items-center gap-2">
-              {/* isAuthor 조건 제거하여 모든 게시글에 버튼 표시 */}
               <Button
                 variant="ghost"
                 size="sm"
