@@ -10,21 +10,21 @@ const nextConfig = {
     unoptimized: true,
   },
   // ??
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: process.env.NEXT_PUBLIC_API_URL + "/api/:path*",
-      },
-      {
-        source: "/stomp/:path*",
-        destination: process.env.NEXT_PUBLIC_API_URL + "/stomp/:path*",
-      },
-    ];
-  },
-  env: {
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_URL
-  },
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: "/api/:path*",
+  //       destination: process.env.NEXT_PUBLIC_API_URL + "/api/:path*",
+  //     },
+  //     {
+  //       source: "/stomp/:path*",
+  //       destination: process.env.NEXT_PUBLIC_API_URL + "/stomp/:path*",
+  //     },
+  //   ];
+  // },
+  // env: {
+  //   NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_URL
+  // },
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
