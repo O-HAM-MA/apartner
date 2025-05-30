@@ -237,8 +237,8 @@ done
 echo "MySQL이 준비됨. 초기화 스크립트 실행 중..."
 
 docker exec mysql_1 mysql -uroot -p${var.password_1} -e "
-CREATE USER 'll_local'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '1234';
-CREATE USER 'll_local'@'172.18.%.%' IDENTIFIED WITH caching_sha2_password BY '1234';
+CREATE USER 'll_local'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY 'rootpw';
+CREATE USER 'll_local'@'172.18.%.%' IDENTIFIED WITH caching_sha2_password BY 'rootpw';
 CREATE USER 'll'@'%' IDENTIFIED WITH caching_sha2_password BY '${var.password_1}';
 
 GRANT ALL PRIVILEGES ON *.* TO 'll_local'@'127.0.0.1';
@@ -311,6 +311,7 @@ resource "aws_instance" "ec2_1" {
   user_data = <<-EOF
 ${local.ec2_user_data_base}
 EOF
+}
 
 # S3 설정 시작
 resource "aws_s3_bucket" "bucket_1" {
