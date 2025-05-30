@@ -14,7 +14,7 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  //
+  //as
   async rewrites() {
     return [
       {
