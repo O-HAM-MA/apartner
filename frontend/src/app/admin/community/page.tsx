@@ -193,6 +193,24 @@ export default function CommunityPage() {
     },
   });
 
+  // Add pin mutation after other mutations
+  const pinPostMutation = useMutation<CommunityResponseDto, Error, number>({
+    mutationFn: async (postId: number) => {
+      const { data, error } = await client.POST(
+        `/api/v1/community/${postId}/pin`
+      );
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
+    },
+    onError: (error) => {
+      console.error("글 고정 실패:", error);
+      alert("글 고정에 실패했습니다.");
+    },
+  });
+
   const handleSubmitPost = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPost.content.trim()) {
@@ -243,16 +261,28 @@ export default function CommunityPage() {
     return (
       <Card
         key={post.id}
-        className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white ${
-          isReply
-            ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
-            : ""
-        }`}
+        className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group 
+          ${post.pinned ? "bg-pink-50/80 border-l-4 border-l-pink-400" : "bg-white/80"}
+          backdrop-blur-sm hover:bg-white ${
+            isReply
+              ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
+              : ""
+          }`}
         onClick={() => router.push(`/udash/community/${post.id}`)}
       >
         <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
           <div className="flex justify-between items-start gap-4">
             <div className="flex-1 space-y-2">
+              {/* Add pin badge for pinned posts */}
+              {post.pinned && (
+                <Badge
+                  variant="secondary"
+                  className="mb-2 bg-pink-100 text-pink-600 hover:bg-pink-200"
+                >
+                  📌 고정된 글
+                </Badge>
+              )}
+
               {/* 작성자 정보 표시 */}
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <User className="w-4 h-4" />
@@ -302,6 +332,25 @@ export default function CommunityPage() {
               <span className="text-xs">{formatDate(post.createdAt)}</span>
             </div>
             <div className="flex items-center gap-2">
+              {/* Add pin toggle button */}
+              {!isReply && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`${
+                    post.pinned
+                      ? "text-pink-600 hover:text-pink-700 hover:bg-pink-50"
+                      : "text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    pinPostMutation.mutate(post.id);
+                  }}
+                >
+                  📌 {post.pinned ? "고정 해제" : "고정"}
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -405,17 +454,18 @@ export default function CommunityPage() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {posts.map((post) => (
-                  <div key={post.id} className="space-y-2">
-                    {/* 원본 게시글 */}
-                    {renderPostCard(post)}
-
-                    {/* 답글 목록 */}
-                    {replies?.[post.id]?.map((reply) =>
-                      renderPostCard(reply, true)
-                    )}
-                  </div>
-                ))}
+                {/* Show pinned posts first */}
+                {posts
+                  ?.sort((a, b) => {
+                    if (a.pinned === b.pinned) return 0;
+                    return a.pinned ? -1 : 1;
+                  })
+                  .map((post) => (
+                    <div key={post.id} className="space-y-2">
+                      {renderPostCard(post)}
+                      {replies?.[post.id]?.map((reply) => renderPostCard(reply, true))}
+                    </div>
+                  ))}
               </div>
             )}
           </div>

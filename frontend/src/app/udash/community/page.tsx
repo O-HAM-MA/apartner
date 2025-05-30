@@ -129,8 +129,54 @@ export default function CommunityPage() {
     },
   });
 
-  // 삭제 mutation 추가
-  const deletePostMutation = useMutation({
+  // 수정 상태 관리 추가
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<CommunityResponseDto | null>(
+    null
+  );
+  const [editContent, setEditContent] = useState("");
+
+  // 수정 mutation 추가
+  const updatePostMutation = useMutation<
+    CommunityResponseDto,
+    Error,
+    { id: number; dto: CommunityRequestDto }
+  >({
+    mutationFn: async ({ id, dto }) => {
+      try {
+        const { data, error } = await client.PUT(
+          `/api/v1/community/update/${id}`,
+          {
+            body: dto,
+          }
+        );
+
+        if (error) {
+          console.error("API Error:", error);
+          throw new Error(error.message || "Failed to update post");
+        }
+
+        return data;
+      } catch (err) {
+        console.error("Mutation Error:", err);
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      setIsEditModalOpen(false);
+      setEditingPost(null);
+      setEditContent("");
+      queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["community", "replies"] });
+    },
+    onError: (error: Error) => {
+      console.error("글 수정 실패:", error.message);
+      alert(`글 수정에 실패했습니다: ${error.message}`);
+    },
+  });
+
+  // 삭제 mutation 수정
+  const deletePostMutation = useMutation<void, Error, number>({
     mutationFn: async (postId: number) => {
       const { error } = await client.DELETE(
         `/api/v1/community/delete/${postId}`
@@ -156,6 +202,31 @@ export default function CommunityPage() {
     createPostMutation.mutate(newPost);
   };
 
+  // 수정 핸들러 추가
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost?.id) {
+      alert("수정할 게시글을 찾을 수 없습니다.");
+      return;
+    }
+
+    if (!editContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+
+    const dto: CommunityRequestDto = {
+      content: editContent,
+      parentId: editingPost.parentId || null,
+    };
+
+    try {
+      await updatePostMutation.mutateAsync({ id: editingPost.id, dto });
+    } catch (error) {
+      console.error("Edit submission error:", error);
+    }
+  };
+
   // 삭제 핸들러 추가
   const handleDelete = async (e: React.MouseEvent, postId: number) => {
     e.stopPropagation();
@@ -169,14 +240,6 @@ export default function CommunityPage() {
     post: CommunityResponseDto,
     isReply: boolean = false
   ) => {
-    // 작성자 체크 로직 추가
-    const isAuthor = loginMember?.id === post.author?.id;
-
-    // 디버깅용 로그
-    console.log("Current post:", post);
-    console.log("Login member:", loginMember);
-    console.log("Is author:", isAuthor);
-
     return (
       <Card
         key={post.id}
@@ -190,13 +253,13 @@ export default function CommunityPage() {
         <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
           <div className="flex justify-between items-start gap-4">
             <div className="flex-1 space-y-2">
-              {/* 작성자 정보 표시 - 제목 위에 추가 */}
+              {/* 작성자 정보 표시 */}
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <User className="w-4 h-4" />
                 <span>{post.author?.username || "알 수 없음"}</span>
               </div>
 
-              {/* 제목 */}
+              {/* 제목과 내용 */}
               <div className="flex items-center gap-2">
                 {isReply && (
                   <div className="flex items-center text-pink-400">
@@ -212,17 +275,9 @@ export default function CommunityPage() {
                   {post.content}
                 </h3>
               </div>
-
-              {/* 하단 메타 정보 */}
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <div className="flex items-center gap-1 text-gray-500">
-                  <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-                  <span className="text-xs">{formatDate(post.createdAt)}</span>
-                </div>
-              </div>
             </div>
 
-            {/* Image placeholder - 답글일 경우 더 작게 표시 */}
+            {/* Image placeholder */}
             {post.hasImage && (
               <div className="flex-shrink-0">
                 <div
@@ -240,38 +295,36 @@ export default function CommunityPage() {
             )}
           </div>
 
-          {/* Meta information 섹션 수정 */}
+          {/* 하단 메타 정보와 버튼 */}
           <div className="flex justify-between items-center mt-4">
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              {/* ...existing meta information... */}
+            <div className="flex items-center gap-1 text-gray-500">
+              <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+              <span className="text-xs">{formatDate(post.createdAt)}</span>
             </div>
             <div className="flex items-center gap-2">
-              {isAuthor && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log("Edit clicked");
-                    }}
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    수정
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={(e) => handleDelete(e, post.id)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    삭제
-                  </Button>
-                </>
-              )}
-              {/* 기존 답글 버튼 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingPost(post);
+                  setEditContent(post.content);
+                  setIsEditModalOpen(true);
+                }}
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                수정
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                onClick={(e) => handleDelete(e, post.id)}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                삭제
+              </Button>
               {!isReply && (
                 <Button
                   variant="ghost"
@@ -432,6 +485,47 @@ export default function CommunityPage() {
                 disabled={createPostMutation.isPending}
               >
                 {createPostMutation.isPending ? "작성 중..." : "작성 완료"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 수정 모달 추가 */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              게시글 수정
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">내용</label>
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="min-h-[200px] resize-none"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingPost(null);
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                type="submit"
+                className="bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white"
+                disabled={updatePostMutation.isPending}
+              >
+                {updatePostMutation.isPending ? "수정 중..." : "수정 완료"}
               </Button>
             </div>
           </form>
