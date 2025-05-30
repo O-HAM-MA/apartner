@@ -51,12 +51,12 @@ public class CommunityService {
         }
 
         Set<Role> roles = currentUser.getRoles();
-        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
+        boolean isAdmin = roles.stream().anyMatch(role ->
                 role == Role.MANAGER || role == Role.MODERATOR || role == Role.ADMIN);
 
         List<Community> list = communityRepository.findByStatusAndParentIsNullOrderByCreatedAtDesc(Status.ACTIVE);
         return list.stream()
-                .map(c -> toDto(c, isManagerOrModerator)) // includeAuthor = true
+                .map(c -> toDto(c, isAdmin)) // includeAuthor = true
                 .collect(Collectors.toList());
     }
 
@@ -126,10 +126,24 @@ public class CommunityService {
 
     @Transactional(readOnly = true)
     public List<CommunityResponseDto> listBranchPosts(Long parentId) {
+
+        // 1) 로그인 사용자 가져오기 — 로그인 필수로 처리
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        // 2) 역할 체크: MANAGER, MODERATOR, ADMIN만 작성자 보임
+        Set<Role> roles = currentUser.getRoles();
+        boolean includeAuthor = roles.contains(Role.MANAGER)
+                || roles.contains(Role.MODERATOR)
+                || roles.contains(Role.ADMIN);
+
+
         List<Community> list = communityRepository.findByParentId(parentId);
         //list = communityRepository.findByStatusAndParentIsNullOrderByCreatedAtDesc(Status.ACTIVE);
         return list.stream()
-                .map(c -> toDto(c, true))
+                .map(c -> toDto(c, includeAuthor))
                 .collect(Collectors.toList());
     }
 }
