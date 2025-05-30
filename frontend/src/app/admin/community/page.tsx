@@ -143,14 +143,24 @@ export default function CommunityPage() {
     { id: number; dto: CommunityRequestDto }
   >({
     mutationFn: async ({ id, dto }) => {
-      const { data, error } = await client.PUT(
-        `/api/v1/community/update/${id}`,
-        {
-          body: dto,
+      try {
+        const { data, error } = await client.PUT(
+          `/api/v1/community/update/${id}`,
+          {
+            body: dto,
+          }
+        );
+
+        if (error) {
+          console.error("API Error:", error);
+          throw new Error(error.message || "Failed to update post");
         }
-      );
-      if (error) throw error;
-      return data;
+
+        return data;
+      } catch (err) {
+        console.error("Mutation Error:", err);
+        throw err;
+      }
     },
     onSuccess: () => {
       setIsEditModalOpen(false);
@@ -159,9 +169,9 @@ export default function CommunityPage() {
       queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
       queryClient.invalidateQueries({ queryKey: ["community", "replies"] });
     },
-    onError: (error) => {
-      console.error("글 수정 실패:", error);
-      alert("글 수정에 실패했습니다.");
+    onError: (error: Error) => {
+      console.error("글 수정 실패:", error.message);
+      alert(`글 수정에 실패했습니다: ${error.message}`);
     },
   });
 
@@ -193,16 +203,28 @@ export default function CommunityPage() {
   };
 
   // 수정 핸들러 추가
-  const handleEdit = (e: React.FormEvent) => {
+  const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPost || !editContent.trim()) return;
+    if (!editingPost?.id) {
+      alert("수정할 게시글을 찾을 수 없습니다.");
+      return;
+    }
+
+    if (!editContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
 
     const dto: CommunityRequestDto = {
       content: editContent,
       parentId: editingPost.parentId || null,
     };
 
-    updatePostMutation.mutate({ id: editingPost.id, dto });
+    try {
+      await updatePostMutation.mutateAsync({ id: editingPost.id, dto });
+    } catch (error) {
+      console.error("Edit submission error:", error);
+    }
   };
 
   // 삭제 핸들러 추가
