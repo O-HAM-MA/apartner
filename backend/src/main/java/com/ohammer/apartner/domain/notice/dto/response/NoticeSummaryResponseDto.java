@@ -1,6 +1,7 @@
 package com.ohammer.apartner.domain.notice.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ohammer.apartner.domain.notice.entity.Notice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -31,4 +32,23 @@ public class NoticeSummaryResponseDto {
 
     @Schema(description = "게시글 조회수", example = "0")
     private Long viewCount;
+
+//    @Schema(description = "이미지 첨부 여부", example = "false")
+//    private Boolean hasImage;
+//
+//    @Schema(description = "파일 첨부 여부", example = "false")
+//    private Boolean hasFile;
+
+    public static NoticeSummaryResponseDto from(Notice notice) {
+        return NoticeSummaryResponseDto.builder()
+                .noticeId(notice.getId())
+                .title(notice.getTitle())
+                .authorName(notice.getUser().getUserName())
+                .buildingId(notice.getBuilding() != null ? notice.getBuilding().getId() : null)
+                .createdAt(notice.getCreatedAt())
+                .viewCount(notice.getViewCount())
+//                .hasImage(notice.getImages() != null && !notice.getImages().isEmpty())
+//                .hasFile(notice.getFiles() != null && !notice.getFiles().isEmpty())
+                .build();
+    }
 }

@@ -1,15 +1,14 @@
 package com.ohammer.apartner.domain.apartment.controller;
 
-import com.ohammer.apartner.domain.apartment.dto.ApartmentResponseDto;
-import com.ohammer.apartner.domain.apartment.dto.BuildingResponseDto;
-import com.ohammer.apartner.domain.apartment.dto.UnitResponseDto;
 import com.ohammer.apartner.domain.apartment.dto.ApartmentRequestDto;
+import com.ohammer.apartner.domain.apartment.dto.ApartmentResponseDto;
 import com.ohammer.apartner.domain.apartment.dto.BuildingRequestDto;
+import com.ohammer.apartner.domain.apartment.dto.BuildingResponseDto;
 import com.ohammer.apartner.domain.apartment.dto.UnitRequestDto;
+import com.ohammer.apartner.domain.apartment.dto.UnitResponseDto;
 import com.ohammer.apartner.domain.apartment.service.AdminApartmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,9 +21,15 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -61,7 +66,8 @@ public class AdminApartmentController {
 
     @Operation(summary = "[관리자] 아파트 수정", description = "기존 아파트 정보를 수정합니다.")
     @PutMapping("/{apartmentId}")
-    public ResponseEntity<ApartmentResponseDto> updateApartment(@PathVariable Long apartmentId, @Valid @RequestBody ApartmentRequestDto requestDto) {
+    public ResponseEntity<ApartmentResponseDto> updateApartment(@PathVariable Long apartmentId,
+                                                                @Valid @RequestBody ApartmentRequestDto requestDto) {
         return ResponseEntity.ok(adminApartmentService.updateApartment(apartmentId, requestDto));
     }
 
@@ -76,14 +82,14 @@ public class AdminApartmentController {
     @GetMapping("/{apartmentId}/buildings")
     @Transactional(readOnly = true)
     public ResponseEntity<Page<BuildingResponseDto>> getBuildingsByApartment(
-            @PathVariable Long apartmentId,
+            @PathVariable(name = "apartmentId") Long apartmentId,
             @PageableDefault(size = 10, sort = "id") Pageable pageable) {
         return ResponseEntity.ok(adminApartmentService.getBuildingsByApartmentId(apartmentId, pageable));
     }
 
     @Operation(summary = "[관리자] 동 상세 조회", description = "특정 동 정보를 ID로 조회합니다.")
     @GetMapping("/buildings/{buildingId}")
-    public ResponseEntity<BuildingResponseDto> getBuildingById(@PathVariable Long buildingId) {
+    public ResponseEntity<BuildingResponseDto> getBuildingById(@PathVariable(name = "buildingId") Long buildingId) {
         return ResponseEntity.ok(adminApartmentService.getBuildingById(buildingId));
     }
 
@@ -96,7 +102,8 @@ public class AdminApartmentController {
 
     @Operation(summary = "[관리자] 동 수정", description = "기존 동 정보를 수정합니다.")
     @PutMapping("/buildings/{buildingId}")
-    public ResponseEntity<BuildingResponseDto> updateBuilding(@PathVariable Long buildingId, @Valid @RequestBody BuildingRequestDto requestDto) {
+    public ResponseEntity<BuildingResponseDto> updateBuilding(@PathVariable Long buildingId,
+                                                              @Valid @RequestBody BuildingRequestDto requestDto) {
         return ResponseEntity.ok(adminApartmentService.updateBuilding(buildingId, requestDto));
     }
 
@@ -130,7 +137,8 @@ public class AdminApartmentController {
 
     @Operation(summary = "[관리자] 호수 수정", description = "기존 호수 정보를 수정합니다.")
     @PutMapping("/units/{unitId}")
-    public ResponseEntity<UnitResponseDto> updateUnit(@PathVariable Long unitId, @Valid @RequestBody UnitRequestDto requestDto) {
+    public ResponseEntity<UnitResponseDto> updateUnit(@PathVariable Long unitId,
+                                                      @Valid @RequestBody UnitRequestDto requestDto) {
         return ResponseEntity.ok(adminApartmentService.updateUnit(unitId, requestDto));
     }
 

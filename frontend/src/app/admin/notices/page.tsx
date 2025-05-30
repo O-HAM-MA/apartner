@@ -5,8 +5,13 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { components } from '@/lib/backend/apiV1/schema';
 import client from '@/lib/backend/client';
 import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faImage, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 
-type NoticeSummary = components['schemas']['NoticeSummaryResponseDto'];
+type NoticeSummary = components['schemas']['NoticeSummaryResponseDto'] & {
+  hasImage?: boolean;
+  hasFile?: boolean;
+};
 
 export default function NoticeListPage() {
   const [notices, setNotices] = useState<NoticeSummary[]>([]);
@@ -26,14 +31,12 @@ export default function NoticeListPage() {
       try {
         const page = currentPage;
         const size = 10;
-        const sort = 'desc';
         const response = await client.GET('/api/v1/admin/notices', {
           params: {
             query: {
               page,
               size,
-              sort,
-              // 카테고리, 검색어 등 필요시 추가
+              sort: 'createdAt,desc',
             },
           },
         });
@@ -63,7 +66,7 @@ export default function NoticeListPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">공지사항</h1>
         <Link href="/admin/notices/new">
-          <button className="bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600 transition-colors">
+          <button className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors">
             글 작성
           </button>
         </Link>
@@ -97,11 +100,12 @@ export default function NoticeListPage() {
         <table className="min-w-full text-center">
           <thead>
             <tr className="bg-gray-50">
-              <th className="px-4 py-2 w-16">번호</th>
-              <th className="px-4 py-2">제목</th>
-              <th className="px-4 py-2 w-32">작성자</th>
-              <th className="px-4 py-2 w-32">작성일</th>
-              <th className="px-4 py-2 w-24">조회수</th>
+              <th className="px-6 py-3 w-20">번호</th>
+              <th className="px-6 py-3 w-[400px]">제목</th>
+              <th className="px-6 py-3 w-36">작성자</th>
+              <th className="px-6 py-3 w-28">대상</th>
+              <th className="px-6 py-3 w-36">작성일</th>
+              <th className="px-6 py-3 w-28">조회수</th>
             </tr>
           </thead>
           <tbody>
@@ -120,22 +124,41 @@ export default function NoticeListPage() {
             ) : (
               notices.map((notice, idx) => (
                 <tr key={notice.noticeId} className="border-b hover:bg-gray-50">
-                  <td className="py-3">{currentPage * 10 + idx + 1}</td>
-                  <td className="py-3 text-left">
+                  <td className="px-6 py-4">{currentPage * 10 + idx + 1}</td>
+                  <td className="px-6 py-4 text-left truncate">
                     <Link
                       href={`/admin/notices/${notice.noticeId}`}
-                      className="text-blue-600 hover:underline cursor-pointer"
+                      className="text-blue-600 hover:underline cursor-pointer inline-flex items-center gap-2"
                     >
                       {notice.title}
+                      <span className="flex gap-1 text-gray-500">
+                        {notice.hasImage && (
+                          <FontAwesomeIcon
+                            icon={faImage}
+                            className="w-4 h-4"
+                            title="이미지 첨부"
+                          />
+                        )}
+                        {notice.hasFile && (
+                          <FontAwesomeIcon
+                            icon={faFileAlt}
+                            className="w-4 h-4"
+                            title="파일 첨부"
+                          />
+                        )}
+                      </span>
                     </Link>
                   </td>
-                  <td className="py-3">{notice.authorName}</td>
-                  <td className="py-3">
+                  <td className="px-6 py-4">{notice.authorName}</td>
+                  <td className="px-6 py-4">
+                    {notice.buildingId ? `${notice.buildingId}동` : '전체'}
+                  </td>
+                  <td className="px-6 py-4">
                     {notice.createdAt
                       ? new Date(notice.createdAt).toISOString().slice(0, 10)
                       : ''}
                   </td>
-                  <td className="py-3">{notice.viewCount}</td>
+                  <td className="px-6 py-4">{notice.viewCount}</td>
                 </tr>
               ))
             )}
@@ -157,7 +180,7 @@ export default function NoticeListPage() {
             onClick={() => setCurrentPage(i)}
             className={`px-3 py-1 rounded border ${
               currentPage === i
-                ? 'bg-pink-500 text-white'
+                ? 'bg-red-500 text-white'
                 : 'bg-gray-100 border-gray-300'
             }`}
           >

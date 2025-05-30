@@ -6,8 +6,14 @@ import TiptapEditor from '@/components/editor/TiptapEditor';
 import { components } from '@/lib/backend/apiV1/schema';
 import client from '@/lib/backend/client';
 
-type NoticeDetail = components['schemas']['NoticeReadResponseDto'];
-type NoticeUpdateRequestDto = components['schemas']['NoticeUpdateRequestDto'];
+type NoticeDetail = components['schemas']['NoticeReadResponseDto'] & {
+  buildingId?: number | null;
+};
+type NoticeUpdateRequestDto =
+  components['schemas']['NoticeUpdateRequestDto'] & {
+    buildingId?: number | null;
+  };
+type Building = components['schemas']['BuildingResponseDto'];
 
 export default function EditNoticePage({
   params,
@@ -19,11 +25,42 @@ export default function EditNoticePage({
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [buildingId, setBuildingId] = useState<number | null>(null);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentImageIds, setCurrentImageIds] = useState<number[]>([]);
   const [currentFileIds, setCurrentFileIds] = useState<number[]>([]);
+
+  // 아파트의 모든 동 정보 가져오기
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        const response = await client.GET(
+          '/api/v1/admin/apartments/{apartmentId}/buildings',
+          {
+            params: {
+              path: { apartmentId: 1 }, // TODO: 실제 로그인한 관리자의 아파트 ID로 변경 필요
+              query: {
+                pageable: {
+                  page: 0,
+                  size: 100,
+                },
+              },
+            },
+          }
+        );
+        if (response.data && response.data.content) {
+          setBuildings(response.data.content as Building[]);
+        }
+      } catch (error) {
+        console.error('동 정보를 불러오는데 실패했습니다:', error);
+      }
+    };
+
+    fetchBuildings();
+  }, []);
 
   // 기존 공지사항 데이터 불러오기
   useEffect(() => {
@@ -35,6 +72,7 @@ export default function EditNoticePage({
         const notice = response.data as NoticeDetail;
         setTitle(notice.title || '');
         setContent(notice.content || '');
+        setBuildingId(notice.buildingId || null);
 
         // 기존 이미지와 파일 ID 설정 - undefined 필터링
         setCurrentImageIds(
@@ -65,6 +103,7 @@ export default function EditNoticePage({
       const updateData: NoticeUpdateRequestDto = {
         title,
         content,
+        buildingId,
         imageIds: currentImageIds,
         fileIds: currentFileIds,
       };
@@ -74,7 +113,7 @@ export default function EditNoticePage({
         body: updateData,
       });
 
-      router.push(`/notices/${noticeId}`);
+      router.push(`admin/notices/${noticeId}`);
     } catch (error) {
       alert('공지사항 수정에 실패했습니다. 다시 시도해주세요.');
     } finally {
@@ -125,10 +164,38 @@ export default function EditNoticePage({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
               placeholder="제목을 입력하세요"
               required
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="buildingId"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              공지 대상 (동 선택)
+            </label>
+            <select
+              id="buildingId"
+              value={buildingId || ''}
+              onChange={(e) =>
+                setBuildingId(e.target.value ? Number(e.target.value) : null)
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="">전체 공지</option>
+              {buildings.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.buildingNumber}동
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-sm text-gray-500">
+              특정 동을 선택하면 해당 동 거주자에게만 공지가 전달됩니다. 전체
+              공지를 선택하면 모든 거주자에게 전송됩니다.
+            </p>
           </div>
 
           <div>
@@ -157,7 +224,7 @@ export default function EditNoticePage({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 disabled:opacity-50"
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? '수정 중...' : '수정하기'}

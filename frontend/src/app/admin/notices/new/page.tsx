@@ -7,16 +7,49 @@ import { components } from '@/lib/backend/apiV1/schema';
 import client from '@/lib/backend/client';
 
 type NoticeCreateRequestDto = components['schemas']['NoticeCreateRequestDto'];
+type Building = components['schemas']['BuildingResponseDto'];
 
 export default function CreateNoticePage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [buildingNumber, setBuildingNumber] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [buildingId, setBuildingId] = useState<number | null>(null);
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageIds, setImageIds] = useState<number[]>([]);
   const [fileIds, setFileIds] = useState<number[]>([]);
+
+  // 아파트의 모든 동 정보 가져오기
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        const response = await client.GET(
+          '/api/v1/admin/apartments/{apartmentId}/buildings',
+          {
+            params: {
+              path: { apartmentId: 1 }, // TODO: 실제 로그인한 관리자의 아파트 ID로 변경 필요
+              query: {
+                pageable: {
+                  page: 0,
+                  size: 100,
+                },
+              },
+            },
+          }
+        );
+        if (response.data && response.data.content) {
+          setBuildings(response.data.content as Building[]);
+        }
+      } catch (error) {
+        console.error('동 정보를 불러오는데 실패했습니다:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBuildings();
+  }, []);
 
   useEffect(() => {
     const createPost = async () => {
@@ -26,7 +59,7 @@ export default function CreateNoticePage() {
         const noticeCreateData: NoticeCreateRequestDto = {
           title,
           content,
-          buildingId: buildingNumber ? Number(buildingNumber) : undefined,
+          buildingId: buildingId || undefined,
           imageIds,
           fileIds,
         };
@@ -56,7 +89,7 @@ export default function CreateNoticePage() {
     };
 
     createPost();
-  }, [isSubmitting, title, content, buildingNumber, router, imageIds, fileIds]);
+  }, [isSubmitting, title, content, buildingId, router, imageIds, fileIds]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,92 +125,101 @@ export default function CreateNoticePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">공지사항 작성</h1>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-800"
-        >
-          뒤로가기
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            제목
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            placeholder="제목을 입력하세요"
-            required
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="building"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            공지 대상 (동 번호)
-          </label>
-          <input
-            type="text"
-            id="building"
-            value={buildingNumber}
-            onChange={(e) => setBuildingNumber(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            placeholder="동 번호를 입력하세요 (전체 공지는 비워두세요)"
-          />
-          <p className="mt-1 text-sm text-gray-500">
-            특정 동을 입력하면 해당 동 거주자에게만 공지가 전달됩니다. 비워두면
-            전체 공지로 전송됩니다.
-          </p>
-        </div>
-
-        <div>
-          <label
-            htmlFor="content"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            내용
-          </label>
-          <TiptapEditor
-            content={content}
-            onChange={setContent}
-            onImageUploadSuccess={handleImageUploadSuccess}
-            onFileUploadSuccess={handleFileUploadSuccess}
-            onImageDelete={handleImageDelete}
-            onFileDelete={handleFileDelete}
-          />
-        </div>
-
-        <div className="flex justify-end space-x-4">
+    <div className="min-h-screen bg-gray-50 py-10">
+      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow px-8 py-10">
+        <div className="flex justify-between items-center mb-8">
           <button
-            type="button"
             onClick={() => router.back()}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="text-gray-600 hover:text-gray-800"
           >
-            취소
+            ← 목록으로
           </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? '등록 중...' : '등록'}
-          </button>
+          <h1 className="text-2xl font-bold">공지사항 작성</h1>
+          <div /> {/* 오른쪽 공간 맞추기용 */}
         </div>
-      </form>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              제목
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+              placeholder="제목을 입력하세요"
+              required
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="building"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              공지 대상 (동 선택)
+            </label>
+            <select
+              id="building"
+              value={buildingId || ''}
+              onChange={(e) =>
+                setBuildingId(e.target.value ? Number(e.target.value) : null)
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="">전체 공지</option>
+              {buildings.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.buildingNumber}동
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-sm text-gray-500">
+              특정 동을 선택하면 해당 동 거주자에게만 공지가 전달됩니다. 전체
+              공지를 선택하면 모든 거주자에게 전송됩니다.
+            </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="content"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              내용
+            </label>
+            <TiptapEditor
+              content={content}
+              onChange={setContent}
+              onImageUploadSuccess={handleImageUploadSuccess}
+              onFileUploadSuccess={handleFileUploadSuccess}
+              onImageDelete={handleImageDelete}
+              onFileDelete={handleFileDelete}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? '등록 중...' : '등록'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
