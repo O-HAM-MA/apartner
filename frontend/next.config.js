@@ -1,4 +1,4 @@
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
 dotenv.config();
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
 'https://api.apartner.site';
