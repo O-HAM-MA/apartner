@@ -129,8 +129,44 @@ export default function CommunityPage() {
     },
   });
 
-  // 삭제 mutation 추가
-  const deletePostMutation = useMutation({
+  // 수정 상태 관리 추가
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<CommunityResponseDto | null>(
+    null
+  );
+  const [editContent, setEditContent] = useState("");
+
+  // 수정 mutation 추가
+  const updatePostMutation = useMutation<
+    CommunityResponseDto,
+    Error,
+    { id: number; dto: CommunityRequestDto }
+  >({
+    mutationFn: async ({ id, dto }) => {
+      const { data, error } = await client.PUT(
+        `/api/v1/community/update/${id}`,
+        {
+          body: dto,
+        }
+      );
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      setIsEditModalOpen(false);
+      setEditingPost(null);
+      setEditContent("");
+      queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["community", "replies"] });
+    },
+    onError: (error) => {
+      console.error("글 수정 실패:", error);
+      alert("글 수정에 실패했습니다.");
+    },
+  });
+
+  // 삭제 mutation 수정
+  const deletePostMutation = useMutation<void, Error, number>({
     mutationFn: async (postId: number) => {
       const { error } = await client.DELETE(
         `/api/v1/community/delete/${postId}`
@@ -154,6 +190,19 @@ export default function CommunityPage() {
       return;
     }
     createPostMutation.mutate(newPost);
+  };
+
+  // 수정 핸들러 추가
+  const handleEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost || !editContent.trim()) return;
+
+    const dto: CommunityRequestDto = {
+      content: editContent,
+      parentId: editingPost.parentId || null,
+    };
+
+    updatePostMutation.mutate({ id: editingPost.id, dto });
   };
 
   // 삭제 핸들러 추가
@@ -240,38 +289,39 @@ export default function CommunityPage() {
             )}
           </div>
 
-          {/* Meta information 섹션 수정 */}
+          {/* Meta information 섹션 수정 - isAuthor 조건 제거 */}
           <div className="flex justify-between items-center mt-4">
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              {/* ...existing meta information... */}
+              <div className="flex items-center gap-1 text-gray-500">
+                <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+                <span className="text-xs">{formatDate(post.createdAt)}</span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
-              {isAuthor && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log("Edit clicked");
-                    }}
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    수정
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={(e) => handleDelete(e, post.id)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    삭제
-                  </Button>
-                </>
-              )}
-              {/* 기존 답글 버튼 */}
+              {/* isAuthor 조건 제거하여 모든 게시글에 버튼 표시 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingPost(post);
+                  setEditContent(post.content);
+                  setIsEditModalOpen(true);
+                }}
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                수정
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                onClick={(e) => handleDelete(e, post.id)}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                삭제
+              </Button>
               {!isReply && (
                 <Button
                   variant="ghost"
@@ -432,6 +482,47 @@ export default function CommunityPage() {
                 disabled={createPostMutation.isPending}
               >
                 {createPostMutation.isPending ? "작성 중..." : "작성 완료"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 수정 모달 추가 */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              게시글 수정
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">내용</label>
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="min-h-[200px] resize-none"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingPost(null);
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                type="submit"
+                className="bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white"
+                disabled={updatePostMutation.isPending}
+              >
+                {updatePostMutation.isPending ? "수정 중..." : "수정 완료"}
               </Button>
             </div>
           </form>
