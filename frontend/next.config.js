@@ -1,7 +1,6 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
-const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
-'https://api.apartner.site';
+const apiUrl = process.env.API_BASE_URL || "https://api.apartner.site";
 
 const nextConfig = {
   eslint: {
