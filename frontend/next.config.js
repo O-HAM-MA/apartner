@@ -13,7 +13,6 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  //asd
   async rewrites() {
     return [
       {
