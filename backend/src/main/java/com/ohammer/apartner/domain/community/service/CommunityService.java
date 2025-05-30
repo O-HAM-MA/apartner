@@ -65,6 +65,11 @@ public class CommunityService {
         Community comm = communityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Not found"));
 
+        // 유저 역할 확인
+//        Set<Role> roles = user.getRoles();
+//        boolean isAdmin = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR) || roles.contains(Role.ADMIN);
+
+
         if (!comm.getAuthor().getId().equals(user.getId())) {
             throw new SecurityException("작성자만 수정할 수 있습니다.");
         }
@@ -82,10 +87,10 @@ public class CommunityService {
 
         // 유저 역할 확인
         Set<Role> roles = user.getRoles();
-        boolean isAdmin = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR);
+        boolean isAdmin = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR) || roles.contains(Role.ADMIN);
 
 
-        if (!isAdmin && !!comm.getAuthor().getId().equals(user.getId())) {
+        if (!isAdmin && !comm.getAuthor().getId().equals(user.getId())) {
             throw new SecurityException("작성자만 삭제할 수 있습니다.");
         }
 //        if (!isAdmin && !comm.getAuthor().equals(user)) {
@@ -140,7 +145,14 @@ public class CommunityService {
                 || roles.contains(Role.ADMIN);
 
 
-        List<Community> list = communityRepository.findByParentId(parentId);
+        // ACTIVE 상태인 답글만 조회
+        List<Community> list = communityRepository
+                .findByParentIdAndStatus(parentId, Status.ACTIVE);
+
+
+
+
+        //List<Community> list = communityRepository.findByParentId(parentId);
         //list = communityRepository.findByStatusAndParentIsNullOrderByCreatedAtDesc(Status.ACTIVE);
         return list.stream()
                 .map(c -> toDto(c, includeAuthor))
