@@ -12,7 +12,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-
+  //ㅅㅅ
   async rewrites() {
     return [
       {
