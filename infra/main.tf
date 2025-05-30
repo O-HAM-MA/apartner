@@ -311,7 +311,6 @@ resource "aws_instance" "ec2_1" {
   user_data = <<-EOF
 ${local.ec2_user_data_base}
 EOF
-}
 
 # S3 설정 시작
 resource "aws_s3_bucket" "bucket_1" {
@@ -380,3 +379,4 @@ resource "aws_s3_object" "object_2" {
   depends_on = [aws_s3_bucket.bucket_2]
 }
 # S3 설정 끝
+
