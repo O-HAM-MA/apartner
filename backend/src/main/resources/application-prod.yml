@@ -10,7 +10,7 @@ spring:
       auto-commit: false
   data:
     redis:
-      host: apartner-redis
+      host: redis_1
       port: 6379
       password: ${custom.prod.redis.password}
   jpa:
