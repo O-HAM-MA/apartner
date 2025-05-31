@@ -4,6 +4,7 @@ import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
+import com.ohammer.apartner.domain.vehicle.entity.ParkingProperties;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 //import jakarta.transaction.Transactional;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
@@ -28,7 +29,10 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final EntryRecordRepository entryRecordRepository;
-    private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
+    //private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
+    private final ParkingProperties parkingProperties;
+    // 최근에 입력한 maxCapacity를 저장할 필드
+    private Integer currentMaxCapacity = null;
 
     // 입주민 차량 등록
     @Transactional
@@ -326,7 +330,7 @@ public class VehicleService {
     // 남은 주차 공간 수
     public int getRemainingSpace() {
         long activeCount = countActiveVehicles();
-        return MAX_CAPACITY - (int) activeCount;
+        return parkingProperties.getMaxCapacity() - (int) activeCount;
     }
 
     // 전체 주차장 현황 반환 DTO
@@ -335,9 +339,9 @@ public class VehicleService {
         checkRoleUtils.validateAdminAccess();
         long activeCount = countActiveVehicles();
         return ParkingStatusDto.builder()
-                .totalCapacity(MAX_CAPACITY)
+                .totalCapacity(parkingProperties.getMaxCapacity())
                 .activeCount(activeCount)
-                .remainingSpace(MAX_CAPACITY - (int) activeCount)
+                .remainingSpace(parkingProperties.getMaxCapacity() - (int) activeCount)
                 .build();
     }
 
@@ -387,6 +391,14 @@ public class VehicleService {
                         && er.getVehicle().getCreatedAt().isAfter(yesterday))
                 .map(er -> VehicleRegistrationInfoDto.from(er.getVehicle(), er))
                 .collect(Collectors.toList());
+    }
+
+
+    // ③ 런타임에 maxCapacity를 변경하고 싶을 때 호출할 메서드
+    public void updateMaxCapacity(int newCapacity) {
+        checkRoleUtils.validateAdminAccess();
+        // yml에서 주입된 기본값을 덮어쓴다
+        parkingProperties.setMaxCapacity(newCapacity);
     }
 
 

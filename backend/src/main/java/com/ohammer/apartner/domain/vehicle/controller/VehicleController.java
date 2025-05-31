@@ -139,6 +139,14 @@ public class VehicleController {
     }
 
 
+    @Operation(summary = "주차장 차량 최대 수용 공간 변경")
+    @PatchMapping("/capacity")
+    public ResponseEntity<String> updateMaxCapacity(@RequestParam("capacity") int capacity) {
+        vehicleService.updateMaxCapacity(capacity);
+        return ResponseEntity.ok("주차장 최대 수용량이 " + capacity + "대로 변경되었습니다.");
+    }
+
+
 
 
 
