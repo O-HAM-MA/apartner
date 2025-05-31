@@ -193,30 +193,6 @@ export default function CommunityPage() {
     },
   });
 
-  // pinPostMutation 수정
-  const pinPostMutation = useMutation<
-    CommunityResponseDto,
-    Error,
-    { id: number; pinned: boolean }
-  >({
-    mutationFn: async ({ id, pinned }) => {
-      // pinned가 true면 고정, false면 해제
-      const endpoint = pinned
-        ? `/api/v1/community/${id}/pin`
-        : `/api/v1/community/${id}/unpin`;
-      const { data, error } = await client.POST(endpoint);
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
-    },
-    onError: (error) => {
-      console.error("글 고정/해제 실패:", error);
-      alert("작업에 실패했습니다.");
-    },
-  });
-
   const handleSubmitPost = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPost.content.trim()) {
@@ -263,165 +239,115 @@ export default function CommunityPage() {
   const renderPostCard = (
     post: CommunityResponseDto,
     isReply: boolean = false
-  ) => {
-    return (
-      <Card
-        key={post.id}
-        className={`
-          border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group
-          ${
-            post.pinned
-              ? "bg-gradient-to-r from-pink-50/90 to-white border-l-4 border-l-pink-300"
-              : "bg-white/80"
-          }
-          backdrop-blur-sm hover:bg-white 
-          ${
-            isReply
-              ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
-              : ""
-          }
-        `}
-        onClick={() => router.push(`/udash/community/${post.id}`)}
-      >
-        <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex-1 space-y-2">
-              {/* Add pin badge for pinned posts */}
-              {post.pinned && (
-                <Badge
-                  variant="secondary"
-                  className="mb-2 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-600 border border-pink-200 shadow-sm"
-                >
-                  <span className="mr-1 opacity-75">📌</span>
-                  고정된 글
-                </Badge>
-              )}
-
-              {/* 작성자 정보 표시 */}
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <User className="w-4 h-4" />
-                <span>{post.author?.username || "알 수 없음"}</span>
-              </div>
-
-              {/* 제목과 내용 */}
-              <div className="flex items-center gap-2">
-                {isReply && (
-                  <div className="flex items-center text-pink-400">
-                    <ChevronRight className="w-4 h-4" />
-                    <span className="text-xs font-medium">답글</span>
-                  </div>
-                )}
-                <h3
-                  className={`font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2 ${
-                    isReply ? "text-base" : "text-xl"
-                  }`}
-                >
-                  {post.content}
-                </h3>
-              </div>
+  ) => (
+    <Card
+      key={post.id}
+      className={`
+        border-0 transition-all duration-300 cursor-pointer group
+        ${
+          post.pinned
+            ? "shadow-lg ring-1 ring-pink-200 bg-gradient-to-r from-rose-200/80 via-pink-50 to-white border-l-4 border-l-pink-400"
+            : "shadow-sm hover:shadow-md bg-white/80"
+        }
+        backdrop-blur-sm hover:bg-white
+        ${
+          isReply
+            ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
+            : ""
+        }
+      `}
+      // onClick={() => router.push(`/udash/community/${post.id}`)}
+    >
+      <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1 space-y-2">
+            {/* 작성자 정보 표시 */}
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <User className="w-4 h-4" />
+              <span className={post.pinned ? "font-medium text-gray-900" : ""}>
+                {post.author?.username || "익명"}
+              </span>
             </div>
 
-            {/* Image placeholder */}
-            {post.hasImage && (
-              <div className="flex-shrink-0">
-                <div
-                  className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg flex items-center justify-center ${
-                    isReply ? "w-16 h-16" : "w-24 h-24"
-                  }`}
-                >
-                  <ImageIcon
-                    className={`text-pink-400 ${
-                      isReply ? "w-6 h-6" : "w-8 h-8"
-                    }`}
-                  />
-                </div>
-              </div>
-            )}
+            {/* 제목과 내용 */}
+            <h3
+              className={`
+                font-bold transition-colors duration-200 line-clamp-2
+                ${
+                  post.pinned
+                    ? "text-pink-900 group-hover:text-pink-700 text-[1.2em]"
+                    : "text-gray-800 group-hover:text-pink-500"
+                }
+                ${isReply ? "text-base" : "text-xl"}
+              `}
+            >
+              {post.content}
+            </h3>
           </div>
 
-          {/* 하단 메타 정보와 버튼 */}
-          <div className="flex justify-between items-center mt-4">
-            <div className="flex items-center gap-1 text-gray-500">
-              <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-              <span className="text-xs">{formatDate(post.createdAt)}</span>
+          {/* Image placeholder */}
+          {post.hasImage && (
+            <div className="flex-shrink-0">
+              <div
+                className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg flex items-center justify-center ${
+                  isReply ? "w-16 h-16" : "w-24 h-24"
+                }`}
+              >
+                <ImageIcon
+                  className={`text-pink-400 ${isReply ? "w-6 h-6" : "w-8 h-8"}`}
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              {/* Add pin toggle button */}
-              {!isReply && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`
-                    transition-all duration-200 flex items-center gap-1
-                    ${
-                      post.pinned
-                        ? "text-pink-600 hover:text-pink-700 hover:bg-pink-50 font-medium"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                    }
-                  `}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    pinPostMutation.mutate({
-                      id: post.id,
-                      pinned: !post.pinned,
-                    });
-                  }}
-                >
-                  <span
-                    className={`transform transition-transform duration-200 ${
-                      post.pinned ? "rotate-45" : ""
-                    }`}
-                  >
-                    📌
-                  </span>
-                  {post.pinned ? "고정 해제" : "고정"}
-                </Button>
-              )}
+          )}
+        </div>
 
+        {/* 하단 메타 정보와 버튼 */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-1 text-gray-500">
+            <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+            <span className="text-xs">{formatDate(post.createdAt)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingPost(post);
+                setEditContent(post.content);
+                setIsEditModalOpen(true);
+              }}
+            >
+              수정
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={(e) => handleDelete(e, post.id)}
+            >
+              삭제
+            </Button>
+            {!isReply && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                className="text-pink-500 hover:text-pink-600 hover:bg-pink-50"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setEditingPost(post);
-                  setEditContent(post.content);
-                  setIsEditModalOpen(true);
+                  setReplyToPost(post.id);
+                  setIsWriteModalOpen(true);
                 }}
               >
-                <Edit className="w-4 h-4 mr-1" />
-                수정
+                답글 작성
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                onClick={(e) => handleDelete(e, post.id)}
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                삭제
-              </Button>
-              {!isReply && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-pink-500 hover:text-pink-600 hover:bg-pink-50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setReplyToPost(post.id);
-                    setIsWriteModalOpen(true);
-                  }}
-                >
-                  <MessageSquare className="w-4 h-4 mr-1" />
-                  답글 작성
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
-    );
-  };
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-rose-50">
@@ -481,20 +407,17 @@ export default function CommunityPage() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {/* Show pinned posts first */}
-                {posts
-                  ?.sort((a, b) => {
-                    if (a.pinned === b.pinned) return 0;
-                    return a.pinned ? -1 : 1;
-                  })
-                  .map((post) => (
-                    <div key={post.id} className="space-y-2">
-                      {renderPostCard(post)}
-                      {replies?.[post.id]?.map((reply) =>
-                        renderPostCard(reply, true)
-                      )}
-                    </div>
-                  ))}
+                {posts.map((post) => (
+                  <div key={post.id} className="space-y-2">
+                    {/* 원본 게시글 */}
+                    {renderPostCard(post)}
+
+                    {/* 답글 목록 */}
+                    {replies?.[post.id]?.map((reply) =>
+                      renderPostCard(reply, true)
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>

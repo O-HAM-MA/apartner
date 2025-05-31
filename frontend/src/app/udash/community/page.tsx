@@ -246,7 +246,7 @@ export default function CommunityPage() {
         border-0 transition-all duration-300 cursor-pointer group
         ${
           post.pinned
-            ? "shadow-lg ring-1 ring-pink-300 bg-gradient-to-r from-rose-300 via-pink-100 to-white border-l-4 border-l-pink-500"
+            ? "shadow-lg ring-1 ring-pink-200 bg-gradient-to-r from-rose-200/80 via-pink-50 to-white border-l-4 border-l-pink-400"
             : "shadow-sm hover:shadow-md bg-white/80"
         }
         backdrop-blur-sm hover:bg-white
@@ -256,7 +256,7 @@ export default function CommunityPage() {
             : ""
         }
       `}
-      onClick={() => router.push(`/udash/community/${post.id}`)}
+      //onClick={() => router.push(`/udash/community/${post.id}`)}
     >
       <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
         <div className="flex justify-between items-start gap-4">
@@ -265,7 +265,7 @@ export default function CommunityPage() {
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <User className="w-4 h-4" />
               <span className={post.pinned ? "font-medium text-gray-900" : ""}>
-                {post.author?.username || "알 수 없음"}
+                {post.author?.username || "익명"}
               </span>
             </div>
 
@@ -302,7 +302,7 @@ export default function CommunityPage() {
         </div>
 
         {/* 하단 메타 정보와 버튼 */}
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-1 text-gray-500">
             <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
             <span className="text-xs">{formatDate(post.createdAt)}</span>
@@ -319,7 +319,6 @@ export default function CommunityPage() {
                 setIsEditModalOpen(true);
               }}
             >
-              <Edit className="w-4 h-4 mr-1" />
               수정
             </Button>
             <Button
@@ -328,7 +327,6 @@ export default function CommunityPage() {
               className="text-red-500 hover:text-red-600 hover:bg-red-50"
               onClick={(e) => handleDelete(e, post.id)}
             >
-              <Trash2 className="w-4 h-4 mr-1" />
               삭제
             </Button>
             {!isReply && (
@@ -342,7 +340,6 @@ export default function CommunityPage() {
                   setIsWriteModalOpen(true);
                 }}
               >
-                <MessageSquare className="w-4 h-4 mr-1" />
                 답글 작성
               </Button>
             )}
