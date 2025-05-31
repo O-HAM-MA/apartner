@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plus, ChevronDown, Loader2, BellRing } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faImage, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -16,6 +18,8 @@ interface Notice {
   authorName: string;
   createdAt: string;
   viewCount: number;
+  hasImage: boolean;
+  hasFile: boolean;
 }
 
 export default function NoticesPage() {
@@ -48,6 +52,8 @@ export default function NoticesPage() {
             authorName: notice.authorName || '',
             createdAt: notice.createdAt || '',
             viewCount: notice.viewCount || 0,
+            hasImage: notice.hasImage || false,
+            hasFile: notice.hasFile || false,
           }));
           setNotices(formattedNotices);
         }
@@ -141,9 +147,25 @@ export default function NoticesPage() {
                         {index + 1}
                       </td>
                       <td className="px-4 py-3 text-left">
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-2">
                           <span className="text-pink-500 hover:underline">
                             {notice.title}
+                          </span>
+                          <span className="flex gap-1 text-gray-500">
+                            {notice.hasImage && (
+                              <FontAwesomeIcon
+                                icon={faImage}
+                                className="w-4 h-4"
+                                title="이미지 첨부"
+                              />
+                            )}
+                            {notice.hasFile && (
+                              <FontAwesomeIcon
+                                icon={faPaperclip}
+                                className="w-4 h-4"
+                                title="파일 첨부"
+                              />
+                            )}
                           </span>
                         </div>
                       </td>

@@ -85,7 +85,7 @@ public class NoticeServiceImpl implements NoticeService {
             if (images.size() != imageIds.size()) {
                 throw new IllegalArgumentException("일부 이미지가 존재하지 않습니다.");
             }
-            
+
             for (Image image : images) {
                 // ✅ S3 경로 이동
                 String newPath = "notice/" + notice.getId() + "/images/" + image.getStoredName();
@@ -117,6 +117,7 @@ public class NoticeServiceImpl implements NoticeService {
                 file.setS3Key(newPath);
                 file.setPath(newPath);
                 file.setNotice(notice);
+                noticeFileRepository.save(file);
             }
         }
 

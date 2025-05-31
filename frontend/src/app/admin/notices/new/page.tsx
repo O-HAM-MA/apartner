@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TiptapEditor from '@/components/editor/TiptapEditor';
 import { components } from '@/lib/backend/apiV1/schema';
-import client from '@/lib/backend/client';
+import { useToast } from '@/components/ui/use-toast';
 
 type NoticeCreateRequestDto = components['schemas']['NoticeRequestDto'];
 type Building = components['schemas']['BuildingResponseDto'];
 
 export default function CreateNoticePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [buildingId, setBuildingId] = useState<number | null>(null);
@@ -24,36 +25,43 @@ export default function CreateNoticePage() {
   useEffect(() => {
     const fetchBuildings = async () => {
       try {
-        const response = await client.GET(
-          '/api/v1/admin/apartments/{apartmentId}/buildings',
+        const response = await fetch(
+          `/api/v1/admin/apartments/1/buildings?page=0&size=100&sort=buildingNumber,asc`,
           {
-            params: {
-              path: { apartmentId: 1 }, // TODO: 실제 로그인한 관리자의 아파트 ID로 변경 필요
-              query: {
-                page: 0,
-                size: 100,
-                sort: 'buildingNumber,asc',
-              },
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
             },
           }
         );
-        if (response.data && response.data.content) {
-          setBuildings(response.data.content as Building[]);
+
+        if (!response.ok) {
+          throw new Error('동 정보를 불러오는데 실패했습니다.');
+        }
+
+        const data = await response.json();
+        if (data && data.content) {
+          setBuildings(data.content as Building[]);
         }
       } catch (error) {
         console.error('동 정보를 불러오는데 실패했습니다:', error);
+        toast({
+          variant: 'destructive',
+          title: '오류',
+          description: '동 정보를 불러오는데 실패했습니다.',
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchBuildings();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
-    const createPost = async () => {
-      if (!isSubmitting) return;
+    if (!isSubmitting) return;
 
+    const createPost = async () => {
       try {
         const noticeCreateData: NoticeCreateRequestDto = {
           title,
@@ -63,17 +71,24 @@ export default function CreateNoticePage() {
           fileIds,
         };
 
-        const { data, error } = await client.POST(
-          '/api/v1/admin/notices/create',
-          {
-            body: noticeCreateData,
-          }
-        );
+        const response = await fetch('/api/v1/admin/notices/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(noticeCreateData),
+        });
 
-        if (error) {
-          alert('공지사항 작성에 실패했습니다. 다시 시도해주세요.');
-          return;
+        if (!response.ok) {
+          throw new Error('공지사항 작성에 실패했습니다.');
         }
+
+        const data = await response.json();
+
+        toast({
+          title: '성공',
+          description: '공지사항이 성공적으로 등록되었습니다.',
+        });
 
         if (data && typeof data === 'object' && 'noticeId' in data) {
           router.push(`/admin/notices/${data.noticeId}`);
@@ -81,14 +96,27 @@ export default function CreateNoticePage() {
           router.push('/admin/notices');
         }
       } catch (error) {
-        alert('공지사항 작성에 실패했습니다. 다시 시도해주세요.');
+        toast({
+          variant: 'destructive',
+          title: '오류',
+          description: '공지사항 작성에 실패했습니다. 다시 시도해주세요.',
+        });
       } finally {
         setIsSubmitting(false);
       }
     };
 
     createPost();
-  }, [isSubmitting, title, content, buildingId, router, imageIds, fileIds]);
+  }, [
+    isSubmitting,
+    title,
+    content,
+    buildingId,
+    router,
+    imageIds,
+    fileIds,
+    toast,
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +145,14 @@ export default function CreateNoticePage() {
 
   const handleFileDelete = (fileId: number) => {
     setFileIds((prev) => prev.filter((id) => id !== fileId));
+  };
+
+  const handleMediaIdsChange = (
+    newImageIds: number[],
+    newFileIds: number[]
+  ) => {
+    setImageIds(newImageIds);
+    setFileIds(newFileIds);
   };
 
   if (isLoading) {
@@ -200,6 +236,7 @@ export default function CreateNoticePage() {
               onFileUploadSuccess={handleFileUploadSuccess}
               onImageDelete={handleImageDelete}
               onFileDelete={handleFileDelete}
+              onMediaIdsChange={handleMediaIdsChange}
             />
           </div>
 

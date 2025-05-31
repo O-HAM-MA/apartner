@@ -578,69 +578,6 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
     return uploadedFiles.map((file) => Number(file.id));
   }, [uploadedFiles]);
 
-  // 미디어 ID 변경 감지 및 부모 컴포넌트에 알림
-  const handleMediaChange = useCallback(
-    (imageIds: number[], fileIds: number[]) => {
-      const currentImageIdsString = JSON.stringify(imageIds.sort());
-      const currentFileIdsString = JSON.stringify(fileIds.sort());
-
-      if (
-        JSON.stringify(prevImageIdsRef.current.sort()) !==
-          currentImageIdsString ||
-        JSON.stringify(prevFileIdsRef.current.sort()) !== currentFileIdsString
-      ) {
-        prevImageIdsRef.current = imageIds;
-        prevFileIdsRef.current = fileIds;
-        setCurrentImageIds(imageIds);
-        onMediaIdsChange?.(imageIds, fileIds);
-      }
-    },
-    [onMediaIdsChange]
-  );
-
-  // 이미지 노드 변경 핸들러
-  const handleImageNodeChanges = useCallback(
-    async (editorInstance: Editor) => {
-      if (!editorInstance) return;
-
-      const currentTempIds = new Set<string>();
-      editorInstance.state.doc.descendants((node: ProseMirrorNode) => {
-        if (node.type.name === 'customImage') {
-          const tempId = node.attrs['data-temp-id'];
-          if (tempId && typeof tempId === 'string') {
-            currentTempIds.add(tempId);
-          }
-        }
-        return true;
-      });
-
-      const prevSet = prevTempIdsRef.current;
-
-      // 제거된 이미지 찾기
-      for (const prevId of prevSet) {
-        if (!currentTempIds.has(prevId)) {
-          try {
-            // Mock API call for demo purposes
-            console.log(`Deleting image with ID: ${prevId}`);
-            onImageDelete?.(Number(prevId));
-          } catch (error) {
-            console.error('이미지 삭제 실패:', error);
-          }
-        }
-      }
-
-      // 현재 이미지 목록으로 업데이트
-      prevTempIdsRef.current = currentTempIds;
-
-      // 현재 이미지와 파일 ID 추출
-      const imageIds = extractImageIds(editorInstance);
-      const fileIds = extractFileIds();
-
-      handleMediaChange(imageIds, fileIds);
-    },
-    [extractImageIds, extractFileIds, onImageDelete, handleMediaChange]
-  );
-
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -674,7 +611,41 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
     content,
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML());
-      handleImageNodeChanges(editor);
+
+      // 이미지 노드 변경 감지
+      const currentTempIds = new Set<string>();
+      editor.state.doc.descendants((node: ProseMirrorNode) => {
+        if (node.type.name === 'customImage') {
+          const tempId = node.attrs['data-temp-id'];
+          if (tempId && typeof tempId === 'string') {
+            currentTempIds.add(tempId);
+          }
+        }
+        return true;
+      });
+
+      // 제거된 이미지 찾기
+      const prevSet = prevTempIdsRef.current;
+      for (const prevId of prevSet) {
+        if (!currentTempIds.has(prevId)) {
+          try {
+            onImageDelete?.(Number(prevId));
+          } catch (error) {
+            console.error('이미지 삭제 실패:', error);
+          }
+        }
+      }
+      prevTempIdsRef.current = currentTempIds;
+
+      // 미디어 ID 변경 감지
+      const imageIds = extractImageIds(editor);
+      const fileIds = extractFileIds();
+
+      if (imageIds.length > 0 || fileIds.length > 0) {
+        requestAnimationFrame(() => {
+          onMediaIdsChange?.(imageIds, fileIds);
+        });
+      }
     },
     editorProps: {
       attributes: {
@@ -683,55 +654,6 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
       },
     },
   });
-
-  // 파일 삭제 처리
-  const handleFileDelete = useCallback(
-    (fileId: string) => {
-      // Mock API call for demo purposes
-      console.log(`Deleting file with ID: ${fileId}`);
-
-      setUploadedFiles((prev) => {
-        const newFiles = prev.filter((file) => file.id !== fileId);
-        const fileIds = newFiles.map((file) => Number(file.id));
-        const imageIds = editor ? extractImageIds(editor) : [];
-        handleMediaChange(imageIds, fileIds);
-        return newFiles;
-      });
-      onFileDelete?.(Number(fileId));
-    },
-    [editor, onFileDelete, extractImageIds, handleMediaChange]
-  );
-
-  // 파일 업로드 성공 시 목록 업데이트
-  const handleFileUploadSuccess = useCallback(
-    (fileId: number, fileName: string, fileUrl: string) => {
-      setUploadedFiles((prev) => {
-        const newFiles = [
-          ...prev,
-          { id: String(fileId), name: fileName, url: fileUrl },
-        ];
-        const fileIds = newFiles.map((file) => Number(file.id));
-        const imageIds = editor ? extractImageIds(editor) : [];
-        if (onMediaIdsChange) {
-          onMediaIdsChange(imageIds, fileIds);
-        }
-        return newFiles;
-      });
-      if (onFileUploadSuccess) {
-        onFileUploadSuccess(fileId);
-      }
-    },
-    [editor, onFileUploadSuccess, extractImageIds, onMediaIdsChange]
-  );
-
-  // 초기 이미지 ID 동기화
-  useEffect(() => {
-    if (!editor) return;
-
-    const imageIds = extractImageIds(editor);
-    const fileIds = extractFileIds();
-    handleMediaChange(imageIds, fileIds);
-  }, [editor, extractImageIds, extractFileIds, handleMediaChange]);
 
   // 이미지 렌더링 후 리사이즈 핸들 추가
   useEffect(() => {
@@ -758,7 +680,34 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
     }
   }, [content, editor]);
 
-  // 파일 업로드 핸들러 추가
+  // 파일 삭제 처리
+  const handleFileDelete = useCallback(
+    (fileId: string) => {
+      setUploadedFiles((prev) => {
+        const newFiles = prev.filter((file) => file.id !== fileId);
+        return newFiles;
+      });
+      onFileDelete?.(Number(fileId));
+    },
+    [onFileDelete]
+  );
+
+  // 파일 업로드 성공 시 목록 업데이트
+  const handleFileUploadSuccess = useCallback(
+    (fileId: number, fileName: string, fileUrl: string) => {
+      setUploadedFiles((prev) => {
+        const newFiles = [
+          ...prev,
+          { id: String(fileId), name: fileName, url: fileUrl },
+        ];
+        return newFiles;
+      });
+      onFileUploadSuccess?.(fileId);
+    },
+    [onFileUploadSuccess]
+  );
+
+  // 파일 업로드 핸들러
   const handleFileUpload = useCallback(
     async (files: FileList | null) => {
       if (!files || isUploading) return;
@@ -777,10 +726,35 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
 
           setUploadingFileName(file.name);
 
-          // Mock file upload for demo purposes
-          const mockFileId = Math.floor(Math.random() * 1000);
-          const mockFileUrl = URL.createObjectURL(file);
-          handleFileUploadSuccess(mockFileId, file.name, mockFileUrl);
+          const formData = new FormData();
+          formData.append('files', file);
+
+          try {
+            const res = await fetch('/api/v1/notices/media/files/upload', {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!res.ok) {
+              throw new Error('파일 업로드에 실패했습니다.');
+            }
+
+            const result = await res.json();
+            const uploaded = result[0];
+
+            handleFileUploadSuccess(
+              uploaded.id,
+              uploaded.originalName || file.name,
+              uploaded.url
+            );
+          } catch (error) {
+            console.error('파일 업로드 실패:', error);
+            alert(
+              `파일 업로드 실패 (${file.name}): ${
+                error instanceof Error ? error.message : '알 수 없는 오류'
+              }`
+            );
+          }
         }
       } finally {
         setIsUploading(false);
@@ -805,7 +779,7 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
     input.click();
   }, [handleFileUpload, isMounted]);
 
-  // 이미지 업로드 핸들러 수정
+  // 이미지 업로드 핸들러
   const handleImageUpload = useCallback(
     async (files: FileList | null) => {
       if (!files || !editor || isUploading) return;
@@ -827,27 +801,26 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
             continue;
           }
 
-          const tempId = crypto.randomUUID();
-
           try {
             setUploadingFileName(file.name);
 
-            // 1. FormData로 파일 업로드 API 호출
             const formData = new FormData();
             formData.append('files', file);
 
-            const res = await fetch(
-              '/api/v1/admin/notices/media/images/upload',
-              {
-                method: 'POST',
-                body: formData,
-              }
-            );
-            const result = await res.json(); // [{ id, url, ... }]
+            const res = await fetch('/api/v1/notices/media/images/upload', {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!res.ok) {
+              throw new Error('이미지 업로드에 실패했습니다.');
+            }
+
+            const result = await res.json();
             const uploaded = result[0];
             const imageId = uploaded.id;
-            const imageUrl = uploaded.url; // S3 실제 URL
-            // 이미지 삽입 - customImage 노드 사용
+            const imageUrl = uploaded.url;
+
             editor
               .chain()
               .focus()
@@ -864,7 +837,6 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
               })
               .run();
 
-            console.log('이미지 삽입 완료:', imageUrl);
             onImageUploadSuccess?.(imageId);
           } catch (error) {
             console.error('이미지 업로드 실패:', error);
@@ -1055,25 +1027,6 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            addImage();
-          }}
-          className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-            isUploading
-              ? 'opacity-50 cursor-not-allowed'
-              : 'bg-white dark:bg-gray-800'
-          }`}
-          title={isUploading ? `업로드 중: ${uploadingFileName}` : '이미지'}
-          disabled={isUploading}
-          type="button"
-        >
-          <span className="text-gray-600 dark:text-gray-300">
-            {isUploading ? 'hourglass_empty' : 'image'}
-          </span>
-        </button>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
             editor.chain().focus().toggleCodeBlock().run();
           }}
           className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
@@ -1114,6 +1067,25 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
         >
           <span className="text-gray-600 dark:text-gray-300">
             format_list_numbered
+          </span>
+        </button>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            addImage();
+          }}
+          className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
+            isUploading
+              ? 'opacity-50 cursor-not-allowed'
+              : 'bg-white dark:bg-gray-800'
+          }`}
+          title={isUploading ? `업로드 중: ${uploadingFileName}` : '이미지'}
+          disabled={isUploading}
+          type="button"
+        >
+          <span className="text-gray-600 dark:text-gray-300">
+            {isUploading ? 'hourglass_empty' : 'image'}
           </span>
         </button>
       </div>

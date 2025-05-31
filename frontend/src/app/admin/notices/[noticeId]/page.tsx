@@ -71,7 +71,7 @@ const processContent = async (
     try {
       // 이미지 정보를 API로 직접 조회
       const { data, error } = await client.GET(
-        '/api/v1/admin/notices/media/images/{noticeImageId}',
+        '/api/v1/notices/media/images/{noticeImageId}',
         {
           params: { path: { noticeImageId: imageId } },
         }

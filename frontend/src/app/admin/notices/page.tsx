@@ -6,7 +6,7 @@ import { components } from '@/lib/backend/apiV1/schema';
 import client from '@/lib/backend/client';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faFileAlt } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 type NoticeSummary = components['schemas']['NoticeSummaryResponseDto'] & {
@@ -186,7 +186,7 @@ export default function NoticeListPage() {
                             )}
                             {notice.hasFile && (
                               <FontAwesomeIcon
-                                icon={faFileAlt}
+                                icon={faPaperclip}
                                 className="w-4 h-4"
                                 title="파일 첨부"
                               />
