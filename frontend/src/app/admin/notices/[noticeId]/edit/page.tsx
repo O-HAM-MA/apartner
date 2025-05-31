@@ -9,10 +9,7 @@ import client from '@/lib/backend/client';
 type NoticeDetail = components['schemas']['NoticeReadResponseDto'] & {
   buildingId?: number | null;
 };
-type NoticeUpdateRequestDto =
-  components['schemas']['NoticeUpdateRequestDto'] & {
-    buildingId?: number | null;
-  };
+type NoticeUpdateRequestDto = components['schemas']['NoticeRequestDto'];
 type Building = components['schemas']['BuildingResponseDto'];
 
 export default function EditNoticePage({
@@ -43,10 +40,9 @@ export default function EditNoticePage({
             params: {
               path: { apartmentId: 1 }, // TODO: 실제 로그인한 관리자의 아파트 ID로 변경 필요
               query: {
-                pageable: {
-                  page: 0,
-                  size: 100,
-                },
+                page: 0,
+                size: 100,
+                sort: 'buildingNumber,asc',
               },
             },
           }
@@ -56,12 +52,13 @@ export default function EditNoticePage({
         }
       } catch (error) {
         console.error('동 정보를 불러오는데 실패했습니다:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchBuildings();
   }, []);
-
   // 기존 공지사항 데이터 불러오기
   useEffect(() => {
     const fetchNoticeDetail = async () => {
@@ -72,7 +69,9 @@ export default function EditNoticePage({
         const notice = response.data as NoticeDetail;
         setTitle(notice.title || '');
         setContent(notice.content || '');
-        setBuildingId(notice.buildingId || null);
+        setBuildingId(
+          notice.buildingId && notice.buildingId > 0 ? notice.buildingId : null
+        );
 
         // 기존 이미지와 파일 ID 설정 - undefined 필터링
         setCurrentImageIds(
@@ -103,7 +102,7 @@ export default function EditNoticePage({
       const updateData: NoticeUpdateRequestDto = {
         title,
         content,
-        buildingId,
+        buildingId: buildingId || undefined,
         imageIds: currentImageIds,
         fileIds: currentFileIds,
       };
@@ -113,7 +112,7 @@ export default function EditNoticePage({
         body: updateData,
       });
 
-      router.push(`admin/notices/${noticeId}`);
+      router.push(`/admin/notices/${noticeId}`);
     } catch (error) {
       alert('공지사항 수정에 실패했습니다. 다시 시도해주세요.');
     } finally {
@@ -138,16 +137,18 @@ export default function EditNoticePage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow px-8 py-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow px-8 py-10">
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-800"
+            className="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
           >
             ← 목록으로
           </button>
-          <h1 className="text-2xl font-bold">공지사항 수정</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            공지사항 수정
+          </h1>
           <div /> {/* 오른쪽 공간 맞추기용 */}
         </div>
 
@@ -155,7 +156,7 @@ export default function EditNoticePage({
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
             >
               제목
             </label>
@@ -164,7 +165,7 @@ export default function EditNoticePage({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="제목을 입력하세요"
               required
             />
@@ -173,7 +174,7 @@ export default function EditNoticePage({
           <div>
             <label
               htmlFor="buildingId"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
             >
               공지 대상 (동 선택)
             </label>
@@ -183,7 +184,7 @@ export default function EditNoticePage({
               onChange={(e) =>
                 setBuildingId(e.target.value ? Number(e.target.value) : null)
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">전체 공지</option>
               {buildings.map((building) => (
@@ -192,7 +193,7 @@ export default function EditNoticePage({
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               특정 동을 선택하면 해당 동 거주자에게만 공지가 전달됩니다. 전체
               공지를 선택하면 모든 거주자에게 전송됩니다.
             </p>
@@ -201,7 +202,7 @@ export default function EditNoticePage({
           <div>
             <label
               htmlFor="content"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
             >
               내용
             </label>
@@ -217,7 +218,7 @@ export default function EditNoticePage({
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               disabled={isSubmitting}
             >
               취소

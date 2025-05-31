@@ -6,6 +6,8 @@ import { ArrowLeft, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import client from '@/lib/backend/client';
 import { use } from 'react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface NoticeFileDto {
   id: number;
@@ -103,17 +105,7 @@ export default function NoticeDetailPage({
   const formatDateTime = (dateTimeStr: string) => {
     try {
       const date = new Date(dateTimeStr);
-      return date
-        .toLocaleString('ko-KR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })
-        .replace(/\./g, '-')
-        .replace(',', '');
+      return format(date, 'yyyy-MM-dd HH:mm', { locale: ko });
     } catch {
       return dateTimeStr;
     }

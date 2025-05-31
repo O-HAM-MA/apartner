@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 // 백엔드 응답 타입 정의
 type NoticeImage = {
@@ -280,7 +282,9 @@ export default function NoticeDetailPage({
             <span className="mr-4">
               작성일:{' '}
               {notice.createdAt
-                ? new Date(notice.createdAt).toLocaleDateString()
+                ? format(new Date(notice.createdAt), 'yyyy-MM-dd HH:mm', {
+                    locale: ko,
+                  })
                 : ''}
             </span>
             <span>조회수: {notice.viewCount}</span>

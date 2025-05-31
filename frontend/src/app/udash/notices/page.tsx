@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import client from '@/lib/backend/client';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface Notice {
   noticeId: number;
@@ -65,17 +67,7 @@ export default function NoticesPage() {
   const formatDateTime = (dateTimeStr: string) => {
     try {
       const date = new Date(dateTimeStr);
-      return date
-        .toLocaleString('ko-KR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })
-        .replace(/\./g, '-')
-        .replace(',', '');
+      return format(date, 'yyyy-MM-dd', { locale: ko });
     } catch {
       return dateTimeStr;
     }
@@ -129,11 +121,11 @@ export default function NoticesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-muted-foreground">
-                    <th className="px-4 py-3 text-left">게시글 번호</th>
-                    <th className="px-4 py-3 text-left">게시글 제목</th>
-                    <th className="px-4 py-3 text-center">게시글 작성자</th>
-                    <th className="px-4 py-3 text-center">게시글 작성일</th>
-                    <th className="px-4 py-3 text-center">게시글 조회수</th>
+                    <th className="px-4 py-3 text-left">번호</th>
+                    <th className="px-4 py-3 text-left">제목</th>
+                    <th className="px-4 py-3 text-center">작성자</th>
+                    <th className="px-4 py-3 text-center">작성일</th>
+                    <th className="px-4 py-3 text-center">조회수</th>
                   </tr>
                 </thead>
                 <tbody>

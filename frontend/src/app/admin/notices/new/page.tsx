@@ -6,7 +6,7 @@ import TiptapEditor from '@/components/editor/TiptapEditor';
 import { components } from '@/lib/backend/apiV1/schema';
 import client from '@/lib/backend/client';
 
-type NoticeCreateRequestDto = components['schemas']['NoticeCreateRequestDto'];
+type NoticeCreateRequestDto = components['schemas']['NoticeRequestDto'];
 type Building = components['schemas']['BuildingResponseDto'];
 
 export default function CreateNoticePage() {
@@ -30,10 +30,9 @@ export default function CreateNoticePage() {
             params: {
               path: { apartmentId: 1 }, // TODO: 실제 로그인한 관리자의 아파트 ID로 변경 필요
               query: {
-                pageable: {
-                  page: 0,
-                  size: 100,
-                },
+                page: 0,
+                size: 100,
+                sort: 'buildingNumber,asc',
               },
             },
           }
@@ -125,16 +124,18 @@ export default function CreateNoticePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow px-8 py-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow px-8 py-10">
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-800"
+            className="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
           >
             ← 목록으로
           </button>
-          <h1 className="text-2xl font-bold">공지사항 작성</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            공지사항 작성
+          </h1>
           <div /> {/* 오른쪽 공간 맞추기용 */}
         </div>
 
@@ -142,7 +143,7 @@ export default function CreateNoticePage() {
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
             >
               제목
             </label>
@@ -151,7 +152,7 @@ export default function CreateNoticePage() {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="제목을 입력하세요"
               required
             />
@@ -159,18 +160,18 @@ export default function CreateNoticePage() {
 
           <div>
             <label
-              htmlFor="building"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              htmlFor="buildingId"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
             >
               공지 대상 (동 선택)
             </label>
             <select
-              id="building"
+              id="buildingId"
               value={buildingId || ''}
               onChange={(e) =>
                 setBuildingId(e.target.value ? Number(e.target.value) : null)
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">전체 공지</option>
               {buildings.map((building) => (
@@ -179,7 +180,7 @@ export default function CreateNoticePage() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               특정 동을 선택하면 해당 동 거주자에게만 공지가 전달됩니다. 전체
               공지를 선택하면 모든 거주자에게 전송됩니다.
             </p>
@@ -188,7 +189,7 @@ export default function CreateNoticePage() {
           <div>
             <label
               htmlFor="content"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
             >
               내용
             </label>
@@ -206,13 +207,13 @@ export default function CreateNoticePage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               취소
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? '등록 중...' : '등록'}

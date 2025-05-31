@@ -3018,8 +3018,8 @@ export interface components {
             id?: number;
             username?: string;
         };
-        /** @description 공지사항 게시글 수정 요청 DTO */
-        NoticeUpdateRequestDto: {
+        /** @description 공지사항 게시글 등록/수정 요청 DTO */
+        NoticeRequestDto: {
             /**
              * @description 게시글 제목
              * @example 엘레베이터 정기점검 안내
@@ -3030,6 +3030,12 @@ export interface components {
              * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
              */
             content?: string;
+            /**
+             * Format: int64
+             * @description 게시글 대상: 전체/동별 선택 - buildingId
+             * @example 101동 / null일 경우 전체 공지
+             */
+            buildingId?: number;
             /**
              * @description tiptap에 삽입된 이미지 ID들
              * @example []
@@ -3823,35 +3829,6 @@ export interface components {
              */
             originalName?: string;
         };
-        /** @description 공지사항 게시글 등록 요청 DTO */
-        NoticeCreateRequestDto: {
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * Format: int64
-             * @description 게시글 대상: 전체/동별 선택 - buildingId
-             * @example 101동 / null일 경우 전체 공지
-             */
-            buildingId?: number;
-            /**
-             * @description tiptap에 삽입된 이미지 ID들
-             * @example []
-             */
-            imageIds?: number[];
-            /**
-             * @description tiptap에 삽입된 첨부파일 ID들
-             * @example []
-             */
-            fileIds?: number[];
-        };
         /** @description 관리자 로그인 요청 DTO */
         AdminLoginRequest: {
             /**
@@ -4128,17 +4105,17 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -4630,6 +4607,16 @@ export interface components {
              * @example 0
              */
             viewCount?: number;
+            /**
+             * @description 이미지 첨부 여부
+             * @example false
+             */
+            hasImage?: boolean;
+            /**
+             * @description 파일 첨부 여부
+             * @example false
+             */
+            hasFile?: boolean;
         };
         PageNoticeSummaryResponseDto: {
             /** Format: int32 */
@@ -5294,7 +5281,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NoticeUpdateRequestDto"];
+                "application/json": components["schemas"]["NoticeRequestDto"];
             };
         };
         responses: {
@@ -7134,7 +7121,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NoticeCreateRequestDto"];
+                "application/json": components["schemas"]["NoticeRequestDto"];
             };
         };
         responses: {

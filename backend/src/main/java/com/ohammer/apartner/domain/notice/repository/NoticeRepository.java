@@ -14,8 +14,8 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     @Query("""
                 SELECT new com.ohammer.apartner.domain.notice.dto.response.NoticeSummaryResponseDto(
-                    n.id, n.title, u.userName, b.id, n.createdAt, n.viewCount
-                )
+                    n.id, n.title, u.userName, b.id, n.createdAt, n.viewCount,
+                     (SIZE(n.images) > 0), (SIZE(n.files) > 0))
                 FROM Notice n
                 LEFT JOIN n.user u
                 LEFT JOIN n.building b

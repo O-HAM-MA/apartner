@@ -13,35 +13,67 @@ type NoticeSummary = components['schemas']['NoticeSummaryResponseDto'] & {
   hasFile?: boolean;
 };
 
+type Building = components['schemas']['BuildingResponseDto'];
+
 export default function NoticeListPage() {
   const [notices, setNotices] = useState<NoticeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState('전체 카테고리');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedTarget, setSelectedTarget] = useState('all');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // 건물 정보 조회
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        const response = await fetch(
+          `/api/v1/admin/apartments/1/buildings?page=0&size=100&sort=buildingNumber,asc`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const data = await response.json();
+        if (data && data.content) {
+          setBuildings(data.content as Building[]);
+        }
+      } catch (error) {
+        console.error('동 정보를 불러오는데 실패했습니다:', error);
+      }
+    };
+
+    fetchBuildings();
+  }, []);
 
   // 게시글 목록 조회
   useEffect(() => {
     const fetchNotices = async () => {
       setIsLoading(true);
       try {
-        const page = currentPage;
-        const size = 10;
         const response = await client.GET('/api/v1/admin/notices', {
           params: {
             query: {
-              page,
-              size,
+              page: currentPage,
+              size: 10,
               sort: 'createdAt,desc',
+              buildingId:
+                selectedTarget === 'all' ? undefined : Number(selectedTarget),
             },
           },
         });
         if (response.data?.content) {
-          setNotices(response.data.content);
+          const mappedNotices = response.data.content.map((notice: any) => ({
+            ...notice,
+            buildingNumber: notice.building?.buildingNumber || null,
+          }));
+          setNotices(mappedNotices);
           setTotalPages(response.data.totalPages || 1);
         } else {
           setNotices([]);
@@ -54,7 +86,7 @@ export default function NoticeListPage() {
       }
     };
     fetchNotices();
-  }, [currentPage]);
+  }, [currentPage, selectedTarget]);
 
   const handleSearch = () => {
     setCurrentPage(0);
@@ -72,16 +104,6 @@ export default function NoticeListPage() {
         </Link>
       </div>
       <div className="flex items-center gap-2 mb-4">
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2"
-        >
-          <option>전체 카테고리</option>
-          <option>공지</option>
-          <option>행사</option>
-          <option>안내</option>
-        </select>
         <input
           type="text"
           placeholder="검색어를 입력하세요"
@@ -95,6 +117,21 @@ export default function NoticeListPage() {
         >
           검색
         </button>
+        <select
+          value={selectedTarget}
+          onChange={(e) => {
+            setSelectedTarget(e.target.value);
+            setCurrentPage(0);
+          }}
+          className="border border-gray-300 rounded-md px-3 py-2"
+        >
+          <option value="all">전체 대상</option>
+          {buildings.map((building) => (
+            <option key={building.id} value={building.id}>
+              {building.buildingNumber}동
+            </option>
+          ))}
+        </select>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-center">
@@ -151,7 +188,12 @@ export default function NoticeListPage() {
                   </td>
                   <td className="px-6 py-4">{notice.authorName}</td>
                   <td className="px-6 py-4">
-                    {notice.buildingId ? `${notice.buildingId}동` : '전체'}
+                    {notice.buildingId
+                      ? `${
+                          buildings.find((b) => b.id === notice.buildingId)
+                            ?.buildingNumber
+                        }동`
+                      : '전체 공지'}
                   </td>
                   <td className="px-6 py-4">
                     {notice.createdAt
