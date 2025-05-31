@@ -243,11 +243,20 @@ export default function CommunityPage() {
     return (
       <Card
         key={post.id}
-        className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group bg-white/80 backdrop-blur-sm hover:bg-white ${
+        className={`
+        border-0 transition-all duration-300 cursor-pointer group
+        ${
+          post.pinned
+            ? "shadow-md ring-1 ring-pink-100 bg-gradient-to-r from-rose-50/30 via-white to-white"
+            : "shadow-sm hover:shadow-md bg-white/80"
+        }
+        backdrop-blur-sm hover:bg-white
+        ${
           isReply
             ? "ml-12 relative before:absolute before:left-[-1rem] before:top-1/2 before:w-4 before:h-px before:bg-pink-200 border-l border-l-pink-200"
             : ""
-        }`}
+        }
+      `}
         onClick={() => router.push(`/udash/community/${post.id}`)}
       >
         <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
@@ -260,21 +269,19 @@ export default function CommunityPage() {
               </div>
 
               {/* 제목과 내용 */}
-              <div className="flex items-center gap-2">
-                {isReply && (
-                  <div className="flex items-center text-pink-400">
-                    <ChevronRight className="w-4 h-4" />
-                    <span className="text-xs font-medium">답글</span>
-                  </div>
-                )}
-                <h3
-                  className={`font-bold text-gray-900 group-hover:text-pink-600 transition-colors duration-200 line-clamp-2 ${
-                    isReply ? "text-base" : "text-xl"
-                  }`}
-                >
-                  {post.content}
-                </h3>
-              </div>
+              <h3
+                className={`
+                font-bold transition-colors duration-200 line-clamp-2
+                ${
+                  post.pinned
+                    ? "text-gray-900 group-hover:text-pink-600"
+                    : "text-gray-800 group-hover:text-pink-500"
+                }
+                ${isReply ? "text-base" : "text-xl"}
+              `}
+              >
+                {post.content}
+              </h3>
             </div>
 
             {/* Image placeholder */}
