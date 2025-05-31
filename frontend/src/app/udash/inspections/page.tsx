@@ -14,6 +14,7 @@ import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import InspectionTypeManagementModal from "@/components/InspectionTypeManagementModal";
 
 
 type IssueResponseDetailDto = {
@@ -90,13 +91,14 @@ export default function AdminDashboard() {
   const searchParams = useSearchParams();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+  const [isTypeManagementModalOpen, setIsTypeManagementModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchInspections() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch("http://localhost:8090/api/v1/inspection/manager", {
+        const res = await fetch("/api/v1/inspection/manager", {
           credentials: "include",
         });
         if (!res.ok) throw new Error("서버에서 데이터를 불러오지 못했습니다.");
@@ -153,6 +155,13 @@ export default function AdminDashboard() {
           <header className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-foreground">시설점검</h2>
             <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTypeManagementModalOpen(true)}
+              >
+                분류 관리
+              </Button>
               <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
                 <BellRing size={22} className="text-muted-foreground" />
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
@@ -361,6 +370,11 @@ export default function AdminDashboard() {
               점검 기록이 성공적으로 삭제되었습니다.
             </div>
           )}
+          {/* Type Management Modal */}
+          <InspectionTypeManagementModal
+            isOpen={isTypeManagementModalOpen}
+            onClose={() => setIsTypeManagementModalOpen(false)}
+          />
         </main>
 
         {/* Footer */}
