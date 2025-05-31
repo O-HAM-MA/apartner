@@ -31,6 +31,15 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useGlobalLoginMember } from "@/auth/loginMember";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // 타입 선언
 type CommunityRequestDto = components["schemas"]["CommunityRequestDto"];
@@ -40,7 +49,7 @@ export default function CommunityPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   // API 연동을 위한 쿼리 추가
   const { data: posts, isLoading } = useQuery<CommunityResponseDto[]>({
@@ -424,6 +433,21 @@ export default function CommunityPage() {
     </Card>
   );
 
+  // 페이지네이션 관련 로직 추가 (중복 선언 제거)
+  const totalPages = Math.ceil((posts?.length || 0) / itemsPerPage);
+
+  // 현재 페이지에 표시할 게시글 필터링
+  const currentPosts = posts?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-rose-50">
       <Header />
@@ -482,7 +506,7 @@ export default function CommunityPage() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {posts.map((post) => (
+                {currentPosts?.map((post) => (
                   <div key={post.id} className="space-y-2">
                     {/* 원본 게시글 */}
                     {renderPostCard(post)}
@@ -496,6 +520,53 @@ export default function CommunityPage() {
               </div>
             )}
           </div>
+
+          {/* 페이지네이션 추가 */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() =>
+                        currentPage > 1 && handlePageChange(currentPage - 1)
+                      }
+                      className={`${
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }`}
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(i + 1)}
+                        isActive={currentPage === i + 1}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        currentPage < totalPages &&
+                        handlePageChange(currentPage + 1)
+                      }
+                      className={`${
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }`}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
 
           {/* Floating action button for mobile */}
           <div className="fixed bottom-6 right-6 sm:hidden">
