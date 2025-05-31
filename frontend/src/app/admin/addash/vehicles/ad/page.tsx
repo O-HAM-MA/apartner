@@ -37,15 +37,21 @@ export default function AdminVehicleManagement() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  // 주차장 현황 조회 쿼리
-  const { data: parkingStatus } = useQuery<ParkingStatusDto>({
-    queryKey: ["parking", "status"],
-    queryFn: async () => {
-      const { data, error } = await client.GET("/api/v1/vehicles/status");
-      if (error) throw error;
-      return data;
-    },
-  });
+  // 주차장 현황 조회 쿼리 수정
+  const { data: parkingStatus, refetch: refetchParkingStatus } =
+    useQuery<ParkingStatusDto>({
+      queryKey: ["parking", "status"],
+      queryFn: async () => {
+        const { data, error } = await client.GET("/api/v1/vehicles/status");
+        if (error) throw error;
+        return data;
+      },
+      // 실시간 갱신을 위한 설정
+      staleTime: 0,
+      cacheTime: 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    });
 
   // 모든 차량 조회 쿼리 추가
   const { data: vehicles } = useQuery<VehicleRegistrationInfoDto[]>({
@@ -138,6 +144,66 @@ export default function AdminVehicleManagement() {
     },
   });
 
+  // updateMaxCapacityMutation 수정
+  const updateMaxCapacityMutation = useMutation({
+    mutationFn: async (newCapacity: number) => {
+      const { data, error } = await client.PATCH(
+        `/api/v1/vehicles/capacity?capacity=${newCapacity}`
+      );
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async (newCapacity) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["parking", "status"] });
+
+      // Snapshot the previous value
+      const previousStatus = queryClient.getQueryData(["parking", "status"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["parking", "status"], (old: any) => ({
+        ...old,
+        totalCapacity: newCapacity,
+        remainingSpace: newCapacity - (old?.activeCount || 0),
+      }));
+
+      return { previousStatus };
+    },
+    onSuccess: () => {
+      setIsEditingCapacity(false);
+    },
+    onError: (_, __, context: any) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousStatus) {
+        queryClient.setQueryData(["parking", "status"], context.previousStatus);
+      }
+      setNewCapacity(parkingStatus?.totalCapacity || 0);
+    },
+    onSettled: () => {
+      // Always refetch after error or success to make sure our local data is correct
+      queryClient.invalidateQueries({ queryKey: ["parking", "status"] });
+    },
+  });
+
+  // Add this state for editing mode
+  const [isEditingCapacity, setIsEditingCapacity] = useState(false);
+  const [newCapacity, setNewCapacity] = useState<number>(0);
+
+  // handleCapacityUpdate 함수 수정
+  const handleCapacityUpdate = () => {
+    if (!newCapacity || newCapacity <= 0) {
+      alert("수용량은 1대 이상이어야 합니다.");
+      return;
+    }
+
+    if (newCapacity < (parkingStatus?.activeCount || 0)) {
+      alert("현재 주차된 차량 수보다 적은 수용량으로 변경할 수 없습니다.");
+      return;
+    }
+
+    updateMaxCapacityMutation.mutate(newCapacity);
+  };
+
   return (
     <div className="min-h-screen bg-white m-0 p-0">
       <Header />
@@ -170,12 +236,59 @@ export default function AdminVehicleManagement() {
             <div className="grid grid-cols-3 gap-10 max-w-[1200px] mx-auto">
               <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
                 <p className="text-sm text-gray-600 mb-2">전체 주차공간</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {parkingStatus?.totalCapacity || 0}
-                  <span className="text-base font-normal text-gray-600 ml-1">
-                    면
-                  </span>
-                </p>
+                {isEditingCapacity ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <input
+                      type="number"
+                      value={newCapacity}
+                      onChange={(e) => setNewCapacity(Number(e.target.value))}
+                      className="w-20 px-2 py-1 text-2xl font-bold text-gray-900 border rounded-md"
+                      min="1"
+                    />
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        className="bg-[#FF4081] hover:bg-[#ff679b]"
+                        onClick={() => {
+                          updateMaxCapacityMutation.mutate(newCapacity);
+                          setIsEditingCapacity(false);
+                        }}
+                      >
+                        확인
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingCapacity(false);
+                          setNewCapacity(parkingStatus?.totalCapacity || 0);
+                        }}
+                      >
+                        취소
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="group relative cursor-pointer"
+                    onClick={() => {
+                      setIsEditingCapacity(true);
+                      setNewCapacity(parkingStatus?.totalCapacity || 0);
+                    }}
+                  >
+                    <p className="text-3xl font-bold text-gray-900">
+                      {parkingStatus?.totalCapacity || 0}
+                      <span className="text-base font-normal text-gray-600 ml-1">
+                        면
+                      </span>
+                    </p>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 rounded-lg transition-colors">
+                      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-transparent group-hover:text-gray-600 text-sm">
+                        클릭하여 수정
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="text-center p-6 bg-pink-50 rounded-lg shadow-sm">
                 <p className="text-sm text-gray-600 mb-2">현재 주차</p>
