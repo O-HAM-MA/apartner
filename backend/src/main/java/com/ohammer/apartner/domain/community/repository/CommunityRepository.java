@@ -13,4 +13,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
 
     // 특정 댓글 ID를 부모로 가진 자식 댓글(답글) 조회
     List<Community> findByParentId(Long parentId);
+
+    // 추가
+    List<Community> findByParentIdAndStatus(Long parentId, Status status);
 }
