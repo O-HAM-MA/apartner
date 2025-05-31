@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Pencil, Trash2 } from 'lucide-react';
 
 // 백엔드 응답 타입 정의
 type NoticeImage = {
@@ -237,61 +239,66 @@ export default function NoticeDetailPage({
   };
 
   if (isLoading) {
-    return <div className="max-w-4xl mx-auto px-4 py-8">로딩 중...</div>;
+    return <div className="container mx-auto py-6">로딩 중...</div>;
   }
 
   if (!notice) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        공지사항을 찾을 수 없습니다.
-      </div>
+      <div className="container mx-auto py-6">공지사항을 찾을 수 없습니다.</div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8 flex justify-between items-center">
-        <button
-          onClick={() => router.push('/admin/notices')}
-          className="text-gray-600 hover:text-gray-800"
-        >
-          ← 목록으로
-        </button>
-        <div className="space-x-2">
-          <button
-            onClick={handleEdit}
-            className="px-4 py-2 text-blue-600 hover:text-blue-800"
-          >
-            수정
-          </button>
-          <button
-            onClick={() => setIsDeleteDialogOpen(true)}
-            className="px-4 py-2 text-red-600 hover:text-red-800"
-          >
-            삭제
-          </button>
-        </div>
-      </div>
-
-      <article className="bg-white rounded-lg shadow-sm">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-4">{notice.title}</h1>
-
-          <div className="flex items-center text-gray-600 text-sm mb-6">
-            <span className="mr-4">작성자: {notice.authorName}</span>
-            <span className="mr-4">
-              작성일:{' '}
-              {notice.createdAt
-                ? format(new Date(notice.createdAt), 'yyyy-MM-dd HH:mm', {
-                    locale: ko,
-                  })
-                : ''}
-            </span>
-            <span>조회수: {notice.viewCount}</span>
+    <div className="container mx-auto py-6">
+      <Card>
+        <CardHeader className="space-y-6">
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => router.push('/admin/notices')}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              ← 목록으로
+            </button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={handleEdit}
+              >
+                <Pencil className="w-4 h-4" />
+                수정
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                <Trash2 className="w-4 h-4" />
+                삭제
+              </Button>
+            </div>
           </div>
-
+          <div className="space-y-3">
+            <CardTitle className="text-2xl">{notice.title}</CardTitle>
+            <div className="flex items-center text-gray-600 text-sm border-b pb-4">
+              <span className="mr-4">작성자: {notice.authorName}</span>
+              <span className="mr-4">
+                작성일:{' '}
+                {notice.createdAt
+                  ? format(new Date(notice.createdAt), 'yyyy-MM-dd HH:mm', {
+                      locale: ko,
+                    })
+                  : ''}
+              </span>
+              <span>조회수: {notice.viewCount}</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
           {/* 본문 내용 */}
-          <div className="prose max-w-none border-b pb-8">
+          <div className="prose max-w-none pb-8">
             <div
               dangerouslySetInnerHTML={{
                 __html: processedContent || '',
@@ -299,9 +306,9 @@ export default function NoticeDetailPage({
             />
           </div>
 
-          {/* 첨부파일 섹션 - 항상 본문 아래에 고정 */}
+          {/* 첨부파일 섹션 */}
           {notice.fileUrls && notice.fileUrls.length > 0 && (
-            <div className="mt-8">
+            <div className="mt-8 border-t pt-6">
               <h3 className="text-lg font-medium mb-4">첨부파일</h3>
               <ul className="space-y-2 bg-gray-50 p-4 rounded-lg">
                 {notice.fileUrls.map((file, index) => (
@@ -337,8 +344,8 @@ export default function NoticeDetailPage({
               </ul>
             </div>
           )}
-        </div>
-      </article>
+        </CardContent>
+      </Card>
 
       {/* 삭제 확인 모달 */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
