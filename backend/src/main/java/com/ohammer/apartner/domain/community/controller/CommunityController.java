@@ -8,6 +8,7 @@ import com.ohammer.apartner.security.utils.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -83,4 +84,12 @@ public class CommunityController {
 
         return communityService.listBranchPosts(id);
     }
+
+
+    @Operation(summary = "삭제 처리된 게시글 목록 조회")
+    @GetMapping("/inactive")
+    public ResponseEntity<List<CommunityResponseDto>> getInactivePosts() {
+        return ResponseEntity.ok(communityService.listInactivePosts());
+    }
+
 }

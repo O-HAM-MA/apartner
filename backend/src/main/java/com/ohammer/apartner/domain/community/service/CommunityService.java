@@ -158,4 +158,26 @@ public class CommunityService {
                 .map(c -> toDto(c, includeAuthor))
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public List<CommunityResponseDto> listInactivePosts() {
+
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        checkRoleUtils.validateManagerAccess();
+
+        Set<Role> roles = currentUser.getRoles();
+        boolean isAdmin = roles.stream().anyMatch(role ->
+                role == Role.MANAGER || role == Role.MODERATOR || role == Role.ADMIN);
+
+        List<Community> list = communityRepository.findByStatusOrderByCreatedAtDesc(Status.INACTIVE);
+
+        return list.stream()
+                .map(c -> toDto(c, isAdmin))
+                .collect(Collectors.toList());
+    }
+
 }

@@ -16,4 +16,6 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
 
     // 추가
     List<Community> findByParentIdAndStatus(Long parentId, Status status);
+
+
 }
