@@ -27,7 +27,7 @@ services:
     container_name: apartner-redis
     restart: always
     ports:
-      - "127.0.0.1:6379:6379"
+      - "6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
