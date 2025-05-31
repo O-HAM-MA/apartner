@@ -239,15 +239,14 @@ export default function CommunityPage() {
   const renderPostCard = (
     post: CommunityResponseDto,
     isReply: boolean = false
-  ) => {
-    return (
-      <Card
-        key={post.id}
-        className={`
+  ) => (
+    <Card
+      key={post.id}
+      className={`
         border-0 transition-all duration-300 cursor-pointer group
         ${
           post.pinned
-            ? "shadow-md ring-1 ring-pink-100 bg-gradient-to-r from-rose-50/30 via-white to-white"
+            ? "shadow-lg ring-1 ring-pink-300 bg-gradient-to-r from-rose-300 via-pink-100 to-white border-l-4 border-l-pink-500"
             : "shadow-sm hover:shadow-md bg-white/80"
         }
         backdrop-blur-sm hover:bg-white
@@ -257,102 +256,101 @@ export default function CommunityPage() {
             : ""
         }
       `}
-        onClick={() => router.push(`/udash/community/${post.id}`)}
-      >
-        <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex-1 space-y-2">
-              {/* 작성자 정보 표시 */}
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <User className="w-4 h-4" />
-                <span>{post.author?.username || "알 수 없음"}</span>
-              </div>
+      onClick={() => router.push(`/udash/community/${post.id}`)}
+    >
+      <CardContent className={`p-4 ${isReply ? "py-3" : "p-6"}`}>
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1 space-y-2">
+            {/* 작성자 정보 표시 */}
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <User className="w-4 h-4" />
+              <span className={post.pinned ? "font-medium text-gray-900" : ""}>
+                {post.author?.username || "알 수 없음"}
+              </span>
+            </div>
 
-              {/* 제목과 내용 */}
-              <h3
-                className={`
+            {/* 제목과 내용 */}
+            <h3
+              className={`
                 font-bold transition-colors duration-200 line-clamp-2
                 ${
                   post.pinned
-                    ? "text-gray-900 group-hover:text-pink-600"
+                    ? "text-pink-900 group-hover:text-pink-700 text-[1.2em]"
                     : "text-gray-800 group-hover:text-pink-500"
                 }
                 ${isReply ? "text-base" : "text-xl"}
               `}
-              >
-                {post.content}
-              </h3>
-            </div>
-
-            {/* Image placeholder */}
-            {post.hasImage && (
-              <div className="flex-shrink-0">
-                <div
-                  className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg flex items-center justify-center ${
-                    isReply ? "w-16 h-16" : "w-24 h-24"
-                  }`}
-                >
-                  <ImageIcon
-                    className={`text-pink-400 ${
-                      isReply ? "w-6 h-6" : "w-8 h-8"
-                    }`}
-                  />
-                </div>
-              </div>
-            )}
+            >
+              {post.content}
+            </h3>
           </div>
 
-          {/* 하단 메타 정보와 버튼 */}
-          <div className="flex justify-between items-center mt-4">
-            <div className="flex items-center gap-1 text-gray-500">
-              <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
-              <span className="text-xs">{formatDate(post.createdAt)}</span>
+          {/* Image placeholder */}
+          {post.hasImage && (
+            <div className="flex-shrink-0">
+              <div
+                className={`bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg flex items-center justify-center ${
+                  isReply ? "w-16 h-16" : "w-24 h-24"
+                }`}
+              >
+                <ImageIcon
+                  className={`text-pink-400 ${isReply ? "w-6 h-6" : "w-8 h-8"}`}
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+          )}
+        </div>
+
+        {/* 하단 메타 정보와 버튼 */}
+        <div className="flex justify-between items-center mt-4">
+          <div className="flex items-center gap-1 text-gray-500">
+            <Calendar className={`${isReply ? "w-3 h-3" : "w-4 h-4"}`} />
+            <span className="text-xs">{formatDate(post.createdAt)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingPost(post);
+                setEditContent(post.content);
+                setIsEditModalOpen(true);
+              }}
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              수정
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={(e) => handleDelete(e, post.id)}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              삭제
+            </Button>
+            {!isReply && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                className="text-pink-500 hover:text-pink-600 hover:bg-pink-50"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setEditingPost(post);
-                  setEditContent(post.content);
-                  setIsEditModalOpen(true);
+                  setReplyToPost(post.id);
+                  setIsWriteModalOpen(true);
                 }}
               >
-                <Edit className="w-4 h-4 mr-1" />
-                수정
+                <MessageSquare className="w-4 h-4 mr-1" />
+                답글 작성
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                onClick={(e) => handleDelete(e, post.id)}
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                삭제
-              </Button>
-              {!isReply && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-pink-500 hover:text-pink-600 hover:bg-pink-50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setReplyToPost(post.id);
-                    setIsWriteModalOpen(true);
-                  }}
-                >
-                  <MessageSquare className="w-4 h-4 mr-1" />
-                  답글 작성
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
-    );
-  };
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-rose-50">
