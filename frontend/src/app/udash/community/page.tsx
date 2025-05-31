@@ -31,6 +31,15 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useGlobalLoginMember } from "@/auth/loginMember";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // 타입 선언
 type CommunityRequestDto = components["schemas"]["CommunityRequestDto"];
@@ -40,7 +49,7 @@ export default function CommunityPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5; // Changed from 5 to 10
 
   // API 연동을 위한 쿼리 추가
   const { data: posts, isLoading } = useQuery<CommunityResponseDto[]>({
@@ -235,6 +244,21 @@ export default function CommunityPage() {
     }
   };
 
+  // Remove duplicate declarations and keep only the pagination logic
+  const totalPages = Math.ceil((posts?.length || 0) / itemsPerPage);
+
+  // Current page posts filtering
+  const currentPosts = posts?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Page change handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // 게시글 카드 렌더링 부분 수정
   const renderPostCard = (
     post: CommunityResponseDto,
@@ -407,7 +431,7 @@ export default function CommunityPage() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {posts.map((post) => (
+                {currentPosts?.map((post) => (
                   <div key={post.id} className="space-y-2">
                     {/* 원본 게시글 */}
                     {renderPostCard(post)}
@@ -422,16 +446,52 @@ export default function CommunityPage() {
             )}
           </div>
 
-          {/* Floating action button for mobile */}
-          <div className="fixed bottom-6 right-6 sm:hidden">
-            <Button
-              onClick={() => router.push("/udash/community/write")}
-              className="w-14 h-14 rounded-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110"
-              size="icon"
-            >
-              <PlusCircle className="w-6 h-6" />
-            </Button>
-          </div>
+          {/* 페이지네이션 컴포넌트 추가 */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() =>
+                        currentPage > 1 && handlePageChange(currentPage - 1)
+                      }
+                      className={`${
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }`}
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(i + 1)}
+                        isActive={currentPage === i + 1}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        currentPage < totalPages &&
+                        handlePageChange(currentPage + 1)
+                      }
+                      className={`${
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }`}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       </main>
       <Footer />
