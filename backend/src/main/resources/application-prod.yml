@@ -1,5 +1,3 @@
-server:
-  port: 8080
 spring:
   datasource:
     url: jdbc:mysql://mysql_1:3306/blog_prod
@@ -8,6 +6,11 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       auto-commit: false
+  data:
+    redis:
+      host: apartner-redis
+      port: 6379
+      password: ${custom.prod.redis.password}
   jpa:
     hibernate:
       ddl-auto: update
