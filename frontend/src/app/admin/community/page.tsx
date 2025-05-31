@@ -193,6 +193,44 @@ export default function CommunityPage() {
     },
   });
 
+  // Pin mutation 수정
+  const pinPostMutation = useMutation<
+    CommunityResponseDto,
+    Error,
+    { id: number; pinned: boolean }
+  >({
+    mutationFn: async ({ id, pinned }) => {
+      // pinned 상태의 반대 값을 보내도록 수정
+      const newPinValue = pinned ? 0 : 1;
+      console.log(`Setting pin value to: ${newPinValue} for post ${id}`);
+
+      const { data, error } = await client.POST(`/api/v1/community/${id}/pin`, {
+        body: JSON.stringify({ pinned: newPinValue }), // JSON 문자열로 변환
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (error) {
+        console.error("Pin mutation error:", error);
+        throw error;
+      }
+
+      // 응답 확인 로깅
+      console.log("Pin mutation response:", data);
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      console.log("Pin mutation successful:", data);
+      // 캐시 무효화 전에 현재 상태 로깅
+      queryClient.invalidateQueries({ queryKey: ["community", "posts"] });
+    },
+    onError: (error) => {
+      console.error("글 고정/해제 실패:", error);
+      alert("작업에 실패했습니다.");
+    },
+  });
+
   const handleSubmitPost = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPost.content.trim()) {
@@ -232,6 +270,26 @@ export default function CommunityPage() {
     e.stopPropagation();
     if (confirm("정말 삭제하시겠습니까?")) {
       deletePostMutation.mutate(postId);
+    }
+  };
+
+  // 토글 핸들러 부분 수정
+  const handlePinToggle = async (
+    e: React.MouseEvent,
+    postId: number,
+    isPinned: boolean
+  ) => {
+    e.stopPropagation();
+    try {
+      console.log(
+        `Toggling pin for post ${postId}. Current pinned status: ${isPinned}`
+      );
+      await pinPostMutation.mutateAsync({
+        id: postId,
+        pinned: isPinned, // 현재 상태 전달
+      });
+    } catch (error) {
+      console.error("Pin toggle failed:", error);
     }
   };
 
@@ -308,6 +366,23 @@ export default function CommunityPage() {
             <span className="text-xs">{formatDate(post.createdAt)}</span>
           </div>
           <div className="flex items-center gap-2">
+            {!isReply && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`
+          transition-colors
+          ${
+            post.pinned
+              ? "text-pink-600 hover:text-pink-700 hover:bg-pink-50"
+              : "text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+          }
+        `}
+                onClick={(e) => handlePinToggle(e, post.id, post.pinned)}
+              >
+                {post.pinned ? "고정해제" : "고정하기"}
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
