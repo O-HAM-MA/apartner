@@ -58,7 +58,7 @@ public class InspectionTypeV1Controller {
 //
 //    }
 
-    @PostMapping("")
+    @PostMapping("/create")
     @Operation(
             summary = "점검 항목을 추가합니다",
             description = "점검 항목을 추가합니다"
