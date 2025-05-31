@@ -84,6 +84,18 @@ export default function CommunityPage() {
     }
   );
 
+  // 삭제된 게시글 목록을 위한 쿼리 추가
+  const { data: inactivePosts, isLoading: isInactiveLoading } = useQuery<
+    CommunityResponseDto[]
+  >({
+    queryKey: ["community", "inactive"],
+    queryFn: async () => {
+      const { data, error } = await client.GET("/api/v1/community/inactive");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Format date helper function
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "yyyy.MM.dd HH:mm", { locale: ko });
@@ -448,12 +460,61 @@ export default function CommunityPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // 삭제된 게시글용 페이지네이션 상태 추가
+  const [inactiveCurrentPage, setInactiveCurrentPage] = useState(1);
+  const inactiveItemsPerPage = 7;
+
+  // 삭제된 게시글 페이지네이션 로직
+  const inactiveTotalPages = Math.ceil(
+    (inactivePosts?.length || 0) / inactiveItemsPerPage
+  );
+  const currentInactivePosts = inactivePosts?.slice(
+    (inactiveCurrentPage - 1) * inactiveItemsPerPage,
+    inactiveCurrentPage * inactiveItemsPerPage
+  );
+
+  // 삭제된 게시글 페이지 변경 핸들러
+  const handleInactivePageChange = (page: number) => {
+    setInactiveCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // 삭제된 게시글 카드 렌더링 함수 수정
+  const renderInactivePostCard = (post: CommunityResponseDto) => (
+    <Card
+      key={post.id}
+      className="border-0 shadow-sm bg-gray-50/80 hover:bg-gray-50 transition-colors duration-200 opacity-75 blur-[0.2px]"
+    >
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <User className="w-4 h-4" />
+              <span>{post.author?.username || "알 수 없음"}</span>
+              <span>•</span>
+              <Calendar className="w-4 h-4" />
+              <span>{formatDate(post.createdAt)}</span>
+            </div>
+            <p className="text-gray-500 line-clamp-2">{post.content}</p>
+          </div>
+          {post.hasImage && (
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 bg-gray-100/50 rounded-lg flex items-center justify-center">
+                <ImageIcon className="w-8 h-8 text-gray-300" />
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-rose-50">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header section */}
+          {/* Existing posts section */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
@@ -568,15 +629,97 @@ export default function CommunityPage() {
             </div>
           )}
 
-          {/* Floating action button for mobile */}
-          <div className="fixed bottom-6 right-6 sm:hidden">
-            <Button
-              onClick={() => router.push("/udash/community/write")}
-              className="w-14 h-14 rounded-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110"
-              size="icon"
-            >
-              <PlusCircle className="w-6 h-6" />
-            </Button>
+          {/* 삭제된 게시글 목록 */}
+          <div className="mt-12">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+                  삭제된 게시글
+                </h2>
+                <p className="text-gray-600">삭제 처리된 게시글 목록입니다</p>
+              </div>
+              <Badge variant="secondary" className="text-gray-500">
+                총 {inactivePosts?.length || 0}건
+              </Badge>
+            </div>
+
+            <div className="space-y-4">
+              {isInactiveLoading ? (
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-12 text-center">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+                      <p className="text-gray-500 text-lg">
+                        게시글을 불러오는 중...
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : !inactivePosts?.length ? (
+                <Card className="border-0 shadow-lg bg-gradient-to-r from-pink-50 to-rose-50">
+                  <CardContent className="p-12 text-center">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="w-16 h-16 bg-gradient-to-r from-pink-100 to-rose-100 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-8 h-8 text-pink-500" />
+                      </div>
+                      <p className="text-gray-500">삭제된 게시글이 없습니다</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {currentInactivePosts?.map(renderInactivePostCard)}
+                </div>
+              )}
+            </div>
+
+            {/* 삭제된 게시글 페이지네이션 */}
+            {inactiveTotalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          inactiveCurrentPage > 1 &&
+                          handleInactivePageChange(inactiveCurrentPage - 1)
+                        }
+                        className={`${
+                          inactiveCurrentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }`}
+                      />
+                    </PaginationItem>
+
+                    {Array.from({ length: inactiveTotalPages }, (_, i) => (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          onClick={() => handleInactivePageChange(i + 1)}
+                          isActive={inactiveCurrentPage === i + 1}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          inactiveCurrentPage < inactiveTotalPages &&
+                          handleInactivePageChange(inactiveCurrentPage + 1)
+                        }
+                        className={`${
+                          inactiveCurrentPage === inactiveTotalPages
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }`}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
         </div>
       </main>
