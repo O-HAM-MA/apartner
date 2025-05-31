@@ -78,8 +78,14 @@ public class NoticeServiceImpl implements NoticeService {
 
         // 이미지 연결
         if (noticeRequestDto.getImageIds() != null) {
-            List<Image> images = imageRepository.findAllById(noticeRequestDto.getImageIds());
+//            List<Image> images = imageRepository.findAllById(noticeRequestDto.getImageIds());
+            List<Long> imageIds = noticeRequestDto.getImageIds();
+            List<Image> images = imageRepository.findAllById(imageIds);
 
+            if (images.size() != imageIds.size()) {
+                throw new IllegalArgumentException("일부 이미지가 존재하지 않습니다.");
+            }
+            
             for (Image image : images) {
                 // ✅ S3 경로 이동
                 String newPath = "notice/" + notice.getId() + "/images/" + image.getStoredName();

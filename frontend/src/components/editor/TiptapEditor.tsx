@@ -10,7 +10,7 @@ import Underline from '@tiptap/extension-underline';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
-import type { HTMLAttributes } from 'react';
+import type { HTMLAttributes, FC, ReactNode } from 'react';
 import { Plugin, PluginKey, NodeSelection } from 'prosemirror-state';
 import { BubbleMenu } from '@tiptap/react';
 import { Bold } from 'lucide-react';
@@ -435,7 +435,7 @@ interface TiptapEditorProps {
   noticeId?: number;
 }
 
-const TiptapEditor = ({
+const TiptapEditor: FC<TiptapEditorProps> = ({
   content = '',
   onChange,
   onImageUploadSuccess,
@@ -444,7 +444,7 @@ const TiptapEditor = ({
   onFileDelete,
   onMediaIdsChange,
   noticeId,
-}: TiptapEditorProps) => {
+}): ReactNode => {
   const [isMounted, setIsMounted] = useState(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const linkButtonRef = useRef<HTMLButtonElement>(null);
@@ -778,11 +778,9 @@ const TiptapEditor = ({
           setUploadingFileName(file.name);
 
           // Mock file upload for demo purposes
-          setTimeout(() => {
-            const mockFileId = Math.floor(Math.random() * 1000);
-            const mockFileUrl = URL.createObjectURL(file);
-            handleFileUploadSuccess(mockFileId, file.name, mockFileUrl);
-          }, 1000);
+          const mockFileId = Math.floor(Math.random() * 1000);
+          const mockFileUrl = URL.createObjectURL(file);
+          handleFileUploadSuccess(mockFileId, file.name, mockFileUrl);
         }
       } finally {
         setIsUploading(false);
@@ -834,32 +832,40 @@ const TiptapEditor = ({
           try {
             setUploadingFileName(file.name);
 
-            // Mock image upload for demo purposes
-            setTimeout(() => {
-              const mockImageId = Math.floor(Math.random() * 1000);
-              const imageUrl = URL.createObjectURL(file);
+            // 1. FormData로 파일 업로드 API 호출
+            const formData = new FormData();
+            formData.append('files', file);
 
-              // 이미지 삽입 - customImage 노드 사용
-              editor
-                .chain()
-                .focus()
-                .insertContent({
-                  type: 'customImage',
-                  attrs: {
-                    src: imageUrl,
-                    'data-id': String(mockImageId),
-                    'data-temp-id': tempId,
-                    'data-align': 'center',
-                    width: null,
-                    height: null,
-                    style: null,
-                  },
-                })
-                .run();
+            const res = await fetch(
+              '/api/v1/admin/notices/media/images/upload',
+              {
+                method: 'POST',
+                body: formData,
+              }
+            );
+            const result = await res.json(); // [{ id, url, ... }]
+            const uploaded = result[0];
+            const imageId = uploaded.id;
+            const imageUrl = uploaded.url; // S3 실제 URL
+            // 이미지 삽입 - customImage 노드 사용
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: 'customImage',
+                attrs: {
+                  src: imageUrl,
+                  'data-id': String(imageId),
+                  'data-align': 'center',
+                  width: null,
+                  height: null,
+                  style: null,
+                },
+              })
+              .run();
 
-              console.log('이미지 삽입 완료:', imageUrl);
-              onImageUploadSuccess?.(mockImageId);
-            }, 1000);
+            console.log('이미지 삽입 완료:', imageUrl);
+            onImageUploadSuccess?.(imageId);
           } catch (error) {
             console.error('이미지 업로드 실패:', error);
             alert(
