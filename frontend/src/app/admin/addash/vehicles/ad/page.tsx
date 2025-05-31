@@ -28,7 +28,7 @@ type EditingEntryRecordStatus = {
 export default function AdminVehicleManagement() {
   // 페이징 상태 추가
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 5;
 
   // 사라지는 차량 ID를 추적하기 위한 상태 추가
   const [slidingVehicleId, setSlidingVehicleId] = useState<number | null>(null);
