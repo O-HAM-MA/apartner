@@ -5,9 +5,27 @@ import { useRouter } from 'next/navigation';
 import TiptapEditor from '@/components/editor/TiptapEditor';
 import { components } from '@/lib/backend/apiV1/schema';
 import { useToast } from '@/components/ui/use-toast';
+import client from '@/lib/backend/client';
 
 type NoticeCreateRequestDto = components['schemas']['NoticeRequestDto'];
 type Building = components['schemas']['BuildingResponseDto'];
+
+interface MeDto {
+  id: number;
+  userName: string;
+  email: string;
+  phoneNum: string;
+  createdAt: string;
+  modifiedAt: string;
+  profileImageUrl: string | null;
+  apartmentName: string;
+  buildingName: string;
+  unitNumber: string;
+  socialProvider: string | null;
+  roles: string[];
+  gradeId: number | null;
+  apartmentId: number;
+}
 
 export default function CreateNoticePage() {
   const router = useRouter();
@@ -16,17 +34,71 @@ export default function CreateNoticePage() {
   const [content, setContent] = useState('');
   const [buildingId, setBuildingId] = useState<number | null>(null);
   const [buildings, setBuildings] = useState<Building[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageIds, setImageIds] = useState<number[]>([]);
   const [fileIds, setFileIds] = useState<number[]>([]);
+  const [apartmentId, setApartmentId] = useState<number | null>(null);
+  const [apartmentName, setApartmentName] = useState<string>('');
+  const [isBuildingsLoading, setIsBuildingsLoading] = useState(false);
 
-  // 아파트의 모든 동 정보 가져오기
+  // 관리자 정보 조회
   useEffect(() => {
-    const fetchBuildings = async () => {
+    const fetchAdminInfo = async () => {
       try {
+        const { data, error } = await client.GET('/api/v1/auth/me');
+
+        if (error) {
+          toast({
+            variant: 'destructive',
+            title: '오류',
+            description: '관리자 정보를 불러오는데 실패했습니다.',
+          });
+          return;
+        }
+
+        const adminInfo = data as unknown as MeDto;
+        console.log('관리자 정보:', adminInfo);
+
+        if (adminInfo?.apartmentId && adminInfo?.apartmentName) {
+          setApartmentId(adminInfo.apartmentId);
+          setApartmentName(adminInfo.apartmentName);
+        } else {
+          setApartmentId(null);
+          setApartmentName('');
+          toast({
+            variant: 'destructive',
+            title: '오류',
+            description: '아파트 정보를 불러오는데 실패했습니다.',
+          });
+        }
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: '오류',
+          description: '관리자 정보를 불러오는데 실패했습니다.',
+        });
+      }
+    };
+
+    fetchAdminInfo();
+  }, []);
+
+  // 건물 정보 조회
+  useEffect(() => {
+    if (!apartmentId) {
+      return;
+    }
+
+    const fetchBuildings = async () => {
+      if (isBuildingsLoading) return;
+
+      setIsBuildingsLoading(true);
+      try {
+        console.log('건물 목록 조회 시작 - apartmentId:', apartmentId);
+
+        // URL을 직접 구성하여 API 호출
         const response = await fetch(
-          `/api/v1/admin/apartments/1/buildings?page=0&size=100&sort=buildingNumber,asc`,
+          `/api/v1/admin/apartments/${apartmentId}/buildings?page=0&size=100&sort=buildingNumber,asc`,
           {
             method: 'GET',
             headers: {
@@ -36,27 +108,38 @@ export default function CreateNoticePage() {
         );
 
         if (!response.ok) {
-          throw new Error('동 정보를 불러오는데 실패했습니다.');
+          throw new Error('건물 목록을 불러오는데 실패했습니다.');
         }
 
         const data = await response.json();
-        if (data && data.content) {
-          setBuildings(data.content as Building[]);
+        console.log('건물 목록 API 응답:', data);
+
+        if (data?.content) {
+          const buildingList = data.content;
+          console.log('설정할 건물 목록:', buildingList);
+          setBuildings(buildingList);
+        } else {
+          console.error('건물 목록이 비어있음:', data);
+          toast({
+            variant: 'destructive',
+            title: '오류',
+            description: '건물 목록을 불러오는데 실패했습니다.',
+          });
         }
       } catch (error) {
-        console.error('동 정보를 불러오는데 실패했습니다:', error);
+        console.error('동 정보 조회 에러:', error);
         toast({
           variant: 'destructive',
           title: '오류',
           description: '동 정보를 불러오는데 실패했습니다.',
         });
       } finally {
-        setIsLoading(false);
+        setIsBuildingsLoading(false);
       }
     };
 
     fetchBuildings();
-  }, [toast]);
+  }, [apartmentId]);
 
   useEffect(() => {
     if (!isSubmitting) return;
@@ -155,10 +238,6 @@ export default function CreateNoticePage() {
     setFileIds(newFileIds);
   };
 
-  if (isLoading) {
-    return <div className="max-w-4xl mx-auto px-4 py-8">로딩 중...</div>;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10">
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow px-8 py-10">
@@ -201,21 +280,29 @@ export default function CreateNoticePage() {
             >
               공지 대상 (동 선택)
             </label>
-            <select
-              id="buildingId"
-              value={buildingId || ''}
-              onChange={(e) =>
-                setBuildingId(e.target.value ? Number(e.target.value) : null)
-              }
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="">전체 공지</option>
-              {buildings.map((building) => (
-                <option key={building.id} value={building.id}>
-                  {building.buildingNumber}동
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                id="buildingId"
+                value={buildingId || ''}
+                onChange={(e) =>
+                  setBuildingId(e.target.value ? Number(e.target.value) : null)
+                }
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none"
+                disabled={isBuildingsLoading}
+              >
+                <option value="">전체 공지</option>
+                {buildings.map((building) => (
+                  <option key={building.id} value={building.id}>
+                    {building.buildingNumber}동
+                  </option>
+                ))}
+              </select>
+              {isBuildingsLoading && (
+                <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
+                </div>
+              )}
+            </div>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               특정 동을 선택하면 해당 동 거주자에게만 공지가 전달됩니다. 전체
               공지를 선택하면 모든 거주자에게 전송됩니다.

@@ -16,42 +16,131 @@ type NoticeSummary = components['schemas']['NoticeSummaryResponseDto'] & {
 
 type Building = components['schemas']['BuildingResponseDto'];
 
+interface MeDto {
+  id: number;
+  userName: string;
+  email: string;
+  phoneNum: string;
+  createdAt: string;
+  modifiedAt: string;
+  profileImageUrl: string | null;
+  apartmentName: string;
+  buildingName: string;
+  unitNumber: string;
+  socialProvider: string | null;
+  zipcode: string;
+  address: string;
+  apartmentId: number;
+}
+
 export default function NoticeListPage() {
   const [notices, setNotices] = useState<NoticeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBuildingsLoading, setIsBuildingsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedTarget, setSelectedTarget] = useState('all');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [apartmentId, setApartmentId] = useState<number | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // 관리자 정보 조회
+  useEffect(() => {
+    const fetchAdminInfo = async () => {
+      try {
+        const { data, error } = await client.GET('/api/v1/auth/me');
+
+        if (error) {
+          setError('관리자 정보를 불러오는데 실패했습니다.');
+          return;
+        }
+
+        const adminInfo = data as unknown as MeDto;
+
+        if (adminInfo?.apartmentId) {
+          setApartmentId(adminInfo.apartmentId);
+        } else {
+          setApartmentId(null);
+          setError('아파트 정보를 불러오는데 실패했습니다.');
+        }
+      } catch (error) {
+        setError('관리자 정보를 불러오는데 실패했습니다.');
+      }
+    };
+
+    fetchAdminInfo();
+  }, []);
+
   // 건물 정보 조회
   useEffect(() => {
+    if (!apartmentId) {
+      return;
+    }
+
     const fetchBuildings = async () => {
+      setIsBuildingsLoading(true);
       try {
-        const response = await fetch(
-          `/api/v1/admin/apartments/1/buildings?page=0&size=100&sort=buildingNumber,asc`,
+        const { data } = await client.GET(
+          '/api/v1/admin/apartments/{apartmentId}/buildings',
           {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
+            params: {
+              path: { apartmentId },
+              query: {
+                page: 0,
+                size: 100,
+                sort: 'buildingNumber,asc',
+              },
             },
           }
         );
-        const data = await response.json();
-        if (data && data.content) {
-          setBuildings(data.content as Building[]);
+
+        console.log('건물 목록 API 응답:', data);
+
+        if (data?.content) {
+          const buildingList = data.content;
+          console.log('설정할 건물 목록:', buildingList);
+          setBuildings(buildingList);
+        } else {
+          console.error('건물 목록이 비어있음:', data);
+          setError('건물 목록을 불러오는데 실패했습니다.');
         }
       } catch (error) {
-        console.error('동 정보를 불러오는데 실패했습니다:', error);
+        console.error('동 정보 조회 에러:', error);
+        setError('동 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setIsBuildingsLoading(false);
       }
     };
 
     fetchBuildings();
-  }, []);
+  }, [apartmentId]);
+
+  // 건물 번호 표시 로직
+  const getBuildingNumber = (buildingId: number | null | undefined) => {
+    if (!buildingId) {
+      return '전체 공지';
+    }
+
+    const building = buildings.find((b) => Number(b.id) === Number(buildingId));
+    return building ? `${building.buildingNumber}동` : 'undefined';
+  };
+
+  // 건물 선택 옵션 렌더링
+  const renderBuildingOptions = () => {
+    return (
+      <>
+        <option value="all">전체 대상</option>
+        {buildings.map((building) => (
+          <option key={building.id} value={building.id}>
+            {building.buildingNumber}동
+          </option>
+        ))}
+      </>
+    );
+  };
 
   // 게시글 목록 조회
   useEffect(() => {
@@ -86,6 +175,7 @@ export default function NoticeListPage() {
         setIsLoading(false);
       }
     };
+
     fetchNotices();
   }, [currentPage, selectedTarget]);
 
@@ -149,13 +239,7 @@ export default function NoticeListPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-8">
-                      로딩 중...
-                    </td>
-                  </tr>
-                ) : notices.length === 0 ? (
+                {notices.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-8">
                       등록된 공지사항이 없습니다.
@@ -196,12 +280,7 @@ export default function NoticeListPage() {
                       </td>
                       <td className="px-6 py-4">{notice.authorName}</td>
                       <td className="px-6 py-4">
-                        {notice.buildingId
-                          ? `${
-                              buildings.find((b) => b.id === notice.buildingId)
-                                ?.buildingNumber
-                            }동`
-                          : '전체 공지'}
+                        {getBuildingNumber(notice.buildingId)}
                       </td>
                       <td className="px-6 py-4">
                         {notice.createdAt

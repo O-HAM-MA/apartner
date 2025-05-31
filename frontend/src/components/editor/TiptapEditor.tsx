@@ -433,6 +433,8 @@ interface TiptapEditorProps {
   onFileDelete?: (fileId: number) => void;
   onMediaIdsChange?: (imageIds: number[], fileIds: number[]) => void;
   noticeId?: number;
+  initialImages?: MediaInfo[];
+  initialFiles?: MediaInfo[];
 }
 
 const TiptapEditor: FC<TiptapEditorProps> = ({
@@ -444,6 +446,8 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
   onFileDelete,
   onMediaIdsChange,
   noticeId,
+  initialImages = [],
+  initialFiles = [],
 }): ReactNode => {
   const [isMounted, setIsMounted] = useState(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -465,73 +469,21 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
     setIsMounted(true);
   }, []);
 
-  // 초기 이미지와 파일 로드
+  // 초기 이미지와 파일 설정
   useEffect(() => {
-    if (!noticeId) return;
-
-    const loadInitialMedia = async () => {
-      try {
-        interface NoticeImage {
-          id: number;
-          originalName?: string;
-          downloadUrl: string;
-        }
-
-        interface NoticeFile {
-          id: number;
-          originalName?: string;
-          downloadUrl: string;
-        }
-
-        interface NoticeResponse {
-          imageUrls: NoticeImage[];
-          fileUrls: NoticeFile[];
-        }
-
-        // Mock API call for demo purposes
-        const mockResponse = {
-          data: {
-            imageUrls: [],
-            fileUrls: [],
-          },
-        };
-
-        const notice = mockResponse.data as NoticeResponse;
-
-        if (notice?.imageUrls && Array.isArray(notice.imageUrls)) {
-          const imageIds = notice.imageUrls
-            .filter(
-              (img): img is NoticeImage =>
-                typeof img?.id === 'number' &&
-                typeof img?.downloadUrl === 'string'
-            )
-            .map((img) => img.id);
-          setCurrentImageIds(imageIds);
-          prevImageIdsRef.current = imageIds;
-        }
-
-        if (notice?.fileUrls && Array.isArray(notice.fileUrls)) {
-          const files = notice.fileUrls
-            .filter(
-              (file): file is NoticeFile =>
-                typeof file?.id === 'number' &&
-                typeof file?.downloadUrl === 'string'
-            )
-            .map((file) => ({
-              id: String(file.id),
-              name: file.originalName || '파일',
-              url: file.downloadUrl,
-            }));
-          setUploadedFiles(files);
-          prevFileIdsRef.current = files.map((file) => Number(file.id));
-        }
-      } catch (error) {
-        console.error('미디어 로드 실패:', error);
-      }
-    };
-
-    loadInitialMedia();
-  }, [noticeId]);
+    if (initialImages.length > 0) {
+      setCurrentImageIds(initialImages.map((img) => img.id));
+    }
+    if (initialFiles.length > 0) {
+      setUploadedFiles(
+        initialFiles.map((file) => ({
+          id: file.id.toString(),
+          name: file.originalName,
+          url: file.downloadUrl,
+        }))
+      );
+    }
+  }, [initialImages, initialFiles]);
 
   // 모달 외부 클릭 감지를 위한 이벤트 핸들러
   useEffect(() => {
