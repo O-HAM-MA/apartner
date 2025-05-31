@@ -106,7 +106,7 @@ public class CommunityService {
 
         Community comm = communityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Not found"));
-        comm.setPinned(true);
+        comm.setPinned(!comm.isPinned());
         return toDto(comm, true);
     }
 
