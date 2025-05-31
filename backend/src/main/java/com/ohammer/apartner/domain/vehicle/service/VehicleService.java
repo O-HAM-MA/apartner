@@ -29,7 +29,7 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final EntryRecordRepository entryRecordRepository;
-    //private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
+
     private final ParkingProperties parkingProperties;
     // 최근에 입력한 maxCapacity를 저장할 필드
     private Integer currentMaxCapacity = null;
@@ -37,12 +37,6 @@ public class VehicleService {
     // 입주민 차량 등록
     @Transactional
     public VehicleResponseDto registerResidentVehicle(ResidentVehicleRequestDto dto) {
-
-
-//        User user = userRepository.findById(dto.getUserId())
-//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        // 1) SecurityUtil로 현재 로그인한 User 엔티티를 바로 꺼낸다.
 
 
         User currentUser = SecurityUtil.getCurrentUser();
@@ -70,11 +64,7 @@ public class VehicleService {
                 .status(EntryRecord.Status.AGREE)
                 .build();
 
-
-
         entryRecordRepository.save(entryRecord);
-
-
 
         return VehicleResponseDto.from(vehicle);
     }
@@ -82,13 +72,6 @@ public class VehicleService {
     // 외부 차량 등록
     @Transactional
     public VehicleResponseDto registerForeignVehicle(ForeignVehicleRequestDto dto) {
-
-//        long activeCount = vehicleRepository.countByStatus(Vehicle.Status.ACTIVE);
-//
-//        if (activeCount >= 17) {
-//            throw new IllegalStateException("주차장이 꽉 찼습니다.");
-//        }
-
 
         // ✅ 1. 동/호수로 입주민(User) 조회
         User inviter = userRepository.findByAptAndBuildingAndUnit(
@@ -113,10 +96,7 @@ public class VehicleService {
                 .status(EntryRecord.Status.PENDING)
                 .build();
 
-
-
         entryRecordRepository.save(entryRecord);
-
 
         return VehicleResponseDto.fromForeign(vehicle, dto.getPhone());
     }
@@ -216,8 +196,6 @@ public class VehicleService {
     public Vehicle findByCurrentUser() {
         Long userId = SecurityUtil.getCurrentUserId();
         if (userId == null) throw new IllegalStateException("로그인 정보가 없습니다.");
-//        return vehicleRepository.findByUser_Id(userId)
-//                .orElseThrow(() -> new IllegalArgumentException("등록된 차량이 없습니다."));
 
         List<Vehicle> vehicles = vehicleRepository.findAllByUser_Id(userId);
         if (vehicles.isEmpty()) {
@@ -238,7 +216,7 @@ public class VehicleService {
 
     }
 
-    /** 입주민용: 본인에게 온 외부인 요청 조회 */
+    // 입주민용: 본인에게 온 외부인 요청 조회
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getMyVisitorRequests(Long inviterId) {
         // 엔티티: Vehicle.user.id = inviterId && isForeign=true && status=PENDING
@@ -291,22 +269,6 @@ public class VehicleService {
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getActiveVehicles() {
 
-//        // 현재 로그인한 사용자 가져오기
-//        User currentUser = SecurityUtil.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new IllegalArgumentException("로그인이 필요합니다.");
-//        }
-//
-//        Set<Role> roles = currentUser.getRoles();
-//
-//        // Role 검사: MANAGER 또는 MODERATOR만 허용
-//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-//                role == Role.MANAGER || role == Role.MODERATOR);
-//
-//        if (!isManagerOrModerator) {
-//            throw new RuntimeException("관리자만 조회할 수 있습니다.");
-//        }
-
         checkRoleUtils.validateManagerAccess();
 
 
@@ -349,7 +311,7 @@ public class VehicleService {
         return vehicleRepository.findByUserId(userId);
     }
 
-    /** 현재 로그인 유저의 차량 목록을 VehicleRegistrationInfoDto로 반환 */
+    // 현재 로그인 유저의 차량 목록을 VehicleRegistrationInfoDto로 반환
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getMyVehicleRegistrations() {
         Long userId = SecurityUtil.getCurrentUserId();
@@ -380,9 +342,6 @@ public class VehicleService {
         LocalDateTime yesterday = now.minusHours(24);
 
 
-
-
-
         List<EntryRecord> entryRecords = entryRecordRepository.findByVehicleIsForeignWithVehicleAndUser(true);
 
 
@@ -394,38 +353,12 @@ public class VehicleService {
     }
 
 
-    // ③ 런타임에 maxCapacity를 변경하고 싶을 때 호출할 메서드
+    //  런타임에 maxCapacity를 변경하고 싶을 때 호출할 메서드
     public void updateMaxCapacity(int newCapacity) {
         checkRoleUtils.validateAdminAccess();
         // yml에서 주입된 기본값을 덮어쓴다
         parkingProperties.setMaxCapacity(newCapacity);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

@@ -38,22 +38,6 @@ public class VehicleController {
     }
 
 
-//    @GetMapping("/resident")
-//    public ResponseEntity<List<VehicleResponseDto>> getResidentVehicles() {
-//        return ResponseEntity.ok(vehicleService.getResidentVehicles());
-//    }
-//
-//    @GetMapping("/foreign")
-//    public ResponseEntity<List<VehicleResponseDto>> getForeignVehicles() {
-//        return ResponseEntity.ok(vehicleService.getForeignVehicles());
-//    }
-
-//    @GetMapping("/registrations")
-//    public ResponseEntity<List<VehicleRegistrationInfoDto>> getVehicleRegistrations(
-//            @RequestParam(name = "isForeign",  required = false) Boolean isForeign) {
-//        List<VehicleRegistrationInfoDto> registrations = vehicleService.getVehicleRegistrationInfo(isForeign);
-//        return ResponseEntity.ok(registrations);
-//    }
 
     @Operation(summary = "등록된 모든 차량 조회")
     @GetMapping("/registrationsWithStatus")

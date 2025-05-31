@@ -8,7 +8,7 @@ import lombok.Getter;
 @NoArgsConstructor
 public class EntryRecordRequestDto {
 
-    // private Long vehicleId;
+
 
     private String phone;    // 외부인 인증용 (입주민은 null 허용)
 }
