@@ -266,7 +266,7 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="flex items-center gap-2 -translate-y-1">
-              <Link href="/udash/inspections/new">
+              <Link href="/admin/inspections/new">
                 <Button className="bg-pink-500 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 dark:text-white">
                   <Plus className="mr-1 h-4 w-4" />
                   점검 추가
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
                             <tr key={inspection.inspectionId} className="border-b border-border hover:bg-secondary/30 transition-colors">
                               <td className="px-4 py-3 text-left font-medium">{inspection.inspectionId}</td>
                               <td className="px-4 py-3 text-left">
-                                <Link href={`/udash/inspections/${inspection.inspectionId}`} className="text-pink-500 hover:underline">
+                                <Link href={`/admin/inspections/${inspection.inspectionId}`} className="text-pink-500 hover:underline">
                                   {inspection.title}
                                 </Link>
                               </td>
@@ -391,7 +391,7 @@ export default function AdminDashboard() {
                           <span className="text-xs text-muted-foreground">이슈 ID: {issue.id}</span>
                         </div>
                         <h3 className="font-bold text-foreground mb-1">
-                          점검 제목: <Link href={`/udash/inspections/${issue.inspectionId}`} className="text-pink-500 hover:underline">{issue.title || '제목 없음'}</Link>
+                          점검 제목: <Link href={`/admin/inspections/${issue.inspectionId}`} className="text-pink-500 hover:underline">{issue.title || '제목 없음'}</Link>
                         </h3>
                         <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">{issue.description}</p>
                         <div className="flex justify-between text-xs text-muted-foreground">
