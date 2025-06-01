@@ -25,18 +25,13 @@ const DashboardPage = () => {
       href: '/udash/facilities',
     },
     {
-      title: '차량관리',
 
-      description: '외부인 차량 등록 및 관리',
-      icon: 'CarFront',
-      actionIcon: 'Zap',
-      href: '/udash/vehicles/guest',
+      title: "차량관리",
+      description: "입주민 차량 등록 및 관리",
+      icon: "CarFront",
+      actionIcon: "Zap",
+      href: "/udash/vehicles",
 
-      title: '차량 관리',
-      description: '외부인 차량 등록 및 관리',
-      icon: 'CarFront',
-      actionIcon: 'Zap',
-      href: '/udash/vehicles/guest',
     },
     {
       title: '시설 점검',
@@ -59,11 +54,7 @@ const DashboardPage = () => {
       actionIcon: 'Megaphone',
       href: '/udash/notices',
 
-      title: '공지사항',
-      description: '아파트 주요 공지 및 안내사항',
-      icon: 'Megaphone',
-      actionIcon: 'Megaphone',
-      href: '/udash/notices',
+      
     },
     {
       title: '소통 관리',
