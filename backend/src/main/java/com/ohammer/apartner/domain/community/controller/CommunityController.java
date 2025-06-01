@@ -8,6 +8,7 @@ import com.ohammer.apartner.security.utils.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,9 +33,6 @@ public class CommunityController {
     @GetMapping
     public List<CommunityResponseDto> list() {
 
-        //boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        boolean isAdmin = false;
-
         return communityService.listPosts();
     }
 
@@ -44,8 +42,6 @@ public class CommunityController {
                                        @RequestBody CommunityRequestDto dto
                                        ) {
         User user = SecurityUtil.getCurrentUser();
-        //boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        //boolean isAdmin = false;
 
         return communityService.update(id, dto, user);
     }
@@ -55,9 +51,6 @@ public class CommunityController {
     public void delete(@PathVariable(value = "id") Long id
                        ) {
         User user = SecurityUtil.getCurrentUser();
-//        boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        //boolean isAdmin = false;
-
         communityService.delete(id, user);
     }
 
@@ -66,10 +59,7 @@ public class CommunityController {
     public CommunityResponseDto pin(@PathVariable(value = "id") Long id
                                     ) {
         User user = SecurityUtil.getCurrentUser();
-//        boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-//        if (!isAdmin) throw new SecurityException("Not allowed");
         boolean isAdmin = false;
-
         return communityService.pin(id);
     }
 
@@ -77,10 +67,15 @@ public class CommunityController {
     @Operation(summary = "특정 글에 달린 답글 목록 조회")
     @GetMapping("/{id}")
     public List<CommunityResponseDto> listBranch(@PathVariable(value = "id") Long id) {
-        //User user = SecurityUtil.getCurrentUser();
-        //boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        //boolean isAdmin = false;
 
         return communityService.listBranchPosts(id);
     }
+
+
+    @Operation(summary = "삭제 처리된 게시글 목록 조회")
+    @GetMapping("/inactive")
+    public ResponseEntity<List<CommunityResponseDto>> getInactivePosts() {
+        return ResponseEntity.ok(communityService.listInactivePosts());
+    }
+
 }

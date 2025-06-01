@@ -186,6 +186,16 @@ export default function GuestVehicleRegistration() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="container mx-auto px-4 py-8">
+        {/* 페이지 제목 추가 */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+            외부 손님용 주차 등록 페이지
+          </h1>
+          <p className="text-gray-600 mt-2">
+            비로그인 권한의 외부인이 외부 차량 등록 및 입/출차 관리를 할 수
+            있습니다
+          </p>
+        </div>
         {/* 24시간 내 외부 차량 목록 테이블 */}
         <div className="max-w-2xl mx-auto mb-8">
           <h2 className="text-xl font-semibold mb-4">

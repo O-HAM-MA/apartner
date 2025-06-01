@@ -19,10 +19,11 @@ type VehicleRegistrationInfoDto =
 
 export default function AdminVehicleManagement() {
   const router = useRouter();
+  const queryClient = useQueryClient(); // Add this line
   const [slidingVehicleId, setSlidingVehicleId] = useState<number | null>(null);
   // 페이징 상태 추가
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   // 페이지네이션 데이터 처리 함수
   const getPaginatedData = (data: VehicleRegistrationInfoDto[] = []) => {
@@ -63,12 +64,18 @@ export default function AdminVehicleManagement() {
       });
     },
     onSuccess: () => {
-      // 데이터 리프레시
-      queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+      // 애니메이션 완료 후 데이터 리프레시
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["vehicles", "invited-approved"],
+        }); // Update this line
+        queryClient.invalidateQueries({ queryKey: ["vehicles", "mine"] });
+        setSlidingVehicleId(null);
+      }, 500);
     },
     onError: (error) => {
-      console.error("승인 상태 변경 :", error);
-      alert("승인 상태 변경.");
+      console.error("승인 상태 변경 실패:", error);
+      alert("승인 상태 변경에 실패했습니다.");
       setSlidingVehicleId(null);
     },
   });
@@ -102,24 +109,6 @@ export default function AdminVehicleManagement() {
       <Header />
 
       {/* 사용자 정보 배너 */}
-      <div className="bg-[#FFE6EE] py-4 w-full m-0">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-              <span className="text-gray-500 text-xl"></span>
-            </div>
-            <div>
-              <h2 className="font-bold text-lg text-[#FF4081]"></h2>
-              <p className="text-sm text-gray-600"></p>
-            </div>
-          </div>
-          <Link href="/dashboard">
-            <Button className="bg-black text-white hover:bg-gray-800">
-              대시보드 가기
-            </Button>
-          </Link>
-        </div>
-      </div>
 
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -129,17 +118,24 @@ export default function AdminVehicleManagement() {
             <h2 className="text-xl font-semibold mb-4">
               입주민 승인 대기 차량
             </h2>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-4 relative">
               {invitedVehicles?.map((vehicle) => (
                 <div
-                  key={vehicle.entryRecordId} // entryRecordId를 사용하여 고유성 보장
+                  key={vehicle.entryRecordId}
                   className={`bg-white p-4 rounded-lg border border-gray-200 shadow-sm 
-                              transform transition-all duration-500 ease-in-out
-                              ${
-                                slidingVehicleId === vehicle.entryRecordId
-                                  ? "translate-x-full opacity-0"
-                                  : ""
-                              }`}
+            transform transition-all duration-500 ease-in-out
+            ${
+              slidingVehicleId === vehicle.entryRecordId
+                ? "translate-x-full opacity-0"
+                : ""
+            }`}
+                  style={{
+                    position: "relative",
+                    gridColumn:
+                      slidingVehicleId === vehicle.entryRecordId
+                        ? "span 0"
+                        : "span 1",
+                  }}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -170,9 +166,13 @@ export default function AdminVehicleManagement() {
                       variant="outline"
                       size="sm"
                       className="w-1/2"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
                         if (!slidingVehicleId && vehicle.entryRecordId) {
+                          setSlidingVehicleId(vehicle.entryRecordId);
+                          await new Promise((resolve) =>
+                            setTimeout(resolve, 500)
+                          );
                           updateVehicleStatusMutation.mutate({
                             entryRecordId: vehicle.entryRecordId,
                             status: "INAGREE",
@@ -186,9 +186,13 @@ export default function AdminVehicleManagement() {
                     <Button
                       size="sm"
                       className="w-1/2 bg-[#FF4081] hover:bg-[#ff679b]"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
                         if (!slidingVehicleId && vehicle.entryRecordId) {
+                          setSlidingVehicleId(vehicle.entryRecordId);
+                          await new Promise((resolve) =>
+                            setTimeout(resolve, 500)
+                          );
                           updateVehicleStatusMutation.mutate({
                             entryRecordId: vehicle.entryRecordId,
                             status: "AGREE",
