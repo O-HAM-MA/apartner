@@ -320,6 +320,8 @@ export default function SignUpPage() {
         { email: fullEmail }
       );
 
+      // 이메일 사용 가능 - 인증 UI 표시를 위해 CHECKED 상태로 설정
+      console.log("이메일 사용 가능: 인증 UI 표시");
       setEmailCheckMessage({
         text: responseData.message || "사용 가능한 이메일입니다.",
         color: "text-green-500",
@@ -328,6 +330,9 @@ export default function SignUpPage() {
     } catch (error: any) {
       console.error("Email check error:", error);
       const backendErrorMessage = error?.response?.data?.message;
+
+      // 이메일 중복 - 인증 UI 숨김을 위해 NONE 상태로 설정
+      console.log("이메일 중복: 인증 UI 숨김");
       setEmailCheckMessage({
         text:
           backendErrorMessage ||
@@ -501,7 +506,8 @@ export default function SignUpPage() {
     } catch (error: any) {
       console.error("회원가입 오류:", error);
       const errorMessage =
-        error?.response?.data?.message || "회원가입 처리 중 오류가 발생했습니다.";
+        error?.response?.data?.message ||
+        "회원가입 처리 중 오류가 발생했습니다.";
       alert(errorMessage);
     } finally {
       setIsLoading(false);
@@ -751,85 +757,90 @@ export default function SignUpPage() {
                     {emailCheckMessage.text}
                   </p>
                 )}
-                {/* 이메일 인증 UI - CHECKED, CODE_SENT, FAILED, VERIFIED 상태일 때 표시 */}
+                {/* 이메일 인증 UI - CHECKED, CODE_SENT, FAILED, VERIFIED 상태일 때만 표시 */}
                 {(emailVerificationStep === "CHECKED" ||
                   emailVerificationStep === "CODE_SENT" ||
                   emailVerificationStep === "FAILED" ||
-                  emailVerificationStep === "VERIFIED") && (
-                  <div className="flex flex-col space-y-2 mt-2">
-                    {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
-                    {emailVerificationStep !== "VERIFIED" && (
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          placeholder="인증번호를 입력해주세요"
-                          className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value)}
-                          disabled={isLoading}
-                        />
-                        {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
-                        {(emailVerificationStep === "CHECKED" ||
-                          emailVerificationStep === "FAILED") && (
-                          <button
-                            type="button"
-                            onClick={handleSendVerificationCode}
-                            className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                              isSendCodeDisabled || isLoading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-indigo-600 hover:bg-indigo-700"
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
-                            disabled={isSendCodeDisabled || isLoading}
-                          >
-                            {isLoading && isSendCodeDisabled
-                              ? "전송중..."
-                              : isSendCodeDisabled
-                              ? "재전송 대기"
-                              : emailVerificationStep === "FAILED"
-                              ? "인증번호 재전송"
-                              : "인증번호 보내기"}
-                          </button>
-                        )}
-                        {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
-                        {(emailVerificationStep === "CODE_SENT" ||
-                          emailVerificationStep === "FAILED") && (
-                          <button
-                            type="button"
-                            onClick={handleVerifyCode}
-                            className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                              verificationCode.length === 0 || isLoading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700"
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap`}
-                            disabled={
-                              verificationCode.length === 0 || isLoading
+                  emailVerificationStep === "VERIFIED") &&
+                  emailCheckMessage.color === "text-green-500" &&
+                  !emailCheckMessage.text.includes("이미 사용중") && (
+                    <div className="flex flex-col space-y-2 mt-2">
+                      {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
+                      {emailVerificationStep !== "VERIFIED" && (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            placeholder="인증번호를 입력해주세요"
+                            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            value={verificationCode}
+                            onChange={(e) =>
+                              setVerificationCode(e.target.value)
                             }
-                          >
-                            {isLoading && emailVerificationStep === "CODE_SENT"
-                              ? "확인중..."
-                              : "확인"}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
-                    {verificationMessage.text && (
-                      <p
-                        className={`text-xs ${verificationMessage.color} ${
-                          verificationMessage.color === "text-green-500"
-                            ? "dark:text-green-400"
-                            : verificationMessage.color === "text-red-500"
-                            ? "dark:text-red-400"
-                            : verificationMessage.color === "text-blue-500"
-                            ? "dark:text-blue-400"
-                            : "dark:text-gray-400"
-                        }`}
-                      >
-                        {verificationMessage.text}
-                      </p>
-                    )}
-                  </div>
-                )}
+                            disabled={isLoading}
+                          />
+                          {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
+                          {(emailVerificationStep === "CHECKED" ||
+                            emailVerificationStep === "FAILED") && (
+                            <button
+                              type="button"
+                              onClick={handleSendVerificationCode}
+                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                isSendCodeDisabled || isLoading
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-indigo-600 hover:bg-indigo-700"
+                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                              disabled={isSendCodeDisabled || isLoading}
+                            >
+                              {isLoading && isSendCodeDisabled
+                                ? "전송중..."
+                                : isSendCodeDisabled
+                                ? "재전송 대기"
+                                : emailVerificationStep === "FAILED"
+                                ? "인증번호 재전송"
+                                : "인증번호 보내기"}
+                            </button>
+                          )}
+                          {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
+                          {(emailVerificationStep === "CODE_SENT" ||
+                            emailVerificationStep === "FAILED") && (
+                            <button
+                              type="button"
+                              onClick={handleVerifyCode}
+                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                verificationCode.length === 0 || isLoading
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-blue-600 hover:bg-blue-700"
+                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap`}
+                              disabled={
+                                verificationCode.length === 0 || isLoading
+                              }
+                            >
+                              {isLoading &&
+                              emailVerificationStep === "CODE_SENT"
+                                ? "확인중..."
+                                : "확인"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
+                      {verificationMessage.text && (
+                        <p
+                          className={`text-xs ${verificationMessage.color} ${
+                            verificationMessage.color === "text-green-500"
+                              ? "dark:text-green-400"
+                              : verificationMessage.color === "text-red-500"
+                              ? "dark:text-red-400"
+                              : verificationMessage.color === "text-blue-500"
+                              ? "dark:text-blue-400"
+                              : "dark:text-gray-400"
+                          }`}
+                        >
+                          {verificationMessage.text}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 {isLoading &&
                   emailVerificationStep !== "CHECKED" &&
                   emailVerificationStep !== "CODE_SENT" &&

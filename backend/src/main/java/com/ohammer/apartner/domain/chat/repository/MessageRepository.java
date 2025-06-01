@@ -12,4 +12,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findAllByChatroomId(Long chatroomId);
 
     List<Message> findAllByChatroomIdOrderByCreatedAtAsc(Long chatroomId);
+
+    boolean existsByChatroomId(Long chatroomId);
 }

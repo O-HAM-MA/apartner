@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import {
   Home,
   Settings,
@@ -7,12 +7,14 @@ import {
   MessageSquare,
   UserCircle,
   Building,
-} from 'lucide-react';
-import type React from 'react';
+} from "lucide-react";
+import type React from "react";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useGlobalLoginMember } from '@/auth/loginMember';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useGlobalLoginMember } from "@/auth/loginMember";
+import NotificationBell from "./notification-bell";
+import NotificationStatus from "./notification-status";
 
 interface NavItemProps {
   href: string;
@@ -32,16 +34,16 @@ const NavItem: React.FC<NavItemProps> = ({
       href={href}
       className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
         isActive
-          ? 'bg-pink-100 text-pink-700 font-semibold dark:bg-pink-950/50 dark:text-pink-300'
-          : 'text-foreground hover:bg-pink-50 hover:text-pink-600 dark:hover:bg-pink-950/30 dark:hover:text-pink-300'
+          ? "bg-pink-100 text-pink-700 font-semibold dark:bg-pink-950/50 dark:text-pink-300"
+          : "text-foreground hover:bg-pink-50 hover:text-pink-600 dark:hover:bg-pink-950/30 dark:hover:text-pink-300"
       }`}
     >
       <Icon
         size={20}
         className={
           isActive
-            ? 'text-pink-700 dark:text-pink-300'
-            : 'text-muted-foreground group-hover:text-pink-600 dark:group-hover:text-pink-300'
+            ? "text-pink-700 dark:text-pink-300"
+            : "text-muted-foreground group-hover:text-pink-600 dark:group-hover:text-pink-300"
         }
       />
       <span>{label}</span>
@@ -56,49 +58,54 @@ const Sidebar = () => {
   // 시설 점검 경로 확인 함수 - 상세 페이지도 포함하도록 수정
   const isInspectionPath = (path: string) => {
     return (
-      path === '/udash/inspections' ||
-      path.startsWith('/udash/inspections/') ||
-      path === '/inspection-detail'
+      path === "/udash/inspections" ||
+      path.startsWith("/udash/inspections/") ||
+      path === "/inspection-detail"
     );
   };
 
   const navItems = [
-    { href: '/udash', icon: Home, label: '대시보드' },
+    { href: "/udash", icon: Home, label: "대시보드" },
     {
-      href: '/udash/facilities',
+      href: "/udash/facilities",
       icon: Building,
-      label: '공용시설',
+      label: "공용시설",
     },
-    { href: '/udash/vehicles', icon: UserCircle, label: '차량 관리' },
+    { href: "/udash/vehicles", icon: UserCircle, label: "차량 관리" },
     {
-      href: '/udash/inspections',
+      href: "/udash/inspections",
       icon: Settings,
-      label: '시설 점검',
+      label: "시설 점검",
       isActive: isInspectionPath(pathname),
     },
-    { href: '/udash/complaints', icon: Users, label: '민원 관리' },
-    { href: '/udash/notices', icon: Bell, label: '공지사항' },
+    { href: "/udash/complaints", icon: Users, label: "민원 관리" },
+    { href: "/udash/notices", icon: Bell, label: "공지사항" },
   ];
 
   return (
     <div className="w-64 bg-card h-screen p-5 flex flex-col border-r border-border shrink-0">
       <div className="mb-10 flex flex-col items-start">
-        <div className="flex items-center space-x-2 mb-2">
-          <Building size={32} className="text-pink-600 dark:text-pink-400" />
-          <h1 className="text-2xl font-bold text-foreground">APTner</h1>
+        <div className="flex items-center justify-between w-full mb-2">
+          <div className="flex items-center space-x-2">
+            <Link href="/">
+              <h1 className="text-2xl font-bold text-foreground">APTner</h1>
+            </Link>
+          </div>
+          {isLogin && <NotificationBell />}
         </div>
+        {isLogin && <NotificationStatus className="ml-auto mb-2" />}
         {isLogin && loginMember ? (
           <div className="bg-secondary p-3 rounded-lg w-full mt-5">
             <p className="text-sm font-semibold text-foreground">
-              {loginMember.userName || '입주민'}
+              {loginMember.userName || "입주민"}
             </p>
             {(loginMember.apartmentName ||
               loginMember.buildingName ||
               loginMember.unitNumber) && (
               <p className="text-xs text-muted-foreground">
                 {loginMember.apartmentName}
-                {loginMember.buildingName && ` ${loginMember.buildingName}`}
-                {loginMember.unitNumber && ` ${loginMember.unitNumber}`}
+                {loginMember.buildingName && ` ${loginMember.buildingName}`} 동
+                {loginMember.unitNumber && ` ${loginMember.unitNumber}`} 호
               </p>
             )}
           </div>

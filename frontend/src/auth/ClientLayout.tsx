@@ -7,10 +7,23 @@ import { LoginMemberContext, useLoginMember } from "@/auth/loginMember";
 import Layout from "@/components/layout";
 import { checkUserAuth, checkAdminAuth } from "@/utils/api";
 
+// 디버깅 정보를 위한 인터페이스 정의
+interface DebugInfo {
+  allCookies?: string;
+  authCookies?: string[];
+  hasAuthCookie?: boolean;
+  emptyUserData?: boolean;
+  validUserData?: boolean;
+  userData?: any;
+  apiError?: any;
+  [key: string]: any; // 추가 디버깅 정보를 위한 인덱스 시그니처
+}
+
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [serverError, setServerError] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
 
   const {
     loginMember,
@@ -40,54 +53,93 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
     let isMounted = true;
 
+    // 현재 경로가 관리자 페이지인지 확인
+    const isAdminPath = pathname.startsWith("/admin");
+
+    // 비로그인 허용 페이지 확인
+    const isNoAuthPath =
+      pathname === "/signup" ||
+      pathname === "/login" ||
+      pathname === "/find-id" ||
+      pathname === "/find-password" ||
+      pathname.startsWith("/auth/");
+
+    // 관리자 페이지인 경우 처리하지 않음 (AdminLayout에서 처리)
+    // 비로그인 허용 페이지인 경우에도 처리하지 않음
+    if (isAdminPath || isNoAuthPath) {
+      setInitialCheckDone(true);
+      setNoLoginMember();
+      return;
+    }
+
+    // API를 직접 호출하여 인증 상태 확인
+    // HttpOnly 쿠키는 자바스크립트에서 접근할 수 없으므로 백엔드 API를 통해 확인해야 함
     const checkLoginStatus = async () => {
+      // 모든 쿠키 로깅 (개발환경에서만)
+      // const allCookies = document.cookie;
+      // if (process.env.NODE_ENV === "development") {
+      //   console.log("[Auth] 모든 쿠키:", allCookies);
+      //   setDebugInfo((prev: DebugInfo | null) => ({ ...prev, allCookies }));
+      // }
+
       try {
-        console.log("[ClientLayout] checkLoginStatus 호출됨");
+        const userData = await checkUserAuth();
 
-        // 현재 경로가 관리자 페이지인지 확인
-        const isAdminPath = pathname.startsWith("/admin");
+        if (!isMounted) return;
 
-        // 경로에 따라 적절한 인증 API 호출
-        if (isAdminPath) {
-          // 관리자 페이지인 경우 처리하지 않음 (AdminLayout에서 처리)
-          setInitialCheckDone(true);
+        // 응답 데이터 유효성 검증
+        if (
+          !userData ||
+          (typeof userData === "object" && Object.keys(userData).length === 0)
+        ) {
+          // if (process.env.NODE_ENV === "development") {
+          //   console.warn(
+          //     "[Auth] API 응답은 성공했으나 유효한 사용자 데이터 없음"
+          //   );
+          //   setDebugInfo((prev: DebugInfo | null) => ({
+          //     ...prev,
+          //     emptyUserData: true,
+          //     userData,
+          //   }));
+          // }
           setNoLoginMember();
+          setInitialCheckDone(true);
           return;
-        } else {
-          // 일반 사용자 인증 API 호출
-          const userData = await checkUserAuth();
-          if (isMounted) {
-            console.log(
-              "[ClientLayout] /api/v1/auth/me 응답 데이터:",
-              userData
-            );
-            setLoginMember(userData);
-            console.log(
-              "[ClientLayout] setLoginMember 호출됨, loginMember 상태:",
-              userData
-            );
-            setInitialCheckDone(true);
-            setServerError(false);
-          }
         }
+
+        // 유효한 사용자 데이터가 있는 경우
+        // if (process.env.NODE_ENV === "development") {
+        //   console.log("[Auth] 유효한 사용자 데이터:", userData);
+        //   setDebugInfo((prev: DebugInfo | null) => ({
+        //     ...prev,
+        //     validUserData: true,
+        //     userData,
+        //   }));
+        // }
+
+        setLoginMember(userData);
+        setInitialCheckDone(true);
+        setServerError(false);
       } catch (error) {
         if (!isMounted) return;
+
+        // if (process.env.NODE_ENV === "development") {
+        //   console.error("[Auth] 인증 API 호출 실패:", error);
+        //   setDebugInfo((prev: DebugInfo | null) => ({
+        //     ...prev,
+        //     apiError: error,
+        //   }));
+        // }
 
         // 서버 연결 오류 처리
         if (
           error instanceof TypeError &&
           error.message.includes("Failed to fetch")
         ) {
-          console.error("[ClientLayout] 서버 연결 오류:", error);
           setServerError(true);
         } else {
-          // 기타 오류 (401 등)
-          console.error(
-            "[ClientLayout] 로그인 상태 확인 실패 또는 비로그인 상태:",
-            error
-          );
+          // 401 등의 인증 오류는 비로그인 처리
           setNoLoginMember();
-          console.log("[ClientLayout] setNoLoginMember 호출됨");
           setInitialCheckDone(true);
         }
       }
@@ -147,6 +199,15 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       ) : (
         // 일반 사용자 경로면 Layout으로 감싸서 렌더링
         <Layout>{children}</Layout>
+      )}
+
+      {/* 개발 환경에서만 디버깅 정보 표시 (숨겨진 요소) */}
+      {process.env.NODE_ENV === "development" && debugInfo && (
+        <div
+          style={{ display: "none" }}
+          id="auth-debug-info"
+          data-debug={JSON.stringify(debugInfo)}
+        ></div>
       )}
     </LoginMemberContext.Provider>
   );

@@ -7,6 +7,8 @@ import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
 import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionIssueRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
+import com.ohammer.apartner.global.service.AlarmService;
+import com.ohammer.apartner.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class InspectionIssueService {
     private final InspectionIssueRepository issueRepository;
     private final InspectionRepository inspectionRepository;
     private final InspectionService inspectionService;
+    private final AlarmService alarmService;
 
     //생성
     @Transactional
@@ -37,9 +40,26 @@ public class InspectionIssueService {
                 .modifiedAt(LocalDateTime.now())
                 .build();
 
-        // inspectionService.IssueInspection(inspection, dto);
         inspectionRepository.save(inspection);
-        return issueRepository.save(inspectionIssue);
+        InspectionIssue saved = issueRepository.save(inspectionIssue);
+
+        User user = inspection.getUser();
+        if (user.getApartment() != null) {
+            String message = "중요: " + user.getUserName() + "님이 점검 중 이슈를 발견했습니다: " + inspection.getTitle();
+            alarmService.notifyUser(
+                user.getId(),
+                user.getApartment().getId(),
+                "점검 이슈 발생",
+                "warning",
+                "INSPECTION_ISSUE",
+                message,
+                null,
+                user.getId(),
+                saved.getId(),
+                null
+            );
+        }
+        return saved;
     }
 
     //조회
@@ -64,7 +84,24 @@ public class InspectionIssueService {
     public void updateInspectionIssue(Long id, String description) {
         InspectionIssue issue = issueRepository.findById(id).orElseThrow();
         issue.setDescription(description);
-
         issueRepository.save(issue);
+
+        User user = issue.getUser();
+        Inspection inspection = issue.getInspection();
+        if (user.getApartment() != null) {
+            String message = user.getUserName() + "님이 점검 이슈 내용을 수정했습니다: " + inspection.getTitle();
+            alarmService.notifyUser(
+                user.getId(),
+                user.getApartment().getId(),
+                "점검 이슈 수정",
+                "warning",
+                "INSPECTION_ISSUE_UPDATE",
+                message,
+                null,
+                user.getId(),
+                issue.getId(),
+                null
+            );
+        }
     }
 }

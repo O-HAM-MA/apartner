@@ -21,6 +21,7 @@ import com.ohammer.apartner.domain.notice.repository.NoticeRepository;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.global.Status;
+import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -52,6 +53,7 @@ public class NoticeServiceImpl implements NoticeService {
     private final NoticeRepository noticeRepository;
     private final NoticeImageRepository noticeImageRepository;
     private final NoticeFileRepository noticeFileRepository;
+    private final AlarmService alarmService;
 
     @Override
     @Transactional
@@ -113,6 +115,29 @@ public class NoticeServiceImpl implements NoticeService {
                 file.setPath(newPath);
                 file.setNotice(notice);
             }
+        }
+
+        Long apartmentId = null;
+        
+        if (building != null && building.getApartment() != null) {
+            apartmentId = building.getApartment().getId();
+        } 
+        else if (user.getApartment() != null) {
+            apartmentId = user.getApartment().getId();
+        }
+        
+        if (apartmentId != null) {
+            alarmService.notifyApartmentUsers(
+                apartmentId,
+                "새 공지사항",
+                "info",
+                "NOTICE_NEW",
+                "새 공지사항이 등록되었습니다: " + notice.getTitle(),
+                "/udash/notices/" + notice.getId(),
+                notice.getUser().getId(),
+                notice.getId(),
+                null
+            );
         }
 
         return notice.getId();

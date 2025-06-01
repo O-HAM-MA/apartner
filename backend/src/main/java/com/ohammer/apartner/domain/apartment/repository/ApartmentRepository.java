@@ -19,7 +19,7 @@ public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
            "  (:address IS NULL OR :address = '' OR LOWER(a.address) LIKE LOWER(CONCAT('%', :address, '%')))" +
            ") AND " +
            " (:zipcode IS NULL OR :zipcode = '' OR a.zipcode LIKE CONCAT('%', :zipcode, '%'))" +
-           ")")
+           ") ORDER BY a.createdAt DESC")
     Page<Apartment> findByCriteriaWithPage(@Param("name") String name,
                                            @Param("address") String address,
                                            @Param("zipcode") String zipcode,
@@ -31,7 +31,7 @@ public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
            "  (:address IS NULL OR :address = '' OR LOWER(a.address) LIKE LOWER(CONCAT('%', :address, '%')))" +
            ") AND " +
            " (:zipcode IS NULL OR :zipcode = '' OR a.zipcode LIKE CONCAT('%', :zipcode, '%'))" +
-           ")")
+           ") ORDER BY a.createdAt DESC")
     List<Apartment> findByCriteriaAsList(@Param("name") String name,
                                          @Param("address") String address,
                                          @Param("zipcode") String zipcode);
