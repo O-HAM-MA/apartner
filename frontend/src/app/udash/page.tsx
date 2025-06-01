@@ -1,6 +1,7 @@
 import FeatureCard from "@/components/feature-card";
 import NotificationItem from "@/components/notification-item";
 import client from "@/lib/backend/client";
+import RecentNotifications from "@/components/RecentNotifications";
 import {
   CalendarDays,
   Edit3,
@@ -12,64 +13,75 @@ import {
   UserCircle,
   Car,
   CarFront,
-} from 'lucide-react';
+} from "lucide-react";
 
 const DashboardPage = () => {
   const featureCards = [
     {
-      title: '공용시설 예약',
-      description: '헬스장, 독서실 등 공용시설 예약',
-      icon: 'CalendarDays',
-      actionIcon: 'Edit3',
-      href: '/udash/facilities',
+      title: "공용시설 예약",
+      description: "헬스장, 독서실 등 공용시설 예약",
+      icon: "CalendarDays",
+      actionIcon: "Edit3",
+      href: "/udash/facilities",
     },
     {
-      title: '차량관리',
-      description: '입주민 차량 등록 및 관리',
-      icon: 'CarFront',
-      actionIcon: 'Zap',
-      href: '/udash/vehicles',
+      title: "차량관리",
+
+      description: "외부인 차량 등록 및 관리",
+      icon: "CarFront",
+      actionIcon: "Zap",
+      href: "/udash/vehicles/guest",
+
     },
     {
-      title: '점검관리',
-      description: '시설 점검 일정 및 이력 관리',
-      icon: 'FileText',
-      actionIcon: 'Edit3',
-      href: '/udash/inspections',
+      title: "점검관리",
+      description: "시설 점검 일정 및 이력 관리",
+      icon: "FileText",
+      actionIcon: "Edit3",
+      href: "/udash/inspections",
     },
     {
-      title: '민원관리',
-      description: '민원 신청 및 처리 현황',
-      icon: 'MessageCircle',
-      actionIcon: 'Edit3',
-      href: '/udash/complaints',
+      title: "민원관리",
+      description: "민원 신청 및 처리 현황",
+      icon: "MessageCircle",
+      actionIcon: "Edit3",
+      href: "/udash/complaints",
     },
     {
-      title: '공지사항',
-      description: '아파트 주요 공지 및 안내사항',
-      icon: 'Megaphone',
-      actionIcon: 'Megaphone',
-      href: '/udash/notices',
+      title: "공지사항",
+      description: "아파트 주요 공지 및 안내사항",
+      icon: "Megaphone",
+      actionIcon: "Megaphone",
+      href: "/udash/notices",
+
+    },
+    {
+      title: "소통 관리",
+      description: "입주민 커뮤니티 소통 게시판",
+      icon: "MessageCircle",
+      actionIcon: "Edit3",
+      href: "/udash/community",
     },
   ] as const;
 
   const notifications = [
     {
-      title: '헬스장 예약이 승인되었습니다.',
-      details: '2024-03-20 14:00-16:00',
-      time: '1시간 전',
+      title: "헬스장 예약이 승인되었습니다.",
+      details: "2024-03-20 14:00-16:00",
+      time: "1시간 전",
     },
     {
-      title: '3월 관리비 고지서가 발행되었습니다.',
-      details: '납부 마감일: 2024-03-25',
-      time: '3시간 전',
+      title: "3월 관리비 고지서가 발행되었습니다.",
+      details: "납부 마감일: 2024-03-25",
+      time: "3시간 전",
     },
     {
-      title: '커뮤니티센터 대청소 안내',
-      details: '내일 오전 10시부터',
-      time: '5시간 전',
+      title: "커뮤니티센터 대청소 안내",
+      details: "내일 오전 10시부터",
+      time: "5시간 전",
     },
   ];
+
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
@@ -78,10 +90,7 @@ const DashboardPage = () => {
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">대시보드</h2>
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 rounded-full hover:bg-gray-200 focus:outline-none">
-              <BellRing size={22} className="text-gray-600" />
-              <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-white"></span>
-            </button>
+            {/* 불필요한 벨 아이콘 제거 (사이드바에 이미 있음) */}
           </div>
         </header>
 
@@ -103,6 +112,14 @@ const DashboardPage = () => {
             description={featureCards[3].description}
             icon={featureCards[3].icon}
             href={featureCards[3].href}
+          />
+          {/* 커뮤니티 카드 추가 */}
+          <FeatureCard
+            key={featureCards[5].title}
+            title={featureCards[5].title}
+            description={featureCards[5].description}
+            icon={featureCards[5].icon}
+            href={featureCards[5].href}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -131,16 +148,7 @@ const DashboardPage = () => {
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
             최근 알림
           </h3>
-          <div>
-            {notifications.map((notification, index) => (
-              <NotificationItem
-                key={index}
-                title={notification.title}
-                details={notification.details}
-                time={notification.time}
-              />
-            ))}
-          </div>
+          <RecentNotifications />
         </div>
       </main>
     </div>

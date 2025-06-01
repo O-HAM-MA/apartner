@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { post } from "@/utils/api"; // API 유틸리티 import
-import { useRouter } from "next/navigation"; // 라우터 사용을 위해 추가
-import { useGlobalLoginMember } from "@/auth/loginMember"; // 로그아웃 함수 사용을 위해 추가
+import React, { useState, useEffect } from 'react';
+import { post } from '@/utils/api'; // API 유틸리티 import
+import { useRouter } from 'next/navigation'; // 라우터 사용을 위해 추가
+import { useGlobalLoginMember } from '@/auth/loginMember'; // 로그아웃 함수 사용을 위해 추가
 
 // API 응답 타입을 위한 인터페이스 정의
 interface ApiResponse {
@@ -13,9 +13,9 @@ interface ApiResponse {
 const EditPasswordPage = () => {
   const router = useRouter(); // 라우터 초기화
   const { logout } = useGlobalLoginMember(); // logout 함수 가져오기
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
 
   const [passwordPolicy, setPasswordPolicy] = useState({
@@ -25,12 +25,12 @@ const EditPasswordPage = () => {
     number: false,
   });
   const [passwordMatchMessage, setPasswordMatchMessage] = useState({
-    text: "",
-    color: "",
+    text: '',
+    color: '',
   });
   const [submitMessage, setSubmitMessage] = useState({
-    text: "",
-    color: "",
+    text: '',
+    color: '',
   });
 
   // 비밀번호 정책 검사 (새 비밀번호)
@@ -48,33 +48,33 @@ const EditPasswordPage = () => {
     if (newPassword && confirmNewPassword) {
       if (newPassword === confirmNewPassword) {
         setPasswordMatchMessage({
-          text: "새 비밀번호가 일치합니다.",
-          color: "text-green-500",
+          text: '새 비밀번호가 일치합니다.',
+          color: 'text-green-500',
         });
       } else {
         setPasswordMatchMessage({
-          text: "새 비밀번호가 일치하지 않습니다.",
-          color: "text-red-500",
+          text: '새 비밀번호가 일치하지 않습니다.',
+          color: 'text-red-500',
         });
       }
     } else {
-      setPasswordMatchMessage({ text: "", color: "" });
+      setPasswordMatchMessage({ text: '', color: '' });
     }
   }, [newPassword, confirmNewPassword]);
 
-  const 정책문구스타일 = "text-xs";
-  const 충족스타일 = "text-green-500";
-  const 미충족스타일 = "text-red-500";
+  const 정책문구스타일 = 'text-xs';
+  const 충족스타일 = 'text-green-500';
+  const 미충족스타일 = 'text-red-500';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitMessage({ text: "", color: "" });
+    setSubmitMessage({ text: '', color: '' });
     setIsLoading(true);
 
     if (newPassword !== confirmNewPassword) {
       setSubmitMessage({
-        text: "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.",
-        color: "text-red-500",
+        text: '새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.',
+        color: 'text-red-500',
       });
       setIsLoading(false);
       return;
@@ -83,8 +83,8 @@ const EditPasswordPage = () => {
     const { length, specialChar, uppercase, number } = passwordPolicy;
     if (!length || !specialChar || !uppercase || !number) {
       setSubmitMessage({
-        text: "새 비밀번호가 정책을 만족하지 않습니다. 모든 조건을 확인해주세요.",
-        color: "text-red-500",
+        text: '새 비밀번호가 정책을 만족하지 않습니다. 모든 조건을 확인해주세요.',
+        color: 'text-red-500',
       });
       setIsLoading(false);
       return;
@@ -92,7 +92,7 @@ const EditPasswordPage = () => {
 
     try {
       const response = await post<ApiResponse>(
-        "/api/v1/myInfos/change-password",
+        '/api/v1/myInfos/change-password',
         {
           currentPassword,
           newPassword,
@@ -100,33 +100,33 @@ const EditPasswordPage = () => {
         }
       );
 
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmNewPassword("");
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
 
       logout(() => {
         alert(
           response.message ||
-            "비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요."
+            '비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요.'
         );
-        router.push("/login");
+        router.push('/login');
       });
     } catch (error: any) {
-      console.error("비밀번호 변경 실패 전체 에러:", error); // 전체 에러 객체 로깅
+      console.error('비밀번호 변경 실패 전체 에러:', error); // 전체 에러 객체 로깅
       let displayMessage =
-        "비밀번호 변경 중 오류가 발생했습니다. 다시 시도해 주세요."; // 기본 메시지
+        '비밀번호 변경 중 오류가 발생했습니다. 다시 시도해 주세요.'; // 기본 메시지
 
       if (
         error.response?.data?.message &&
-        typeof error.response.data.message === "string"
+        typeof error.response.data.message === 'string'
       ) {
         displayMessage = error.response.data.message;
-      } else if (typeof error.message === "string") {
+      } else if (typeof error.message === 'string') {
         try {
           const jsonStringMatch = error.message.match(/{[\s\S]*}/);
           if (jsonStringMatch && jsonStringMatch[0]) {
             const parsedData = JSON.parse(jsonStringMatch[0]);
-            if (parsedData && typeof parsedData.message === "string") {
+            if (parsedData && typeof parsedData.message === 'string') {
               displayMessage = parsedData.message;
             } else {
               displayMessage = error.message; // JSON은 있지만 message 필드가 없거나 유효하지 않으면 원래 error.message 사용
@@ -136,28 +136,28 @@ const EditPasswordPage = () => {
           }
         } catch (e) {
           console.warn(
-            "error.message 내 JSON 파싱 실패, error.message 사용:",
+            'error.message 내 JSON 파싱 실패, error.message 사용:',
             error.message
           );
           displayMessage = error.message; // 파싱 중 오류 발생 시 error.message 사용
         }
       } else if (
         error.response?.data &&
-        typeof error.response.data === "string"
+        typeof error.response.data === 'string'
       ) {
         try {
           const parsedData = JSON.parse(error.response.data);
-          if (parsedData && typeof parsedData.message === "string") {
+          if (parsedData && typeof parsedData.message === 'string') {
             displayMessage = parsedData.message;
           }
         } catch (e) {}
-      } else if (typeof error === "string") {
+      } else if (typeof error === 'string') {
         displayMessage = error;
       }
 
       setSubmitMessage({
         text: displayMessage,
-        color: "text-red-500",
+        color: 'text-red-500',
       });
     } finally {
       setIsLoading(false);
@@ -183,12 +183,8 @@ const EditPasswordPage = () => {
           </svg>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">
-              비밀번호 변경 안내
+              비밀번호 변경
             </h1>
-            <h2 className="text-2xl md:text-3xl font-bold text-pink-500 dark:text-pink-400">
-              안전한 서비스 이용을 위해 <br />
-              비밀번호를 변경해 주세요.
-            </h2>
           </div>
         </div>
 
@@ -198,8 +194,8 @@ const EditPasswordPage = () => {
           </h3>
           <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 mb-8 space-y-2 text-sm md:text-base">
             <li>
-              회원님의 소중한 정보를 보호하기 위해 비밀번호를 정기적으로 변경해
-              주시기 바랍니다.
+              회원님의 소중한 정보를 보호하기 위해 비밀번호를 정기적으로
+              변경해주세요.
             </li>
             <li>비밀번호를 변경하신 후에는 새로운 비밀번호를 사용해주세요.</li>
           </ul>
@@ -245,8 +241,8 @@ const EditPasswordPage = () => {
                     passwordPolicy.length ? 충족스타일 : 미충족스타일
                   } ${
                     passwordPolicy.length
-                      ? "dark:text-green-400"
-                      : "dark:text-red-400"
+                      ? 'dark:text-green-400'
+                      : 'dark:text-red-400'
                   }`}
                 >
                   총 8글자 이상
@@ -256,8 +252,8 @@ const EditPasswordPage = () => {
                     passwordPolicy.uppercase ? 충족스타일 : 미충족스타일
                   } ${
                     passwordPolicy.uppercase
-                      ? "dark:text-green-400"
-                      : "dark:text-red-400"
+                      ? 'dark:text-green-400'
+                      : 'dark:text-red-400'
                   }`}
                 >
                   영문자 1개 이상
@@ -267,8 +263,8 @@ const EditPasswordPage = () => {
                     passwordPolicy.number ? 충족스타일 : 미충족스타일
                   } ${
                     passwordPolicy.number
-                      ? "dark:text-green-400"
-                      : "dark:text-red-400"
+                      ? 'dark:text-green-400'
+                      : 'dark:text-red-400'
                   }`}
                 >
                   숫자 1개 이상
@@ -278,8 +274,8 @@ const EditPasswordPage = () => {
                     passwordPolicy.specialChar ? 충족스타일 : 미충족스타일
                   } ${
                     passwordPolicy.specialChar
-                      ? "dark:text-green-400"
-                      : "dark:text-red-400"
+                      ? 'dark:text-green-400'
+                      : 'dark:text-red-400'
                   }`}
                 >
                   특수문자 1개 이상 (!@#$%^&*(),.?":{}|&lt;&gt;)
@@ -306,9 +302,9 @@ const EditPasswordPage = () => {
               {passwordMatchMessage.text && (
                 <p
                   className={`mt-2 text-xs ${passwordMatchMessage.color} ${
-                    passwordMatchMessage.color === "text-green-500"
-                      ? "dark:text-green-400"
-                      : "dark:text-red-400"
+                    passwordMatchMessage.color === 'text-green-500'
+                      ? 'dark:text-green-400'
+                      : 'dark:text-red-400'
                   }`}
                 >
                   {passwordMatchMessage.text}
@@ -322,9 +318,9 @@ const EditPasswordPage = () => {
             {submitMessage.text && (
               <p
                 className={`text-sm ${submitMessage.color} ${
-                  submitMessage.color === "text-red-500"
-                    ? "dark:text-red-400"
-                    : "dark:text-green-400" // 성공 메시지도 있을 수 있으므로 추가
+                  submitMessage.color === 'text-red-500'
+                    ? 'dark:text-red-400'
+                    : 'dark:text-green-400' // 성공 메시지도 있을 수 있으므로 추가
                 } text-center`}
               >
                 {submitMessage.text}
@@ -336,7 +332,7 @@ const EditPasswordPage = () => {
               disabled={isLoading} // 로딩 중 버튼 비활성화
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400 transition-transform duration-150 ease-in-out hover:scale-105 disabled:bg-pink-300 dark:disabled:bg-pink-800 disabled:cursor-not-allowed"
             >
-              {isLoading ? "처리 중..." : "변경하기"}
+              {isLoading ? '처리 중...' : '변경하기'}
             </button>
           </form>
         </div>

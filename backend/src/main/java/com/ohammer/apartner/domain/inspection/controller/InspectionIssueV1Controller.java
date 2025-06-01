@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/inspection/issue")
 @RequiredArgsConstructor
@@ -34,35 +36,51 @@ public class InspectionIssueV1Controller {
                                                  @RequestBody InspectionIssueDto dto) {
         try {
             inspectionIssueService.makeInspectionIssue(id, dto);
-            //inspectionService.IssueInspection(id, dto);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("이슈 생성 실패");
         }
     }
-    //이슈 조회
-    @GetMapping("/show/{issueId}")
+    //해당 점검의 이슈 조회
+    @GetMapping("/show/{Id}")
     @Operation(
-            summary = "해당 이슈에 대한 내용을 볼 수 있음",
-            description = "해당 이슈에 대한 내용"
+            summary = "해당 점검에 대한 이슈 내용을 볼 수 있음",
+            description = "해당 점검에 대한 이슈 내용"
     )
-    public ResponseEntity<IssueResponseDetailDto> getInspectionIssue(@PathVariable(name = "issueId")Long id) {
+    public ResponseEntity<List<IssueResponseDetailDto>> getIssueFromInspection(@PathVariable(name = "Id")Long id) {
         try {
-            IssueResponseDetailDto issue= inspectionIssueService.showInspectionIssue(id);
-
-            return ResponseEntity.ok().body(issue);
+            List<IssueResponseDetailDto> issues= inspectionIssueService.showIssueFormInspection(id);
+            return ResponseEntity.ok().body(issues);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
+
+    //이슈 전체 조회
+    @GetMapping("/show_all")
+    @Operation(
+            summary = "모든 이슈를 조회를 할 수 있다",
+            description = "이슈의 리스트"
+    )
+    public ResponseEntity<List<IssueResponseDetailDto>> getInspectionIssue() {
+        try {
+            List<IssueResponseDetailDto> issues= inspectionIssueService.showInspectionIssue();
+
+            return ResponseEntity.ok().body(issues);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+
     //이슈 수정
-    @PostMapping("{id}/update")
+    @PostMapping("{issueId}/update")
     @Operation(
             summary = "해당 이슈에 대한 내용을 수정 할 수 있음",
             description = "해당 이슈에 대한 수정 내용"
     )
-    public ResponseEntity<?> updateInspectionIssue(@PathVariable(name = "id") Long id, @RequestBody InspectionIssueDto dto) {
+    public ResponseEntity<?> updateInspectionIssue(@PathVariable(name = "issueId") Long id, @RequestBody InspectionIssueDto dto) {
         try {
             inspectionIssueService.updateInspectionIssue(id, dto.getDescription());
             return ResponseEntity.ok().build();

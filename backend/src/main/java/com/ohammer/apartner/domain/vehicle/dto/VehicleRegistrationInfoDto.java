@@ -26,11 +26,8 @@ public class VehicleRegistrationInfoDto {
     private String type; // 차종
     private String phone; // 연락처
     private LocalDateTime createdAt; // 신청일
-    //private LocalDateTime visitPeriod; // 방문기간 (외부인일 경우만 사용)
-
     private String reason;     // 외부 차량 방문 사유
     private String userPhone;  // 연락처 (거주자는 user에서, 외부인은 직접 입력)
-
     private String status; // EntryRecord의 상태
     private String vehicleStatus;  // Vehicle 자체 상태 ← 추가됨
 
@@ -84,37 +81,7 @@ public class VehicleRegistrationInfoDto {
                         ? inviter.getUnit().getUnitNumber() : null;
 
 
-//            applicantName = (user != null && user.getUserName() != null)
-//                    ? user.getUserName()
-//                    : "탈퇴한 사용자";
-//            phone = (user != null)
-//                    ? user.getPhoneNum()
-//                    : null;
-//            if (user != null) {
-//                apartment = user.getApartment() != null
-//                        ? user.getApartment().getName()
-//                        : null;
-//                building = user.getBuilding() != null
-//                        ? user.getBuilding().getBuildingNumber()
-//                        : null;
-//                unit = user.getUnit() != null
-//                        ? user.getUnit().getUnitNumber()
-//                        : null;
 
-//            User user = vehicle.getUser();
-//            applicantName = user != null ? user.getUserName() : "탈퇴한 사용자";
-//            building = user != null && user.getBuilding() != null ? user.getBuilding().getBuildingNumber() : null;
-//            unit = user != null && user.getUnit() != null ? user.getUnit().getUnitNumber() : null;
-//            phone = user != null ? user.getPhoneNum() : null;
-//            // 여기에 apartmentName 세팅
-//            Apartment apt = user != null ? user.getApartment() : null;  // 혹은 vehicle.getApartment()
-//            apartment = apt != null ? apt.getName() : null;
-
-
-//            applicantName = String.valueOf(user.getId()); // 혹은 .toString()
-//            building = user.getBuilding().getBuildingNumber();
-//            unit = user.getUnit().getUnitNumber();
-//            phone = user.getPhoneNum();
             }
         }
 
@@ -130,10 +97,7 @@ public class VehicleRegistrationInfoDto {
                 .type(vehicle.getType())
                 .phone(phone)
                 .createdAt(vehicle.getCreatedAt())
-                //.visitPeriod(vehicle.getVisitPeriod()) // visitPeriod 필드 Vehicle 엔티티에 있어야 함
-                //.visitPeriod(visitPeriod)
                 .reason(isForeign ? vehicle.getReason() : null)
-                //.userPhone(!isForeign ? phone : null)
                 .userPhone(phone) // ✅ 무조건 phone을 넣자
                 .status(entryRecord.getStatus() != null ? entryRecord.getStatus().name() : null) // ✅ 이 부분
                 .vehicleStatus(vehicleStatus) // ✅ 여기에 추가

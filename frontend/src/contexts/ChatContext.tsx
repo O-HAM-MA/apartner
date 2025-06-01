@@ -72,21 +72,25 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
-  const [initialized, setInitialized] = useState(false);
-  // 인증 상태 확인용 상태 추가
   const [authChecked, setAuthChecked] = useState(false);
+  // 비동기 작업 상태 추가
+  const [isJoining, setIsJoining] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   // 관리자 사용자 정보 사용 - 직접 참조만 하고 상태로 저장하지 않음
   const { adminMember, isAdminLogin } = useGlobalAdminMember();
 
-  // 초기화 상태를 관리하는 ref
-  const initRef = useRef(false);
-  // API 호출 중인지 추적하는 ref
+  // 초기화 중인지 추적하는 ref
   const isLoadingRef = useRef(false);
+  // 초기화 여부 ref로 변경
+  const initializedRef = useRef(false);
   // 초기화 시도 횟수 추적
   const initAttemptRef = useRef(0);
   // 최대 초기화 시도 횟수
   const MAX_INIT_ATTEMPTS = 3;
+  // 진행 중인 작업 추적 ref (race condition 방지)
+  const pendingActionRef = useRef<string | null>(null);
 
   // ChatProvider 함수 내부에 구독 관리를 위한 상태 추가
   const [subscriptions, setSubscriptions] = useState<{
@@ -99,7 +103,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
       try {
         await checkAdminAuth();
         setAuthChecked(true);
-        console.log("[ChatContext] 관리자 인증 확인 완료");
       } catch (error) {
         console.warn("[ChatContext] 관리자 인증 확인 실패:", error);
         setAuthChecked(false);
@@ -114,7 +117,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   // 초기 데이터 로드
   useEffect(() => {
     // 이미 초기화되었거나 로딩 중이면 무시
-    if (initRef.current || isLoadingRef.current) {
+    if (isLoadingRef.current || initializedRef.current) {
       return;
     }
 
@@ -152,8 +155,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         // 채팅방 목록만 가져오기
         await fetchChatrooms();
         // 성공적으로 초기화되었음을 표시
-        initRef.current = true;
-        setInitialized(true);
+        initializedRef.current = true;
         console.log("[ChatContext] 초기화 완료");
       } catch (error) {
         console.error(
@@ -178,76 +180,43 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
   // 채팅방 목록 가져오기
   const fetchChatrooms = async () => {
-    console.log(
-      "[ChatContext] 채팅방 목록 가져오기 시작:",
-      new Date().toISOString()
-    );
-
-    // 인증 상태 다시 확인
-    if (!isAdminLogin || !adminMember?.id) {
-      console.warn(
-        "[ChatContext] 관리자 인증 상태가 아닙니다. 채팅방 목록을 가져올 수 없습니다."
-      );
-      throw new Error("관리자 인증이 필요합니다.");
-    }
-
+    if (isLoadingRef.current || initializedRef.current) return;
+    isLoadingRef.current = true;
     try {
-      // 관리자용 API 호출
-      console.log("[ChatContext] getAdminChatrooms API 호출 시도");
       const response = await getAdminChatrooms();
+      console.log("[ChatContext][fetchChatrooms] API 응답:", response);
       console.log(
-        "[ChatContext] 채팅방 목록 가져오기 성공:",
-        new Date().toISOString(),
-        "응답 데이터:",
+        "[ChatContext][fetchChatrooms] setChatrooms 호출, 기존 상태:",
+        chatrooms
+      );
+      setChatrooms(response);
+      console.log(
+        "[ChatContext][fetchChatrooms] setChatrooms 후 상태:",
         response
       );
-
-      // 응답 구조 확인 및 데이터 추출
-      let apiChatrooms = response;
-
-      // API 응답이 객체이고 data 속성이 있는 경우 (ApiResponse 형식)
-      if (response && typeof response === "object" && "data" in response) {
-        apiChatrooms = response.data;
-      }
-
-      // 배열인지 확인
-      if (!Array.isArray(apiChatrooms)) {
-        console.error(
-          "[ChatContext] 채팅방 목록 응답이 배열이 아닙니다:",
-          apiChatrooms
-        );
-        setChatrooms([]);
-        return [];
-      }
-
-      // 타입 변환
-      const formattedChatrooms: ChatroomType[] = apiChatrooms.map(
-        (room: any) => ({
-          id: room.id,
-          title: room.title || (room.id ? `채팅방 #${room.id}` : "채팅방"),
-          hasNewMessage: room.hasNewMessage || false,
-          userCount: room.userCount || 0,
-          createdAt: room.createdAt || "",
-        })
-      );
-
-      setChatrooms(formattedChatrooms);
-      return formattedChatrooms;
-    } catch (error) {
-      console.error("[ChatContext] 채팅방 목록 불러오기 실패:", error);
-
-      // 직접 API 호출 시도는 제거 (관리자 API만 사용)
-      setChatrooms([]);
-      throw error; // 오류 전파
+      initializedRef.current = true;
+    } finally {
+      isLoadingRef.current = false;
     }
   };
+
+  useEffect(() => {
+    if (
+      !initializedRef.current &&
+      isAdminLogin &&
+      adminMember?.id &&
+      authChecked
+    ) {
+      fetchChatrooms();
+    }
+  }, [isAdminLogin, adminMember?.id, authChecked]);
 
   // 메시지 목록 가져오기
   const fetchMessages = async (chatroomId: number) => {
     try {
       // 관리자용 API 사용
       const response = await getAdminChatMessages(chatroomId);
-      console.log("[ChatContext] 메시지 목록 가져오기 응답:", response);
+      console.log("[ChatContext][fetchMessages] API 응답:", response);
 
       // 응답 구조 확인 및 데이터 추출
       let apiMessages = response;
@@ -322,7 +291,15 @@ export function ChatProvider({ children }: ChatProviderProps) {
           })
         );
 
+        console.log(
+          "[ChatContext][fetchMessages] setMessages 호출, 기존 상태:",
+          messages
+        );
         setMessages(messagesWithUserInfo);
+        console.log(
+          "[ChatContext][fetchMessages] setMessages 후 상태:",
+          messagesWithUserInfo
+        );
         return messagesWithUserInfo;
       }
       return [];
@@ -405,14 +382,86 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
   // 채팅방 참여
   const joinChatroom = async (chatroomId: number) => {
+    // 이미 join 진행 중이면 중복 호출 방지
+    if (isJoining) {
+      console.log(
+        `[ChatContext] 이미 채팅방 참여 진행 중입니다. chatroomId: ${chatroomId}`
+      );
+      return;
+    }
+
+    // 이미 leave 진행 중이면 충돌 방지
+    if (isLeaving) {
+      console.log(
+        `[ChatContext] 채팅방 나가기 진행 중입니다. 완료 후 다시 시도하세요.`
+      );
+      return;
+    }
+
+    // 이미 같은 채팅방을 선택한 경우 중복 방지
+    if (selectedChatroom?.id === chatroomId) {
+      console.log(
+        `[ChatContext] 이미 선택된 채팅방입니다. chatroomId: ${chatroomId}`
+      );
+      return;
+    }
+
+    // 참여 중인 채팅방인지 확인
+    const isAlreadyJoined = chatrooms.some((room) => room.id === chatroomId);
+    if (isAlreadyJoined) {
+      console.log(
+        `[ChatContext] 이미 참여 중인 채팅방입니다. chatroomId: ${chatroomId}`
+      );
+      // 이미 참여 중이면 메시지만 가져오고 웹소켓 연결
+      try {
+        // 채팅방 정보 가져오기
+        const apiChatroom = await getAdminChatroom(chatroomId);
+        if (apiChatroom) {
+          // 타입 변환
+          const formattedChatroom: ChatroomType = {
+            id: apiChatroom.id,
+            title: apiChatroom.title || "",
+            hasNewMessage: apiChatroom.hasNewMessage || false,
+            userCount: apiChatroom.userCount || 0,
+            createdAt: apiChatroom.createdAt || "",
+          };
+
+          setSelectedChatroom(formattedChatroom);
+        }
+
+        // 메시지 목록 가져오기
+        await fetchMessages(chatroomId);
+
+        // 스톰프 연결 설정
+        connectStomp(chatroomId);
+        return;
+      } catch (error) {
+        console.error("[ChatContext] 채팅방 정보 가져오기 실패:", error);
+        return;
+      }
+    }
+
     const currentChatroomId = selectedChatroom?.id;
+    setIsJoining(true);
+    pendingActionRef.current = `join-${chatroomId}`;
 
     try {
+      console.log(
+        "[ChatContext][joinChatroom] 참여 요청 chatroomId:",
+        chatroomId
+      );
+      console.log(
+        "[ChatContext][joinChatroom] setSelectedChatroom 호출, 기존 상태:",
+        selectedChatroom
+      );
+      setSelectedChatroom(formattedChatroom);
+      console.log(
+        "[ChatContext][joinChatroom] setSelectedChatroom 후 상태:",
+        formattedChatroom
+      );
+
       // 관리자용 API 사용
       await joinAdminChatroom(chatroomId, currentChatroomId);
-
-      // 스톰프 연결 설정
-      connectStomp(chatroomId);
 
       // 채팅방 정보 가져오기
       const apiChatroom = await getAdminChatroom(chatroomId);
@@ -432,8 +481,27 @@ export function ChatProvider({ children }: ChatProviderProps) {
       // 메시지 목록 가져오기
       await fetchMessages(chatroomId);
 
+      // 스톰프 연결 설정 (join 성공 후에만)
+      connectStomp(chatroomId);
+
       // 채팅방 목록 갱신
       await fetchChatrooms();
+      console.log(`[ChatContext] 채팅방 ${chatroomId} 참여 완료`);
+
+      // status 불일치 감지
+      if (apiChatroom && chatrooms) {
+        const listRoom = chatrooms.find((r) => r.id === chatroomId);
+        if (listRoom && listRoom.status !== apiChatroom.status) {
+          console.warn(
+            "[ChatContext][joinChatroom] 상태 불일치 감지! 목록 status:",
+            listRoom.status,
+            "상세 status:",
+            apiChatroom.status,
+            "roomId:",
+            chatroomId
+          );
+        }
+      }
     } catch (error) {
       console.error("[ChatContext] 채팅방 참여 실패:", error);
 
@@ -448,9 +516,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
           undefined,
           true
         );
-
-        // 스톰프 연결 설정
-        connectStomp(chatroomId);
 
         // 채팅방 정보 직접 가져오기
         const response = await get<ApiResponse<ChatroomType>>(
@@ -474,30 +539,81 @@ export function ChatProvider({ children }: ChatProviderProps) {
         // 메시지 목록 가져오기
         await fetchMessages(chatroomId);
 
+        // 스톰프 연결 설정
+        connectStomp(chatroomId);
+
         // 채팅방 목록 갱신
         await fetchChatrooms();
-
-        return;
       } catch (fallbackError) {
         console.error("[ChatContext] 대체 방법도 실패:", fallbackError);
         throw error; // 원래 오류 그대로 던짐
+      }
+    } finally {
+      setIsJoining(false);
+      if (pendingActionRef.current === `join-${chatroomId}`) {
+        pendingActionRef.current = null;
       }
     }
   };
 
   // 채팅방 나가기
   const leaveChatroom = async (chatroomId: number) => {
+    // 이미 leave 진행 중이면 중복 호출 방지
+    if (isLeaving) {
+      console.log(
+        `[ChatContext] 이미 채팅방 나가기 진행 중입니다. chatroomId: ${chatroomId}`
+      );
+      return;
+    }
+
+    // 이미 join 진행 중이면 충돌 방지
+    if (isJoining) {
+      console.log(
+        `[ChatContext] 채팅방 참여 진행 중입니다. 완료 후 다시 시도하세요.`
+      );
+      return;
+    }
+
+    // 참여 중인 채팅방인지 확인
+    const isJoined = chatrooms.some((room) => room.id === chatroomId);
+    if (!isJoined) {
+      console.log(
+        `[ChatContext] 참여하지 않은 채팅방은 나갈 수 없습니다. chatroomId: ${chatroomId}`
+      );
+      return;
+    }
+
+    setIsLeaving(true);
+    pendingActionRef.current = `leave-${chatroomId}`;
+
     try {
+      console.log(`[ChatContext] 채팅방 ${chatroomId} 나가기 시작`);
       // 관리자용 API 사용
       await leaveAdminChatroom(chatroomId);
-      setSelectedChatroom(null);
-      setMessages([]);
+
+      // 연결 해제 및 상태 초기화
       if (stompClient) {
+        // 모든 구독 취소
+        Object.values(subscriptions).forEach((sub) => {
+          try {
+            stompClient.unsubscribe(sub.id);
+          } catch (e) {
+            console.log("구독 해제 중 오류:", e);
+          }
+        });
+
         stompClient.deactivate();
         setStompClient(null);
         setConnected(false);
+        setSubscriptions({});
       }
+
+      setSelectedChatroom(null);
+      setMessages([]);
+
+      // 채팅방 목록 갱신
       await fetchChatrooms();
+      console.log(`[ChatContext] 채팅방 ${chatroomId} 나가기 완료`);
     } catch (error) {
       console.error("[ChatContext] 채팅방 나가기 실패:", error);
 
@@ -514,28 +630,36 @@ export function ChatProvider({ children }: ChatProviderProps) {
           stompClient.deactivate();
           setStompClient(null);
           setConnected(false);
+          setSubscriptions({});
         }
 
         await fetchChatrooms();
-        return;
       } catch (fallbackError) {
         console.error("[ChatContext] 대체 방법도 실패:", fallbackError);
         throw error; // 원래 오류 그대로 던짐
+      }
+    } finally {
+      setIsLeaving(false);
+      if (pendingActionRef.current === `leave-${chatroomId}`) {
+        pendingActionRef.current = null;
       }
     }
   };
 
   // STOMP 클라이언트 연결
   const connectStomp = (chatroomId: number) => {
+    // 이미 같은 채팅방에 연결되어 있는 경우
+    if (connected && stompClient && subscriptions[`chatroom-${chatroomId}`]) {
+      return;
+    }
+
     // 이전 연결 해제
     if (stompClient) {
       // 모든 구독 취소
       Object.values(subscriptions).forEach((sub) => {
         try {
           stompClient.unsubscribe(sub.id);
-        } catch (e) {
-          console.log("구독 해제 중 오류:", e);
-        }
+        } catch (e) {}
       });
 
       stompClient.deactivate();
@@ -543,8 +667,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
 
     setConnecting(true);
-
-    console.log(`[ChatContext] 채팅방 ${chatroomId}에 WebSocket 연결 시작...`);
 
     // 백엔드 서버 URL 추출
     const apiBaseUrl =
@@ -564,8 +686,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setConnected(true);
       setConnecting(false);
 
-      console.log(`[ChatContext] 채팅방 ${chatroomId}에 WebSocket 연결 완료`);
-
       // 신규 구독 저장용 객체
       const newSubscriptions: { [key: string]: { id: string } } = {};
 
@@ -574,8 +694,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         `/sub/chats/${chatroomId}`,
         (message) => {
           const receivedMessage = JSON.parse(message.body);
-
-          console.log(`채팅방 ${chatroomId} 메시지 수신:`, receivedMessage);
 
           // requestAnimationFrame을 사용해 다음 프레임에 상태 업데이트 예약
           requestAnimationFrame(() => {
@@ -692,32 +810,21 @@ export function ChatProvider({ children }: ChatProviderProps) {
   // 메시지 전송
   const sendMessage = (message: string) => {
     if (!stompClient || !connected) {
-      console.error(
-        "[ChatContext] 연결이 활성화되지 않아 메시지를 보낼 수 없습니다."
-      );
       return;
     }
 
     if (!selectedChatroom || !selectedChatroom.id) {
-      console.error(
-        "[ChatContext] 선택된 채팅방이 없거나 ID가 없어 메시지를 보낼 수 없습니다."
-      );
       return;
     }
 
     const chatroomId = selectedChatroom.id;
-    console.log(`[ChatContext] 메시지 전송 대상 채팅방 ID: ${chatroomId}`);
 
     const trimmedMessage = message.trim();
     if (!trimmedMessage) {
-      console.log("[ChatContext] 빈 메시지는 전송하지 않습니다.");
       return;
     }
 
     if (!adminMember) {
-      console.error(
-        "[ChatContext] 관리자 정보가 없어 메시지를 보낼 수 없습니다."
-      );
       return;
     }
 
@@ -725,14 +832,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
       message: trimmedMessage,
       userId: adminMember.id,
     };
-
-    console.log(`[ChatContext] 채팅방 ${chatroomId}로 메시지 전송:`, {
-      message:
-        trimmedMessage.substring(0, 20) +
-        (trimmedMessage.length > 20 ? "..." : ""),
-      userId: adminMember.id,
-      destination: `/pub/chats/${chatroomId}`,
-    });
 
     try {
       // 명시적으로 선택된 채팅방 ID 로깅 및 사용
@@ -742,52 +841,39 @@ export function ChatProvider({ children }: ChatProviderProps) {
         destination: destination,
         body: JSON.stringify(messageData),
       });
-
-      console.log(`[ChatContext] 메시지가 ${destination}로 성공적으로 전송됨`);
-    } catch (error) {
-      console.error(
-        `[ChatContext] 채팅방 ${chatroomId}로 메시지 전송 중 오류 발생:`,
-        error
-      );
-    }
+    } catch (error) {}
   };
 
   // 채팅방 선택
   const selectChatroom = async (chatroom: ChatroomType) => {
     // 이미 선택된 채팅방인 경우 무시
     if (selectedChatroom?.id === chatroom.id) {
-      console.log(`[ChatContext] 이미 선택된 채팅방 ${chatroom.id} 입니다.`);
       return;
     }
 
-    console.log(
-      `[ChatContext] 채팅방 선택: 이전=${selectedChatroom?.id}, 새로운=${chatroom.id}`
-    );
-
-    // 기존 연결 정리
-    if (stompClient) {
-      Object.values(subscriptions).forEach((sub) => {
-        try {
-          stompClient.unsubscribe(sub.id);
-        } catch (e) {
-          console.log("구독 해제 중 오류:", e);
-        }
-      });
+    // 다른 비동기 작업이 진행 중이면 충돌 방지
+    if (isJoining || isLeaving || isSelecting) {
+      return;
     }
 
-    // 메시지 목록 초기화 및 새 채팅방 설정
-    setMessages([]);
+    setSelectedChatroom(chatroom);
 
-    // 채팅방에 title이 없는 경우 기본값 설정
-    const chatroomWithTitle = {
-      ...chatroom,
-      title:
-        chatroom.title || (chatroom.id ? `채팅방 #${chatroom.id}` : "채팅방"),
-    };
-
-    setSelectedChatroom(chatroomWithTitle);
+    setIsSelecting(true);
+    pendingActionRef.current = `select-${chatroom.id}`;
 
     try {
+      // 메시지 목록 초기화 및 새 채팅방 설정
+      setMessages([]);
+
+      // 채팅방에 title이 없는 경우 기본값 설정
+      const chatroomWithTitle = {
+        ...chatroom,
+        title:
+          chatroom.title || (chatroom.id ? `채팅방 #${chatroom.id}` : "채팅방"),
+      };
+
+      setSelectedChatroom(chatroomWithTitle);
+
       // 이미 참여 중인지 확인
       const isAlreadyJoined = chatrooms.some(
         (room) => room.id === chatroom.id && room.userCount > 0
@@ -807,14 +893,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
           if (data && data.data) {
             setSelectedChatroom(data.data);
           }
-        } catch (error) {
-          console.error("[ChatContext] 채팅방 정보 가져오기 실패:", error);
-        }
+        } catch (error) {}
 
         // 메시지 목록 가져오기
         await fetchMessages(chatroom.id);
 
-        // 웹소켓 연결 설정
+        // 웹소켓 연결 설정 (항상 마지막에 수행)
         connectStomp(chatroom.id);
       }
     } catch (error) {
@@ -823,10 +907,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         error instanceof Error &&
         error.message.includes("이미 참여한 채팅방입니다")
       ) {
-        console.log(
-          "[ChatContext] 이미 참여 중인 채팅방입니다. 메시지만 가져옵니다."
-        );
-
         try {
           const data = await get<ApiResponse<ChatroomType>>(
             `/api/v1/chats/${chatroom.id}`,
@@ -836,9 +916,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
           if (data && data.data) {
             setSelectedChatroom(data.data);
           }
-        } catch (error) {
-          console.error("[ChatContext] 채팅방 정보 가져오기 실패:", error);
-        }
+        } catch (error) {}
 
         // 메시지 목록 가져오기
         await fetchMessages(chatroom.id);
@@ -846,8 +924,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
         // 웹소켓 연결 설정
         connectStomp(chatroom.id);
       } else {
-        console.error("[ChatContext] 채팅방 선택 중 오류 발생:", error);
-        throw error;
+        // 오류가 발생하면 상태 초기화
+        setSelectedChatroom(null);
+        setMessages([]);
+      }
+    } finally {
+      setIsSelecting(false);
+      if (pendingActionRef.current === `select-${chatroom.id}`) {
+        pendingActionRef.current = null;
       }
     }
   };
@@ -855,11 +939,19 @@ export function ChatProvider({ children }: ChatProviderProps) {
   // 연결 해제
   const disconnect = () => {
     if (stompClient) {
+      // 모든 구독 취소
+      Object.values(subscriptions).forEach((sub) => {
+        try {
+          stompClient.unsubscribe(sub.id);
+        } catch (e) {}
+      });
+
       stompClient.deactivate();
       setStompClient(null);
       setConnected(false);
       setSelectedChatroom(null);
       setMessages([]);
+      setSubscriptions({});
     }
   };
 
@@ -867,10 +959,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
     return () => {
       // 컴포넌트 언마운트 시 연결 해제
       if (stompClient) {
+        // 모든 구독 취소
+        Object.values(subscriptions).forEach((sub) => {
+          try {
+            stompClient.unsubscribe(sub.id);
+          } catch (e) {}
+        });
+
         stompClient.deactivate();
       }
     };
-  }, [stompClient]);
+  }, [stompClient, subscriptions]);
 
   const value = {
     chatrooms,
@@ -901,27 +1000,19 @@ const getValidUserName = (message: any) => {
   ];
 
   // 단계적 확인 및 로깅
-  console.log("[ChatContext] 사용자 이름 찾기 시도:", {
-    availableFields: Object.keys(message).filter(
-      (key) => possibleNameFields.includes(key) && message[key]
-    ),
-  });
 
   // 먼저 직접 userName 확인
   if (message.userName && message.userName.trim() !== "") {
-    console.log("[ChatContext] userName 필드 사용:", message.userName);
     return message.userName;
   }
 
   // 다른 가능한 필드들 확인
   for (const field of possibleNameFields) {
     if (message[field] && message[field].trim() !== "") {
-      console.log(`[ChatContext] 대체 필드 사용 (${field}):`, message[field]);
       return message[field];
     }
   }
 
   // 기본값 반환
-  console.log("[ChatContext] 사용자 이름 필드를 찾을 수 없어 기본값 사용");
   return "사용자";
 };

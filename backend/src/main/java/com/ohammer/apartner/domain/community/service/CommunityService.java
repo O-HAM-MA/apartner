@@ -51,12 +51,12 @@ public class CommunityService {
         }
 
         Set<Role> roles = currentUser.getRoles();
-        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-                role == Role.MANAGER || role == Role.MODERATOR);
+        boolean isAdmin = roles.stream().anyMatch(role ->
+                role == Role.MANAGER || role == Role.MODERATOR || role == Role.ADMIN);
 
         List<Community> list = communityRepository.findByStatusAndParentIsNullOrderByCreatedAtDesc(Status.ACTIVE);
         return list.stream()
-                .map(c -> toDto(c, isManagerOrModerator)) // includeAuthor = true
+                .map(c -> toDto(c, isAdmin)) // includeAuthor = true
                 .collect(Collectors.toList());
     }
 
@@ -65,12 +65,11 @@ public class CommunityService {
         Community comm = communityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Not found"));
 
+
         if (!comm.getAuthor().getId().equals(user.getId())) {
             throw new SecurityException("작성자만 수정할 수 있습니다.");
         }
-//        if (!isAdmin && !comm.getAuthor().equals(user)) {
-//            throw new SecurityException("Unauthorized");
-//        }
+
         comm.setContent(dto.getContent());
         return toDto(comm, false);
     }
@@ -82,15 +81,13 @@ public class CommunityService {
 
         // 유저 역할 확인
         Set<Role> roles = user.getRoles();
-        boolean isAdmin = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR);
+        boolean isAdmin = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR) || roles.contains(Role.ADMIN);
 
 
-        if (!isAdmin && !!comm.getAuthor().getId().equals(user.getId())) {
+        if (!isAdmin && !comm.getAuthor().getId().equals(user.getId())) {
             throw new SecurityException("작성자만 삭제할 수 있습니다.");
         }
-//        if (!isAdmin && !comm.getAuthor().equals(user)) {
-//            throw new SecurityException("Unauthorized");
-//        }
+
         comm.setStatus(Status.INACTIVE);
     }
 
@@ -101,7 +98,7 @@ public class CommunityService {
 
         Community comm = communityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Not found"));
-        comm.setPinned(true);
+        comm.setPinned(!comm.isPinned());
         return toDto(comm, true);
     }
 
@@ -125,11 +122,50 @@ public class CommunityService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommunityResponseDto> listBranchPosts(Boolean isAdmin, Long parentId) {
-        List<Community> list = communityRepository.findByParentId(parentId);
-        //list = communityRepository.findByStatusAndParentIsNullOrderByCreatedAtDesc(Status.ACTIVE);
+    public List<CommunityResponseDto> listBranchPosts(Long parentId) {
+
+        // 1) 로그인 사용자 가져오기 — 로그인 필수로 처리
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        // 2) 역할 체크: MANAGER, MODERATOR, ADMIN만 작성자 보임
+        Set<Role> roles = currentUser.getRoles();
+        boolean includeAuthor = roles.contains(Role.MANAGER)
+                || roles.contains(Role.MODERATOR)
+                || roles.contains(Role.ADMIN);
+
+
+        // ACTIVE 상태인 답글만 조회
+        List<Community> list = communityRepository
+                .findByParentIdAndStatus(parentId, Status.ACTIVE);
+
+
+        return list.stream()
+                .map(c -> toDto(c, includeAuthor))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommunityResponseDto> listInactivePosts() {
+
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        checkRoleUtils.validateManagerAccess();
+
+        Set<Role> roles = currentUser.getRoles();
+        boolean isAdmin = roles.stream().anyMatch(role ->
+                role == Role.MANAGER || role == Role.MODERATOR || role == Role.ADMIN);
+
+        List<Community> list = communityRepository.findByStatusOrderByCreatedAtDesc(Status.INACTIVE);
+
         return list.stream()
                 .map(c -> toDto(c, isAdmin))
                 .collect(Collectors.toList());
     }
+
 }
