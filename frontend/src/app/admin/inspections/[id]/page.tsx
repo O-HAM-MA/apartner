@@ -161,7 +161,7 @@ export default function InspectionDetail() {
   // Handle edit button click
   const handleEdit = () => {
     // Navigate to edit page with inspection ID
-    router.push(`/udash/inspections/${inspectionData?.inspectionId}/edit`);
+    router.push(`/admin/inspections/${inspectionData?.inspectionId}/edit`);
   };
 
   // Handle delete button click
@@ -189,7 +189,7 @@ export default function InspectionDetail() {
       }
 
       // 삭제 성공 후 점검 목록 페이지로 리다이렉트하며 성공 상태 전달
-      router.push("/udash/inspections?deleted=1");
+      router.push("/admin/inspections?deleted=1");
     } catch (error: any) {
       console.error("Error deleting inspection:", error);
       alert(error.message || "점검 기록 삭제 중 오류가 발생했습니다.");
@@ -280,12 +280,13 @@ export default function InspectionDetail() {
     setIsAddingIssue(true);
     try {
       const id = params.id;
+      // 이슈 추가 API 호출
       const res = await fetch(`/api/v1/inspection/issue/${id}/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // JWT 토큰을 위한 credentials 포함
+        credentials: "include",
         body: JSON.stringify({
           description: newIssueComment.trim()
         }),
@@ -305,12 +306,36 @@ export default function InspectionDetail() {
         throw new Error(errorMessage);
       }
 
-      // 성공 시 입력란 초기화하고 이슈 목록 새로고침
-      setNewIssueComment("");
-      // 이슈 목록 새로고침
-      const issuesRes = await fetch(`/api/v1/inspection/issue/show/${id}`, {
+      // 점검 상태를 ISSUE로 업데이트
+      const updateRes = await fetch(`/api/v1/inspection/manager/${id}/update_status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
+        body: JSON.stringify({
+          result: "ISSUE"
+        }),
       });
+
+      if (!updateRes.ok) {
+        console.error("점검 상태 업데이트에 실패했습니다.");
+      }
+
+      // 성공 시 입력란 초기화하고 데이터 새로고침
+      setNewIssueComment("");
+      
+      // 점검 데이터와 이슈 목록 새로고침
+      const [inspectionRes, issuesRes] = await Promise.all([
+        fetch(`/api/v1/inspection/manager/${id}`, { credentials: "include" }),
+        fetch(`/api/v1/inspection/issue/show/${id}`, { credentials: "include" })
+      ]);
+
+      if (inspectionRes.ok) {
+        const inspectionData = await inspectionRes.json();
+        setInspectionData(inspectionData);
+      }
+      
       if (issuesRes.ok) {
         const issuesData = await issuesRes.json();
         setIssues(issuesData);
@@ -406,7 +431,7 @@ export default function InspectionDetail() {
           <header className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-foreground">시설점검</h2>
             {/* Back Button */}
-            <Link href="/udash/inspections">
+            <Link href="/admin/inspections">
               <Button
                 variant="outline"
                 className="flex items-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:text-pink-400 dark:border-pink-900/30 dark:hover:bg-pink-950/30 dark:hover:text-pink-300"
@@ -592,19 +617,10 @@ export default function InspectionDetail() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2">
-                      <Square className="h-5 w-5 text-gray-600 dark:text-gray-400 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="font-medium text-foreground">
-                          점검 예정
-                        </p>
-                        <p className="text-foreground">
-                          아직 점검이 시작되지 않았습니다. 점검을 시작하고 진행해주세요.
-                        </p>
-                      </div>
+                    <div className="text-sm text-muted-foreground">
+                      발견된 이슈가 없습니다
                     </div>
                   )}
-
                   <div className="border-t border-border pt-4 mt-4">
                     <h3 className="font-medium text-foreground mb-3">
                       발견된 이슈
@@ -651,7 +667,7 @@ export default function InspectionDetail() {
                         발견된 이슈가 없습니다
                       </div>
                     )}
-                    {inspectionData?.result !== "CHECKED" && (
+                    {(inspectionData?.result === "PENDING" || inspectionData?.result === "ISSUE") && (
                       <div className="mt-4 space-y-2">
                         <Textarea
                           placeholder="이슈 내역을 등록해주세요"

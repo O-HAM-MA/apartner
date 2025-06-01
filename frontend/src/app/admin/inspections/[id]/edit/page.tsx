@@ -201,7 +201,7 @@ export default function InspectionEditPage({
       alert("점검 기록이 성공적으로 수정되었습니다.");
 
       // 수정 완료 후 상세 페이지로 이동
-      router.push(`/udash/inspections/${params.id}`);
+      router.push(`/admin/inspections/${params.id}`);
     } catch (error: any) {
       console.error("Error updating inspection:", error);
       alert(error.message || "점검 수정 중 오류가 발생했습니다.");
@@ -211,7 +211,7 @@ export default function InspectionEditPage({
   };
 
   const handleCancel = () => {
-    router.push(`/udash/inspections/${params.id}`);
+    router.push(`/admin/inspections/${params.id}`);
   };
 
   if (isLoading || typeLoading) {
@@ -271,7 +271,7 @@ export default function InspectionEditPage({
           {/* Back Button */}
           <div className="mb-6">
             <Link
-              href={`/udash/inspections/${params.id}`}
+              href={`/admin/inspections/${params.id}`}
             >
               <Button
                 variant="outline"
