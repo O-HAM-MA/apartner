@@ -7,6 +7,7 @@ import React, {
   useState,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -85,6 +86,9 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
   // const { adminMember, isAdminLogin } = useGlobalAdminMember(); // 삭제
   const { loginMember, isLogin } = useGlobalLoginMember(); // useLoginMember 대신 useGlobalLoginMember 사용
 
+  const isLoadingRef = useRef(false);
+  const initializedRef = useRef(false);
+
   // 사용자 정보가 변경될 때 currentUser 업데이트
   useEffect(() => {
     if (isLogin && loginMember.id > 0) {
@@ -113,38 +117,21 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
 
   // 채팅방 목록 가져오기 (사용자용 API 엔드포인트 사용)
   const fetchChatrooms = useCallback(async () => {
-    console.log("사용자 채팅방 목록 가져오기 시작:", new Date().toISOString());
+    if (isLoadingRef.current || initializedRef.current) return;
+    isLoadingRef.current = true;
     try {
-      // 새로운 authApi 함수 사용
       const apiResponse = await getUserChatrooms<any>();
-      console.log("사용자 채팅방 API 응답:", apiResponse);
-
       let apiChatrooms: any = apiResponse;
-
-      // apiResponse가 ApiResponse<T> 형식인지 확인 (data 필드 포함)
       if (
         apiResponse &&
         typeof apiResponse === "object" &&
         "data" in apiResponse
       ) {
         apiChatrooms = apiResponse.data;
-        console.log("ApiResponse 형식 감지, data 필드 추출:", apiChatrooms);
       }
-
-      // apiChatrooms가 배열인지 확인
       if (!Array.isArray(apiChatrooms)) {
-        console.warn("채팅방 목록이 배열이 아닙니다:", apiChatrooms);
         apiChatrooms = [];
       }
-
-      console.log(
-        "사용자 채팅방 목록 가져오기 성공:",
-        new Date().toISOString(),
-        "채팅방 수:",
-        apiChatrooms.length
-      );
-
-      // 타입 변환
       const formattedChatrooms: ChatroomType[] = apiChatrooms.map(
         (room: any) => ({
           id: room.id,
@@ -154,66 +141,23 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
           createdAt: room.createdAt || "",
         })
       );
-
-      console.log("변환된 채팅방 목록:", formattedChatrooms);
       setChatrooms(formattedChatrooms);
+      initializedRef.current = true;
       return formattedChatrooms;
     } catch (error) {
-      console.error("사용자 채팅방 목록 불러오기 실패:", error);
       setChatrooms([]);
       return [];
+    } finally {
+      isLoadingRef.current = false;
     }
   }, []);
 
   // 초기 데이터 로드
   useEffect(() => {
-    async function initData() {
-      console.log(
-        "[UserChatContext] initData 호출됨. isLogin:",
-        isLogin,
-        "loginMember.id:",
-        loginMember.id
-      );
-      try {
-        // isLogin && loginMember.id > 0 조건은 이미 외부 useEffect에서 확인 후 initData를 호출하므로, 여기서는 바로 실행
-        console.log("[UserChatContext] fetchChatrooms 호출 시도...");
-        await fetchChatrooms();
-        console.log("[UserChatContext] fetchChatrooms 호출 완료.");
-      } finally {
-        setInitialized(true);
-        console.log("[UserChatContext] initialized_set_to_true");
-      }
+    if (!initializedRef.current && isLogin && loginMember.id > 0) {
+      fetchChatrooms();
     }
-
-    console.log(
-      "[UserChatContext] 초기 데이터 로드 useEffect 실행. initialized:",
-      initialized,
-      "isLogin:",
-      isLogin,
-      "loginMember.id:",
-      loginMember.id
-    );
-    if (!initialized && isLogin && loginMember.id > 0) {
-      console.log(
-        "[UserChatContext] initData 실행 조건 충족 ( !initialized && isLogin && loginMember.id > 0 )"
-      );
-      initData();
-    } else {
-      console.log(
-        "[UserChatContext] initData 실행 조건 미충족. initialized:",
-        initialized,
-        "isLogin:",
-        isLogin,
-        "loginMember.id:",
-        loginMember.id
-      );
-      if (!initialized && !(isLogin && loginMember.id > 0)) {
-        console.log(
-          "[UserChatContext] 아직 로그인 정보가 준비되지 않았거나, 이미 초기화가 진행된 상태일 수 있습니다."
-        );
-      }
-    }
-  }, [initialized, isLogin, loginMember.id, fetchChatrooms]);
+  }, [isLogin, loginMember.id, fetchChatrooms]);
 
   // 현재 사용자 정보 가져오기 (loginMember를 사용하므로 이 함수는 제거하거나 수정)
   // const fetchCurrentUser = async () => { ... }; // 이 함수는 loginMember로 대체되므로 주석 처리 또는 삭제

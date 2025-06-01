@@ -3,6 +3,8 @@ package com.ohammer.apartner.domain.inspection.repository;
 import com.ohammer.apartner.domain.inspection.entity.Inspection;
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.global.Status;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +21,7 @@ public interface InspectionRepository extends JpaRepository<Inspection, Long> {
     List<Inspection> findByUserIdOrManager(@Param("userId") Long userId, @Param("role") Role role);
 
     @Query("SELECT i FROM Inspection i WHERE i.status <> :excludedStatus")
-    List<Inspection> findAllByStatusNotWithdrawn(@Param("excludedStatus") Status excludedStatus);
+    Page<Inspection> findAllByStatusNotWithdrawn(@Param("excludedStatus") Status excludedStatus, Pageable pageable);
 
 
     @Query("SELECT i FROM Inspection i WHERE i.user.id = :userId")

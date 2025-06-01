@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { post, get } from '@/utils/api';
-import { useRouter } from 'next/navigation';
-import React from 'react';
-import AddressSearch from '@/components/AddressSearch';
+import { useState, useEffect } from "react";
+import { post, get } from "@/utils/api";
+import { useRouter } from "next/navigation";
+import React from "react";
+import AddressSearch from "@/components/AddressSearch";
 
 export default function SignUpPage() {
   const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
@@ -17,30 +17,30 @@ export default function SignUpPage() {
     profileImage?: string;
     email?: string;
   }>({});
-  const [signupType, setSignupType] = useState<'NORMAL' | 'KAKAO'>('NORMAL');
-  const [emailId, setEmailId] = useState('');
-  const [emailDomain, setEmailDomain] = useState('naver.com');
-  const [customEmailDomain, setCustomEmailDomain] = useState('');
+  const [signupType, setSignupType] = useState<"NORMAL" | "KAKAO">("NORMAL");
+  const [emailId, setEmailId] = useState("");
+  const [emailDomain, setEmailDomain] = useState("naver.com");
+  const [customEmailDomain, setCustomEmailDomain] = useState("");
   const [emailCheckMessage, setEmailCheckMessage] = useState({
-    text: '',
-    color: '',
+    text: "",
+    color: "",
   });
   const [emailVerificationStep, setEmailVerificationStep] = useState<
-    'NONE' | 'CHECKED' | 'CODE_SENT' | 'VERIFIED' | 'FAILED'
-  >('NONE');
-  const [verificationCode, setVerificationCode] = useState('');
+    "NONE" | "CHECKED" | "CODE_SENT" | "VERIFIED" | "FAILED"
+  >("NONE");
+  const [verificationCode, setVerificationCode] = useState("");
   const [isSendCodeDisabled, setIsSendCodeDisabled] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState({
-    text: '',
-    color: '',
+    text: "",
+    color: "",
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [passwordMatchMessage, setPasswordMatchMessage] = useState({
-    text: '',
-    color: '',
+    text: "",
+    color: "",
   });
   const [passwordPolicy, setPasswordPolicy] = useState({
     length: false,
@@ -49,7 +49,7 @@ export default function SignUpPage() {
     number: false,
   });
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
 
   // 주소 관련 상태
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -59,23 +59,23 @@ export default function SignUpPage() {
     address: string;
     zipcode: string;
   } | null>(null);
-  const [addressError, setAddressError] = useState('');
-  const [dong, setDong] = useState('');
-  const [dongError, setDongError] = useState('');
-  const [ho, setHo] = useState('');
-  const [hoError, setHoError] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [addressError, setAddressError] = useState("");
+  const [dong, setDong] = useState("");
+  const [dongError, setDongError] = useState("");
+  const [ho, setHo] = useState("");
+  const [hoError, setHoError] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneCheckMessage, setPhoneCheckMessage] = useState({
-    text: '',
-    color: '',
+    text: "",
+    color: "",
   });
 
   const emailDomains = [
-    'naver.com',
-    'gmail.com',
-    'daum.net',
-    'hanmail.net',
-    '직접 입력',
+    "naver.com",
+    "gmail.com",
+    "daum.net",
+    "hanmail.net",
+    "직접 입력",
   ];
 
   // 아파트, 동, 호수 데이터
@@ -115,9 +115,9 @@ export default function SignUpPage() {
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs
+    return `${mins.toString().padStart(2, "0")}:${secs
       .toString()
-      .padStart(2, '0')}`;
+      .padStart(2, "0")}`;
   };
 
   // 선택된 아파트에 따라 동 목록 로드
@@ -134,15 +134,15 @@ export default function SignUpPage() {
         );
         setBuildings(response);
         // 동이 선택되어 있었다면 초기화
-        setDong('');
-        setHo('');
+        setDong("");
+        setHo("");
       } catch (error) {
-        console.error('동 목록 로드 실패:', error);
+        console.error("동 목록 로드 실패:", error);
         // 실패 시 기본 데이터 사용
         setBuildings([
-          { id: 1, buildingNumber: '101동' },
-          { id: 2, buildingNumber: '102동' },
-          { id: 3, buildingNumber: '103동' },
+          { id: 1, buildingNumber: "101동" },
+          { id: 2, buildingNumber: "102동" },
+          { id: 3, buildingNumber: "103동" },
         ]);
       }
     };
@@ -169,13 +169,13 @@ export default function SignUpPage() {
         );
         setUnits(response);
       } catch (error) {
-        console.error('호수 목록 로드 실패:', error);
+        console.error("호수 목록 로드 실패:", error);
         // 실패 시 기본 데이터 사용
         setUnits([
-          { id: 1, unitNumber: '101호' },
-          { id: 2, unitNumber: '102호' },
-          { id: 3, unitNumber: '201호' },
-          { id: 4, unitNumber: '202호' },
+          { id: 1, unitNumber: "101호" },
+          { id: 2, unitNumber: "102호" },
+          { id: 3, unitNumber: "201호" },
+          { id: 4, unitNumber: "202호" },
         ]);
       }
     };
@@ -189,16 +189,16 @@ export default function SignUpPage() {
       try {
         // URL에서 kakaoInfo 쿼리 파라미터 확인
         const urlParams = new URLSearchParams(window.location.search);
-        const kakaoInfoParam = urlParams.get('kakaoInfo');
-        const authSource = urlParams.get('authSource');
+        const kakaoInfoParam = urlParams.get("kakaoInfo");
+        const authSource = urlParams.get("authSource");
 
         if (kakaoInfoParam) {
           // URL 파라미터에서 카카오 정보 파싱
           try {
             const decodedInfo = JSON.parse(decodeURIComponent(kakaoInfoParam));
-            console.log('Decoded Kakao info from URL:', decodedInfo);
+            console.log("Decoded Kakao info from URL:", decodedInfo);
 
-            if (decodedInfo.socialProvider === 'kakao') {
+            if (decodedInfo.socialProvider === "kakao") {
               // socialId를 제외한 정보만 저장
               setKakaoInfo({
                 socialProvider: decodedInfo.socialProvider,
@@ -206,33 +206,33 @@ export default function SignUpPage() {
                 profileImage: decodedInfo.profileImage,
                 email: decodedInfo.email,
               });
-              setSignupType('KAKAO');
+              setSignupType("KAKAO");
 
               if (decodedInfo.nickname) {
                 setName(decodedInfo.nickname);
               }
 
               if (decodedInfo.email) {
-                const [id, domain] = decodedInfo.email.split('@');
-                setEmailId(id || '');
+                const [id, domain] = decodedInfo.email.split("@");
+                setEmailId(id || "");
 
                 if (domain) {
                   if (emailDomains.includes(domain)) {
                     setEmailDomain(domain);
                   } else {
-                    setEmailDomain('직접 입력');
+                    setEmailDomain("직접 입력");
                     setCustomEmailDomain(domain);
                   }
                 }
               }
             }
           } catch (error) {
-            console.error('Failed to parse kakaoInfo from URL:', error);
+            console.error("Failed to parse kakaoInfo from URL:", error);
           }
 
           // 처리 후 URL에서 파라미터 제거 (필요시)
           const url = new URL(window.location.href);
-          url.searchParams.delete('kakaoInfo');
+          url.searchParams.delete("kakaoInfo");
           window.history.replaceState({}, document.title, url.toString());
 
           return; // URL에서 정보를 가져왔으므로 API 호출 불필요
@@ -240,8 +240,8 @@ export default function SignUpPage() {
 
         // 카카오 로그인으로부터 온 경우 또는 기존 로직
         if (
-          authSource === 'kakao' ||
-          window.location.pathname.includes('/signup')
+          authSource === "kakao" ||
+          window.location.pathname.includes("/signup")
         ) {
           // API 호출 시도
           const response = await get<{
@@ -249,24 +249,24 @@ export default function SignUpPage() {
             nickname?: string;
             profileImage?: string;
             email?: string;
-          }>('/api/v1/auth/check-social-session'); // 기존 API 경로 유지
+          }>("/api/v1/auth/check-social-session"); // 기존 API 경로 유지
 
-          if (response && response.socialProvider === 'kakao') {
+          if (response && response.socialProvider === "kakao") {
             setKakaoInfo(response);
-            setSignupType('KAKAO');
+            setSignupType("KAKAO");
 
-            if (Object.prototype.hasOwnProperty.call(response, 'nickname')) {
-              setName(response.nickname || '');
+            if (Object.prototype.hasOwnProperty.call(response, "nickname")) {
+              setName(response.nickname || "");
             }
 
             if (response.email) {
-              const [id, domain] = response.email.split('@');
-              setEmailId(id || '');
+              const [id, domain] = response.email.split("@");
+              setEmailId(id || "");
               if (domain) {
                 if (emailDomains.includes(domain)) {
                   setEmailDomain(domain);
                 } else {
-                  setEmailDomain('직접 입력');
+                  setEmailDomain("직접 입력");
                   setCustomEmailDomain(domain);
                 }
               }
@@ -276,12 +276,12 @@ export default function SignUpPage() {
           // URL 파라미터 정리
           if (authSource) {
             const url = new URL(window.location.href);
-            url.searchParams.delete('authSource');
+            url.searchParams.delete("authSource");
             window.history.replaceState({}, document.title, url.toString());
           }
         }
       } catch (error) {
-        console.error('카카오 정보 조회 실패:', error);
+        console.error("카카오 정보 조회 실패:", error);
       }
     };
 
@@ -290,24 +290,24 @@ export default function SignUpPage() {
 
   const handleEmailCheck = async () => {
     // 상태 초기화
-    setEmailVerificationStep('NONE');
-    setVerificationMessage({ text: '', color: '' });
-    setVerificationCode('');
+    setEmailVerificationStep("NONE");
+    setVerificationMessage({ text: "", color: "" });
+    setVerificationCode("");
     clearVerificationTimer();
     setIsSendCodeDisabled(false);
     setEmailCheckMessage({
-      text: '이메일 중복 확인 중...',
-      color: 'text-gray-500',
+      text: "이메일 중복 확인 중...",
+      color: "text-gray-500",
     });
 
     const fullEmail =
-      emailDomain === '직접 입력'
+      emailDomain === "직접 입력"
         ? `${emailId}@${customEmailDomain}`
         : `${emailId}@${emailDomain}`;
-    if (!emailId || (emailDomain === '직접 입력' && !customEmailDomain)) {
+    if (!emailId || (emailDomain === "직접 입력" && !customEmailDomain)) {
       setEmailCheckMessage({
-        text: '이메일 주소를 입력해주세요.',
-        color: 'text-red-500',
+        text: "이메일 주소를 입력해주세요.",
+        color: "text-red-500",
       });
       return;
     }
@@ -316,26 +316,31 @@ export default function SignUpPage() {
 
     try {
       const responseData = await post<{ message: string }>(
-        '/api/v1/auth/check-email',
+        "/api/v1/auth/check-email",
         { email: fullEmail }
       );
 
+      // 이메일 사용 가능 - 인증 UI 표시를 위해 CHECKED 상태로 설정
+      console.log("이메일 사용 가능: 인증 UI 표시");
       setEmailCheckMessage({
-        text: responseData.message || '사용 가능한 이메일입니다.',
-        color: 'text-green-500',
+        text: responseData.message || "사용 가능한 이메일입니다.",
+        color: "text-green-500",
       });
-      setEmailVerificationStep('CHECKED');
+      setEmailVerificationStep("CHECKED");
     } catch (error: any) {
-      console.error('Email check error:', error);
+      console.error("Email check error:", error);
       const backendErrorMessage = error?.response?.data?.message;
+
+      // 이메일 중복 - 인증 UI 숨김을 위해 NONE 상태로 설정
+      console.log("이메일 중복: 인증 UI 숨김");
       setEmailCheckMessage({
         text:
           backendErrorMessage ||
           error.message ||
-          '이미 사용중이거나 확인할 수 없는 이메일입니다.',
-        color: 'text-red-500',
+          "이미 사용중이거나 확인할 수 없는 이메일입니다.",
+        color: "text-red-500",
       });
-      setEmailVerificationStep('NONE');
+      setEmailVerificationStep("NONE");
     } finally {
       setIsLoading(false);
     }
@@ -344,41 +349,41 @@ export default function SignUpPage() {
   const handlePhoneCheck = async () => {
     if (!phoneNumber) {
       setPhoneCheckMessage({
-        text: '휴대폰 번호를 입력해주세요.',
-        color: 'text-red-500',
+        text: "휴대폰 번호를 입력해주세요.",
+        color: "text-red-500",
       });
       return;
     }
     if (!/^\d{10,11}$/.test(phoneNumber)) {
       setPhoneCheckMessage({
-        text: '유효하지 않은 휴대폰 번호 형식입니다.',
-        color: 'text-red-500',
+        text: "유효하지 않은 휴대폰 번호 형식입니다.",
+        color: "text-red-500",
       });
       return;
     }
 
     setIsLoading(true);
-    setPhoneCheckMessage({ text: '', color: '' });
+    setPhoneCheckMessage({ text: "", color: "" });
 
     try {
       const responseData = await post<{ message: string }>(
-        '/api/v1/auth/check-phone',
+        "/api/v1/auth/check-phone",
         { phoneNumber }
       );
 
       setPhoneCheckMessage({
-        text: responseData.message || '사용 가능한 휴대폰 번호입니다.',
-        color: 'text-green-500',
+        text: responseData.message || "사용 가능한 휴대폰 번호입니다.",
+        color: "text-green-500",
       });
     } catch (error: any) {
-      console.error('Phone check error:', error);
+      console.error("Phone check error:", error);
       const backendErrorMessage = error?.response?.data?.message;
       setPhoneCheckMessage({
         text:
           backendErrorMessage ||
           error.message ||
-          '이미 등록되었거나 확인할 수 없는 번호입니다.',
-        color: 'text-red-500',
+          "이미 등록되었거나 확인할 수 없는 번호입니다.",
+        color: "text-red-500",
       });
     } finally {
       setIsLoading(false);
@@ -389,17 +394,17 @@ export default function SignUpPage() {
     if (password && passwordConfirm) {
       if (password === passwordConfirm) {
         setPasswordMatchMessage({
-          text: '비밀번호가 일치합니다.',
-          color: 'text-green-500',
+          text: "비밀번호가 일치합니다.",
+          color: "text-green-500",
         });
       } else {
         setPasswordMatchMessage({
-          text: '비밀번호가 일치하지 않습니다.',
-          color: 'text-red-500',
+          text: "비밀번호가 일치하지 않습니다.",
+          color: "text-red-500",
         });
       }
     } else {
-      setPasswordMatchMessage({ text: '', color: '' });
+      setPasswordMatchMessage({ text: "", color: "" });
     }
 
     setPasswordPolicy({
@@ -414,44 +419,44 @@ export default function SignUpPage() {
     e.preventDefault();
 
     // 이메일을 입력했다면, 타입(일반/카카오)에 관계없이 이메일 인증 완료 여부 확인
-    if (emailId && emailVerificationStep !== 'VERIFIED') {
-      alert('이메일 인증을 완료해주세요.');
+    if (emailId && emailVerificationStep !== "VERIFIED") {
+      alert("이메일 인증을 완료해주세요.");
       return;
     }
 
     // 주소 검증
     if (!selectedAddress) {
-      setAddressError('주소를 선택해주세요.');
+      setAddressError("주소를 선택해주세요.");
       return;
     }
 
     // 동 검증
     if (!dong) {
-      setDongError('동을 선택해주세요.');
+      setDongError("동을 선택해주세요.");
       return;
     }
 
     // 호수 검증
     if (!ho) {
-      setHoError('호수를 선택해주세요.');
+      setHoError("호수를 선택해주세요.");
       return;
     }
 
     if (
-      signupType !== 'KAKAO' &&
-      (!phoneCheckMessage.text || phoneCheckMessage.color !== 'text-green-500')
+      signupType !== "KAKAO" &&
+      (!phoneCheckMessage.text || phoneCheckMessage.color !== "text-green-500")
     ) {
-      alert('휴대폰 번호 중복 확인이 필요합니다.');
+      alert("휴대폰 번호 중복 확인이 필요합니다.");
       return;
     }
 
-    if (signupType !== 'KAKAO' && password !== passwordConfirm) {
-      alert('비밀번호가 일치하지 않습니다.');
+    if (signupType !== "KAKAO" && password !== passwordConfirm) {
+      alert("비밀번호가 일치하지 않습니다.");
       return;
     }
 
     if (!name) {
-      alert('이름을 입력해주세요.');
+      alert("이름을 입력해주세요.");
       return;
     }
 
@@ -459,7 +464,7 @@ export default function SignUpPage() {
 
     try {
       const fullEmail =
-        emailDomain === '직접 입력'
+        emailDomain === "직접 입력"
           ? `${emailId}@${customEmailDomain}`
           : `${emailId}@${emailDomain}`;
 
@@ -467,7 +472,7 @@ export default function SignUpPage() {
       const selectedUnit = units.find((u) => u.unitNumber === ho);
 
       if (!selectedAddress || !selectedBuilding || !selectedUnit) {
-        alert('선택한 주소 정보를 찾을 수 없습니다.');
+        alert("선택한 주소 정보를 찾을 수 없습니다.");
         return;
       }
 
@@ -480,11 +485,11 @@ export default function SignUpPage() {
         // 프로필 이미지 필드를 회원가입 시점에는 전송하지 않음
       };
 
-      if (signupType === 'KAKAO') {
-        registrationData.socialProvider = 'kakao';
+      if (signupType === "KAKAO") {
+        registrationData.socialProvider = "kakao";
         // 프로필 이미지 관련 필드 제거 (백엔드에서 처리하도록 함)
         // 카카오의 경우 소셜 ID 전송
-        if (kakaoInfo && kakaoInfo.socialProvider === 'kakao') {
+        if (kakaoInfo && kakaoInfo.socialProvider === "kakao") {
           // 카카오 정보가 있으면 소셜 ID만 전송
           // 프로필 이미지는 전송하지 않음 - 백엔드에서 처리하도록 함
         }
@@ -493,57 +498,57 @@ export default function SignUpPage() {
         registrationData.phoneNum = phoneNumber;
       }
 
-      const response = await post('/api/v1/users/userreg', registrationData);
+      const response = await post("/api/v1/users/userreg", registrationData);
 
-      console.log('회원가입 성공:', response);
-      alert('회원가입이 완료되었습니다.');
-      router.push('/signup/success');
+      console.log("회원가입 성공:", response);
+      alert("회원가입이 완료되었습니다.");
+      router.push("/signup/success");
     } catch (error: any) {
-      console.error('회원가입 오류:', error);
+      console.error("회원가입 오류:", error);
       const errorMessage =
         error?.response?.data?.message ||
-        '회원가입 처리 중 오류가 발생했습니다.';
+        "회원가입 처리 중 오류가 발생했습니다.";
+
       alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const 정책문구스타일 = 'text-xs';
-  const 충족스타일 = 'text-green-500';
-  const 미충족스타일 = 'text-red-500';
+  const 정책문구스타일 = "text-xs";
+  const 충족스타일 = "text-green-500";
+  const 미충족스타일 = "text-red-500";
 
   const handleSendVerificationCode = async () => {
     // 기존 타이머 정리
     clearVerificationTimer();
     setIsSendCodeDisabled(true);
     setIsLoading(true);
-    setEmailCheckMessage({ text: '', color: '' });
     setVerificationMessage({
-      text: '인증번호를 전송 중입니다...',
-      color: 'text-gray-500',
+      text: "인증번호를 전송 중입니다...",
+      color: "text-gray-500",
     });
     const fullEmail =
-      emailDomain === '직접 입력'
+      emailDomain === "직접 입력"
         ? `${emailId}@${customEmailDomain}`
         : `${emailId}@${emailDomain}`;
 
     try {
       const responseData = await post<{ message: string }>(
-        '/api/v1/auth/send-verification-code',
+        "/api/v1/auth/send-verification-code",
         {
           email: fullEmail,
         }
       );
 
-      setEmailVerificationStep('CODE_SENT');
+      setEmailVerificationStep("CODE_SENT");
       const timerDuration = 300;
       setRemainingTime(timerDuration);
       setVerificationMessage({
         text: `✅ 인증번호가 발송되었습니다. 이메일을 확인해주세요. (유효시간: ${formatTime(
           timerDuration
         )})`,
-        color: 'text-green-500',
+        color: "text-green-500",
       });
 
       const newTimer = setInterval(() => {
@@ -553,16 +558,16 @@ export default function SignUpPage() {
             setIsSendCodeDisabled(false);
             setVerificationMessage({
               text: "인증번호 유효시간이 만료되었습니다. 재전송이 필요하면 '인증번호 재전송' 버튼을 클릭해주세요.",
-              color: 'text-blue-500',
+              color: "text-blue-500",
             });
             return 0;
           } else {
-            if (emailVerificationStepRef.current !== 'FAILED') {
+            if (emailVerificationStepRef.current !== "FAILED") {
               setVerificationMessage({
                 text: `✅ 인증번호가 발송되었습니다. 이메일을 확인해주세요. (유효시간: ${formatTime(
                   prevTime - 1
                 )})`,
-                color: 'text-green-500',
+                color: "text-green-500",
               });
             }
             return prevTime - 1;
@@ -571,14 +576,14 @@ export default function SignUpPage() {
       }, 1000);
       setVerificationTimer(newTimer);
     } catch (error: any) {
-      console.error('Send verification code error:', error);
-      setEmailVerificationStep('FAILED');
+      console.error("Send verification code error:", error);
+      setEmailVerificationStep("FAILED");
       const backendErrorMessage = error?.response?.data?.message;
       setVerificationMessage({
         text: `❌ ${
-          backendErrorMessage || error.message || '인증번호 발송 실패'
+          backendErrorMessage || error.message || "인증번호 발송 실패"
         }`,
-        color: 'text-red-500',
+        color: "text-red-500",
       });
       setIsSendCodeDisabled(false);
     } finally {
@@ -589,26 +594,25 @@ export default function SignUpPage() {
   const handleVerifyCode = async () => {
     if (!verificationCode) {
       setVerificationMessage({
-        text: '인증번호를 입력해주세요.',
-        color: 'text-red-500',
+        text: "인증번호를 입력해주세요.",
+        color: "text-red-500",
       });
       return;
     }
 
     setIsLoading(true);
-    setEmailCheckMessage({ text: '', color: '' });
     setVerificationMessage({
-      text: '인증번호를 확인 중입니다...',
-      color: 'text-gray-500',
+      text: "인증번호를 확인 중입니다...",
+      color: "text-gray-500",
     });
     const fullEmail =
-      emailDomain === '직접 입력'
+      emailDomain === "직접 입력"
         ? `${emailId}@${customEmailDomain}`
         : `${emailId}@${emailDomain}`;
 
     try {
       const responseData = await post<{ message: string }>(
-        '/api/v1/auth/verify-code',
+        "/api/v1/auth/verify-code",
         {
           email: fullEmail,
           code: verificationCode,
@@ -616,22 +620,21 @@ export default function SignUpPage() {
       );
 
       clearVerificationTimer();
-      setEmailVerificationStep('VERIFIED');
-      setEmailCheckMessage({ text: '', color: '' });
+      setEmailVerificationStep("VERIFIED");
       setVerificationMessage({
-        text: responseData.message || '✅ 인증번호가 일치합니다.',
-        color: 'text-green-500',
+        text: responseData.message || "✅ 인증번호가 일치합니다.",
+        color: "text-green-500",
       });
     } catch (error: any) {
-      console.error('Verify code error:', error);
-      setEmailVerificationStep('FAILED');
+      console.error("Verify code error:", error);
+      setEmailVerificationStep("FAILED");
       const backendErrorMessage = error?.response?.data?.message;
       setVerificationMessage({
         text: `❌ ${
           backendErrorMessage ||
-          '인증번호가 일치하지 않습니다. 다시 확인해주세요.'
+          "인증번호가 일치하지 않습니다. 다시 확인해주세요."
         }`,
-        color: 'text-red-500',
+        color: "text-red-500",
       });
     } finally {
       setIsLoading(false);
@@ -645,7 +648,7 @@ export default function SignUpPage() {
         onClose={() => setIsAddressModalOpen(false)}
         onSelectAddress={(address) => {
           setSelectedAddress(address);
-          setAddressError('');
+          setAddressError("");
         }}
       />
       <div className="min-h-screen bg-pink-50 p-4 sm:p-8 flex flex-col items-center  dark:bg-gray-900">
@@ -654,7 +657,7 @@ export default function SignUpPage() {
             <h2 className="text-center text-5xl font-bold tracking-tight text-pink-500 dark:text-pink-400 mb-2 max-w-xl mx-auto">
               SIGN UP
             </h2>
-            {signupType === 'KAKAO' && (
+            {signupType === "KAKAO" && (
               <p className="text-center text-3xl font-semibold text-yellow-400 mb-10">
                 - KAKAO -
               </p>
@@ -681,15 +684,15 @@ export default function SignUpPage() {
                     value={emailId}
                     onChange={(e) => {
                       setEmailId(e.target.value);
-                      setEmailCheckMessage({ text: '', color: '' });
-                      setEmailVerificationStep('NONE');
-                      setVerificationMessage({ text: '', color: '' });
-                      setVerificationCode('');
+                      setEmailCheckMessage({ text: "", color: "" });
+                      setEmailVerificationStep("NONE");
+                      setVerificationMessage({ text: "", color: "" });
+                      setVerificationCode("");
                     }}
                     disabled={isLoading}
                   />
                   <span className="text-gray-500 dark:text-gray-400">@</span>
-                  {emailDomain === '직접 입력' ? (
+                  {emailDomain === "직접 입력" ? (
                     <input
                       type="text"
                       required
@@ -698,10 +701,10 @@ export default function SignUpPage() {
                       value={customEmailDomain}
                       onChange={(e) => {
                         setCustomEmailDomain(e.target.value);
-                        setEmailCheckMessage({ text: '', color: '' });
-                        setEmailVerificationStep('NONE');
-                        setVerificationMessage({ text: '', color: '' });
-                        setVerificationCode('');
+                        setEmailCheckMessage({ text: "", color: "" });
+                        setEmailVerificationStep("NONE");
+                        setVerificationMessage({ text: "", color: "" });
+                        setVerificationCode("");
                       }}
                       disabled={isLoading}
                     />
@@ -712,12 +715,12 @@ export default function SignUpPage() {
                       value={emailDomain}
                       onChange={(e) => {
                         setEmailDomain(e.target.value);
-                        if (e.target.value !== '직접 입력')
-                          setCustomEmailDomain('');
-                        setEmailCheckMessage({ text: '', color: '' });
-                        setEmailVerificationStep('NONE');
-                        setVerificationMessage({ text: '', color: '' });
-                        setVerificationCode('');
+                        if (e.target.value !== "직접 입력")
+                          setCustomEmailDomain("");
+                        setEmailCheckMessage({ text: "", color: "" });
+                        setEmailVerificationStep("NONE");
+                        setVerificationMessage({ text: "", color: "" });
+                        setVerificationCode("");
                       }}
                       className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       disabled={isLoading}
@@ -733,113 +736,120 @@ export default function SignUpPage() {
                     type="button"
                     onClick={handleEmailCheck}
                     className={`ml-2 px-4 h-12 border border-transparent text-sm font-semibold leading-6 text-white rounded-lg ${
-                      isLoading || emailVerificationStep === 'VERIFIED'
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-pink-500 hover:bg-pink-600'
+                      isLoading || emailVerificationStep === "VERIFIED"
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-pink-500 hover:bg-pink-600"
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 whitespace-nowrap`}
-                    disabled={isLoading || emailVerificationStep === 'VERIFIED'}
+                    disabled={isLoading || emailVerificationStep === "VERIFIED"}
                   >
-                    {isLoading && emailVerificationStep === 'NONE'
-                      ? '확인중...'
-                      : '중복체크'}
+                    {isLoading && emailVerificationStep === "NONE"
+                      ? "확인중..."
+                      : "중복체크"}
                   </button>
                 </div>
                 {emailCheckMessage.text && (
                   <p
                     className={`mt-2 text-xs ${emailCheckMessage.color} ${
-                      emailCheckMessage.color === 'text-green-500'
-                        ? 'dark:text-green-400'
-                        : emailCheckMessage.color === 'text-red-500'
-                        ? 'dark:text-red-400'
-                        : 'dark:text-gray-400'
+                      emailCheckMessage.color === "text-green-500"
+                        ? "dark:text-green-400"
+                        : emailCheckMessage.color === "text-red-500"
+                        ? "dark:text-red-400"
+                        : "dark:text-gray-400"
                     }`}
                   >
                     {emailCheckMessage.text}
                   </p>
                 )}
-                {/* 이메일 인증 UI - CHECKED, CODE_SENT, FAILED, VERIFIED 상태일 때 표시 */}
-                {(emailVerificationStep === 'CHECKED' ||
-                  emailVerificationStep === 'CODE_SENT' ||
-                  emailVerificationStep === 'FAILED' ||
-                  emailVerificationStep === 'VERIFIED') && (
-                  <div className="flex flex-col space-y-2 mt-2">
-                    {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
-                    {emailVerificationStep !== 'VERIFIED' && (
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          placeholder="인증번호를 입력해주세요"
-                          className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value)}
-                          disabled={isLoading}
-                        />
-                        {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
-                        {(emailVerificationStep === 'CHECKED' ||
-                          emailVerificationStep === 'FAILED') && (
-                          <button
-                            type="button"
-                            onClick={handleSendVerificationCode}
-                            className={`ml-2 px-4 h-12 border border-transparent text-sm font-semibold leading-6 text-white rounded-lg ${
-                              isSendCodeDisabled || isLoading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-pink-500 hover:bg-pink-600'
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 whitespace-nowrap`}
-                            disabled={isSendCodeDisabled || isLoading}
-                          >
-                            {isLoading && isSendCodeDisabled
-                              ? '전송중...'
-                              : isSendCodeDisabled
-                              ? '재전송 대기'
-                              : emailVerificationStep === 'FAILED'
-                              ? '인증번호 재전송'
-                              : '인증번호 보내기'}
-                          </button>
-                        )}
-                        {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
-                        {(emailVerificationStep === 'CODE_SENT' ||
-                          emailVerificationStep === 'FAILED') && (
-                          <button
-                            type="button"
-                            onClick={handleVerifyCode}
-                            className={`ml-2 px-4 h-12 border border-transparent text-sm font-semibold leading-6 text-white rounded-lg ${
-                              verificationCode.length === 0 || isLoading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-pink-500 hover:bg-pink-600'
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 whitespace-nowrap`}
-                            disabled={
-                              verificationCode.length === 0 || isLoading
+
+                {/* 이메일 인증 UI - CHECKED, CODE_SENT, FAILED, VERIFIED 상태일 때만 표시 */}
+                {(emailVerificationStep === "CHECKED" ||
+                  emailVerificationStep === "CODE_SENT" ||
+                  emailVerificationStep === "FAILED" ||
+                  emailVerificationStep === "VERIFIED") &&
+                  emailCheckMessage.color === "text-green-500" &&
+                  !emailCheckMessage.text.includes("이미 사용중") && (
+                    <div className="flex flex-col space-y-2 mt-2">
+                      {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
+                      {emailVerificationStep !== "VERIFIED" && (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            placeholder="인증번호를 입력해주세요"
+                            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            value={verificationCode}
+                            onChange={(e) =>
+                              setVerificationCode(e.target.value)
                             }
-                          >
-                            {isLoading && emailVerificationStep === 'CODE_SENT'
-                              ? '확인중...'
-                              : '확인'}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
-                    {verificationMessage.text && (
-                      <p
-                        className={`text-xs ${verificationMessage.color} ${
-                          verificationMessage.color === 'text-green-500'
-                            ? 'dark:text-green-400'
-                            : verificationMessage.color === 'text-red-500'
-                            ? 'dark:text-red-400'
-                            : verificationMessage.color === 'text-blue-500'
-                            ? 'dark:text-blue-400'
-                            : 'dark:text-gray-400'
-                        }`}
-                      >
-                        {verificationMessage.text}
-                      </p>
-                    )}
-                  </div>
-                )}
+                            disabled={isLoading}
+                          />
+                          {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
+                          {(emailVerificationStep === "CHECKED" ||
+                            emailVerificationStep === "FAILED") && (
+                            <button
+                              type="button"
+                              onClick={handleSendVerificationCode}
+                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                isSendCodeDisabled || isLoading
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-indigo-600 hover:bg-indigo-700"
+                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                              disabled={isSendCodeDisabled || isLoading}
+                            >
+                              {isLoading && isSendCodeDisabled
+                                ? "전송중..."
+                                : isSendCodeDisabled
+                                ? "재전송 대기"
+                                : emailVerificationStep === "FAILED"
+                                ? "인증번호 재전송"
+                                : "인증번호 보내기"}
+                            </button>
+                          )}
+                          {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
+                          {(emailVerificationStep === "CODE_SENT" ||
+                            emailVerificationStep === "FAILED") && (
+                            <button
+                              type="button"
+                              onClick={handleVerifyCode}
+                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                verificationCode.length === 0 || isLoading
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-blue-600 hover:bg-blue-700"
+                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap`}
+                              disabled={
+                                verificationCode.length === 0 || isLoading
+                              }
+                            >
+                              {isLoading &&
+                              emailVerificationStep === "CODE_SENT"
+                                ? "확인중..."
+                                : "확인"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
+                      {verificationMessage.text && (
+                        <p
+                          className={`text-xs ${verificationMessage.color} ${
+                            verificationMessage.color === "text-green-500"
+                              ? "dark:text-green-400"
+                              : verificationMessage.color === "text-red-500"
+                              ? "dark:text-red-400"
+                              : verificationMessage.color === "text-blue-500"
+                              ? "dark:text-blue-400"
+                              : "dark:text-gray-400"
+                          }`}
+                        >
+                          {verificationMessage.text}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                 {isLoading &&
-                  emailVerificationStep !== 'CHECKED' &&
-                  emailVerificationStep !== 'CODE_SENT' &&
-                  emailVerificationStep !== 'FAILED' && (
+                  emailVerificationStep !== "CHECKED" &&
+                  emailVerificationStep !== "CODE_SENT" &&
+                  emailVerificationStep !== "FAILED" && (
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       처리 중...
                     </p>
@@ -849,7 +859,7 @@ export default function SignUpPage() {
                 </p>
               </div>
 
-              {signupType !== 'KAKAO' && (
+              {signupType !== "KAKAO" && (
                 <>
                   <div className="pb-5">
                     <label
@@ -894,9 +904,9 @@ export default function SignUpPage() {
                         className={`mt-2 text-xs ${
                           passwordMatchMessage.color
                         } ${
-                          passwordMatchMessage.color === 'text-green-500'
-                            ? 'dark:text-green-400'
-                            : 'dark:text-red-400'
+                          passwordMatchMessage.color === "text-green-500"
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
                         }`}
                       >
                         {passwordMatchMessage.text}
@@ -908,8 +918,8 @@ export default function SignUpPage() {
                           passwordPolicy.length ? 충족스타일 : 미충족스타일
                         } ${
                           passwordPolicy.length
-                            ? 'dark:text-green-400'
-                            : 'dark:text-red-400'
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
                         }`}
                       >
                         총 8글자 이상
@@ -919,8 +929,8 @@ export default function SignUpPage() {
                           passwordPolicy.specialChar ? 충족스타일 : 미충족스타일
                         } ${
                           passwordPolicy.specialChar
-                            ? 'dark:text-green-400'
-                            : 'dark:text-red-400'
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
                         }`}
                       >
                         특수문자 1개 이상
@@ -930,8 +940,8 @@ export default function SignUpPage() {
                           passwordPolicy.uppercase ? 충족스타일 : 미충족스타일
                         } ${
                           passwordPolicy.uppercase
-                            ? 'dark:text-green-400'
-                            : 'dark:text-red-400'
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
                         }`}
                       >
                         영문자 1개 이상
@@ -941,8 +951,8 @@ export default function SignUpPage() {
                           passwordPolicy.number ? 충족스타일 : 미충족스타일
                         } ${
                           passwordPolicy.number
-                            ? 'dark:text-green-400'
-                            : 'dark:text-red-400'
+                            ? "dark:text-green-400"
+                            : "dark:text-red-400"
                         }`}
                       >
                         숫자 1개 이상
@@ -970,10 +980,10 @@ export default function SignUpPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={
-                    signupType === 'KAKAO' && kakaoInfo.nickname !== undefined
+                    signupType === "KAKAO" && kakaoInfo.nickname !== undefined
                   }
                 />
-                {signupType === 'KAKAO' && kakaoInfo.nickname && (
+                {signupType === "KAKAO" && kakaoInfo.nickname && (
                   <p className="mt-2 text-xs text-pink-500 dark:text-pink-400">
                     kakao에서 가져온 이름입니다.
                   </p>
@@ -995,7 +1005,7 @@ export default function SignUpPage() {
                     value={
                       selectedAddress
                         ? `(${selectedAddress.zipcode}) ${selectedAddress.address} ${selectedAddress.name}`
-                        : ''
+                        : ""
                     }
                     readOnly
                     placeholder="주소찾기 버튼을 클릭하여 주소를 검색하세요"
@@ -1031,7 +1041,7 @@ export default function SignUpPage() {
                         value={dong}
                         onChange={(e) => {
                           setDong(e.target.value);
-                          setDongError('');
+                          setDongError("");
                         }}
                         required
                         className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
@@ -1064,7 +1074,7 @@ export default function SignUpPage() {
                         value={ho}
                         onChange={(e) => {
                           setHo(e.target.value);
-                          setHoError('');
+                          setHoError("");
                         }}
                         required
                         className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
@@ -1088,7 +1098,7 @@ export default function SignUpPage() {
                 )}
               </div>
 
-              {signupType !== 'KAKAO' && (
+              {signupType !== "KAKAO" && (
                 <div className="pb-5">
                   <label
                     htmlFor="phone-number"
@@ -1107,8 +1117,8 @@ export default function SignUpPage() {
                       placeholder="휴대폰 번호를 입력하세요 (예: 01012345678)"
                       value={phoneNumber}
                       onChange={(e) => {
-                        setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''));
-                        setPhoneCheckMessage({ text: '', color: '' });
+                        setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""));
+                        setPhoneCheckMessage({ text: "", color: "" });
                       }}
                       disabled={isLoading}
                     />
@@ -1117,30 +1127,30 @@ export default function SignUpPage() {
                       onClick={handlePhoneCheck}
                       className={`ml-2 px-4 h-12 border border-transparent text-sm font-semibold leading-6 text-white rounded-lg ${
                         isLoading ||
-                        phoneCheckMessage.color === 'text-green-500'
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-pink-500 hover:bg-pink-600'
+                        phoneCheckMessage.color === "text-green-500"
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-pink-500 hover:bg-pink-600"
                       } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 whitespace-nowrap`}
                       disabled={
                         isLoading ||
-                        phoneCheckMessage.color === 'text-green-500'
+                        phoneCheckMessage.color === "text-green-500"
                       }
                     >
                       {isLoading
-                        ? '확인중...'
-                        : phoneCheckMessage.color === 'text-green-500'
-                        ? '확인완료'
-                        : '중복체크'}
+                        ? "확인중..."
+                        : phoneCheckMessage.color === "text-green-500"
+                        ? "확인완료"
+                        : "중복체크"}
                     </button>
                   </div>
                   {phoneCheckMessage.text && (
                     <p
                       className={`mt-2 text-xs ${phoneCheckMessage.color} ${
-                        phoneCheckMessage.color === 'text-green-500'
-                          ? 'dark:text-green-400'
-                          : phoneCheckMessage.color === 'text-red-500'
-                          ? 'dark:text-red-400'
-                          : 'dark:text-gray-400'
+                        phoneCheckMessage.color === "text-green-500"
+                          ? "dark:text-green-400"
+                          : phoneCheckMessage.color === "text-red-500"
+                          ? "dark:text-red-400"
+                          : "dark:text-gray-400"
                       }`}
                     >
                       {phoneCheckMessage.text}
@@ -1155,24 +1165,24 @@ export default function SignUpPage() {
                 type="submit"
                 className={`flex w-full items-center justify-center rounded-lg px-3 h-12 border border-transparent text-sm font-semibold leading-6 text-white ${
                   !isLoading &&
-                  (signupType === 'KAKAO'
+                  (signupType === "KAKAO"
                     ? emailId
-                      ? emailVerificationStep === 'VERIFIED'
+                      ? emailVerificationStep === "VERIFIED"
                       : true
-                    : emailVerificationStep === 'VERIFIED')
-                    ? 'bg-pink-500 hover:bg-pink-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500'
-                    : 'bg-gray-400 cursor-not-allowed'
+                    : emailVerificationStep === "VERIFIED")
+                    ? "bg-pink-500 hover:bg-pink-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
+                    : "bg-gray-400 cursor-not-allowed"
                 }`}
                 disabled={
                   isLoading ||
-                  (emailId !== '' && emailVerificationStep !== 'VERIFIED')
+                  (emailId !== "" && emailVerificationStep !== "VERIFIED")
                 }
               >
-                {isLoading ? '가입 처리중...' : '회원가입'}
+                {isLoading ? "가입 처리중..." : "회원가입"}
               </button>
             </div>
 
-            {signupType !== 'KAKAO' && (
+            {signupType !== "KAKAO" && (
               <>
                 <div className="relative my-6">
                   <div className="flex items-center">

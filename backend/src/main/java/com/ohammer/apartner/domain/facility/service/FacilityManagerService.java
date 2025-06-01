@@ -13,10 +13,15 @@ import com.ohammer.apartner.domain.facility.entity.FacilityReservation;
 import com.ohammer.apartner.domain.facility.repository.FacilityInstructorRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityRepository;
 import com.ohammer.apartner.domain.facility.repository.FacilityReservationRepository;
+import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.Status;
+import com.ohammer.apartner.global.service.AlarmService;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +36,7 @@ public class FacilityManagerService {
     private final FacilityRepository facilityRepository;
     private final FacilityReservationRepository facilityReservationRepository;
     private final FacilityInstructorRepository facilityInstructorRepository;
+    private final AlarmService alarmService;
 
     // 공용시설 등록
     @Transactional
@@ -163,8 +169,109 @@ public class FacilityManagerService {
             throw new IllegalStateException("이미 시작된 예약은 상태 변경이 불가합니다.");
         }
 
+        // 이전 상태 저장
+        FacilityReservation.Status oldStatus = reservation.getStatus();
+        
+        // 상태 변경
         reservation.setStatus(newStatus);
         reservation.setModifiedAt(LocalDateTime.now());
+        
+        // 상태 변경 알림 전송
+        sendStatusChangeNotification(reservation, oldStatus, newStatus);
     }
-
+    
+    // 예약 상태 변경 알림 전송
+    private void sendStatusChangeNotification(FacilityReservation reservation, 
+                                             FacilityReservation.Status oldStatus,
+                                             FacilityReservation.Status newStatus) {
+        User user = reservation.getUser();
+        Facility facility = reservation.getFacility();
+        Long apartmentId = facility.getApartment().getId();
+        Long userId = user.getId();
+        Long facilityId = facility.getId();
+        Long managerId = userId; // 관리자 ID가 없는 경우 임시로 userId 사용
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        String formattedTime = reservation.getStartTime().format(formatter) + " ~ " +
+                               reservation.getEndTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+        
+        // 사용자에게 보낼 알림 정보
+        String userTitle;
+        String userMessage;
+        String userType;
+        String userCustomType;
+        
+        // 관리자에게 보낼 알림 정보
+        String adminTitle;
+        String adminMessage;
+        String adminType;
+        String adminCustomType;
+        
+        // 상태에 따른 알림 내용 설정
+        switch (newStatus) {
+            case AGREE:
+                // 승인 완료 알림
+                userTitle = "시설 예약 승인 완료";
+                userMessage = facility.getName() + " " + formattedTime + " 예약이 승인되었습니다.";
+                userType = "success"; // 프론트엔드 알림 타입
+                userCustomType = "FACILITY_RESERVATION_APPROVED";
+                
+                adminTitle = "시설 예약 승인 처리 완료";
+                adminMessage = user.getUserName() + "님의 " + facility.getName() + 
+                              " " + formattedTime + " 예약이 승인 처리되었습니다.";
+                adminType = "success";
+                adminCustomType = "FACILITY_RESERVATION_ADMIN_APPROVED";
+                break;
+                
+            case REJECT:
+                // 거절 알림
+                userTitle = "시설 예약 신청 거절";
+                userMessage = facility.getName() + " " + formattedTime + " 예약 신청이 거절되었습니다.";
+                userType = "error"; // 프론트엔드 알림 타입
+                userCustomType = "FACILITY_RESERVATION_REJECTED";
+                
+                adminTitle = "시설 예약 거절 처리 완료";
+                adminMessage = user.getUserName() + "님의 " + facility.getName() + 
+                              " " + formattedTime + " 예약이 거절 처리되었습니다.";
+                adminType = "warning";
+                adminCustomType = "FACILITY_RESERVATION_ADMIN_REJECTED";
+                break;
+                
+            default:
+                // 기타 상태 변경
+                userTitle = "시설 예약 상태 변경";
+                userMessage = facility.getName() + " " + formattedTime + " 예약 상태가 " + 
+                             getStatusKoreanName(newStatus) + "(으)로 변경되었습니다.";
+                userType = "info"; // 프론트엔드 알림 타입
+                userCustomType = "FACILITY_RESERVATION_STATUS_CHANGED";
+                
+                adminTitle = "시설 예약 상태 변경 처리 완료";
+                adminMessage = "사용자 " + user.getUserName() + "님의 " + facility.getName() + 
+                              " " + formattedTime + " 예약 상태가 " + getStatusKoreanName(newStatus) + 
+                              "(으)로 변경되었습니다.";
+                adminType = "info";
+                adminCustomType = "FACILITY_RESERVATION_ADMIN_STATUS_CHANGED";
+                break;
+        }
+        
+      
+        
+        alarmService.notifyUser(userId, apartmentId, userTitle, userType, userCustomType, userMessage, 
+        "/udash/facilities", managerId, reservation.getId(), null);        
+       
+        // 관리자/운영자에게 알림 전송     
+        alarmService.notifyApartmentAdmins(apartmentId, adminTitle, adminType, adminCustomType, adminMessage, 
+                "/admin/facilities/reservations", managerId, reservation.getId(), null);
+    }
+    
+    // 예약 상태 한글 이름 변환
+    private String getStatusKoreanName(FacilityReservation.Status status) {
+        switch (status) {
+            case PENDING: return "승인 대기";
+            case AGREE: return "승인 완료";
+            case REJECT: return "승인 거절";
+            case CANCEL: return "예약 취소";
+            default: return "알 수 없음";
+        }
+    }
 }

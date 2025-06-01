@@ -266,8 +266,71 @@ public List<ChatroomDto> getAllChatrooms() {
         throw new BadRequestException("인증된 사용자만 채팅방 목록을 조회할 수 있습니다.");
     }
 
-    List<UserChatroomMapping> userChatroomMappingList = userChatroomMappingRepository.findAllByUserId(currentUser.getId());
+    // ADMIN이면 전체 채팅방 반환
+    if (isAdminOrManager(currentUser) && currentUser.getRoles().contains(Role.ADMIN)) {
+        List<Chatroom> allRooms = chatroomRepository.findAllByOrderByCreatedAtDesc();
+        return allRooms.stream()
+        .map(chatroom -> {
+            // 매니저-채팅방 매핑 조회 (참여한 적 없으면 null)
+            UserChatroomMapping mapping = userChatroomMappingRepository
+                .findByUserIdAndChatroomId(currentUser.getId(), chatroom.getId())
+                .orElse(null);
 
+            boolean hasNewMessage;
+            if (mapping == null) {
+                // 참여한 적 없는 방: 메시지가 1개라도 있으면 새 메시지
+                hasNewMessage = messageRepository.existsByChatroomId(chatroom.getId());
+            } else {
+                LocalDateTime lastCheckTime = mapping.getLastCheckAt();
+                if (lastCheckTime == null) {
+                    hasNewMessage = true;
+                } else {
+                    hasNewMessage = messageRepository.existsByChatroomIdAndCreatedAtAfter(
+                        chatroom.getId(), lastCheckTime);
+                }
+            }
+            chatroom.setHasNewMessage(hasNewMessage);
+            return createChatroomDto(chatroom);
+        })
+        .collect(Collectors.toList());
+    }
+
+    // MANAGER는 본인 아파트 소속 전체 채팅방 반환
+    if (currentUser.getRoles().contains(Role.MANAGER) && !currentUser.getRoles().contains(Role.ADMIN)) {
+        if (currentUser.getApartment() == null) {
+            throw new ForbiddenAccessException("아파트 정보가 없는 매니저입니다.");
+        }
+        Long managerApartmentId = currentUser.getApartment().getId();
+        List<Chatroom> apartmentRooms = chatroomRepository.findByApartmentIdOrderByCreatedAtDesc(managerApartmentId);
+    
+        return apartmentRooms.stream()
+            .map(chatroom -> {
+                // 매니저-채팅방 매핑 조회 (참여한 적 없으면 null)
+                UserChatroomMapping mapping = userChatroomMappingRepository
+                    .findByUserIdAndChatroomId(currentUser.getId(), chatroom.getId())
+                    .orElse(null);
+    
+                boolean hasNewMessage;
+                if (mapping == null) {
+                    // 참여한 적 없는 방: 메시지가 1개라도 있으면 새 메시지
+                    hasNewMessage = messageRepository.existsByChatroomId(chatroom.getId());
+                } else {
+                    LocalDateTime lastCheckTime = mapping.getLastCheckAt();
+                    if (lastCheckTime == null) {
+                        hasNewMessage = true;
+                    } else {
+                        hasNewMessage = messageRepository.existsByChatroomIdAndCreatedAtAfter(
+                            chatroom.getId(), lastCheckTime);
+                    }
+                }
+                chatroom.setHasNewMessage(hasNewMessage);
+                return createChatroomDto(chatroom);
+            })
+            .collect(Collectors.toList());
+    }
+
+    // 일반 유저는 기존대로 본인 참여 채팅방만 반환
+    List<UserChatroomMapping> userChatroomMappingList = userChatroomMappingRepository.findAllByUserId(currentUser.getId());
     return userChatroomMappingList.stream()
         .map(userChatroomMapping -> {
             Chatroom chatroom = userChatroomMapping.getChatroom();

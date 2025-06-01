@@ -43,6 +43,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<UserStatus | null>(null);
   const [activeTab, setActiveTab] = useState("1");
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<UserStatus | null>(null);
 
   useEffect(() => {
     if (open && userId) {
@@ -73,7 +75,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
     setSelectedStatus(status);
   };
 
-  const handleStatusUpdate = async () => {
+  const handleStatusUpdate = () => {
     if (
       !userId ||
       !userDetail ||
@@ -81,30 +83,29 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
       selectedStatus === userDetail.status
     )
       return;
+    setPendingStatus(selectedStatus);
+    setConfirmVisible(true);
+  };
 
-    Modal.confirm({
-      title: "사용자 상태 변경",
-      content: `사용자 상태를 ${getStatusText(
-        userDetail.status
-      )}에서 ${getStatusText(selectedStatus)}로 변경하시겠습니까?`,
-      okText: "변경",
-      cancelText: "취소",
-      onOk: async () => {
-        try {
-          setStatusUpdating(true);
-          await updateUserStatus(userId, { status: selectedStatus });
+  const handleConfirmOk = async () => {
+    if (!userId || !userDetail || !pendingStatus) return;
+    try {
+      setStatusUpdating(true);
+      await updateUserStatus(userId, { status: pendingStatus });
+      message.success("사용자 상태가 변경되었습니다");
+      fetchUserDetail();
+      onUserUpdated();
+      setConfirmVisible(false);
+    } catch (error) {
+      console.error("사용자 상태 업데이트 중 오류 발생:", error);
+      message.error("상태 변경 중 오류가 발생했습니다");
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
 
-          message.success("사용자 상태가 변경되었습니다");
-          fetchUserDetail();
-          onUserUpdated();
-        } catch (error) {
-          console.error("사용자 상태 업데이트 중 오류 발생:", error);
-          message.error("상태 변경 중 오류가 발생했습니다");
-        } finally {
-          setStatusUpdating(false);
-        }
-      },
-    });
+  const handleConfirmCancel = () => {
+    setConfirmVisible(false);
   };
 
   const getStatusText = (status: UserStatus): string => {
@@ -113,7 +114,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         return "활성";
       case UserStatus.INACTIVE:
         return "비활성";
-      case UserStatus.SUSPENDED:
+      case UserStatus.PENDING:
         return "정지";
       case UserStatus.DELETED:
         return "탈퇴";
@@ -138,7 +139,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
         );
-      case UserStatus.SUSPENDED:
+      case UserStatus.PENDING:
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
             <CloseCircleFilled style={{ color: "red", fontSize: "16px" }} />
@@ -234,11 +235,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                         </span>
                       </div>
                     </Option>
-                    <Option value={UserStatus.SUSPENDED}>
+                    <Option value={UserStatus.PENDING}>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         <CloseCircleFilled style={{ color: "red" }} />
                         <span style={{ marginLeft: 5 }}>
-                          {getStatusText(UserStatus.SUSPENDED)}
+                          {getStatusText(UserStatus.PENDING)}
                         </span>
                       </div>
                     </Option>
@@ -326,6 +327,23 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
           </div>
         )}
       </Spin>
+      <Modal
+        open={confirmVisible}
+        title="사용자 상태 변경"
+        onOk={handleConfirmOk}
+        onCancel={handleConfirmCancel}
+        okText="변경"
+        cancelText="취소"
+        confirmLoading={statusUpdating}
+        maskClosable={false}
+      >
+        {userDetail && pendingStatus && (
+          <span>
+            사용자 상태를 {getStatusText(userDetail.status)}에서{" "}
+            {getStatusText(pendingStatus)}로 변경하시겠습니까?
+          </span>
+        )}
+      </Modal>
     </Modal>
   );
 };

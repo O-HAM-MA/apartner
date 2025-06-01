@@ -337,7 +337,41 @@ export function AdminChatProvider({ children }: AdminChatProviderProps) {
         })
       );
 
+      console.log("[AdminChatContext][fetchChatrooms] API 응답:", response);
+      console.log(
+        "[AdminChatContext][fetchChatrooms] setChatrooms 호출, 기존 상태:",
+        chatrooms
+      );
       setChatrooms(formattedChatrooms);
+      console.log(
+        "[AdminChatContext][fetchChatrooms] setChatrooms 후 상태:",
+        formattedChatrooms
+      );
+
+      if (
+        adminMember &&
+        Array.isArray(adminMember.roles) &&
+        adminMember.roles.includes("MANAGER")
+      ) {
+        console.log("[AdminChatContext][MANAGER] 로그인 사용자:", {
+          id: adminMember.id,
+          roles: adminMember.roles,
+          apartmentId: adminMember.apartmentId,
+          userName: adminMember.userName,
+        });
+        if (Array.isArray(response)) {
+          console.log(
+            "[AdminChatContext][MANAGER] 불러온 채팅방 목록:",
+            response.map((room) => ({
+              id: room.id,
+              apartmentId: room.apartmentId,
+              title: room.title,
+              status: room.status,
+            }))
+          );
+        }
+      }
+
       return formattedChatrooms;
     } catch (error) {
       setChatrooms([]);
@@ -450,8 +484,7 @@ export function AdminChatProvider({ children }: AdminChatProviderProps) {
 
   // 채팅방 선택
   const selectChatroom = async (chatroom: ChatroomType) => {
-    // 디버깅 로그 추가
-    console.log("🔍 selectChatroom 호출됨: ", chatroom.id, chatroom);
+    console.log("[AdminChatContext][selectChatroom] 선택 요청:", chatroom);
 
     // 이미 선택된 채팅방인 경우 무시
     if (selectedChatroom?.id === chatroom.id) {
@@ -491,10 +524,15 @@ export function AdminChatProvider({ children }: AdminChatProviderProps) {
 
       // 중요: 먼저 기본 정보로 채팅방 선택 상태 설정
       // 이렇게 하면 서버 오류가 발생해도 UI가 업데이트됨
-      setSelectedChatroom({
-        ...chatroom,
-        status: chatroom.status || "ACTIVE", // 상태가 없으면 기본값 설정
-      });
+      console.log(
+        "[AdminChatContext][selectChatroom] setSelectedChatroom 호출, 기존 상태:",
+        selectedChatroom
+      );
+      setSelectedChatroom({ ...chatroom, status: chatroom.status || "ACTIVE" });
+      console.log(
+        "[AdminChatContext][selectChatroom] setSelectedChatroom 후 상태:",
+        { ...chatroom, status: chatroom.status || "ACTIVE" }
+      );
 
       // 채팅방 정보를 먼저 조회하여 상태 확인
       try {
@@ -566,12 +604,9 @@ export function AdminChatProvider({ children }: AdminChatProviderProps) {
 
   // 채팅방 참여
   const joinChatroom = async (chatroomId: number) => {
-    // 디버깅 로그 추가
     console.log(
-      "🔍 joinChatroom 호출됨: chatroomId=",
-      chatroomId,
-      "selectedChatroom=",
-      selectedChatroom?.id
+      "[AdminChatContext][joinChatroom] 참여 요청 chatroomId:",
+      chatroomId
     );
 
     try {
@@ -595,7 +630,15 @@ export function AdminChatProvider({ children }: AdminChatProviderProps) {
         };
 
         // 중요: 먼저 선택된 채팅방을 설정하여 연결이 끊기는 문제 방지
+        console.log(
+          "[AdminChatContext][joinChatroom] setSelectedChatroom 호출, 기존 상태:",
+          selectedChatroom
+        );
         setSelectedChatroom(formattedChatroom);
+        console.log(
+          "[AdminChatContext][joinChatroom] setSelectedChatroom 후 상태:",
+          formattedChatroom
+        );
 
         // 비활성화된 채팅방인 경우 참여 시도하지 않음
         if (apiChatroom && apiChatroom.status === "INACTIVE") {

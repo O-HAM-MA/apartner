@@ -12,8 +12,6 @@ export const UserStatusDisplay: Record<UserStatus, string> = {
   [UserStatus.INACTIVE]: "비활성",
   [UserStatus.PENDING]: "정지",
   [UserStatus.WITHDRAWN]: "탈퇴",
-  [UserStatus.SUSPENDED]: "정지",
-  [UserStatus.DELETED]: "탈퇴",
 };
 
 export enum LogType {
