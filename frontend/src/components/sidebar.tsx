@@ -85,6 +85,7 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-card h-screen p-5 flex flex-col border-r border-border shrink-0">
       <div className="mb-10 flex flex-col items-start">
+
         <div className="flex items-center justify-between w-full mb-2">
           <div className="flex items-center space-x-2">
             <Link href="/">
@@ -94,6 +95,7 @@ const Sidebar = () => {
           {isLogin && <NotificationBell />}
         </div>
         {isLogin && <NotificationStatus className="ml-auto mb-2" />}
+
         {isLogin && loginMember ? (
           <div className="bg-secondary p-3 rounded-lg w-full mt-5">
             <p className="text-sm font-semibold text-foreground">

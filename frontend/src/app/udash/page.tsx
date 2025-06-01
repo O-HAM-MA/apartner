@@ -26,10 +26,12 @@ const DashboardPage = () => {
     },
     {
       title: "차량관리",
-      description: "입주민 차량 등록 및 관리",
+
+      description: "외부인 차량 등록 및 관리",
       icon: "CarFront",
       actionIcon: "Zap",
-      href: "/udash/vehicles",
+      href: "/udash/vehicles/guest",
+
     },
     {
       title: "점검관리",
@@ -51,8 +53,35 @@ const DashboardPage = () => {
       icon: "Megaphone",
       actionIcon: "Megaphone",
       href: "/udash/notices",
+
+    },
+    {
+      title: "소통 관리",
+      description: "입주민 커뮤니티 소통 게시판",
+      icon: "MessageCircle",
+      actionIcon: "Edit3",
+      href: "/udash/community",
     },
   ] as const;
+
+  const notifications = [
+    {
+      title: "헬스장 예약이 승인되었습니다.",
+      details: "2024-03-20 14:00-16:00",
+      time: "1시간 전",
+    },
+    {
+      title: "3월 관리비 고지서가 발행되었습니다.",
+      details: "납부 마감일: 2024-03-25",
+      time: "3시간 전",
+    },
+    {
+      title: "커뮤니티센터 대청소 안내",
+      details: "내일 오전 10시부터",
+      time: "5시간 전",
+    },
+  ];
+
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
@@ -83,6 +112,14 @@ const DashboardPage = () => {
             description={featureCards[3].description}
             icon={featureCards[3].icon}
             href={featureCards[3].href}
+          />
+          {/* 커뮤니티 카드 추가 */}
+          <FeatureCard
+            key={featureCards[5].title}
+            title={featureCards[5].title}
+            description={featureCards[5].description}
+            icon={featureCards[5].icon}
+            href={featureCards[5].href}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

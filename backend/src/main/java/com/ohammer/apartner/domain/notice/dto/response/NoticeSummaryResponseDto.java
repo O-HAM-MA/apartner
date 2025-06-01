@@ -1,15 +1,16 @@
 package com.ohammer.apartner.domain.notice.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ohammer.apartner.domain.notice.entity.Notice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@AllArgsConstructor
+@NoArgsConstructor
 @Schema(description = "매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO")
 public class NoticeSummaryResponseDto {
 
@@ -31,4 +32,38 @@ public class NoticeSummaryResponseDto {
 
     @Schema(description = "게시글 조회수", example = "0")
     private Long viewCount;
+
+    @Schema(description = "이미지 첨부 여부", example = "false")
+    private Boolean hasImage;
+
+    @Schema(description = "파일 첨부 여부", example = "false")
+    private Boolean hasFile;
+
+    public static NoticeSummaryResponseDto from(Notice notice) {
+        return NoticeSummaryResponseDto.builder()
+                .noticeId(notice.getId())
+                .title(notice.getTitle())
+                .authorName(notice.getUser().getUserName())
+                .buildingId(notice.getBuilding() != null ? notice.getBuilding().getId() : null)
+                .createdAt(notice.getCreatedAt())
+                .viewCount(notice.getViewCount())
+                .hasImage(notice.getImages() != null && !notice.getImages().isEmpty())
+                .hasFile(notice.getFiles() != null && !notice.getFiles().isEmpty())
+                .build();
+    }
+
+    public NoticeSummaryResponseDto(
+            Long noticeId, String title, String authorName,
+            Long buildingId, LocalDateTime createdAt, Long viewCount,
+            Boolean hasImage, Boolean hasFile
+    ) {
+        this.noticeId = noticeId;
+        this.title = title;
+        this.authorName = authorName;
+        this.buildingId = buildingId;
+        this.createdAt = createdAt;
+        this.viewCount = viewCount;
+        this.hasImage = hasImage;
+        this.hasFile = hasFile;
+    }
 }

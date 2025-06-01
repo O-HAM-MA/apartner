@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { useGlobalLoginMember } from "@/auth/loginMember";
-import { post, get } from "@/utils/api";
+import Link from 'next/link';
+import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { useGlobalLoginMember } from '@/auth/loginMember';
+import { post, get } from '@/utils/api';
 
 type Member = {
   id: number;
@@ -24,8 +24,8 @@ export default function LoginPage() {
   const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
   const redirectUrl = `${process.env.NEXT_PUBLIC_FRONT_BASE_URL}`;
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { setLoginMember } = useGlobalLoginMember();
@@ -35,15 +35,15 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await post<any>("/api/v1/auth/login", { email, password });
+      await post<any>('/api/v1/auth/login', { email, password });
 
       try {
-        const memberData = await get<Member>("/api/v1/auth/me", {}, true);
+        const memberData = await get<Member>('/api/v1/auth/me', {}, true);
         setLoginMember(memberData);
-        router.push("/");
+        router.push('/');
       } catch (meError) {
-        console.error("Failed to fetch user data after login:", meError);
-        let displayMessage = "사용자 정보 로딩 실패: 알 수 없는 오류입니다."; // Default message
+        console.error('Failed to fetch user data after login:', meError);
+        let displayMessage = '사용자 정보 로딩 실패: 알 수 없는 오류입니다.'; // Default message
 
         if (meError instanceof Error) {
           let rawErrorMessage = meError.message;
@@ -59,11 +59,11 @@ export default function LoginPage() {
           let processedMessage = rawErrorMessage;
           try {
             const parsedJson = JSON.parse(rawErrorMessage);
-            if (parsedJson && typeof parsedJson.error === "string") {
+            if (parsedJson && typeof parsedJson.error === 'string') {
               processedMessage = parsedJson.error;
-            } else if (parsedJson && typeof parsedJson.message === "string") {
+            } else if (parsedJson && typeof parsedJson.message === 'string') {
               processedMessage = parsedJson.message;
-            } else if (parsedJson && typeof parsedJson.detail === "string") {
+            } else if (parsedJson && typeof parsedJson.detail === 'string') {
               processedMessage = parsedJson.detail;
             }
             // If no common keys found, or if not JSON, processedMessage remains as is.
@@ -82,12 +82,12 @@ export default function LoginPage() {
         } else {
           // meError is not an Error instance
           displayMessage =
-            "사용자 정보 로딩 중 알 수 없는 타입의 오류가 발생했습니다.";
+            '사용자 정보 로딩 중 알 수 없는 타입의 오류가 발생했습니다.';
         }
         setError(displayMessage);
       }
     } catch (err) {
-      let errorMessage = "로그인 중 오류가 발생했습니다.";
+      let errorMessage = '로그인 중 오류가 발생했습니다.';
       if (err instanceof Error) {
         const apiErrorMatch = err.message.match(/[^\-]+(?: - (.*))?/);
         if (apiErrorMatch && apiErrorMatch[1]) {
@@ -105,7 +105,7 @@ export default function LoginPage() {
 
       const reportedErrorPattern = /^API 요청 실패: \d{3}(?:.*?) - (.*)$/;
       const match =
-        typeof errorMessage === "string"
+        typeof errorMessage === 'string'
           ? errorMessage.match(reportedErrorPattern)
           : null;
 
@@ -120,19 +120,19 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-pink-50 p-4 sm:p-8 flex flex-col items-center dark:bg-gray-900">
-        <div className="w-full max-w-md space-y-8 rounded-lg bg-white dark:bg-gray-800 p-10 shadow-md">
+      <div className="min-h-screen bg-pink-50 dark:bg-gray-900 flex flex-col items-center px-7 pt-32 sm:px-6 lg:px-8">
+        <div className="w-full max-w-lg space-y-2 bg-white dark:bg-gray-800 rounded-2xl py-16 px-8 shadow-xl">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-              로그인
-            </h2>
+            <h1 className="text-center text-5xl font-bold tracking-tight text-pink-500 dark:text-pink-400 mb-10 max-w-sm mx-auto">
+              LOGIN
+            </h1>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5 max-w-sm mx-auto" onSubmit={handleSubmit}>
             <input type="hidden" name="remember" defaultValue="true" />
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-2.5 mb-2.5"
+                className="block text-m font-medium leading-6 text-gray-900 dark:text-gray-100 mb-2"
               >
                 이메일 (아이디)
               </label>
@@ -142,7 +142,7 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full appearance-none rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                 placeholder="이메일(아이디)을 입력하세요."
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -151,7 +151,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-2.5 mb-2.5"
+                className="block text-m font-medium leading-6 text-gray-900 dark:text-gray-100 mb-2"
               >
                 비밀번호
               </label>
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="relative block w-full appearance-none rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                 placeholder="비밀번호를 입력하세요."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -196,32 +196,32 @@ export default function LoginPage() {
             )}
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
+              <div className="flex items-center mb-4 mt-2">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-500 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700"
+                  className="h-4 w-4 rounded border-gray-300 text-pink-500 focus:ring-pink-500 focus:ring-offset-0 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-pink-400"
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-900 dark:text-gray-300"
+                  className="ml-2 block text-sm text-gray-600 dark:text-gray-400"
                 >
                   로그인 상태 유지
                 </label>
               </div>
 
-              <div className="text-sm">
+              <div className="text-sm mb-4 mt-2 ml-auto">
                 <Link
                   href="/find-id"
-                  className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300"
+                  className="font-medium text-pink-500 hover:text-pink-400 dark:text-pink-400 dark:hover:text-pink-300"
                 >
                   아이디 찾기
                 </Link>
                 <span className="mx-1 text-gray-400 dark:text-gray-500">|</span>
                 <Link
                   href="/find-password"
-                  className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300"
+                  className="font-medium text-pink-500 hover:text-pink-400 dark:text-pink-400 dark:hover:text-pink-300"
                 >
                   비밀번호 찾기
                 </Link>
@@ -231,43 +231,36 @@ export default function LoginPage() {
             <div>
               <button
                 type="submit"
-                className="group relative flex w-full justify-center rounded-md border border-transparent bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2"
+                className="flex w-full justify-center rounded-lg bg-pink-500 px-3 py-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-pink-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500 dark:bg-pink-600 dark:hover:bg-pink-700"
               >
                 로그인
               </button>
             </div>
           </form>
-
-          <div className="relative mt-6">
-            <div
-              className="absolute inset-0 flex items-center"
-              aria-hidden="true"
-            >
-              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
-                또는
-              </span>
-            </div>
+          <div className="flex items-center max-w-sm mx-auto">
+            <div className="flex-grow h-px bg-gray-300 dark:bg-gray-600"></div>
+            <span className="px-2 text-gray-500 dark:text-gray-400 text-s">
+              또는
+            </span>
+            <div className="flex-grow h-px bg-gray-300 dark:bg-gray-600"></div>
           </div>
 
-          <div className="mt-6">
+          <div>
             <a
               href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrl}`}
-              className="group relative flex w-full justify-center rounded-md border border-transparent bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 text-black"
+              className="flex w-full justify-center rounded-lg bg-yellow-400 px-3 py-3 text-sm font-semibold leading-6 text-black shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400 mb-8 max-w-sm mx-auto"
             >
               카카오톡으로 1초만에 시작하기
             </a>
           </div>
 
-          <div className="mt-6 text-center text-sm">
+          <div className="text-center text-sm max-w-sm mx-auto">
             <span className="text-gray-600 dark:text-gray-400">
-              아직 회원이 아니신가요?{" "}
+              아직 회원이 아니신가요?{' '}
             </span>
             <Link
               href="/signup"
-              className="font-medium text-pink-500 dark:text-pink-400 hover:text-pink-400 dark:hover:text-pink-300"
+              className="font-semibold text-pink-500 hover:text-pink-400 dark:text-pink-400 dark:hover:text-pink-300"
             >
               회원가입
             </Link>

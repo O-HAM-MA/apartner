@@ -117,3 +117,12 @@ application-secret.yml
 **/.cursor/rules
 
 schema.d.ts
+.idea
+.terraform
+.DS_Store
+
+ .terraform.lock.hcl
+ terraform.tfstate
+ terraform.tfstate.backup
+ .terraform.tfstate.lock.info
+ secrets.tf

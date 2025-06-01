@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin/notices/media")
+@RequestMapping("/api/v1/notices/media")
 @Tag(name = "공지사항 게시물 미디어(사진, 파일) 관리")
 public class NoticeMediaController {
 
