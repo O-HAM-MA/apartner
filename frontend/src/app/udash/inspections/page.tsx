@@ -113,6 +113,7 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   useEffect(() => {
     async function fetchInspections() {
@@ -198,6 +199,32 @@ export default function AdminDashboard() {
     }
   };
 
+  // 검색 실행 함수
+  const performSearch = async (keyword: string, page: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/inspection/manager/search/${encodeURIComponent(keyword)}?page=${page}`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("검색 결과를 불러오지 못했습니다.");
+
+      const pageData = await res.json();
+      setInspections(pageData.content);
+      setTotalPages(pageData.totalPages);
+      setTotalElements(pageData.totalElements);
+
+    } catch (e: any) {
+      setError(e.message || "검색 중 알 수 없는 에러가 발생했습니다.");
+      setInspections([]);
+      setTotalPages(0);
+      setTotalElements(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background overflow-hidden">
       <div className="flex flex-1 flex-col bg-background">
@@ -221,49 +248,23 @@ export default function AdminDashboard() {
             </div>
           </header>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-border mb-6">
-            <button
-              onClick={() => handleTabClick("inspections")}
-              className={`px-4 py-2 font-semibold ${activeTab === "inspections" ? "text-pink-600 border-b-2 border-pink-600" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              점검 내역
-            </button>
-            <button
-              onClick={() => handleTabClick("issues")}
-              className={`px-4 py-2 font-semibold ${activeTab === "issues" ? "text-pink-600 border-b-2 border-pink-600" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              이슈 내역 보기
-            </button>
-          </div>
-
-          {/* Filters and Actions */}
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {/* "전체 시설" 필터 제거 */}
-              {/*
-              <div className="inline-flex items-center rounded-md border border-border bg-card shadow-sm">
-                <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground">
-                  전체 시설
-                </button>
-              </div>
-              */}
-              <div className="inline-flex items-center rounded-md border border-border bg-card shadow-sm">
-                <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground">
-                  전체 상태
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-              </div>
+          {/* Tab Navigation and Add Button */}
+          <div className="flex justify-between items-center border-b border-border mb-6">
+            <div className="flex">
+              <button
+                onClick={() => handleTabClick("inspections")}
+                className={`px-4 py-2 font-semibold ${activeTab === "inspections" ? "text-pink-600 border-b-2 border-pink-600" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                점검 내역
+              </button>
+              <button
+                onClick={() => handleTabClick("issues")}
+                className={`px-4 py-2 font-semibold ${activeTab === "issues" ? "text-pink-600 border-b-2 border-pink-600" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                이슈 내역 보기
+              </button>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="점검명 검색"
-                  className="w-full rounded-md border border-border bg-card pl-9 md:w-[240px] text-foreground"
-                />
-              </div>
               <Link href="/udash/inspections/new">
                 <Button className="bg-pink-500 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 dark:text-white">
                   <Plus className="mr-1 h-4 w-4" />
@@ -272,6 +273,55 @@ export default function AdminDashboard() {
               </Link>
             </div>
           </div>
+
+          {/* Filters and Search */}
+          {activeTab === "inspections" && (
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {/* "전체 시설" 필터 제거 */}
+                {/*
+              <div className="inline-flex items-center rounded-md border border-border bg-card shadow-sm">
+                <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground">
+                  전체 시설
+                </button>
+              </div>
+              */}
+                <div className="inline-flex items-center rounded-md border border-border bg-card shadow-sm">
+                  <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground">
+                    전체 상태
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="점검명 검색"
+                    className="w-full rounded-md border border-border bg-card pl-9 md:w-[240px] text-foreground"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setCurrentPage(1); // 검색 시 1페이지부터 시작
+                        performSearch(searchKeyword, 1);
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    setCurrentPage(1); // 검색 시 1페이지부터 시작
+                    performSearch(searchKeyword, 1);
+                  }}
+                  className="bg-pink-500 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 dark:text-white"
+                >
+                  검색
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Table */}
           <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
@@ -369,7 +419,15 @@ export default function AdminDashboard() {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-md border-border bg-card text-muted-foreground hover:bg-secondary"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  onClick={() => {
+                    const nextPage = Math.max(1, currentPage - 1);
+                    setCurrentPage(nextPage);
+                    if (searchKeyword) {
+                      performSearch(searchKeyword, nextPage);
+                    } else {
+                      // fetchInspections 함수는 이미 currentPage 변경을 감지하여 실행됨
+                    }
+                  }}
                   disabled={currentPage === 1 || isLoading}
                 >
                   <span className="sr-only">Previous</span>
@@ -382,7 +440,15 @@ export default function AdminDashboard() {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-md border-border bg-card text-muted-foreground hover:bg-secondary"
-                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  onClick={() => {
+                    const nextPage = currentPage + 1;
+                    setCurrentPage(nextPage);
+                    if (searchKeyword) {
+                      performSearch(searchKeyword, nextPage);
+                    } else {
+                      // fetchInspections 함수는 이미 currentPage 변경을 감지하여 실행됨
+                    }
+                  }}
                   disabled={currentPage === totalPages || totalPages === 0 || isLoading}
                 >
                   <span className="sr-only">Next</span>

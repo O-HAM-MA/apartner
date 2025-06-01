@@ -137,6 +137,15 @@ public class InspectionV1Controller {
 
     }
 
+    //검색
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<Page<InspectionResponseDetailDto>> searchInsepction(@PathVariable("keyword") String keyword, @RequestParam(name = "page") int page) {
+        if (page < 1)
+            page = 1;
+        Pageable pageable = PageRequest.of(page - 1, 6, Sort.by(Sort.Direction.DESC, "id"));
+        return ResponseEntity.ok().body(inspectionService.searchInspection(keyword, pageable));
+    }
+
     //제거
     @DeleteMapping("/{id}")
     @Operation(

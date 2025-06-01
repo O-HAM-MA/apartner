@@ -110,7 +110,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       pathname === "/login" ||
       pathname === "/find-id" ||
       pathname === "/find-password" ||
-      pathname.startsWith("/auth/");
+      pathname.startsWith("/auth/") ||
+      pathname === "/foreignsVehicles";
 
     // 인증이 필요한 페이지인데 로그인되지 않은 경우 로그인 페이지로 리다이렉트
     // 유효한 인증이 있으면 로그인 상태로 간주하여 리다이렉트하지 않음
@@ -167,7 +168,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       pathname === "/login" ||
       pathname === "/find-id" ||
       pathname === "/find-password" ||
-      pathname.startsWith("/auth/");
+      pathname.startsWith("/auth/") ||
+      pathname === "/foreignsVehicles";
 
     // 관리자 페이지인지 확인
     const isAdminPath = pathname.startsWith("/admin");
