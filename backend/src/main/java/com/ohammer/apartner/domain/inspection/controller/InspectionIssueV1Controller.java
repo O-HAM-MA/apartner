@@ -42,14 +42,14 @@ public class InspectionIssueV1Controller {
         }
     }
     //해당 점검의 이슈 조회
-    @GetMapping("/show/{Id}")
+    @GetMapping("/show/{id}")
     @Operation(
             summary = "해당 점검에 대한 이슈 내용을 볼 수 있음",
             description = "해당 점검에 대한 이슈 내용"
     )
-    public ResponseEntity<List<IssueResponseDetailDto>> getIssueFromInspection(@PathVariable(name = "Id")Long id) {
+    public ResponseEntity<List<IssueResponseDetailDto>> getIssueFromInspection(@PathVariable(name = "id")Long id) {
         try {
-            List<IssueResponseDetailDto> issues= inspectionIssueService.showIssueFormInspection(id);
+            List<IssueResponseDetailDto> issues= inspectionIssueService.showIssueFromInspection(id);
             return ResponseEntity.ok().body(issues);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
