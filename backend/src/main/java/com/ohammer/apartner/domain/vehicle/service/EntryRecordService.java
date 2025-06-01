@@ -279,7 +279,7 @@ switch (newStatus) {
         return EntryRecordResponseDto.from(entryRecord);
     }
 
-//
+
 //    @Transactional
 //    public EntryRecordStatusDto updateLatestPendingStatus(Long vehicleId, EntryRecord.Status newStatus) {
 //        EntryRecord record = entryRecordRepository
