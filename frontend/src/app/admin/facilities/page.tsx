@@ -462,7 +462,6 @@ export default function FacilitiesPage() {
   const handleInstructorSelect = (instructor: Instructor) => {
     setSelectedInstructor(instructor);
     if (selectedFacility) {
-      fetchSchedules(instructor.instructorId);
       fetchInstructorSchedules(instructor.instructorId);
     }
   };
@@ -1012,10 +1011,27 @@ export default function FacilitiesPage() {
 
   // 날짜 범위 변경 시 타임슬롯 재조회
   useEffect(() => {
-    if (selectedInstructor && (dateRange.from || dateRange.to)) {
+    if (
+      selectedInstructor?.instructorId &&
+      selectedFacility?.facilityId &&
+      dateRange.from &&
+      dateRange.to
+    ) {
       fetchSchedules(selectedInstructor.instructorId);
     }
-  }, [dateRange, selectedInstructor]);
+  }, [
+    dateRange.from,
+    dateRange.to,
+    selectedInstructor?.instructorId,
+    selectedFacility?.facilityId,
+  ]);
+
+  // 강사 선택 시 스케줄 조회
+  useEffect(() => {
+    if (selectedInstructor?.instructorId && selectedFacility?.facilityId) {
+      fetchSchedules(selectedInstructor.instructorId);
+    }
+  }, [selectedInstructor?.instructorId, selectedFacility?.facilityId]);
 
   useEffect(() => {
     if (activeTab === 'facilities') {
@@ -1228,59 +1244,58 @@ export default function FacilitiesPage() {
                         </TableHeader>
                         <TableBody>
                           {filteredInstructors.map((instructor) => (
-                            <React.Fragment key={instructor.instructorId}>
-                              <TableRow
-                                className={`cursor-pointer hover:bg-muted/50 ${
-                                  expandedInstructorId ===
-                                  instructor.instructorId
-                                    ? 'bg-muted/50'
-                                    : ''
-                                }`}
-                                onClick={() =>
-                                  handleInstructorRowClick(instructor)
-                                }
-                              >
-                                <TableCell>{instructor.name}</TableCell>
-                                <TableCell>{instructor.description}</TableCell>
-                                <TableCell>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                      asChild
-                                      onClick={(e) => e.stopPropagation()}
+                            <TableRow
+                              key={instructor.instructorId}
+                              className={`cursor-pointer hover:bg-muted/50 ${
+                                selectedInstructor?.instructorId ===
+                                instructor.instructorId
+                                  ? 'bg-muted/50'
+                                  : ''
+                              }`}
+                              onClick={() =>
+                                handleInstructorRowClick(instructor)
+                              }
+                            >
+                              <TableCell>{instructor.name}</TableCell>
+                              <TableCell>{instructor.description}</TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger
+                                    asChild
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 p-0"
                                     >
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 p-0"
-                                      >
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleInstructorEdit(instructor);
-                                        }}
-                                      >
-                                        <Pencil className="w-4 h-4 mr-2" />
-                                        수정
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        className="text-red-600"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleInstructorDelete(instructor);
-                                        }}
-                                      >
-                                        <Trash className="w-4 h-4 mr-2" />
-                                        삭제
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
-                              </TableRow>
-                            </React.Fragment>
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleInstructorEdit(instructor);
+                                      }}
+                                    >
+                                      <Pencil className="w-4 h-4 mr-2" />
+                                      수정
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-red-600"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleInstructorDelete(instructor);
+                                      }}
+                                    >
+                                      <Trash className="w-4 h-4 mr-2" />
+                                      삭제
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
                           ))}
                         </TableBody>
                       </Table>

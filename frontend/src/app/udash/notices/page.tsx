@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plus, ChevronDown, Loader2, BellRing } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faImage, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import client from '@/lib/backend/client';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface Notice {
   noticeId: number;
@@ -14,6 +18,8 @@ interface Notice {
   authorName: string;
   createdAt: string;
   viewCount: number;
+  hasImage: boolean;
+  hasFile: boolean;
 }
 
 export default function NoticesPage() {
@@ -46,6 +52,8 @@ export default function NoticesPage() {
             authorName: notice.authorName || '',
             createdAt: notice.createdAt || '',
             viewCount: notice.viewCount || 0,
+            hasImage: notice.hasImage || false,
+            hasFile: notice.hasFile || false,
           }));
           setNotices(formattedNotices);
         }
@@ -65,17 +73,7 @@ export default function NoticesPage() {
   const formatDateTime = (dateTimeStr: string) => {
     try {
       const date = new Date(dateTimeStr);
-      return date
-        .toLocaleString('ko-KR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })
-        .replace(/\./g, '-')
-        .replace(',', '');
+      return format(date, 'yyyy-MM-dd', { locale: ko });
     } catch {
       return dateTimeStr;
     }
@@ -129,11 +127,11 @@ export default function NoticesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-muted-foreground">
-                    <th className="px-4 py-3 text-left">게시글 번호</th>
-                    <th className="px-4 py-3 text-left">게시글 제목</th>
-                    <th className="px-4 py-3 text-center">게시글 작성자</th>
-                    <th className="px-4 py-3 text-center">게시글 작성일</th>
-                    <th className="px-4 py-3 text-center">게시글 조회수</th>
+                    <th className="px-4 py-3 text-left">번호</th>
+                    <th className="px-4 py-3 text-left">제목</th>
+                    <th className="px-4 py-3 text-center">작성자</th>
+                    <th className="px-4 py-3 text-center">작성일</th>
+                    <th className="px-4 py-3 text-center">조회수</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -149,9 +147,25 @@ export default function NoticesPage() {
                         {index + 1}
                       </td>
                       <td className="px-4 py-3 text-left">
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-2">
                           <span className="text-pink-500 hover:underline">
                             {notice.title}
+                          </span>
+                          <span className="flex gap-1 text-gray-500">
+                            {notice.hasImage && (
+                              <FontAwesomeIcon
+                                icon={faImage}
+                                className="w-4 h-4"
+                                title="이미지 첨부"
+                              />
+                            )}
+                            {notice.hasFile && (
+                              <FontAwesomeIcon
+                                icon={faPaperclip}
+                                className="w-4 h-4"
+                                title="파일 첨부"
+                              />
+                            )}
                           </span>
                         </div>
                       </td>
