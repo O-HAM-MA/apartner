@@ -25,10 +25,10 @@ const DashboardPage = () => {
     },
     {
       title: "차량관리",
-      description: "외부인 차량 등록 및 관리",
+      description: "입주민 차량 등록 및 관리",
       icon: "CarFront",
       actionIcon: "Zap",
-      href: "/udash/vehicles/guest",
+      href: "/udash/vehicles",
     },
     {
       title: "점검관리",
