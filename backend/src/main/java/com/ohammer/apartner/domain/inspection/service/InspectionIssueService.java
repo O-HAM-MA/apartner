@@ -7,6 +7,7 @@ import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
 import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionIssueRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
+import com.ohammer.apartner.domain.notice.service.NoticeServiceImpl;
 import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.domain.user.entity.User;
