@@ -41,6 +41,7 @@ export function middleware(request: NextRequest) {
     "/find-id",
     "/find-password",
     "/auth",
+    "/foreignsVehicles",
   ];
 
   // 현재 경로가 public 경로인지 확인
