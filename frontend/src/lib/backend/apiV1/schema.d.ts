@@ -1840,6 +1840,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inspection/manager/search/{keyword}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["searchInsepction"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inspection/issue/show_all": {
         parameters: {
             query?: never;
@@ -1860,7 +1876,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/issue/show/{Id}": {
+    "/api/v1/inspection/issue/show/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -4395,17 +4411,17 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         /** @description 사용자 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -5465,6 +5481,16 @@ export interface components {
              * @example 서비스 불만
              */
             leaveReason?: string;
+            /**
+             * @description 소셜 로그인 제공자
+             * @example kakao
+             */
+            socialProvider?: string;
+            /**
+             * @description 소셜 로그인 사용자 여부
+             * @example true
+             */
+            isSocialUser?: boolean;
         };
         /** @description 공용시설 예약 취소 요청 DTO */
         FacilityReservationCancelDto: {
@@ -6172,7 +6198,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7463,9 +7491,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                notificationId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -8739,6 +8765,30 @@ export interface operations {
             };
         };
     };
+    searchInsepction: {
+        parameters: {
+            query: {
+                page: number;
+            };
+            header?: never;
+            path: {
+                keyword: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageInspectionResponseDetailDto"];
+                };
+            };
+        };
+    };
     getInspectionIssue: {
         parameters: {
             query?: never;
@@ -8764,7 +8814,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                Id: number;
+                id: number;
             };
             cookie?: never;
         };
@@ -9426,10 +9476,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                userId: number;
-                type: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9448,12 +9495,10 @@ export interface operations {
     getPagedUserNotifications: {
         parameters: {
             query: {
-                pageable: components["schemas"]["Pageable"];
+                arg1: components["schemas"]["Pageable"];
             };
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9473,10 +9518,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                userId: number;
-                category: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9516,9 +9558,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                notificationId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9537,12 +9577,10 @@ export interface operations {
     getApartmentNotifications: {
         parameters: {
             query?: {
-                status?: "active" | "inactive" | "pending" | "withdrawn";
+                arg1?: "active" | "inactive" | "pending" | "withdrawn";
             };
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10151,7 +10189,9 @@ export interface operations {
                 arg1: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -10402,7 +10442,7 @@ export interface operations {
     deleteReadNotifications: {
         parameters: {
             query?: {
-                days?: number;
+                arg0?: number;
             };
             header?: never;
             path?: never;
