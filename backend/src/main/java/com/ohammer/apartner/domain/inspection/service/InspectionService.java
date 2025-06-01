@@ -57,9 +57,6 @@ public class InspectionService {
 
     @Transactional
     public Inspection newInspectionSchedule (InspectionRequestDto dto) {
-        //대충 유저 찾기
-        //원래 통으로 객체를 찾을까 싶었는데, 도용?의 문제가 있을 것 같아서 효율성 깎고 id뽑아서 찾아오는걸루
-        //하지만 우리는 보안상으로 jwt는 필터에서만 처리시키기 때문에 여기서는 처리하지 않는다
         User user = SecurityUtil.getCurrentUser();
         if (user == null)
             throw new RuntimeException("인증 과정에 오류가 생겼음");
@@ -231,18 +228,12 @@ public class InspectionService {
         }
     }
 
-    //이슈 변경
-//    @Transactional
-//    public void IssueInspection(Long id, InspectionIssueDto dto) {
-//        if (!inspectionRepository.existsById(id))
-//            throw new RuntimeException("그거 없는댑쇼");
-//        Inspection inspection = inspectionRepository.findById(id).get();
-//        if (!itIsYou(dto.getUserName(), inspection))
-//            throw new RuntimeException("본인만 이슈 추가가 가능합니다");
-//        inspection.setResult(Result.ISSUE);
-//
-//        inspectionRepository.save(inspection);
-//    }
+    //검색
+    public Page<InspectionResponseDetailDto> searchInspection(String keyword, Pageable pageable) {
+        return inspectionRepository
+                .findActiveByTitleOrDetailContainingIgnoreCase(keyword, pageable)
+                .map(InspectionResponseDetailDto::fromEntity);
+    }
 
 
     // =========== 여기서 부턴 타입쪽 ===========

@@ -29,4 +29,12 @@ public interface InspectionRepository extends JpaRepository<Inspection, Long> {
 
     @Query("SELECT i FROM Inspection i JOIN i.user u JOIN u.roles r WHERE r = :role")
     List<Inspection> findByRole(@Param("role") Role role);
+
+
+    //검색
+    @Query("SELECT i FROM Inspection i " +
+            "WHERE i.status = 'ACTIVE' AND " +
+            "(LOWER(i.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(i.detail) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Inspection> findActiveByTitleOrDetailContainingIgnoreCase(@Param("keyword") String keyword, Pageable pageable);
 }

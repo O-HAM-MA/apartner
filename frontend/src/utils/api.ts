@@ -142,7 +142,8 @@ export async function fetchApi(
               window.location.pathname === "/login" ||
               window.location.pathname === "/find-id" ||
               window.location.pathname === "/find-password" ||
-              window.location.pathname.startsWith("/auth/"));
+              window.location.pathname.startsWith("/auth/") ||
+              window.location.pathname === "/foreignsVehicles");
 
           // 관리자 페이지나 비로그인 허용 페이지에서는 myInfos 호출 건너뛰기
           if (isAdminPath) {
