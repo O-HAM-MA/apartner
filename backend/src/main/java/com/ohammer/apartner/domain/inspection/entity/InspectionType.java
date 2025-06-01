@@ -15,6 +15,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class InspectionType extends BaseEntity {
 
-    @Column(name = "type_name")
+    @Column(name = "type_name", unique = true)
     private String typeName;
 }

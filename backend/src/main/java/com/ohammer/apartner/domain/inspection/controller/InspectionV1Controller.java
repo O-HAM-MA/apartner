@@ -15,6 +15,10 @@ import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -68,7 +72,22 @@ public class InspectionV1Controller {
     )
     public ResponseEntity<?> compeleteInspection(@PathVariable(name = "id") Long id) {
         try {
-            inspectionService.completeInspection(id);
+            inspectionService.changeInspectionResult(id, "CHECKED");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    //시작
+    @PostMapping("/start/{id}")
+    @Operation(
+            summary = "점검 일정을 바로 시작을 하면",
+            description = "해당 점검의 상태가 PENDING으로 변합니다"
+    )
+    public ResponseEntity<?> startInspection(@PathVariable(name = "id") Long id) {
+        try {
+            inspectionService.changeInspectionResult(id, "PENDING");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
@@ -76,16 +95,30 @@ public class InspectionV1Controller {
     }
 
 
+//    //전체 불러오기
+//    //그냥 여기서 제목만 불러와도 되는게 아닌가
+//    @GetMapping("")
+//    @Operation(
+//            summary = "점검 일정을 가져옵니다",
+//            description = "점검 일정 목록을 가져옵니다"
+//    )
+//    public ResponseEntity<List<InspectionResponseDetailDto>> showAllInspections() {
+//        User user = SecurityUtil.getCurrentUser();
+//        return ResponseEntity.ok(inspectionService.showAllInspections());
+//    }
+
     //전체 불러오기
     //그냥 여기서 제목만 불러와도 되는게 아닌가
-    @GetMapping("")
+    @GetMapping()
     @Operation(
             summary = "점검 일정을 가져옵니다",
             description = "점검 일정 목록을 가져옵니다"
     )
-    public ResponseEntity<List<InspectionResponseDetailDto>> showAllInspections() {
-        User user = SecurityUtil.getCurrentUser();
-        return ResponseEntity.ok(inspectionService.showAllInspections());
+    public ResponseEntity<Page<InspectionResponseDetailDto>> showAllInspection(@RequestParam(name = "page") int page) {
+        if (page < 1)
+            page = 1;
+        Pageable pageable = PageRequest.of(page - 1, 6, Sort.by(Sort.Direction.DESC, "id"));
+        return ResponseEntity.ok(inspectionService.showAllInspections(pageable));
     }
 
     //상세 보기 -> 추가 내용 볼려고?
