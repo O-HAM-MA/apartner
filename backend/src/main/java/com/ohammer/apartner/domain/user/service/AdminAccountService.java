@@ -28,8 +28,7 @@ import com.ohammer.apartner.domain.user.repository.UserLogRepository;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
-import com.ohammer.apartner.global.Status;
-
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -217,7 +216,10 @@ public class AdminAccountService {
         if (!isAdminOrManager(user)) {
             throw new AdminAccountException("해당 사용자는 관리자 계정이 아닙니다.");
         }
-        
+
+        // user_log에서 해당 user의 로그 먼저 삭제
+        userLogRepository.deleteAll(userLogRepository.findByUser(user, Pageable.unpaged()).getContent());
+
         userRepository.delete(user);
     }
     

@@ -135,9 +135,18 @@ export async function fetchApi(
             typeof window !== "undefined" &&
             window.location.pathname.startsWith("/admin");
 
-          // 관리자 페이지에서는 myInfos 호출 건너뛰기
+          // 비로그인 허용 페이지 확인
+          const isNoAuthPath =
+            typeof window !== "undefined" &&
+            (window.location.pathname === "/signup" ||
+              window.location.pathname === "/login" ||
+              window.location.pathname === "/find-id" ||
+              window.location.pathname === "/find-password" ||
+              window.location.pathname.startsWith("/auth/"));
+
+          // 관리자 페이지나 비로그인 허용 페이지에서는 myInfos 호출 건너뛰기
           if (isAdminPath) {
-            console.info("[fetchApi] myInfos update skipped for admin page");
+          } else if (isNoAuthPath) {
           } else {
             // 사용자 정보 갱신
             const userInfoResponse = await fetchApi(
@@ -421,31 +430,15 @@ export async function checkAuth<T = any>(isAdminPath: boolean): Promise<T> {
  */
 export async function getUserChatrooms<T = any[]>(): Promise<T> {
   try {
-    // 사용자 본인의 채팅방 목록만 조회하는 API 사용
-    console.log("[getUserChatrooms] 사용자 채팅방 목록 API 조회 시도");
     const userChatroomsResponse = await get<any>("/api/v1/chats/my", {}, true);
-
-    // ApiResponse 형태로 응답이 왔는지 확인
     if (userChatroomsResponse && userChatroomsResponse.data) {
-      console.log(
-        "[getUserChatrooms] 사용자 채팅방 목록:",
-        userChatroomsResponse.data
-      );
       return userChatroomsResponse.data as T;
     }
-
-    // 응답 자체가 배열인 경우
     if (Array.isArray(userChatroomsResponse)) {
-      console.log(
-        "[getUserChatrooms] 사용자 채팅방 배열 응답:",
-        userChatroomsResponse
-      );
       return userChatroomsResponse as T;
     }
-
     return [] as unknown as T;
   } catch (error) {
-    console.error("[getUserChatrooms] 채팅방 목록 조회 중 오류:", error);
     return [] as unknown as T;
   }
 }
@@ -515,21 +508,14 @@ export async function leaveUserChatroom<T = any>(
 export async function getAdminChatrooms<T = any>(): Promise<T> {
   try {
     const response = await get<any>("/api/v1/admin/chats", {}, true);
-
-    // ApiResponse 형태로 응답이 왔는지 확인
     if (response && typeof response === "object" && "data" in response) {
       return response.data as T;
     }
-
-    // 응답 자체가 배열인 경우
     if (Array.isArray(response)) {
       return response as T;
     }
-
-    console.error("잘못된 응답 형식:", response);
     return [] as unknown as T;
   } catch (error) {
-    console.error("관리자 채팅방 목록 조회 중 오류:", error);
     return [] as unknown as T;
   }
 }
@@ -556,7 +542,6 @@ export async function getAdminChatMessages<T = any>(
 
     return response as T;
   } catch (error) {
-    console.error("관리자 채팅방 메시지 조회 중 오류:", error);
     // 관리자용 API가 실패할 경우 일반 API로 폴백
     console.log("일반 채팅방 메시지 API로 폴백 시도");
     return await get<T>(`/api/v1/chats/${chatroomId}/messages`, {}, true);
@@ -584,7 +569,6 @@ export async function getAdminChatroom<T = any>(
 
     return response as T;
   } catch (error) {
-    console.error("관리자 채팅방 상세 조회 중 오류:", error);
     // 관리자용 API가 실패할 경우 일반 API로 폴백
     console.log("일반 채팅방 API로 폴백 시도");
     return await get<T>(`/api/v1/chats/${chatroomId}`, {}, true);
@@ -725,23 +709,12 @@ export async function closeChatroom<T = any>(chatroomId: number): Promise<T> {
  */
 export async function getActiveUserChatrooms<T = any[]>(): Promise<T> {
   try {
-    console.log("[getActiveUserChatrooms] 활성화된 채팅방 목록 조회 시도");
-    const allChatrooms = await getUserChatrooms(); // 이미 사용자 본인의 채팅방만 조회
-
-    // 상태가 ACTIVE인 채팅방만 필터링
+    const allChatrooms = await getUserChatrooms();
     const activeChatrooms = Array.isArray(allChatrooms)
       ? allChatrooms.filter((room: any) => room.status === "ACTIVE")
       : [];
-
-    console.log(
-      `[getActiveUserChatrooms] 활성화된 채팅방 ${activeChatrooms.length}개 조회됨`
-    );
     return activeChatrooms as unknown as T;
   } catch (error) {
-    console.error(
-      "[getActiveUserChatrooms] 활성화된 채팅방 목록 조회 중 오류:",
-      error
-    );
     return [] as unknown as T;
   }
 }
@@ -750,4 +723,199 @@ export async function markMessagesAsRead<T = any>(
   chatroomId: number
 ): Promise<T> {
   return await post<T>(`/api/v1/chats/${chatroomId}/read`);
+}
+
+// SSE 관련 API 함수 추가
+
+/**
+ * 알림 전송 API
+ * @param type 알림 타입
+ * @param message 알림 메시지
+ * @param data 추가 데이터 (선택적)
+ */
+export async function sendNotification<T = any>(
+  type: string,
+  message: string,
+  data?: string
+): Promise<T> {
+  return await post<T>(
+    "/api/v1/alarm/send",
+    {
+      type,
+      message,
+      data,
+    },
+    {},
+    true
+  );
+}
+
+/**
+ * 커스텀 이벤트로 알림 전송 API
+ * @param eventName 이벤트 이름
+ * @param type 알림 타입
+ * @param message 알림 메시지
+ * @param data 추가 데이터 (선택적)
+ */
+export async function sendCustomEvent<T = any>(
+  eventName: string,
+  type: string,
+  message: string,
+  data?: string
+): Promise<T> {
+  return await post<T>(
+    `/api/v1/alarm/send/${eventName}`,
+    {
+      type,
+      message,
+      data,
+    },
+    {},
+    true
+  );
+}
+
+/**
+ * 특정 사용자에게 알림을 전송합니다.
+ */
+export async function sendNotificationToUser<T = any>(
+  userId: number,
+  type: string,
+  message: string,
+  data?: string
+): Promise<T> {
+  return await post<T>(
+    `/api/v1/alarm/send/user/${userId}`,
+    {
+      type,
+      message,
+      data,
+    },
+    {},
+    true
+  );
+}
+
+/**
+ * 특정 아파트의 관리자(ADMIN, MANAGER)에게 알림을 전송합니다.
+ */
+export async function sendNotificationToApartmentAdmins<T = any>(
+  apartmentId: number,
+  type: string,
+  message: string,
+  data?: string
+): Promise<T> {
+  return await post<T>(
+    `/api/v1/alarm/send/apartment/${apartmentId}/admins`,
+    {
+      type,
+      message,
+      data,
+    },
+    {},
+    true
+  );
+}
+
+/**
+ * 특정 아파트의 모든 사용자에게 알림을 전송합니다.
+ */
+export async function sendNotificationToApartmentUsers<T = any>(
+  apartmentId: number,
+  type: string,
+  message: string,
+  data?: string
+): Promise<T> {
+  return await post<T>(
+    `/api/v1/alarm/send/apartment/${apartmentId}/users`,
+    {
+      type,
+      message,
+      data,
+    },
+    {},
+    true
+  );
+}
+
+/**
+ * 내 알림 목록 조회
+ */
+export async function getUserNotifications<T = any>(): Promise<T> {
+  try {
+    const result = await get<T>("/api/v1/alarm/notifications", {}, true);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * 내 읽지 않은 알림 목록 조회
+ */
+export async function getUnreadNotifications<T = any>(): Promise<T> {
+  try {
+    const response = await get<any>(
+      "/api/v1/alarm/notifications/unread",
+      {},
+      true
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * 단일 알림 읽음 처리
+ */
+export async function markNotificationAsRead<T = any>(
+  notificationId: number
+): Promise<T> {
+  try {
+    const result = await post<T>(
+      `/api/v1/alarm/notifications/${notificationId}/read`,
+      {},
+      {},
+      true
+    );
+    return result;
+  } catch (error) {
+    throw error; // 오류 전파
+  }
+}
+
+/**
+ * 내 모든 알림 읽음 처리
+ */
+export async function markAllNotificationsAsRead<T = any>(): Promise<T> {
+  try {
+    const result = await post<T>(
+      "/api/v1/alarm/notifications/read_all",
+      {},
+      {},
+      true
+    );
+    return result;
+  } catch (error) {
+    throw error; // 오류 전파
+  }
+}
+
+/**
+ * 내 읽은 알림 삭제
+ */
+export async function deleteReadNotifications<T = any>(
+  days: number = 30
+): Promise<T> {
+  try {
+    const result = await del<T>(
+      `/api/v1/alarm/notifications/read?days=${days}`,
+      {},
+      true
+    );
+    return result;
+  } catch (error) {
+    throw error; // 오류 전파
+  }
 }

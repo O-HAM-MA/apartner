@@ -212,9 +212,20 @@ export default function GradesPage() {
 
   // 데이터 불러오기
   useEffect(() => {
-    fetchGrades();
-    fetchAllMenus();
-    fetchPagedMenus(currentPage);
+    const fetchInitialData = async () => {
+      try {
+        // 세 가지 API 호출을 병렬로 처리
+        await Promise.all([
+          fetchGrades(),
+          fetchAllMenus(),
+          fetchPagedMenus(currentPage),
+        ]);
+      } catch (error) {
+        console.error("초기 데이터 로딩 중 오류 발생:", error);
+      }
+    };
+
+    fetchInitialData();
   }, []);
 
   // 페이지 변경시 메뉴 데이터 불러오기
