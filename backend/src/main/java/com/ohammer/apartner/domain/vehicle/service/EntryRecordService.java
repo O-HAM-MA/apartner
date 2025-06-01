@@ -12,6 +12,7 @@ import com.ohammer.apartner.domain.vehicle.entity.ParkingProperties;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 //import jakarta.transaction.Transactional;
+import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import com.ohammer.apartner.security.utils.checkRoleUtils;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,8 @@ public class EntryRecordService {
 
     private final EntryRecordRepository entryRecordRepository;
     private final VehicleService vehicleService;
+    private final AlarmService alarmService;
+    private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
     private final ParkingProperties parkingProperties;
 
 
@@ -76,6 +79,36 @@ public class EntryRecordService {
         }
 
         record.setStatus(newStatus);
+        
+        // 실시간 알림 추가
+        Vehicle vehicle = record.getVehicle();
+        User vehicleOwner = vehicle.getUser();
+        Long apartmentId = vehicleOwner.getApartment() != null ? vehicleOwner.getApartment().getId() : null;
+        
+        // 차량 주인에게 알림
+        String statusText = newStatus.name();
+        String notificationType;
+switch (newStatus) {
+    case AGREE: notificationType = "success"; break;
+    case INVITER_AGREE: notificationType = "info"; break;
+    case INAGREE: notificationType = "warning"; break;
+    case PENDING: notificationType = "info"; break;
+    default: notificationType = "info";
+}
+        
+        String message = String.format("차량 [%s] 출입 요청이 %s 상태로 변경되었습니다.", 
+                vehicle.getVehicleNum(), getStatusKoreanName(newStatus));
+        
+        alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "차량 출입 상태 변경", notificationType, "vehicle", message, null, null, null, null);
+        
+        // 관리자에게도 알림 (관리자가 아닌 사람이 상태 변경했을 경우)
+        if (!isMG && !isAD && apartmentId != null) {
+            String adminMessage = String.format("사용자가 차량 [%s] 출입 요청 상태를 %s(으)로 변경했습니다.", 
+                    vehicle.getVehicleNum(), getStatusKoreanName(newStatus));
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 출입 상태 변경", "info", "vehicle", adminMessage, null, currentUser.getId(), null, null);
+        }
+        
         return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
     }
 
@@ -131,6 +164,28 @@ public class EntryRecordService {
 
         entryRecordRepository.save(latestApprovedRecord);
         vehicleService.save(vehicle);
+        
+        // 실시간 알림 추가
+        User vehicleOwner = vehicle.getUser();
+        Long apartmentId = vehicleOwner.getApartment() != null ? vehicleOwner.getApartment().getId() : null;
+        
+        // 차량 주인에게 알림
+        String message = String.format("차량 [%s]이(가) 주차장에 입차했습니다.", vehicle.getVehicleNum());
+        alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "차량 입차", "info", "vehicle", message, null, null, null, null);
+        
+        // 외부 차량인 경우 초대한 입주민에게 알림
+        if (vehicle.getIsForeign() && !vehicleOwner.getId().equals(SecurityUtil.getCurrentUserId())) {
+            String inviterMessage = String.format("초대한 방문차량 [%s]이(가) 주차장에 입차했습니다.", vehicle.getVehicleNum());
+            alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "방문차량 입차", "info", "vehicle", inviterMessage, null, null, null, null);
+        }
+        
+        // 관리자에게도 알림
+        if (apartmentId != null) {
+            String adminMessage = String.format("%s 차량 [%s]이(가) 주차장에 입차했습니다.", 
+                    vehicle.getIsForeign() ? "외부" : "입주민", vehicle.getVehicleNum());
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 입차", "info", "vehicle", adminMessage, null, null, null, null);
+        }
 
         return EntryRecordResponseDto.from(latestApprovedRecord);
     }
@@ -166,6 +221,28 @@ public class EntryRecordService {
 
         entryRecordRepository.save(activeRecord);
         vehicleService.save(vehicle);
+        
+        // 실시간 알림 추가
+        User vehicleOwner = vehicle.getUser();
+        Long apartmentId = vehicleOwner.getApartment() != null ? vehicleOwner.getApartment().getId() : null;
+        
+        // 차량 주인에게 알림
+        String message = String.format("차량 [%s]이(가) 주차장에서 출차했습니다.", vehicle.getVehicleNum());
+        alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "차량 출차", "info", "vehicle", message, null, null, null, null);
+        
+        // 외부 차량인 경우 초대한 입주민에게 알림
+        if (vehicle.getIsForeign() && !vehicleOwner.getId().equals(SecurityUtil.getCurrentUserId())) {
+            String inviterMessage = String.format("초대한 방문차량 [%s]이(가) 주차장에서 출차했습니다.", vehicle.getVehicleNum());
+            alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "방문차량 출차", "info", "vehicle", inviterMessage, null, null, null, null);
+        }
+        
+        // 관리자에게도 알림
+        if (apartmentId != null) {
+            String adminMessage = String.format("%s 차량 [%s]이(가) 주차장에서 출차했습니다.", 
+                    vehicle.getIsForeign() ? "외부" : "입주민", vehicle.getVehicleNum());
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 출차", "info", "vehicle", adminMessage, null, null, null, null);
+        }
 
         return EntryRecordResponseDto.from(activeRecord);
     }
@@ -203,5 +280,25 @@ public class EntryRecordService {
     }
 
 
+    @Transactional
+    public EntryRecordStatusDto updateLatestPendingStatus(Long vehicleId, EntryRecord.Status newStatus) {
+        EntryRecord record = entryRecordRepository
+                .findTopByVehicleIdAndStatusOrderByCreatedAtDesc(vehicleId, EntryRecord.Status.PENDING)
+                .orElseThrow(() -> new IllegalArgumentException("승인 대기 중인 기록이 없습니다."));
+
+        record.setStatus(newStatus);
+        return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
+    }
+
+    // 출입 상태 한글명 반환 헬퍼 메서드
+    private String getStatusKoreanName(EntryRecord.Status status) {
+        switch (status) {
+            case AGREE: return "최종 승인";
+            case INAGREE: return "미승인";
+            case INVITER_AGREE: return "입주민 승인";
+            case PENDING: return "승인 대기";
+            default: return status.name();
+        }
+    }
 
 }

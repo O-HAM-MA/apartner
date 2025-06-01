@@ -106,8 +106,6 @@ export default function AdminVehicleManagement() {
 
   return (
     <div className="min-h-screen bg-white m-0 p-0">
-      <Header />
-
       {/* 사용자 정보 배너 */}
 
       <main className="container mx-auto px-4 py-8">
@@ -334,8 +332,6 @@ export default function AdminVehicleManagement() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

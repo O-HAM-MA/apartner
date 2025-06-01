@@ -13,6 +13,7 @@ import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.utils.SecurityUtil;
+import com.ohammer.apartner.global.service.AlarmService;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class InspectionUserService {
     private final InspectionRepository inspectionRepository;
     private final InspectionTypeRepository inspectionTypeRepository;
     private final UserRepository userRepository;
+    private final AlarmService alarmService;
 
     //자기꺼랑 매니저에 대한 공지사항 보기
     public List<InspectionResponseDetailDto>getAllInspectionWithUser() {
@@ -56,14 +58,9 @@ public class InspectionUserService {
 
     @Transactional
     public Inspection newUserInspectionSchedule (InspectionRequestDto dto) {
-        //대충 유저 찾기
-        //원래 통으로 객체를 찾을까 싶었는데, 도용?의 문제가 있을 것 같아서 효율성 깎고 id뽑아서 찾아오는걸루
         Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
-
         User user = userRepository.findById(userId).get();
-
         InspectionType type = inspectionTypeRepository.findByTypeName(dto.getType());
-
         Inspection inspection = Inspection.builder()
                 .user(user)
                 .startAt(dto.getStartAt())
@@ -76,43 +73,85 @@ public class InspectionUserService {
                 .createdAt(LocalDateTime.now())
                 .status(Status.ACTIVE)
                 .build();
-        return inspectionRepository.save(inspection);
+        Inspection saved = inspectionRepository.save(inspection);
+
+        if (user.getApartment() != null) {
+            String userMessage = "자가점검 일정이 등록되었습니다: " + dto.getTitle();
+            alarmService.notifyUser(
+                userId,
+                user.getApartment().getId(),
+                "자가점검 등록",
+                "info",
+                "SELF_INSPECTION_NEW",
+                userMessage,
+                null,
+                userId,
+                saved.getId(),
+                null
+            );
+        }
+        return saved;
     }
 
     //수정
     @Transactional
     public void updateInspectionUser(Long id, InspectionUpdateDto dto) {
-
-
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
         Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
-
         if (inspection.getUser().getId() != userId)
             throw new RuntimeException("오직 본인만 수정/삭제가 가능합니다");
-
         inspection.setDetail(dto.getDetail());
         inspection.setStartAt(dto.getStartAt());
         inspection.setFinishAt(dto.getFinishAt());
         inspection.setModifiedAt(LocalDateTime.now());
         inspection.setTitle(dto.getTitle());
-
         inspection.setType(inspectionTypeRepository.findByTypeName(dto.getType()));
-
         inspection.setResult(inspectionService.findResult(dto.getResult()));
-
         inspectionRepository.save(inspection);
+
+        User user = inspection.getUser();
+        if (user.getApartment() != null) {
+            String userMessage = "자가점검 정보가 수정되었습니다: " + dto.getTitle();
+            alarmService.notifyUser(
+                userId,
+                user.getApartment().getId(),
+                "자가점검 수정",
+                "info",
+                "SELF_INSPECTION_UPDATE",
+                userMessage,
+                null,
+                userId,
+                inspection.getId(),
+                null
+            );
+        }
     }
 
     //삭제
     @Transactional
     public void deleteUserInspection(Long id) {
-
         Inspection inspection = inspectionRepository.findById(id).orElseThrow();
         Long userId = SecurityUtil.getOptionalCurrentUserId().orElseThrow();
-
         if (inspection.getUser().getId() != userId)
             throw new RuntimeException("오직 본인만 수정/삭제가 가능합니다");
         inspection.setStatus(Status.WITHDRAWN);
         inspectionRepository.save(inspection);
+
+        User user = inspection.getUser();
+        if (user.getApartment() != null) {
+            String userMessage = "자가점검 일정이 삭제되었습니다: " + inspection.getTitle();
+            alarmService.notifyUser(
+                userId,
+                user.getApartment().getId(),
+                "자가점검 삭제",
+                "info",
+                "SELF_INSPECTION_DELETE",
+                userMessage,
+                null,
+                userId,
+                null,
+                null
+            );
+        }
     }
 }

@@ -160,7 +160,7 @@ export default function AdminUsersPage() {
         return "활성";
       case UserStatus.INACTIVE:
         return "비활성";
-      case UserStatus.SUSPENDED:
+      case UserStatus.PENDING:
         return "정지";
       case UserStatus.DELETED:
         return "탈퇴";
@@ -185,7 +185,7 @@ export default function AdminUsersPage() {
             <span style={{ marginLeft: "5px" }}>{getStatusText(status)}</span>
           </div>
         );
-      case UserStatus.SUSPENDED:
+      case UserStatus.PENDING:
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
             <CloseCircleFilled style={{ color: "red", fontSize: "16px" }} />
@@ -202,6 +202,14 @@ export default function AdminUsersPage() {
           </div>
         );
       default:
+        if (String(status).toLowerCase() === "pending") {
+          return (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <CloseCircleFilled style={{ color: "red", fontSize: "16px" }} />
+              <span style={{ marginLeft: "5px" }}>정지</span>
+            </div>
+          );
+        }
         return <span>{status}</span>;
     }
   };

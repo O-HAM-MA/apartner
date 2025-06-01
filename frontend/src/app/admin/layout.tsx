@@ -6,6 +6,7 @@ import AdminSidebar from "@/components/admin-sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { AdminMemberContext, useAdminMember } from "@/auth/adminMember";
 import { checkAdminAuth } from "@/utils/api";
+import { NotificationProvider } from "@/contexts/notification-context";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -108,12 +109,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         clearAdminState,
       }}
     >
-      <div className="min-h-screen flex">
-        <AdminSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <main className="flex-1 overflow-y-auto p-4 pb-6">{children}</main>
+      <NotificationProvider>
+        <div className="min-h-screen flex">
+          <AdminSidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <main className="flex-1 overflow-y-auto p-4 pb-6">{children}</main>
+          </div>
         </div>
-      </div>
+      </NotificationProvider>
     </AdminMemberContext.Provider>
   );
 }
