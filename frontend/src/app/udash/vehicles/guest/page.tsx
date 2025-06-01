@@ -184,7 +184,6 @@ export default function GuestVehicleRegistration() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         {/* 페이지 제목 추가 */}
         <div className="mb-8 text-center">
@@ -501,7 +500,6 @@ export default function GuestVehicleRegistration() {
           </DialogContent>
         </Dialog>
       </main>
-      <Footer />
     </div>
   );
 }

@@ -31,7 +31,6 @@ public class EntryRecordService {
     private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
     private final ParkingProperties parkingProperties;
 
-
     @Transactional
     public EntryRecordStatusDto updateStatus(Long entryRecordId, EntryRecord.Status newStatus) {
         EntryRecord record = entryRecordRepository.findById(entryRecordId)
@@ -118,7 +117,6 @@ public class EntryRecordService {
         return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
     }
 
-
     // 🚗 입차
     public EntryRecordResponseDto enterVehicle(EntryRecordRequestDto dto) {
 
@@ -195,7 +193,6 @@ public class EntryRecordService {
         return EntryRecordResponseDto.from(latestApprovedRecord);
     }
 
-
     // 🚙 출차
     @Transactional
     public EntryRecordResponseDto exitVehicle(EntryRecordRequestDto dto) {
@@ -253,7 +250,6 @@ public class EntryRecordService {
         return EntryRecordResponseDto.from(activeRecord);
     }
 
-
     // 📜 출입 기록 조회
     public List<EntryRecordResponseDto> getEntryRecords(Long vehicleId) {
 
@@ -262,7 +258,6 @@ public class EntryRecordService {
                 .map(EntryRecordResponseDto::from)
                 .collect(Collectors.toList());
     }
-
 
     // 차량이 다시 주차 허가를 받고 싶을 때
     @Transactional
