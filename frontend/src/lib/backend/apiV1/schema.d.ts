@@ -533,18 +533,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/type": {
+    "/api/v1/inspection/type/create": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * 점검 항목 내용들을 싹다 보여주기
-         * @description 점검 항목들을 보여줍니다, 그리고 주호야 페이징 언제 만들꺼니
-         */
-        get: operations["showAllTypes"];
+        get?: never;
         put?: never;
         /**
          * 점검 항목을 추가합니다
@@ -580,6 +576,26 @@ export interface paths {
          * @description 해당 점검 일정을 삭제합니다
          */
         delete: operations["deleteInspectionSchedule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/manager/start/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 점검 일정을 바로 시작을 하면
+         * @description 해당 점검의 상태가 PENDING으로 변합니다
+         */
+        post: operations["startInspection"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -625,7 +641,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/issue/{id}/update": {
+    "/api/v1/inspection/issue/{issueId}/update": {
         parameters: {
             query?: never;
             header?: never;
@@ -995,146 +1011,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/alarm/send": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 전체 알림 전송
-         * @description 모든 연결된 클라이언트에게 알림을 전송합니다.
-         */
-        post: operations["sendAlarm"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/{eventName}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 커스텀 이벤트 전송
-         * @description 커스텀 이벤트 이름으로 알림을 전송합니다.
-         */
-        post: operations["sendCustomEvent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/user/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 사용자 알림 전송
-         * @description 특정 사용자에게 알림을 전송합니다.
-         */
-        post: operations["sendToUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/user/{userId}/category/{category}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 카테고리별 알림 전송
-         * @description 특정 사용자에게 카테고리가 지정된 알림을 전송합니다.
-         */
-        post: operations["sendCategorizedAlarm"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/apartment/{apartmentId}/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 아파트 사용자 알림 전송
-         * @description 특정 아파트의 모든 사용자에게 알림을 전송합니다.
-         */
-        post: operations["sendToApartmentUsers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/apartment/{apartmentId}/admins": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 아파트 관리자 알림 전송
-         * @description 특정 아파트의 관리자에게 알림을 전송합니다.
-         */
-        post: operations["sendToApartmentAdmins"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/notifications/{userId}/read-all": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 모든 알림 읽음 처리
-         * @description 특정 사용자의 모든 알림을 읽음 상태로 변경합니다.
-         */
-        post: operations["markAllAsRead"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/alarm/notifications/{notificationId}/read": {
         parameters: {
             query?: never;
@@ -1149,6 +1025,26 @@ export interface paths {
          * @description 특정 알림을 읽음 상태로 변경합니다.
          */
         post: operations["markAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/read_all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 모든 알림 읽음 처리
+         * @description 로그인 사용자의 모든 알림을 읽음 상태로 변경합니다.
+         */
+        post: operations["markAllAsRead"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1444,6 +1340,23 @@ export interface paths {
         head?: never;
         /** 등록된 차량을 수정 */
         patch: operations["updateVehicle"];
+        trace?: never;
+    };
+    "/api/v1/vehicles/capacity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 주차장 차량 최대 수용 공간 변경 */
+        patch: operations["updateMaxCapacity"];
         trace?: never;
     };
     "/api/v1/opinions/{opinionId}/inactive": {
@@ -1887,6 +1800,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inspection/type": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 점검 항목 내용들을 싹다 보여주기
+         * @description 점검 항목들을 보여줍니다, 그리고 주호야 페이징 언제 만들꺼니
+         */
+        get: operations["showAllTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inspection/manager": {
         parameters: {
             query?: never;
@@ -1898,7 +1831,7 @@ export interface paths {
          * 점검 일정을 가져옵니다
          * @description 점검 일정 목록을 가져옵니다
          */
-        get: operations["showAllInspections"];
+        get: operations["showAllInspection"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1907,7 +1840,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/issue/show/{issueId}": {
+    "/api/v1/inspection/issue/show_all": {
         parameters: {
             query?: never;
             header?: never;
@@ -1915,10 +1848,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 해당 이슈에 대한 내용을 볼 수 있음
-         * @description 해당 이슈에 대한 내용
+         * 모든 이슈를 조회를 할 수 있다
+         * @description 이슈의 리스트
          */
         get: operations["getInspectionIssue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/issue/show/{Id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 해당 점검에 대한 이슈 내용을 볼 수 있음
+         * @description 해당 점검에 대한 이슈 내용
+         */
+        get: operations["getIssueFromInspection"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2192,6 +2145,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/community/inactive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 삭제 처리된 게시글 목록 조회 */
+        get: operations["getInactivePosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/chats/{chatroomId}": {
         parameters: {
             query?: never;
@@ -2424,7 +2394,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/alarm/notifications/{userId}": {
+    "/api/v1/alarm/notifications": {
         parameters: {
             query?: never;
             header?: never;
@@ -2432,30 +2402,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 사용자 알림 목록 조회
-         * @description 특정 사용자의 모든 알림 목록을 조회합니다(읽은 알림 포함).
+         * 내 알림 목록 조회
+         * @description 로그인 사용자의 모든 알림 목록을 조회합니다(읽은 알림 포함).
          */
         get: operations["getUserNotifications"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/notifications/{userId}/unread": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 사용자 읽지 않은 알림 목록 조회
-         * @description 특정 사용자의 읽지 않은 알림 목록을 조회합니다.
-         */
-        get: operations["getUnreadUserNotifications"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2524,6 +2474,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alarm/notifications/unread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 읽지 않은 알림 목록 조회
+         * @description 로그인 사용자의 읽지 않은 알림 목록을 조회합니다.
+         */
+        get: operations["getUnreadUserNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alarm/notifications/detail/{notificationId}": {
         parameters: {
             query?: never;
@@ -2556,26 +2526,6 @@ export interface paths {
          * @description 특정 아파트의 모든 알림을 조회합니다.
          */
         get: operations["getApartmentNotifications"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/connected-clients": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 연결된 클라이언트 수 조회
-         * @description 현재 연결된 클라이언트 수를 조회합니다.
-         */
-        get: operations["getConnectedClients"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3245,7 +3195,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/alarm/notifications/{userId}/read": {
+    "/api/v1/alarm/notifications/read": {
         parameters: {
             query?: never;
             header?: never;
@@ -3257,7 +3207,7 @@ export interface paths {
         post?: never;
         /**
          * 읽은 알림 삭제
-         * @description 특정 사용자의 읽은 알림을 삭제합니다.
+         * @description 로그인 사용자의 읽은 알림을 삭제합니다.
          */
         delete: operations["deleteReadNotifications"];
         options?: never;
@@ -4151,23 +4101,6 @@ export interface components {
              */
             available?: boolean;
         };
-        AlarmRequest: {
-            type?: string;
-            title?: string;
-            message?: string;
-            linkUrl?: string;
-            /** Format: int64 */
-            entityId?: number;
-            /** Format: int64 */
-            senderId?: number;
-            category?: string;
-            extraData?: {
-                [key: string]: Record<string, never>;
-            };
-            data?: {
-                [key: string]: Record<string, never>;
-            };
-        };
         /** @description 관리자 등록 요청 DTO */
         AdminRegistrationRequest: {
             /**
@@ -4471,8 +4404,8 @@ export interface components {
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         /** @description 사용자 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -4627,17 +4560,35 @@ export interface components {
             result?: "CHECKED" | "PENDING" | "NOTYET" | "ISSUE";
             typeName?: string;
         };
+        PageInspectionResponseDetailDto: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["InspectionResponseDetailDto"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
         IssueResponseDetailDto: {
             /** Format: int64 */
-            id?: number;
-            /** Format: int64 */
             inspectionId?: number;
+            /** Format: int64 */
+            id?: number;
             /** Format: int64 */
             userId?: number;
             userName?: string;
             title?: string;
-            description?: string;
             typeName?: string;
+            description?: string;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -4847,17 +4798,10 @@ export interface components {
             messageId?: number;
             clientId?: string;
         };
-        Pageable: {
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
-            sort?: string[];
-        };
-        ApiResponsePageNotification: {
+        ApiResponseListNotification: {
             success?: boolean;
             message?: string;
-            data?: components["schemas"]["PageNotification"];
+            data?: components["schemas"]["Notification"][];
         };
         Notification: {
             /** Format: int64 */
@@ -4875,6 +4819,7 @@ export interface components {
             title?: string;
             message?: string;
             type?: string;
+            businessType?: string;
             /**
              * @description 상태
              * @enum {string}
@@ -4896,6 +4841,18 @@ export interface components {
             /** Format: date-time */
             expiredAt?: string;
         };
+        Pageable: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            sort?: string[];
+        };
+        ApiResponsePageNotification: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageNotification"];
+        };
         PageNotification: {
             /** Format: int32 */
             totalPages?: number;
@@ -4914,21 +4871,10 @@ export interface components {
             numberOfElements?: number;
             empty?: boolean;
         };
-        ApiResponseListNotification: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["Notification"][];
-        };
         ApiResponseNotification: {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["Notification"];
-        };
-        ApiResponseInteger: {
-            success?: boolean;
-            message?: string;
-            /** Format: int32 */
-            data?: number;
         };
         AdminUserListResponse: {
             /** Format: int64 */
@@ -5534,6 +5480,12 @@ export interface components {
              */
             cancelReason?: string;
         };
+        ApiResponseInteger: {
+            success?: boolean;
+            message?: string;
+            /** Format: int32 */
+            data?: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -6096,9 +6048,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6118,9 +6068,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -6144,9 +6092,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6164,9 +6110,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                unitId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6186,9 +6130,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                unitId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -6212,9 +6154,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                unitId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6232,9 +6172,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                buildingId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6254,9 +6192,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                buildingId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -6280,9 +6216,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                buildingId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6300,9 +6234,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6322,9 +6254,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -6348,9 +6278,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -6368,9 +6296,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -6792,26 +6718,6 @@ export interface operations {
             };
         };
     };
-    showAllTypes: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["InspectionType"][];
-                };
-            };
-        };
-    };
     addNewType: {
         parameters: {
             query?: never;
@@ -6906,6 +6812,28 @@ export interface operations {
             };
         };
     };
+    startInspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     createInspectionSchedule: {
         parameters: {
             query?: never;
@@ -6957,7 +6885,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                issueId: number;
             };
             cookie?: never;
         };
@@ -7531,167 +7459,12 @@ export interface operations {
             };
         };
     };
-    sendAlarm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendCustomEvent: {
+    markAsRead: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                eventName: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendToUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendCategorizedAlarm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: number;
-                category: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendToApartmentUsers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                apartmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendToApartmentAdmins: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                apartmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    markAllAsRead: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: number;
+                notificationId: number;
             };
             cookie?: never;
         };
@@ -7708,13 +7481,11 @@ export interface operations {
             };
         };
     };
-    markAsRead: {
+    markAllAsRead: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                notificationId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -7781,7 +7552,7 @@ export interface operations {
     getAllMenus: {
         parameters: {
             query: {
-                pageable: components["schemas"]["Pageable"];
+                arg0: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -8116,12 +7887,12 @@ export interface operations {
         parameters: {
             query: {
                 /** @description 아파트 이름 검색어 */
-                name?: string;
+                arg0?: string;
                 /** @description 아파트 주소 검색어 */
-                address?: string;
+                arg1?: string;
                 /** @description 우편번호 검색어 */
-                zipcode?: string;
-                pageable: components["schemas"]["Pageable"];
+                arg2?: string;
+                arg3: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -8280,6 +8051,28 @@ export interface operations {
             };
         };
     };
+    updateMaxCapacity: {
+        parameters: {
+            query: {
+                capacity: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
     inactiveComplaint: {
         parameters: {
             query?: never;
@@ -8424,9 +8217,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -8450,9 +8241,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -8500,9 +8289,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -8910,7 +8697,7 @@ export interface operations {
             };
         };
     };
-    showAllInspections: {
+    showAllTypes: {
         parameters: {
             query?: never;
             header?: never;
@@ -8925,7 +8712,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["InspectionResponseDetailDto"][];
+                    "*/*": components["schemas"]["InspectionType"][];
+                };
+            };
+        };
+    };
+    showAllInspection: {
+        parameters: {
+            query: {
+                page: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageInspectionResponseDetailDto"];
                 };
             };
         };
@@ -8934,8 +8743,28 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssueResponseDetailDto"][];
+                };
+            };
+        };
+    };
+    getIssueFromInspection: {
+        parameters: {
+            query?: never;
+            header?: never;
             path: {
-                issueId: number;
+                Id: number;
             };
             cookie?: never;
         };
@@ -8947,7 +8776,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["IssueResponseDetailDto"];
+                    "*/*": components["schemas"]["IssueResponseDetailDto"][];
                 };
             };
         };
@@ -9278,6 +9107,26 @@ export interface operations {
             };
         };
     };
+    getInactivePosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommunityResponseDto"][];
+                };
+            };
+        };
+    };
     getChatroomById: {
         parameters: {
             query?: never;
@@ -9430,11 +9279,11 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description 아파트 이름 검색어 */
-                name?: string;
+                arg0?: string;
                 /** @description 아파트 주소 검색어 */
-                address?: string;
+                arg1?: string;
                 /** @description 우편번호 검색어 */
-                zipcode?: string;
+                arg2?: string;
             };
             header?: never;
             path?: never;
@@ -9457,9 +9306,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9479,9 +9326,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9501,9 +9346,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                unitId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9523,9 +9366,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                buildingId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9545,9 +9386,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                buildingId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9565,36 +9404,9 @@ export interface operations {
     };
     getUserNotifications: {
         parameters: {
-            query: {
-                status?: "active" | "inactive" | "pending" | "withdrawn";
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                userId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePageNotification"];
-                };
-            };
-        };
-    };
-    getUnreadUserNotifications: {
-        parameters: {
             query?: never;
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9680,6 +9492,26 @@ export interface operations {
             };
         };
     };
+    getUnreadUserNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListNotification"];
+                };
+            };
+        };
+    };
     getNotificationDetail: {
         parameters: {
             query?: never;
@@ -9704,9 +9536,8 @@ export interface operations {
     };
     getApartmentNotifications: {
         parameters: {
-            query: {
+            query?: {
                 status?: "active" | "inactive" | "pending" | "withdrawn";
-                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path: {
@@ -9722,27 +9553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponsePageNotification"];
-                };
-            };
-        };
-    };
-    getConnectedClients: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseInteger"];
+                    "*/*": components["schemas"]["ApiResponseListNotification"];
                 };
             };
         };
@@ -9750,13 +9561,13 @@ export interface operations {
     getUserList: {
         parameters: {
             query: {
-                searchTerm?: string;
-                userName?: string;
-                email?: string;
-                apartmentName?: string;
-                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                status?: "active" | "inactive" | "pending" | "withdrawn";
-                pageable: components["schemas"]["Pageable"];
+                arg0?: string;
+                arg1?: string;
+                arg2?: string;
+                arg3?: string;
+                arg4?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                arg5?: "active" | "inactive" | "pending" | "withdrawn";
+                arg6: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -9779,9 +9590,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9800,13 +9609,11 @@ export interface operations {
     getUserLogs: {
         parameters: {
             query: {
-                logType?: string;
-                pageable: components["schemas"]["Pageable"];
+                arg1?: string;
+                arg2: components["schemas"]["Pageable"];
             };
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9825,10 +9632,10 @@ export interface operations {
     exportUsers: {
         parameters: {
             query?: {
-                searchTerm?: string;
-                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                status?: "active" | "inactive" | "pending" | "withdrawn";
-                format?: string;
+                arg0?: string;
+                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                arg2?: "active" | "inactive" | "pending" | "withdrawn";
+                arg3?: string;
             };
             header?: never;
             path?: never;
@@ -10341,12 +10148,10 @@ export interface operations {
     getBuildingsByApartment_1: {
         parameters: {
             query: {
-                pageable: components["schemas"]["Pageable"];
+                arg1: components["schemas"]["Pageable"];
             };
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10365,12 +10170,10 @@ export interface operations {
     getUnitsByBuilding_1: {
         parameters: {
             query: {
-                pageable: components["schemas"]["Pageable"];
+                arg1: components["schemas"]["Pageable"];
             };
             header?: never;
-            path: {
-                buildingId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10389,10 +10192,10 @@ export interface operations {
     getAdminAccountsByPage: {
         parameters: {
             query?: {
-                page?: number;
-                size?: number;
-                sort?: string;
-                direction?: string;
+                arg0?: number;
+                arg1?: number;
+                arg2?: string;
+                arg3?: string;
             };
             header?: never;
             path?: never;
@@ -10455,9 +10258,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10604,9 +10405,7 @@ export interface operations {
                 days?: number;
             };
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

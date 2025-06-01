@@ -35,18 +35,38 @@ export default function InspectionDetail() {
   const { loginMember } = useGlobalLoginMember();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [newIssueComment, setNewIssueComment] = useState("");
+  const [isAddingIssue, setIsAddingIssue] = useState(false);
+  const [showEditIssueDialog, setShowEditIssueDialog] = useState(false);
+  const [editingIssue, setEditingIssue] = useState<{id: number, description: string} | null>(null);
+  const [editedIssueComment, setEditedIssueComment] = useState("");
+  const [isUpdatingIssue, setIsUpdatingIssue] = useState(false);
   const [inspectionData, setInspectionData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [issues, setIssues] = useState<Array<{
+    id: number;
+    inspectionId: number;
+    userId: number;
+    userName: string;
+    title: string;
+    description: string;
+    typeName: string;
+    createdAt: string;
+    modifiedAt: string;
+  }>>([]);
+  const [issuesError, setIssuesError] = useState<string | null>(null);
 
+  // 점검 데이터 가져오기
   useEffect(() => {
     async function fetchInspection() {
       setLoading(true);
       setError(null);
       try {
         const id = params.id;
-        const res = await fetch(`api/v1/inspection/manager/${id}`, {
+        const res = await fetch(`/api/v1/inspection/manager/${id}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("점검 데이터를 불러오지 못했습니다.");
@@ -59,6 +79,27 @@ export default function InspectionDetail() {
       }
     }
     if (params.id) fetchInspection();
+  }, [params.id]);
+
+  // 이슈 데이터 가져오기
+  useEffect(() => {
+    async function fetchIssues() {
+      setIssuesError(null);
+      try {
+        const id = params.id;
+        const res = await fetch(`/api/v1/inspection/issue/show/${id}`, {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("이슈 데이터를 불러오지 못했습니다.");
+        const data = await res.json();
+        setIssues(data);
+      } catch (e: any) {
+        console.error("이슈 데이터 로딩 중 에러:", e);
+        setIssuesError(e.message || "이슈 데이터를 불러오지 못했습니다.");
+        setIssues([]); // 에러 발생 시 빈 배열로 초기화
+      }
+    }
+    if (params.id) fetchIssues();
   }, [params.id]);
 
   // Database-driven inspection data (would be replaced with API call in production)
@@ -83,6 +124,13 @@ export default function InspectionDetail() {
           textColor: "text-green-800 dark:text-green-300",
           icon: <CheckCircle size={16} className="mr-1" />,
           text: "정상 완료",
+        };
+      case "ISSUE":
+        return {
+          bgColor: "bg-red-100 dark:bg-red-900/30",
+          textColor: "text-red-800 dark:text-red-300",
+          icon: <AlertCircle size={16} className="mr-1" />,
+          text: "이슈 발생",
         };
       case "PENDING":
         return {
@@ -151,17 +199,189 @@ export default function InspectionDetail() {
     }
   };
 
+  // Handle start inspection
+  const handleStart = async () => {
+    setIsStarting(true);
+    try {
+      const id = params.id;
+      const res = await fetch(`/api/v1/inspection/manager/start/${id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        let errorMessage = "점검 시작 처리에 실패했습니다.";
+        try {
+          const text = await res.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (e) {
+          // 파싱 에러 무시
+        }
+        throw new Error(errorMessage);
+      }
+
+      // 시작 성공 후 페이지 새로고침
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Error starting inspection:", error);
+      alert(error.message || "점검 시작 처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  // Handle complete inspection
+  const handleComplete = async () => {
+    setIsCompleting(true);
+    try {
+      const id = params.id;
+      const res = await fetch(`/api/v1/inspection/manager/complete/${id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        let errorMessage = "점검 완료 처리에 실패했습니다.";
+        try {
+          const text = await res.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (e) {
+          // 파싱 에러 무시
+        }
+        throw new Error(errorMessage);
+      }
+
+      // 완료 성공 후 페이지 새로고침
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Error completing inspection:", error);
+      alert(error.message || "점검 완료 처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   const handleNewIssueCommentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setNewIssueComment(e.target.value);
   };
 
-  const handleAddIssue = () => {
+  const handleAddIssue = async () => {
     if (newIssueComment.trim() === "") {
-      alert("이슈 코멘트를 입력해 주세요.");
+      alert("이슈 내역을 등록해주세요");
       return;
     }
-    alert("새로운 이슈 추가 기능은 준비 중입니다. 입력한 코멘트: " + newIssueComment);
-    setNewIssueComment("");
+
+    setIsAddingIssue(true);
+    try {
+      const id = params.id;
+      const res = await fetch(`/api/v1/inspection/issue/${id}/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // JWT 토큰을 위한 credentials 포함
+        body: JSON.stringify({
+          description: newIssueComment.trim()
+        }),
+      });
+
+      if (!res.ok) {
+        let errorMessage = "이슈 등록에 실패했습니다.";
+        try {
+          const text = await res.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (e) {
+          // 파싱 에러 무시
+        }
+        throw new Error(errorMessage);
+      }
+
+      // 성공 시 입력란 초기화하고 이슈 목록 새로고침
+      setNewIssueComment("");
+      // 이슈 목록 새로고침
+      const issuesRes = await fetch(`/api/v1/inspection/issue/show/${id}`, {
+        credentials: "include",
+      });
+      if (issuesRes.ok) {
+        const issuesData = await issuesRes.json();
+        setIssues(issuesData);
+      }
+    } catch (error: any) {
+      console.error("Error adding issue:", error);
+      alert(error.message || "이슈 등록 중 오류가 발생했습니다.");
+    } finally {
+      setIsAddingIssue(false);
+    }
+  };
+
+  const handleEditIssue = (issue: {id: number, description: string}) => {
+    setEditingIssue(issue);
+    setEditedIssueComment(issue.description);
+    setShowEditIssueDialog(true);
+  };
+
+  const handleUpdateIssue = async () => {
+    if (!editingIssue || editedIssueComment.trim() === "") {
+      alert("이슈 내역을 등록해주세요");
+      return;
+    }
+
+    setIsUpdatingIssue(true);
+    try {
+      const res = await fetch(`/api/v1/inspection/issue/${editingIssue.id}/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          description: editedIssueComment.trim()
+        }),
+      });
+
+      if (!res.ok) {
+        let errorMessage = "이슈 수정에 실패했습니다.";
+        try {
+          const text = await res.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (e) {
+          // 파싱 에러 무시
+        }
+        throw new Error(errorMessage);
+      }
+
+      // 성공 시 이슈 목록 새로고침
+      const inspectionId = params.id; // 현재 점검의 ID
+      const issuesRes = await fetch(`/api/v1/inspection/issue/show/${inspectionId}`, {
+        credentials: "include",
+      });
+      if (issuesRes.ok) {
+        const issuesData = await issuesRes.json();
+        setIssues(issuesData);
+      }
+
+      // 모달 닫기
+      setShowEditIssueDialog(false);
+      setEditingIssue(null);
+      setEditedIssueComment("");
+    } catch (error: any) {
+      console.error("Error updating issue:", error);
+      alert(error.message || "이슈 수정 중 오류가 발생했습니다.");
+    } finally {
+      setIsUpdatingIssue(false);
+    }
   };
 
   // 날짜 포맷 함수 추가
@@ -182,20 +402,10 @@ export default function InspectionDetail() {
       <div className="flex flex-1 flex-col bg-background">
         {/* Main Content */}
         <main className="flex-1 p-8 overflow-y-auto bg-background">
-          {/* Header with Title, Theme Toggle and Bell Icon */}
+          {/* Header with Title and Back Button */}
           <header className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-foreground">시설점검</h2>
-            <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
-                <BellRing size={22} className="text-muted-foreground" />
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
-              </button>
-            </div>
-          </header>
-
-          {/* Back Button */}
-          <div className="mb-6">
+            {/* Back Button */}
             <Link href="/udash/inspections">
               <Button
                 variant="outline"
@@ -205,7 +415,7 @@ export default function InspectionDetail() {
                 <span>점검 목록으로 돌아가기</span>
               </Button>
             </Link>
-          </div>
+          </header>
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -225,6 +435,14 @@ export default function InspectionDetail() {
                     <h1 className="text-2xl font-bold text-foreground">
                       {inspectionData?.title}
                     </h1>
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      작성자: {inspectionData?.userName || "-"}
+                      {loginMember?.id !== inspectionData?.userId && (
+                        <span className="ml-2 text-blue-600 dark:text-blue-400">
+                          (작성자만 점검을 수정할 수 있습니다)
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-4 md:mt-0 flex items-center gap-3">
                     <span
@@ -295,49 +513,148 @@ export default function InspectionDetail() {
             <div className="space-y-6 lg:col-span-1">
               {/* Inspection Results */}
               <div className="bg-card rounded-lg border border-border p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  점검 결과
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    점검 결과
+                  </h2>
+                  {inspectionData?.result === "NOTYET" && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={handleStart}
+                      disabled={isStarting}
+                    >
+                      <Play size={16} />
+                      <span>{isStarting ? "처리 중..." : "점검 바로 시작하기"}</span>
+                    </Button>
+                  )}
+                  {inspectionData?.result === "PENDING" && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={handleComplete}
+                      disabled={isCompleting}
+                    >
+                      <CheckCircle size={16} />
+                      <span>{isCompleting ? "처리 중..." : "점검 완료 하기"}</span>
+                    </Button>
+                  )}
+                  {inspectionData?.result === "ISSUE" && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={handleComplete}
+                      disabled={isCompleting}
+                    >
+                      <CheckCircle size={16} />
+                      <span>{isCompleting ? "처리 중..." : "이슈 해결 및 점검 완료"}</span>
+                    </Button>
+                  )}
+                </div>
                 <div className="space-y-4">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="font-medium text-foreground">
-                        모든 기능 정상 작동
-                      </p>
-                      <p className="text-foreground">
-                        엘레베이터의 모든 기능이 정상적으로 작동하고 있습니다.
-                      </p>
+                  {inspectionData?.result === "CHECKED" ? (
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          점검 완료
+                        </p>
+                        <p className="text-foreground">
+                          점검이 정상적으로 완료되었습니다. 발견된 이슈가 있다면 아래에서 확인하실 수 있습니다.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ) : inspectionData?.result === "ISSUE" ? (
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          이슈 발생
+                        </p>
+                        <p className="text-foreground">
+                          점검 중 발견된 이슈가 있습니다. 이슈 내용을 확인하고 필요한 조치를 취해주세요. 이슈가 해결되면 점검을 완료할 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  ) : inspectionData?.result === "PENDING" ? (
+                    <div className="flex items-start gap-2">
+                      <Play className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          점검 진행 중
+                        </p>
+                        <p className="text-foreground">
+                          현재 점검이 진행 중입니다. 점검이 완료되면 "점검 완료 하기" 버튼을 눌러주세요.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2">
+                      <Square className="h-5 w-5 text-gray-600 dark:text-gray-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          점검 예정
+                        </p>
+                        <p className="text-foreground">
+                          아직 점검이 시작되지 않았습니다. 점검을 시작하고 진행해주세요.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                  {issueData.length > 0 && (
-                    <div className="border-t border-border pt-4 mt-4">
-                      <h3 className="font-medium text-foreground mb-3">
-                        발견된 이슈
-                      </h3>
-                      {issueData.map((issue) => (
-                        <div
-                          key={issue.wrong_id}
-                          className="flex items-start gap-2 mb-3 pb-3 border-b border-border last:border-0 last:mb-0 last:pb-0"
-                        >
-                          <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-400 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="font-medium text-foreground">
-                              경미한 소음 발생
-                            </p>
-                            <p className="text-foreground">
-                              {issue.description}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              보고 시간: {issue.created_at}
-                            </p>
+                  <div className="border-t border-border pt-4 mt-4">
+                    <h3 className="font-medium text-foreground mb-3">
+                      발견된 이슈
+                    </h3>
+                    {issuesError ? (
+                      <div className="text-sm text-muted-foreground">
+                        이슈 데이터를 불러오는 중 문제가 발생했습니다
+                      </div>
+                    ) : issues.length > 0 ? (
+                      <div className="space-y-4">
+                        {issues.map((issue) => (
+                          <div
+                            key={issue.id}
+                            className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50 dark:bg-secondary/20"
+                          >
+                            <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-400 mt-0.5 shrink-0" />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start mb-2">
+                                <p className="text-foreground whitespace-pre-wrap flex-1">
+                                  {issue.description}
+                                </p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="ml-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                  onClick={() => handleEditIssue({id: issue.id, description: issue.description})}
+                                >
+                                  <Edit size={16} />
+                                </Button>
+                              </div>
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                {formatDateTime(issue.createdAt)}
+                                {issue.modifiedAt !== issue.createdAt && (
+                                  <span className="ml-2">(수정됨: {formatDateTime(issue.modifiedAt)})</span>
+                                )}
+                                <span className="ml-2">• 이슈 ID: {issue.id}</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        발견된 이슈가 없습니다
+                      </div>
+                    )}
+                    {inspectionData?.result !== "CHECKED" && (
                       <div className="mt-4 space-y-2">
                         <Textarea
-                          placeholder="새로운 이슈 코멘트를 입력하세요"
+                          placeholder="이슈 내역을 등록해주세요"
                           value={newIssueComment}
                           onChange={handleNewIssueCommentChange}
                           className="w-full border border-border rounded-lg p-2 text-foreground bg-card"
@@ -346,13 +663,14 @@ export default function InspectionDetail() {
                           <Button
                             className="bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-lg shadow-sm"
                             onClick={handleAddIssue}
+                            disabled={isAddingIssue}
                           >
-                            + 이슈 추가
+                            {isAddingIssue ? "등록 중..." : "+ 이슈 추가"}
                           </Button>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -403,6 +721,51 @@ export default function InspectionDetail() {
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               {isDeleting ? "삭제 중..." : "삭제"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Issue Dialog */}
+      <Dialog open={showEditIssueDialog} onOpenChange={setShowEditIssueDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit size={20} />
+              이슈 수정
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              이슈 내용을 수정해주세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="이슈 내역을 등록해주세요"
+              value={editedIssueComment}
+              onChange={(e) => setEditedIssueComment(e.target.value)}
+              className="w-full min-h-[200px] border border-border rounded-lg p-2 text-foreground bg-card"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEditIssueDialog(false);
+                setEditingIssue(null);
+                setEditedIssueComment("");
+              }}
+              disabled={isUpdatingIssue}
+              className="border-border text-foreground hover:bg-secondary"
+            >
+              취소
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleUpdateIssue}
+              disabled={isUpdatingIssue}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isUpdatingIssue ? "수정 중..." : "수정"}
             </Button>
           </DialogFooter>
         </DialogContent>

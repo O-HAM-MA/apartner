@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { FiEye, FiEdit, FiMessageSquare } from "react-icons/fi";
-import client from "@/lib/backend/client";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { useState, useEffect } from 'react';
+import { FiEye, FiEdit, FiMessageSquare } from 'react-icons/fi';
+import client from '@/lib/backend/client';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import {
   Table,
   TableBody,
@@ -12,23 +12,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 interface Feedback {
   feedbackId: number;
@@ -42,7 +42,7 @@ interface Complaint {
   title: string;
   content: string;
   createdAt: string;
-  complaintStatus: "pending" | "in_progress" | "completed" | "rejected";
+  complaintStatus: 'pending' | 'in_progress' | 'completed' | 'rejected';
   category: string;
   user: string;
   feedbacks?: {
@@ -54,28 +54,28 @@ interface Complaint {
 }
 
 const statusOptions = [
-  { value: "pending", label: "대기중", color: "bg-yellow-100 text-yellow-800" },
-  { value: "in_progress", label: "처리중", color: "bg-blue-100 text-blue-800" },
-  { value: "completed", label: "완료", color: "bg-green-100 text-green-800" },
-  { value: "rejected", label: "반려", color: "bg-red-100 text-red-800" },
+  { value: 'pending', label: '대기중', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'in_progress', label: '처리중', color: 'bg-blue-100 text-blue-800' },
+  { value: 'completed', label: '완료', color: 'bg-green-100 text-green-800' },
+  { value: 'rejected', label: '반려', color: 'bg-red-100 text-red-800' },
 ];
 
 const categoryOptions = [
-  { value: "general", label: "일반" },
-  { value: "maintenance", label: "시설관리" },
-  { value: "security", label: "보안" },
-  { value: "other", label: "기타" },
+  { value: 'general', label: '일반' },
+  { value: 'maintenance', label: '시설관리' },
+  { value: 'security', label: '보안' },
+  { value: 'other', label: '기타' },
 ];
 
 // 카테고리 한글 라벨을 영문 값으로 변환하는 함수
 const getCategoryValue = (label: string): string => {
   const option = categoryOptions.find((opt) => opt.label === label);
-  return option ? option.value : "other";
+  return option ? option.value : 'other';
 };
 
 // 민원 상태 값을 한글 라벨로 매핑하는 함수
 const getStatusLabel = (
-  status: Complaint["complaintStatus"] | string
+  status: Complaint['complaintStatus'] | string
 ): string => {
   const option = statusOptions.find((opt) => opt.value === status);
   return option ? option.label : status;
@@ -83,15 +83,15 @@ const getStatusLabel = (
 
 // 상태에 따른 스타일을 반환하는 함수
 const getStatusStyle = (
-  status: Complaint["complaintStatus"] | string
+  status: Complaint['complaintStatus'] | string
 ): string => {
   const option = statusOptions.find((opt) => opt.value === status);
-  return option ? option.color : "bg-gray-100 text-gray-800";
+  return option ? option.color : 'bg-gray-100 text-gray-800';
 };
 
 export default function ComplaintsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchCategory, setSearchCategory] = useState("title");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchCategory, setSearchCategory] = useState('title');
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(
     null
   );
@@ -103,13 +103,13 @@ export default function ComplaintsPage() {
   const [editedComplaint, setEditedComplaint] = useState<Complaint | null>(
     null
   );
-  const [newFeedback, setNewFeedback] = useState("");
+  const [newFeedback, setNewFeedback] = useState('');
 
   // 모든 민원 불러오기
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
-        const { data } = await client.GET("/api/v1/complaints", {});
+        const { data } = await client.GET('/api/v1/complaints', {});
 
         const normalized = data.map((item: any) => ({
           ...item,
@@ -119,7 +119,7 @@ export default function ComplaintsPage() {
 
         setComplaints(normalized);
       } catch (error) {
-        console.error("민원 데이터를 불러오는 데 실패했습니다:", error);
+        console.error('민원 데이터를 불러오는 데 실패했습니다:', error);
       }
     };
 
@@ -165,7 +165,7 @@ export default function ComplaintsPage() {
       setIsEditing(false);
       setIsModalOpen(false);
     } catch (error) {
-      console.error("민원 수정에 실패했습니다:", error);
+      console.error('민원 수정에 실패했습니다:', error);
     }
   };
 
@@ -173,7 +173,7 @@ export default function ComplaintsPage() {
     if (!editedComplaint) return;
 
     try {
-      const { data } = await client.POST("/api/v1/complaints", {
+      const { data } = await client.POST('/api/v1/complaints', {
         body: {
           title: editedComplaint.title,
           content: editedComplaint.content,
@@ -188,7 +188,7 @@ export default function ComplaintsPage() {
       setIsCreateModalOpen(false);
       setEditedComplaint(null);
     } catch (error) {
-      console.error("민원 작성에 실패했습니다:", error);
+      console.error('민원 작성에 실패했습니다:', error);
     }
   };
 
@@ -202,10 +202,10 @@ export default function ComplaintsPage() {
         feedbacks: data,
       });
       setIsFeedbackModalOpen(true);
-      console.log("피드백 : " + data);
+      console.log('피드백 : ' + data);
     } catch (error) {
-      console.error("피드백 조회 실패:", error);
-      alert("피드백 조회에 실패했습니다.");
+      console.error('피드백 조회 실패:', error);
+      alert('피드백 조회에 실패했습니다.');
     }
   };
 
@@ -231,26 +231,26 @@ export default function ComplaintsPage() {
         feedbacks: data,
       });
 
-      setNewFeedback(""); // Clear the input
+      setNewFeedback(''); // Clear the input
     } catch (error) {
-      console.error("피드백 작성 실패:", error);
-      alert("피드백 작성에 실패했습니다.");
+      console.error('피드백 작성 실패:', error);
+      alert('피드백 작성에 실패했습니다.');
     }
   };
 
   const searchCategories = [
-    { value: "title", label: "제목" },
-    { value: "status", label: "상태" },
+    { value: 'title', label: '제목' },
+    { value: 'status', label: '상태' },
   ];
 
   const filteredComplaints = complaints
-    .filter((complaint) => complaint.status !== "inactive")
+    .filter((complaint) => complaint.status !== 'inactive')
     .filter((complaint) => {
       const searchValue = searchQuery.toLowerCase();
       switch (searchCategory) {
-        case "title":
+        case 'title':
           return complaint.title.toLowerCase().includes(searchValue);
-        case "status":
+        case 'status':
           return complaint.complaintStatus.toLowerCase().includes(searchValue);
         default:
           return true;
@@ -292,7 +292,10 @@ export default function ComplaintsPage() {
                 className="max-w-sm"
               />
             </div>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-pink-500 hover:bg-pink-600 text-white"
+            >
               민원 작성
             </Button>
           </div>
@@ -315,7 +318,7 @@ export default function ComplaintsPage() {
                   <TableCell>
                     {format(
                       new Date(complaint.createdAt),
-                      "yyyy년 MM월 dd일 HH:mm",
+                      'yyyy년 MM월 dd일 HH:mm',
                       { locale: ko }
                     )}
                   </TableCell>
@@ -367,7 +370,7 @@ export default function ComplaintsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? "민원 수정" : "민원 상세 내용"}
+              {isEditing ? '민원 수정' : '민원 상세 내용'}
             </DialogTitle>
           </DialogHeader>
           {selectedComplaint && (
@@ -383,7 +386,7 @@ export default function ComplaintsPage() {
                       )
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="focus:ring-pink-500 focus:border-pink-500 hover:border-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-0">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -408,6 +411,7 @@ export default function ComplaintsPage() {
                         prev ? { ...prev, title: e.target.value } : null
                       )
                     }
+                    className="focus:ring-pink-500 focus:border-pink-500 hover:border-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-0"
                   />
                 ) : (
                   <p>{selectedComplaint.title}</p>
@@ -418,7 +422,7 @@ export default function ComplaintsPage() {
                 <p>
                   {format(
                     new Date(selectedComplaint.createdAt),
-                    "yyyy년 MM월 dd일 HH:mm",
+                    'yyyy년 MM월 dd일 HH:mm',
                     { locale: ko }
                   )}
                 </p>
@@ -431,7 +435,7 @@ export default function ComplaintsPage() {
                 <h3 className="font-semibold">내용</h3>
                 {isEditing ? (
                   <textarea
-                    className="w-full min-h-[200px] p-2 border rounded-md"
+                    className="w-full min-h-[200px] p-2 border rounded-md focus:ring-pink-500 focus:border-pink-500 hover:border-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-0"
                     value={editedComplaint?.content}
                     onChange={(e) =>
                       setEditedComplaint((prev) =>
@@ -447,16 +451,27 @@ export default function ComplaintsPage() {
               </div>
               <div className="flex justify-end gap-2">
                 {!isEditing ? (
-                  <Button onClick={() => setIsEditing(true)}>수정</Button>
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-pink-500 hover:bg-pink-600 text-white"
+                  >
+                    수정
+                  </Button>
                 ) : (
                   <>
                     <Button
                       variant="outline"
                       onClick={() => setIsEditing(false)}
+                      className="hover:bg-pink-50 hover:text-pink-600"
                     >
                       취소
                     </Button>
-                    <Button onClick={handleSaveEdit}>저장</Button>
+                    <Button
+                      onClick={handleSaveEdit}
+                      className="bg-pink-500 hover:bg-pink-600 text-white"
+                    >
+                      저장
+                    </Button>
                   </>
                 )}
               </div>
@@ -474,29 +489,33 @@ export default function ComplaintsPage() {
             <div>
               <h3 className="font-semibold">카테고리</h3>
               <Select
-                value={editedComplaint?.category || ""}
+                value={editedComplaint?.category || ''}
                 onValueChange={(value) =>
                   setEditedComplaint((prev) =>
                     prev
                       ? { ...prev, category: value }
                       : {
                           id: 0,
-                          title: "",
-                          content: "",
-                          createdAt: "",
-                          complaintStatus: "pending",
+                          title: '',
+                          content: '',
+                          createdAt: '',
+                          complaintStatus: 'pending',
                           category: value,
-                          user: "",
+                          user: '',
                         }
                   )
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="focus:ring-pink-500 hover:border-pink-500">
                   <SelectValue placeholder="카테고리를 선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
                   {categoryOptions.map((category) => (
-                    <SelectItem key={category.value} value={category.label}>
+                    <SelectItem
+                      key={category.value}
+                      value={category.label}
+                      className="hover:bg-pink-50 focus:bg-pink-50"
+                    >
                       {category.label}
                     </SelectItem>
                   ))}
@@ -507,7 +526,7 @@ export default function ComplaintsPage() {
               <h3 className="font-semibold">제목</h3>
               <Input
                 placeholder="제목을 입력하세요"
-                value={editedComplaint?.title || ""}
+                value={editedComplaint?.title || ''}
                 onChange={(e) =>
                   setEditedComplaint((prev) =>
                     prev
@@ -515,34 +534,35 @@ export default function ComplaintsPage() {
                       : {
                           id: 0,
                           title: e.target.value,
-                          content: "",
-                          createdAt: "",
-                          complaintStatus: "pending",
-                          category: "",
-                          user: "",
+                          content: '',
+                          createdAt: '',
+                          complaintStatus: 'pending',
+                          category: '',
+                          user: '',
                         }
                   )
                 }
+                className="focus:ring-pink-500 focus:border-pink-500 hover:border-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-0"
               />
             </div>
             <div>
               <h3 className="font-semibold">내용</h3>
               <textarea
-                className="w-full min-h-[200px] p-2 border rounded-md"
+                className="w-full min-h-[200px] p-2 border rounded-md focus:ring-pink-500 focus:border-pink-500 hover:border-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-0"
                 placeholder="내용을 입력하세요"
-                value={editedComplaint?.content || ""}
+                value={editedComplaint?.content || ''}
                 onChange={(e) =>
                   setEditedComplaint((prev) =>
                     prev
                       ? { ...prev, content: e.target.value }
                       : {
                           id: 0,
-                          title: "",
+                          title: '',
                           content: e.target.value,
-                          createdAt: "",
-                          complaintStatus: "pending",
-                          category: "",
-                          user: "",
+                          createdAt: '',
+                          complaintStatus: 'pending',
+                          category: '',
+                          user: '',
                         }
                   )
                 }
@@ -552,10 +572,16 @@ export default function ComplaintsPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsCreateModalOpen(false)}
+                className="hover:bg-pink-50 hover:text-pink-600"
               >
                 취소
               </Button>
-              <Button onClick={handleCreate}>저장</Button>
+              <Button
+                onClick={handleCreate}
+                className="bg-pink-500 hover:bg-pink-600 text-white"
+              >
+                저장
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -588,12 +614,12 @@ export default function ComplaintsPage() {
                           {feedback.createAt
                             ? format(
                                 new Date(feedback.createAt),
-                                "yyyy년 MM월 dd일 HH:mm",
+                                'yyyy년 MM월 dd일 HH:mm',
                                 {
                                   locale: ko,
                                 }
                               )
-                            : "날짜 없음"}
+                            : '날짜 없음'}
                         </span>
                       </div>
                       <p className="text-sm">{feedback.content}</p>
@@ -604,7 +630,7 @@ export default function ComplaintsPage() {
               <div className="space-y-2">
                 <h3 className="font-semibold">새 피드백 작성</h3>
                 <textarea
-                  className="w-full min-h-[100px] p-2 border rounded-md"
+                  className="w-full min-h-[100px] p-2 border rounded-md focus:ring-pink-500 focus:border-pink-500 hover:border-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-0"
                   value={newFeedback}
                   onChange={(e) => setNewFeedback(e.target.value)}
                   placeholder="피드백을 입력하세요"
@@ -613,10 +639,16 @@ export default function ComplaintsPage() {
                   <Button
                     variant="outline"
                     onClick={() => setIsFeedbackModalOpen(false)}
+                    className="hover:bg-pink-50 hover:text-pink-600"
                   >
                     닫기
                   </Button>
-                  <Button onClick={handleSubmitFeedback}>작성</Button>
+                  <Button
+                    onClick={handleSubmitFeedback}
+                    className="bg-pink-500 hover:bg-pink-600 text-white"
+                  >
+                    작성
+                  </Button>
                 </div>
               </div>
             </div>
