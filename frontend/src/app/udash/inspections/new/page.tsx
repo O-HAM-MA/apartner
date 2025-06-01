@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
-import TipTapEditor from "@/components/editor/TiptapEditor";
 import { useGlobalLoginMember } from "@/auth/loginMember";
 import { useRouter } from "next/navigation";
+import { Textarea } from "@/components/ui/textarea";
 
 interface InspectionFormProps {
   onSubmit?: (data: any) => void;
@@ -51,7 +51,6 @@ export default function InspectionForm({
     detail: "",
   });
 
-  const [editorContent, setEditorContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [types, setTypes] = useState<{ type_id: number; typeName: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,9 +65,8 @@ export default function InspectionForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditorChange = (content: string) => {
-    setEditorContent(content);
-    setFormData((prev) => ({ ...prev, detail: content }));
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData((prev) => ({ ...prev, detail: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,6 +77,16 @@ export default function InspectionForm({
       // 날짜와 시간 합치기 (ISO 8601 형식)
       const startAt = `${formData.startDate}T${formData.startTime}`;
       const finishAt = `${formData.endDate}T${formData.endTime}`;
+
+      // 시작 시간과 종료 시간 비교 유효성 검사
+      const startDateObj = new Date(startAt);
+      const finishDateObj = new Date(finishAt);
+
+      if (finishDateObj <= startDateObj) {
+        alert("점검 종료 시간은 점검 시작 시간보다 늦어야 합니다.");
+        setIsSubmitting(false);
+        return; // 제출 중단
+      }
 
       // HTML에서 텍스트 추출
       const parser = new DOMParser();
@@ -200,12 +208,6 @@ export default function InspectionForm({
             <h2 className="text-3xl font-bold text-foreground">
               시설점검 등록
             </h2>
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
-                <BellRing size={22} className="text-muted-foreground" />
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
-              </button>
-            </div>
           </header>
 
           {/* Back Button */}
@@ -362,15 +364,17 @@ export default function InspectionForm({
                   </div>
                 </div>
 
-                {/* Inspection Content with TipTap Editor */}
+                {/* Inspection Content with Textarea */}
                 <div className="bg-card rounded-lg border border-border p-6">
                   <h3 className="text-lg font-semibold text-card-foreground mb-4">
                     점검 내용
                   </h3>
-                  <div className="min-h-[400px] border border-border rounded-lg">
-                    <TipTapEditor
-                      content={editorContent}
-                      onChange={handleEditorChange}
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder="점검 내용을 입력하세요."
+                      value={formData.detail}
+                      onChange={handleTextareaChange}
+                      className="min-h-[200px]"
                     />
                   </div>
                 </div>
