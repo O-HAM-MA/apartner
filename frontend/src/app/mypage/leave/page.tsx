@@ -10,7 +10,8 @@ const LeavePage = () => {
   const router = useRouter();
   const { loginMember, clearLoginState, logout } = useGlobalLoginMember();
 
-  // const userId = "devtestaiko49";
+  // 소셜 로그인(카카오) 사용자 확인
+  const isSocialUser = loginMember?.socialProvider === "kakao";
   const displayEmail = loginMember?.email || "이메일 정보 없음";
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -26,8 +27,23 @@ const LeavePage = () => {
       return;
     }
     setError(null);
-    setIsModalOpen(true);
+
+    // 소셜 로그인(카카오) 사용자는 비밀번호 확인 없이 진행
+    if (isSocialUser) {
+      if (!leaveReason) {
+        alert("탈퇴 사유를 선택해주세요.");
+        return;
+      }
+
+      if (confirm("정말 탈퇴하시겠습니까? 탈퇴 시 모든 정보는 삭제됩니다.")) {
+        handleWithdraw();
+      }
+    } else {
+      // 일반 사용자는 기존 비밀번호 확인 모달 표시
+      setIsModalOpen(true);
+    }
   };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setPassword("");
@@ -35,21 +51,36 @@ const LeavePage = () => {
   };
 
   const handleWithdraw = async () => {
-    if (!password) {
+    // 소셜 로그인(카카오) 사용자가 아닌 경우 비밀번호 검증
+    if (!isSocialUser && !password) {
       setError("비밀번호를 입력해주세요.");
       return;
     }
     setError(null);
 
     try {
+      // 소셜 로그인(카카오) 사용자 여부에 따라 요청 데이터 구성
+      const requestBody = isSocialUser
+        ? {
+            leaveReason,
+            isSocialUser: true,
+            socialProvider: "kakao",
+          }
+        : {
+            password,
+            leaveReason,
+          };
+
       await del<void>("/api/v1/users/me/withdraw", {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password, leaveReason }),
+        body: JSON.stringify(requestBody),
       });
 
-      handleCloseModal();
+      if (!isSocialUser) {
+        handleCloseModal();
+      }
       logout(() => router.push("/mypage/leave/success"));
     } catch (e: any) {
       console.error("Withdrawal error:", e);
@@ -190,7 +221,7 @@ const LeavePage = () => {
           onClick={handleOpenModal}
           className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 px-4 rounded-md shadow-md transition duration-150 ease-in-out"
         >
-          회원탈퇴
+          {isSocialUser ? "회원탈퇴" : "회원탈퇴"}
         </button>
       </div>
 

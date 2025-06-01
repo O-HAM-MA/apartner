@@ -16,6 +16,8 @@ import com.ohammer.apartner.security.utils.SecurityUtil;
 import com.ohammer.apartner.global.service.AlarmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,21 +101,9 @@ public class InspectionService {
     }
 
     //전부 조회
-    public List<InspectionResponseDetailDto> showAllInspections() {
-        //TODO 일단 페이징까지는 패스
-        return inspectionRepository.findAllByStatusNotWithdrawn(Status.WITHDRAWN).stream()
-                 .map( r-> new InspectionResponseDetailDto(
-                         r.getId(),
-                         r.getUser().getId(),
-                         r.getUser().getUserName(),
-                         r.getStartAt(),
-                         r.getFinishAt(),
-                         r.getTitle(),
-                         r.getDetail(),
-                         r.getResult(),
-                         r.getType().getTypeName()
-                 ))
-                 .toList();
+    public Page<InspectionResponseDetailDto> showAllInspections(Pageable pageable) {
+        return inspectionRepository.findAllByStatusNotWithdrawn(Status.WITHDRAWN, pageable)
+                 .map(InspectionResponseDetailDto::fromEntity);
     }
 
     //수정, 결과입력?
@@ -201,16 +191,25 @@ public class InspectionService {
     }
 
 
-    //검사 완료
+    //결과 수정
     @Transactional
-    public void completeInspection(Long id) {
+    public void changeInspectionResult(Long id, String result) {
         if (!inspectionRepository.existsById(id))
             throw new RuntimeException("그거 없는댑쇼");
         Inspection inspection = inspectionRepository.findById(id).get();
         if (!itIsYou(inspection))
             throw new RuntimeException("본인만 완료 가능합니다");
 
-        inspection.setResult(Result.CHECKED);
+        inspection.setResult(findResult(result));
+
+        if (result.equals("CHECKED"))
+            inspection.setFinishAt(LocalDateTime.now());
+        else if (result.equals("PENDING"))
+            inspection.setStartAt(LocalDateTime.now());
+
+
+        inspection.setModifiedAt(LocalDateTime.now());
+
 
         inspectionRepository.save(inspection);
         

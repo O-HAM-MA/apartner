@@ -8,6 +8,11 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       auto-commit: false
+  data:
+    redis:
+      host: redis_1
+      port: 6379
+      password: ${custom.prod.redis.password}
   jackson:
     time-zone: Asia/Seoul
   jpa:
