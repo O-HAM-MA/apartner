@@ -12,6 +12,7 @@ import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -61,6 +62,7 @@ public class OpinionService {
                 .build();
     }
 
+    @Transactional
     public List<AllManagerOpinionResponseDto> getAllManagerOpinion() throws AccessDeniedException {
 
         User user = SecurityUtil.getCurrentUser();
@@ -80,15 +82,20 @@ public class OpinionService {
 
         List<Opinion> opinions = opinionRepository.findByType(Opinion.Type.REPRESENTATIVE);
 
-        return opinions.stream().map(opinion -> AllManagerOpinionResponseDto.builder()
-                        .id(opinion.getId())
-                        .title(opinion.getTitle())
-                        .userName(opinion.getUser().getUserName())
-                        .content(opinion.getContent())
-                        .status(opinion.getStatus().name())
-                        .createdAt(opinion.getCreatedAt())
-                        .build())
-                        .collect(Collectors.toList());
+        return opinions.stream().map(opinion -> {
+            Set<Role> roles = opinion.getUser().getRoles();
+            String userRole = roles.stream().findFirst().map(Enum::name).orElse("UNKNOWN");
+
+            return AllManagerOpinionResponseDto.builder()
+                    .id(opinion.getId())
+                    .title(opinion.getTitle())
+                    .userName(opinion.getUser().getUserName())
+                    .content(opinion.getContent())
+                    .status(opinion.getStatus().name())
+                    .createdAt(opinion.getCreatedAt())
+                    .userRole(userRole) // ✅ 유저의 대표 역할
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     public UpdateOpinionStatsResponseDto inactiveOpinion(Long opinionId) throws Exception {

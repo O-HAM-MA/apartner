@@ -13,6 +13,7 @@ public class AllManagerOpinionResponseDto {
     private String content;
     private String status;
     private LocalDateTime createdAt;
+    private String userRole;
 
     // 필요시에
     private String userName;
