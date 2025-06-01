@@ -64,6 +64,11 @@ public class InspectionService {
             throw new RuntimeException("인증 과정에 오류가 생겼음");
 
         InspectionType type = inspectionTypeRepository.findByTypeName(dto.getType());
+        Result result;
+        if (dto.getStartAt().isAfter(LocalDateTime.now()))
+            result = Result.NOTYET;
+        else
+            result = Result.PENDING;
 
         Inspection inspection = Inspection.builder()
                 .user(user)
@@ -72,7 +77,7 @@ public class InspectionService {
                 .detail(dto.getDetail())
                 .title(dto.getTitle())
                 .type(type)
-                .result(Result.PENDING)
+                .result(result)
                 .modifiedAt(null)
                 .createdAt(LocalDateTime.now())
                 .status(Status.ACTIVE)
@@ -126,6 +131,11 @@ public class InspectionService {
         inspection.setType(inspectionTypeRepository.findByTypeName(dto.getType()));
 
         inspection.setResult(findResult(dto.getResult()));
+
+        if (dto.getResult().equals("CHECKED"))
+            inspection.setFinishAt(LocalDateTime.now());
+        else if (dto.getResult().equals("PENDING"))
+            inspection.setStartAt(LocalDateTime.now());
 
         inspectionRepository.save(inspection);
         User user = inspection.getUser();
@@ -260,19 +270,5 @@ public class InspectionService {
 
         return inspectionTypeRepository.save(inspectionType);
     }
-
-//    //삭제
-//    @Transactional
-//    public void removeType(Long id) {
-//        InspectionType type = inspectionTypeRepository.findById(id).orElseThrow();
-//        inspectionTypeRepository.delete(type);
-//    }
-//
-//
-//    //수정
-//    @Transactional
-//    public void updateInspectionType(Long id, )
-//
-
 
 }
