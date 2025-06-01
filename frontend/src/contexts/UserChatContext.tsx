@@ -424,7 +424,12 @@ export function UserChatProvider({ children }: UserChatProviderProps) {
       process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
 
     const client = new Client({
-      webSocketFactory: () => new SockJS(`${apiBaseUrl}/stomp/chats`),
+      webSocketFactory: () => {
+        const socket = new SockJS(`${apiBaseUrl}/stomp/chats`);
+        // @ts-ignore - SockJS 타입 정의에는 없지만 실제로는 존재하는 속성
+        socket.withCredentials = true; // 인증 쿠키 전송을 위한 설정 추가
+        return socket;
+      },
       debug: function (str) {
         console.log(str);
       },
