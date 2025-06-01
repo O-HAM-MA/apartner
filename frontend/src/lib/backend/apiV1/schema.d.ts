@@ -1286,6 +1286,23 @@ export interface paths {
         patch: operations["updateVehicle"];
         trace?: never;
     };
+    "/api/v1/vehicles/capacity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 주차장 차량 최대 수용 공간 변경 */
+        patch: operations["updateMaxCapacity"];
+        trace?: never;
+    };
     "/api/v1/opinions/{opinionId}/inactive": {
         parameters: {
             query?: never;
@@ -2024,6 +2041,23 @@ export interface paths {
         };
         /** 특정 글에 달린 답글 목록 조회 */
         get: operations["listBranch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/community/inactive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 삭제 처리된 게시글 목록 조회 */
+        get: operations["getInactivePosts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4084,10 +4118,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4096,9 +4130,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
@@ -4114,8 +4148,8 @@ export interface components {
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         /** @description 사용자 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -4528,10 +4562,10 @@ export interface components {
             data?: components["schemas"]["PageAdminUserListResponse"];
         };
         PageAdminUserListResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4540,9 +4574,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminUserDetailResponse: {
@@ -4594,10 +4628,10 @@ export interface components {
             data?: components["schemas"]["PageObject"];
         };
         PageObject: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4606,9 +4640,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -4659,10 +4693,10 @@ export interface components {
             hasFile?: boolean;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4671,9 +4705,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ApiResponsePageMenuDTO: {
@@ -4682,10 +4716,10 @@ export interface components {
             data?: components["schemas"]["PageMenuDTO"];
         };
         PageMenuDTO: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4694,9 +4728,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ApiResponseListMenuDTO: {
@@ -4991,10 +5025,10 @@ export interface components {
             }[];
         };
         Page: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5003,16 +5037,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageBuildingResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5021,16 +5055,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageUnitResponseDto: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5039,16 +5073,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageAdminAccountResponse: {
-            /** Format: int32 */
-            totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5057,9 +5091,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminGrade: {
@@ -7648,6 +7682,28 @@ export interface operations {
             };
         };
     };
+    updateMaxCapacity: {
+        parameters: {
+            query: {
+                capacity: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
     inactiveComplaint: {
         parameters: {
             query?: never;
@@ -8631,6 +8687,26 @@ export interface operations {
             path: {
                 id: number;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CommunityResponseDto"][];
+                };
+            };
+        };
+    };
+    getInactivePosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

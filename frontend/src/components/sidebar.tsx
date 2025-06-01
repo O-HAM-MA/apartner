@@ -70,14 +70,15 @@ const Sidebar = () => {
       label: '공용시설',
     },
     { href: '/udash/vehicles', icon: UserCircle, label: '차량 관리' },
+    { href: '/udash/complaints', icon: Users, label: '민원 관리' },
     {
       href: '/udash/inspections',
       icon: Settings,
       label: '시설 점검',
       isActive: isInspectionPath(pathname),
     },
-    { href: '/udash/complaints', icon: Users, label: '민원 관리' },
     { href: '/udash/notices', icon: Bell, label: '공지사항' },
+    { href: '/udash/community', icon: MessageSquare, label: '소통 관리' },
   ];
 
   return (
