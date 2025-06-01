@@ -1726,7 +1726,7 @@ export interface paths {
          * 점검 일정을 가져옵니다
          * @description 점검 일정 목록을 가져옵니다
          */
-        get: operations["showAllInspections"];
+        get: operations["showAllInspection"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1735,7 +1735,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/issue/show_all/{issueId}": {
+    "/api/v1/inspection/issue/show_all": {
         parameters: {
             query?: never;
             header?: never;
@@ -1743,8 +1743,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 해당 이슈에 대한 내용을 볼 수 있음
-         * @description 해당 이슈에 대한 내용
+         * 모든 이슈를 조회를 할 수 있다
+         * @description 이슈의 리스트
          */
         get: operations["getInspectionIssue"];
         put?: never;
@@ -4184,17 +4184,17 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            sorted?: boolean;
             unsorted?: boolean;
+            sorted?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -4308,6 +4308,24 @@ export interface components {
             /** @enum {string} */
             result?: "CHECKED" | "PENDING" | "NOTYET" | "ISSUE";
             typeName?: string;
+        };
+        PageInspectionResponseDetailDto: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["InspectionResponseDetailDto"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
         };
         IssueResponseDetailDto: {
             /** Format: int64 */
@@ -8243,7 +8261,29 @@ export interface operations {
             };
         };
     };
-    showAllInspections: {
+    showAllInspection: {
+        parameters: {
+            query: {
+                page: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageInspectionResponseDetailDto"];
+                };
+            };
+        };
+    };
+    getInspectionIssue: {
         parameters: {
             query?: never;
             header?: never;
@@ -8258,29 +8298,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["InspectionResponseDetailDto"][];
-                };
-            };
-        };
-    };
-    getInspectionIssue: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                issueId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["IssueResponseDetailDto"];
+                    "*/*": components["schemas"]["IssueResponseDetailDto"][];
                 };
             };
         };

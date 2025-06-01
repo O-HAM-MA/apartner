@@ -110,26 +110,36 @@ export default function AdminDashboard() {
   const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
   const [isTypeManagementModalOpen, setIsTypeManagementModalOpen] = useState(false);
   const [issuesError, setIssuesError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   useEffect(() => {
     async function fetchInspections() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/v1/inspection/manager", {
+        const res = await fetch(`/api/v1/inspection/manager?page=${currentPage}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("서버에서 데이터를 불러오지 못했습니다.");
-        const data = await res.json();
-        setInspections(data);
+
+        const pageData = await res.json();
+        setInspections(pageData.content);
+        setTotalPages(pageData.totalPages);
+        setTotalElements(pageData.totalElements);
+
       } catch (e: any) {
         setError(e.message || "알 수 없는 에러가 발생했습니다.");
+        setInspections([]);
+        setTotalPages(0);
+        setTotalElements(0);
       } finally {
         setIsLoading(false);
       }
     }
     fetchInspections();
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     if (searchParams.get("success") === "1") {
@@ -352,48 +362,28 @@ export default function AdminDashboard() {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
               <div className="text-sm text-muted-foreground">
-                총 24개 항목 중 1-6 표시
+                총 {totalElements}개 항목 중 {(currentPage - 1) * 6 + 1}-{Math.min(currentPage * 6, totalElements)} 표시
               </div>
               <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-md border-border bg-card text-muted-foreground hover:bg-secondary"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1 || isLoading}
                 >
                   <span className="sr-only">Previous</span>
                   <ChevronDown className="h-4 w-4 rotate-90" />
                 </Button>
-                <Button
-                  size="sm"
-                  className="h-8 min-w-8 rounded-md bg-pink-500 px-3 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700"
-                >
-                  1
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-w-8 rounded-md border-border bg-card px-3 text-muted-foreground hover:bg-secondary"
-                >
-                  2
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-w-8 rounded-md border-border bg-card px-3 text-muted-foreground hover:bg-secondary"
-                >
-                  3
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-w-8 rounded-md border-border bg-card px-3 text-muted-foreground hover:bg-secondary"
-                >
-                  4
-                </Button>
+                <span className="text-sm font-medium text-foreground">
+                  {currentPage} / {totalPages === 0 ? 1 : totalPages} 페이지
+                </span>
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-md border-border bg-card text-muted-foreground hover:bg-secondary"
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={currentPage === totalPages || totalPages === 0 || isLoading}
                 >
                   <span className="sr-only">Next</span>
                   <ChevronDown className="h-4 w-4 -rotate-90" />

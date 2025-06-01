@@ -15,6 +15,8 @@ import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,21 +81,9 @@ public class InspectionService {
     }
 
     //전부 조회
-    public List<InspectionResponseDetailDto> showAllInspections() {
-        //TODO 일단 페이징까지는 패스
-        return inspectionRepository.findAllByStatusNotWithdrawn(Status.WITHDRAWN).stream()
-                 .map( r-> new InspectionResponseDetailDto(
-                         r.getId(),
-                         r.getUser().getId(),
-                         r.getUser().getUserName(),
-                         r.getStartAt(),
-                         r.getFinishAt(),
-                         r.getTitle(),
-                         r.getDetail(),
-                         r.getResult(),
-                         r.getType().getTypeName()
-                 ))
-                 .toList();
+    public Page<InspectionResponseDetailDto> showAllInspections(Pageable pageable) {
+        return inspectionRepository.findAllByStatusNotWithdrawn(Status.WITHDRAWN, pageable)
+                 .map(InspectionResponseDetailDto::fromEntity);
     }
 
     //수정, 결과입력?
