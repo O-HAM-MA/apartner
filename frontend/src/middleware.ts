@@ -17,7 +17,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("accessToken");
+  // 토큰 확인 - 서버 검증은 실제 API 요청에서 수행됨
+  // 여기서는 기본적인 토큰 존재 여부만 확인하고 리다이렉트 결정
+  // 토큰의 유효성 검증은 백엔드 서버에서 수행됨
+  const accessToken = request.cookies.get("accessToken");
+  const refreshToken = request.cookies.get("refreshToken");
+  const hasAuthToken = accessToken || refreshToken;
+
+  console.log(
+    `[Middleware] 경로: ${path}, 토큰 존재: ${Boolean(hasAuthToken)}`
+  );
+  console.log(
+    `[Middleware] accessToken: ${
+      accessToken ? "있음" : "없음"
+    }, refreshToken: ${refreshToken ? "있음" : "없음"}`
+  );
 
   // 인증이 필요 없는 경로들
   const publicPaths = [
@@ -35,10 +49,15 @@ export function middleware(request: NextRequest) {
   );
 
   // 토큰이 없고 public 경로가 아니면 로그인 페이지로 리다이렉트
-  if (!token && !isPublicPath) {
+  // 토큰 유효성 검증은 백엔드 API 호출 시 수행됨
+  if (!hasAuthToken && !isPublicPath) {
+    console.log(
+      `[Middleware] 인증 토큰 없음, 로그인 페이지로 리다이렉트: ${path}`
+    );
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  console.log(`[Middleware] 통과: ${path}`);
   return NextResponse.next();
 }
 
