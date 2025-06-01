@@ -63,14 +63,6 @@ public class EntryRecordController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ 가장 최근 PENDING 상태의 출입기록 상태 변경 (ex. AGREE, REJECT)
-//    @PutMapping("/update-status/{vehicleId}")
-//    public ResponseEntity<EntryRecordStatusDto> updateLatestPendingStatus(
-//            @PathVariable(value = "vehicleId") Long vehicleId,
-//            @RequestParam EntryRecord.Status status) {
-//
-//        EntryRecordStatusDto updated = entryRecordService.updateLatestPendingStatus(vehicleId, status);
-//        return ResponseEntity.ok(updated);
-//    }
+
 
 }

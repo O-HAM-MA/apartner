@@ -38,22 +38,6 @@ public class VehicleController {
     }
 
 
-//    @GetMapping("/resident")
-//    public ResponseEntity<List<VehicleResponseDto>> getResidentVehicles() {
-//        return ResponseEntity.ok(vehicleService.getResidentVehicles());
-//    }
-//
-//    @GetMapping("/foreign")
-//    public ResponseEntity<List<VehicleResponseDto>> getForeignVehicles() {
-//        return ResponseEntity.ok(vehicleService.getForeignVehicles());
-//    }
-
-//    @GetMapping("/registrations")
-//    public ResponseEntity<List<VehicleRegistrationInfoDto>> getVehicleRegistrations(
-//            @RequestParam(name = "isForeign",  required = false) Boolean isForeign) {
-//        List<VehicleRegistrationInfoDto> registrations = vehicleService.getVehicleRegistrationInfo(isForeign);
-//        return ResponseEntity.ok(registrations);
-//    }
 
     @Operation(summary = "등록된 모든 차량 조회")
     @GetMapping("/registrationsWithStatus")
@@ -136,6 +120,14 @@ public class VehicleController {
     public ResponseEntity<List<VehicleRegistrationInfoDto>> getRegistrations() {
         List<VehicleRegistrationInfoDto> registrations = vehicleService.getForeignsVehicleRegistrationInfo();
         return ResponseEntity.ok(registrations);
+    }
+
+
+    @Operation(summary = "주차장 차량 최대 수용 공간 변경")
+    @PatchMapping("/capacity")
+    public ResponseEntity<String> updateMaxCapacity(@RequestParam("capacity") int capacity) {
+        vehicleService.updateMaxCapacity(capacity);
+        return ResponseEntity.ok("주차장 최대 수용량이 " + capacity + "대로 변경되었습니다.");
     }
 
 
