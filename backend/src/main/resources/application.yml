@@ -151,3 +151,7 @@ app:
   upload:
     temp-dir: ${user.dir}/uploads/temp
     prod-dir: ${user.dir}/uploads/prodImg
+
+
+parking:
+  max-capacity: 50
