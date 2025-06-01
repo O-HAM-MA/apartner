@@ -28,6 +28,7 @@ const ChatInterface: React.FC = () => {
     showCategorySelection,
     closeCurrentChat,
     messagesLoaded,
+    disconnectWebSocket,
   } = useApartnerTalkContext();
 
   const [newMessage, setNewMessage] = useState("");
@@ -47,7 +48,6 @@ const ChatInterface: React.FC = () => {
   // 메시지 로딩 완료 시 스크롤 조정
   useEffect(() => {
     if (messagesLoaded && messagesEndRef.current) {
-      console.log("[ChatInterface] 메시지 로딩 완료, 스크롤 조정");
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
         setAutoScroll(true);
@@ -131,6 +131,8 @@ const ChatInterface: React.FC = () => {
 
   // 뒤로가기 (카테고리 선택 화면으로)
   const handleBack = () => {
+    // 웹소켓 연결 명시적 해제
+    disconnectWebSocket();
     showCategorySelection();
   };
 

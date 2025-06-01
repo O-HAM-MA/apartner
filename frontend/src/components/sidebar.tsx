@@ -13,6 +13,8 @@ import type React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGlobalLoginMember } from '@/auth/loginMember';
+import NotificationBell from './notification-bell';
+import NotificationStatus from './notification-status';
 
 interface NavItemProps {
   href: string;
@@ -84,13 +86,16 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-card h-screen p-5 flex flex-col border-r border-border shrink-0">
       <div className="mb-10 flex flex-col items-start">
-        <Link
-          href="/"
-          className="flex items-center space-x-2 mb-2 hover:opacity-80 transition-opacity"
-        >
-          <Building size={32} className="text-pink-600 dark:text-pink-400" />
-          <h1 className="text-2xl font-bold text-foreground">APTner</h1>
-        </Link>
+        <div className="flex items-center justify-between w-full mb-2">
+          <div className="flex items-center space-x-2">
+            <Link href="/">
+              <h1 className="text-2xl font-bold text-foreground">APTner</h1>
+            </Link>
+          </div>
+          {isLogin && <NotificationBell />}
+        </div>
+        {isLogin && <NotificationStatus className="ml-auto mb-2" />}
+
         {isLogin && loginMember ? (
           <div className="bg-secondary p-3 rounded-lg w-full mt-5">
             <p className="text-sm font-semibold text-foreground">
@@ -101,8 +106,8 @@ const Sidebar = () => {
               loginMember.unitNumber) && (
               <p className="text-xs text-muted-foreground">
                 {loginMember.apartmentName}
-                {loginMember.buildingName && ` ${loginMember.buildingName}`}
-                {loginMember.unitNumber && ` ${loginMember.unitNumber}`}
+                {loginMember.buildingName && ` ${loginMember.buildingName}`} 동
+                {loginMember.unitNumber && ` ${loginMember.unitNumber}`} 호
               </p>
             )}
           </div>

@@ -16,40 +16,41 @@ import client from "@/lib/backend/client";
 export default function AdminDashboard() {
   const { adminMember, isAdminLogin } = useGlobalAdminMember();
   const [complaintsCount, setComplaintsCount] = useState(0);
-  const [complaintsIncrease, setComplaintsIncrease] = useState(0);
+  const [complaintsIncrease, setComplaintsIncrease] = useState({
+    increaseRate: 0,
+  });
   const router = useRouter();
 
-  // 오늘 접수된 민원 수 조회
+  // 오늘 접수된 민원 수와 증가율 데이터를 병렬로 조회
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const { data } = await client.GET(
-          "/api/v1/complaints/statistics/today",
-          {}
-        );
-        setComplaintsCount(data);
+        // 두 API 호출을 병렬로 처리
+        const [statsResponse, increaseResponse] = await Promise.all([
+          client.GET("/api/v1/complaints/statistics/today", {}),
+          client.GET("/api/v1/complaints/statistics/today-rate", {}),
+        ]);
+
+        // 데이터가 있을 경우만 상태 업데이트
+        if (statsResponse && typeof statsResponse.data === "number") {
+          setComplaintsCount(statsResponse.data);
+        }
+
+        // increaseResponse.data에 increaseRate 속성이 있는지 확인
+        if (
+          increaseResponse &&
+          increaseResponse.data &&
+          typeof increaseResponse.data === "object" &&
+          "increaseRate" in increaseResponse.data
+        ) {
+          setComplaintsIncrease(increaseResponse.data);
+        }
       } catch (error) {
         console.error("오늘의 통계 데이터를 불러오는 데 실패했습니다:", error);
       }
     };
 
-    fetchStats();
-  }, []);
-
-  useEffect(() => {
-    const fetchComplaintsIncrease = async () => {
-      try {
-        const { data } = await client.GET(
-          "/api/v1/complaints/statistics/today-rate",
-          {}
-        );
-        setComplaintsIncrease(data);
-      } catch (error) {
-        console.error("오늘의 통계 데이터를 불러오는 데 실패했습니다:", error);
-      }
-    };
-
-    fetchComplaintsIncrease();
+    fetchData();
   }, []);
 
   // 관리자 로그인 상태 확인

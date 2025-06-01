@@ -19,10 +19,6 @@ const userStatusToBackendStatus = (status: UserStatus): string => {
       return "PENDING";
     case UserStatus.WITHDRAWN:
       return "WITHDRAWN";
-    case UserStatus.SUSPENDED:
-      return "SUSPENDED";
-    case UserStatus.DELETED:
-      return "DELETED";
     default:
       return status;
   }

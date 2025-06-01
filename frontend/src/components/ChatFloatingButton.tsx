@@ -216,7 +216,6 @@ function ChatFloatingButtonWithContext({
   // 컴포넌트 마운트 시 최초 1회만 활성화된 채팅방 확인
   useEffect(() => {
     const initializeChat = async () => {
-      console.log("[ChatFloatingButton] fetchChatrooms called - 초기 마운트");
       await checkActiveChats();
     };
 
@@ -226,10 +225,8 @@ function ChatFloatingButtonWithContext({
   // 카드가 열리거나 닫힐 때 동작
   useEffect(() => {
     if (isOpen) {
-      console.log("[ChatFloatingButton] 카드 열림 - 메시지 읽음 처리");
       markMessagesAsRead();
     } else {
-      console.log("[ChatFloatingButton] fetchChatrooms called - 카드 닫힘");
       checkActiveChats();
     }
   }, [isOpen, markMessagesAsRead, checkActiveChats]);

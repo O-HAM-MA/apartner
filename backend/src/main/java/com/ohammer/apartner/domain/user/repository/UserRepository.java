@@ -100,5 +100,20 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("SELECT u FROM User u WHERE u.userName = :userName AND u.phoneNum = :phoneNum")
     Optional<User> findByUserNameAndPhoneNum(@Param("userName") String userName, @Param("phoneNum") String phoneNum);
-
+    
+    /**
+     * 특정 아파트의 모든 사용자를 조회합니다.
+     */
+    @EntityGraph(attributePaths = {"roles", "apartment"})
+    @Query("SELECT u FROM User u WHERE u.apartment.id = :apartmentId")
+    List<User> findByApartmentId(@Param("apartmentId") Long apartmentId);
+    
+    /**
+     * 특정 아파트의 특정 역할을 가진 사용자들을 조회합니다.
+     */
+    @EntityGraph(attributePaths = {"roles", "apartment"})
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE u.apartment.id = :apartmentId AND r IN :roleNames")
+List<User> findByApartmentIdAndRolesIn(
+        @Param("apartmentId") Long apartmentId,
+        @Param("roleNames") List<Role> roleNames);
 }

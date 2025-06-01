@@ -319,8 +319,9 @@ export default function AdminAccountsPage() {
   // 수정 모달에서 사용할 건물 목록 로드 함수 추가
   const loadBuildingsForEdit = async (apartmentId: number) => {
     try {
-      const buildingsData =
-        await adminAccountService.getBuildingsByApartmentId(apartmentId);
+      const buildingsData = await adminAccountService.getBuildingsByApartmentId(
+        apartmentId
+      );
       setBuildings(buildingsData);
     } catch (err) {
       console.error("Failed to load buildings for edit", err);
@@ -421,10 +422,7 @@ export default function AdminAccountsPage() {
         active: selectedAdmin.status === "ACTIVE",
       };
 
-      await adminAccountService.updateAccount(
-        selectedAdmin.id,
-        updateRequest
-      );
+      await adminAccountService.updateAccount(selectedAdmin.id, updateRequest);
 
       // 수정 후 현재 페이지 데이터 다시 불러오기
       await fetchAdminAccounts();
@@ -653,7 +651,9 @@ export default function AdminAccountsPage() {
                       <TableCell className="text-center">
                         {admin.email}
                       </TableCell>
-                      <TableCell className="text-center">{admin.role}</TableCell>
+                      <TableCell className="text-center">
+                        {admin.role}
+                      </TableCell>
                       <TableCell className="text-center">
                         {admin.apartmentName ? (
                           <div className="flex items-center justify-center gap-2">
@@ -782,7 +782,8 @@ export default function AdminAccountsPage() {
             <div className="mt-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                  총 <span className="font-medium">{totalElements}</span>개 항목 중{" "}
+                  총 <span className="font-medium">{totalElements}</span>개 항목
+                  중{" "}
                   <span className="font-medium">
                     {currentPage * pageSize + 1}-
                     {Math.min((currentPage + 1) * pageSize, totalElements)}
@@ -948,8 +949,7 @@ export default function AdminAccountsPage() {
                       variant="outline"
                       onClick={() => setShowBuildingSelect(true)}
                     >
-                      <BuildingIcon className="mr-2 h-4 w-4" />
-                      동 추가
+                      <BuildingIcon className="mr-2 h-4 w-4" />동 추가
                     </Button>
                   </div>
                 ) : null}
@@ -968,7 +968,9 @@ export default function AdminAccountsPage() {
                     >
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={buildings.length ? "동 선택" : "로드 중..."}
+                          placeholder={
+                            buildings.length ? "동 선택" : "로드 중..."
+                          }
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -1089,9 +1091,21 @@ export default function AdminAccountsPage() {
                 </label>
                 <Select
                   value={selectedAdmin.role}
-                  onValueChange={(value) =>
-                    setSelectedAdmin({ ...selectedAdmin, role: value })
-                  }
+                  onValueChange={(value) => {
+                    setSelectedAdmin((prev) => {
+                      if (!prev) return prev;
+                      if (value === "ADMIN") {
+                        return {
+                          ...prev,
+                          role: value,
+                          gradeId: undefined,
+                          apartmentId: undefined,
+                          buildingId: undefined,
+                        };
+                      }
+                      return { ...prev, role: value };
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="역할 선택" />
@@ -1106,89 +1120,97 @@ export default function AdminAccountsPage() {
                 </Select>
               </div>
 
-              <div className="grid gap-2">
-                <label htmlFor="edit-grade" className="font-medium">
-                  등급
-                </label>
-                <Select
-                  value={selectedAdmin.gradeId?.toString() || ""}
-                  onValueChange={(value) =>
-                    setSelectedAdmin({
-                      ...selectedAdmin,
-                      gradeId: Number(value),
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="등급 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {grades.map((grade) => (
-                      <SelectItem key={grade.id} value={grade.id.toString()}>
-                        {grade.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* ADMIN이 아닐 때만 등급/아파트/동 UI 노출 */}
+              {selectedAdmin.role !== "ADMIN" && (
+                <>
+                  <div className="grid gap-2">
+                    <label htmlFor="edit-grade" className="font-medium">
+                      등급
+                    </label>
+                    <Select
+                      value={selectedAdmin.gradeId?.toString() || ""}
+                      onValueChange={(value) =>
+                        setSelectedAdmin({
+                          ...selectedAdmin,
+                          gradeId: Number(value),
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="등급 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {grades.map((grade) => (
+                          <SelectItem
+                            key={grade.id}
+                            value={grade.id.toString()}
+                          >
+                            {grade.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="grid gap-2">
-                <label htmlFor="edit-apartment" className="font-medium">
-                  아파트
-                </label>
-                <Select
-                  value={selectedAdmin.apartmentId?.toString() || "none"}
-                  onValueChange={(value) =>
-                    handleEditApartmentChange(
-                      value === "none" ? 0 : Number(value)
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="아파트 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">선택 안함</SelectItem>
-                    {apartments.map((apt) => (
-                      <SelectItem key={apt.id} value={apt.id.toString()}>
-                        {apt.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="edit-apartment" className="font-medium">
+                      아파트
+                    </label>
+                    <Select
+                      value={selectedAdmin.apartmentId?.toString() || "none"}
+                      onValueChange={(value) =>
+                        handleEditApartmentChange(
+                          value === "none" ? 0 : Number(value)
+                        )
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="아파트 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {apartments.map((apt) => (
+                          <SelectItem key={apt.id} value={apt.id.toString()}>
+                            {apt.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {selectedAdmin.apartmentId && (
-                <div className="grid gap-2">
-                  <label htmlFor="edit-building" className="font-medium">
-                    동
-                  </label>
-                  <Select
-                    value={selectedAdmin.buildingId?.toString() || "none"}
-                    onValueChange={(value) =>
-                      setSelectedAdmin({
-                        ...selectedAdmin,
-                        buildingId:
-                          value === "none" ? undefined : Number(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="동 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">선택 안함</SelectItem>
-                      {buildings.map((building) => (
-                        <SelectItem
-                          key={`${selectedAdmin.apartmentId}-${building.id}`}
-                          value={building.id.toString()}
-                        >
-                          {building.buildingNumber}동
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  {selectedAdmin.apartmentId && (
+                    <div className="grid gap-2">
+                      <label htmlFor="edit-building" className="font-medium">
+                        동
+                      </label>
+                      <Select
+                        value={selectedAdmin.buildingId?.toString() || "none"}
+                        onValueChange={(value) =>
+                          setSelectedAdmin({
+                            ...selectedAdmin,
+                            buildingId:
+                              value === "none" ? undefined : Number(value),
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="동 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">선택 안함</SelectItem>
+                          {buildings.map((building) => (
+                            <SelectItem
+                              key={`${selectedAdmin.apartmentId}-${building.id}`}
+                              value={building.id.toString()}
+                            >
+                              {building.buildingNumber}동
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="grid gap-2">

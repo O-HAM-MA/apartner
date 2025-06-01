@@ -1,8 +1,7 @@
-'use client';
-
 import FeatureCard from '@/components/feature-card';
 import NotificationItem from '@/components/notification-item';
 import client from '@/lib/backend/client';
+import RecentNotifications from '@/components/RecentNotifications';
 import {
   CalendarDays,
   Edit3,
@@ -26,6 +25,13 @@ const DashboardPage = () => {
       href: '/udash/facilities',
     },
     {
+      title: '차량관리',
+
+      description: '외부인 차량 등록 및 관리',
+      icon: 'CarFront',
+      actionIcon: 'Zap',
+      href: '/udash/vehicles/guest',
+
       title: '차량 관리',
       description: '외부인 차량 등록 및 관리',
       icon: 'CarFront',
@@ -47,6 +53,12 @@ const DashboardPage = () => {
       href: '/udash/complaints',
     },
     {
+      title: '공지사항',
+      description: '아파트 주요 공지 및 안내사항',
+      icon: 'Megaphone',
+      actionIcon: 'Megaphone',
+      href: '/udash/notices',
+
       title: '공지사항',
       description: '아파트 주요 공지 및 안내사항',
       icon: 'Megaphone',
@@ -87,10 +99,7 @@ const DashboardPage = () => {
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">대시보드</h2>
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 rounded-full hover:bg-gray-200 focus:outline-none">
-              <BellRing size={22} className="text-gray-600" />
-              <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-white"></span>
-            </button>
+            {/* 불필요한 벨 아이콘 제거 (사이드바에 이미 있음) */}
           </div>
         </header>
 
@@ -149,16 +158,7 @@ const DashboardPage = () => {
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
             최근 알림
           </h3>
-          <div>
-            {notifications.map((notification, index) => (
-              <NotificationItem
-                key={index}
-                title={notification.title}
-                details={notification.details}
-                time={notification.time}
-              />
-            ))}
-          </div>
+          <RecentNotifications />
         </div>
       </main>
     </div>
