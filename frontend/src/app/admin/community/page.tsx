@@ -511,7 +511,6 @@ export default function CommunityPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-rose-50">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Existing posts section */}
@@ -723,7 +722,6 @@ export default function CommunityPage() {
           </div>
         </div>
       </main>
-      <Footer />
 
       {/* 새 글 작성 모달 */}
       <Dialog

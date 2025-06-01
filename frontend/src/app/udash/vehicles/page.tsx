@@ -743,7 +743,6 @@ export default function VehicleManagement() {
       style={{ margin: 0, padding: 0 }}
     >
       {/* 헤더 */}
-      <Header />
 
       {/* 사용자 정보 배너 */}
 
@@ -1183,7 +1182,6 @@ export default function VehicleManagement() {
       </main>
 
       {/* 푸터 */}
-      <Footer />
     </div>
   );
 }
