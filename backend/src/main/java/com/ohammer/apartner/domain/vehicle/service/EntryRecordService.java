@@ -280,15 +280,7 @@ switch (newStatus) {
     }
 
 
-    @Transactional
-    public EntryRecordStatusDto updateLatestPendingStatus(Long vehicleId, EntryRecord.Status newStatus) {
-        EntryRecord record = entryRecordRepository
-                .findTopByVehicleIdAndStatusOrderByCreatedAtDesc(vehicleId, EntryRecord.Status.PENDING)
-                .orElseThrow(() -> new IllegalArgumentException("승인 대기 중인 기록이 없습니다."));
 
-        record.setStatus(newStatus);
-        return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
-    }
 
     // 출입 상태 한글명 반환 헬퍼 메서드
     private String getStatusKoreanName(EntryRecord.Status status) {
