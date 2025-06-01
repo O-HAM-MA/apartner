@@ -17,6 +17,23 @@ import { useSearchParams } from "next/navigation";
 import InspectionTypeManagementModal from "@/components/InspectionTypeManagementModal";
 
 
+// 날짜 포맷 함수
+const formatDateTime = (dateTimeString: string) => {
+  if (!dateTimeString) return "-";
+  try {
+    const date = new Date(dateTimeString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (error) {
+    console.error("Invalid date string:", dateTimeString);
+    return "Invalid Date";
+  }
+};
+
 type IssueResponseDetailDto = {
   id: number;
   inspectionId: number;
@@ -92,6 +109,7 @@ export default function AdminDashboard() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
   const [isTypeManagementModalOpen, setIsTypeManagementModalOpen] = useState(false);
+  const [issuesError, setIssuesError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchInspections() {
@@ -129,18 +147,42 @@ export default function AdminDashboard() {
     }
   }, [searchParams]);
 
-  const handleTabClick = (tab: string) => {
+  const handleTabClick = async (tab: string) => {
     setActiveTab(tab);
     if (tab === "issues") {
       setIsLoadingIssues(true);
-      setTimeout(() => {
-        const mockIssues = [
-          { id: 1, inspectionId: 1, userId: 1, userName: "김기술", title: "엘레베이터 1호기 소음", description: "2층에서 3층 이동 시 경미한 소음 발생", typeName: "소방", createdAt: "2023-05-15 10:45", modifiedAt: "2023-05-15 11:00" },
-          { id: 2, inspectionId: 2, userId: 2, userName: "이점검", title: "비상 통신 시스템 점검", description: "비상 통신 시스템 점검 중 일부 통신 불안정", typeName: "소방", createdAt: "2023-05-16 09:00", modifiedAt: "2023-05-16 09:30" }
-        ];
-        setIssues(mockIssues);
+      setIssuesError(null);
+      try {
+        const res = await fetch('/api/v1/inspection/issue/show_all', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!res.ok) {
+          let errorMessage = '이슈 목록을 불러오는데 실패했습니다.';
+          try {
+            const errorData = await res.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (e) {
+            const text = await res.text();
+            errorMessage = text || errorMessage;
+          }
+          throw new Error(errorMessage);
+        }
+
+        const data: IssueResponseDetailDto[] = await res.json();
+        setIssues(data);
+
+      } catch (err: any) {
+        console.error('Failed to fetch all issues:', err);
+        setIssuesError(err.message || '이슈 데이터를 불러오는 중 오류가 발생했습니다.');
+        setIssues([]);
+      } finally {
         setIsLoadingIssues(false);
-      }, 1000);
+      }
     } else {
       setIssues([]);
     }
@@ -188,12 +230,14 @@ export default function AdminDashboard() {
           {/* Filters and Actions */}
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap gap-2">
+              {/* "전체 시설" 필터 제거 */}
+              {/*
               <div className="inline-flex items-center rounded-md border border-border bg-card shadow-sm">
                 <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground">
                   전체 시설
-                  <ChevronDown className="h-4 w-4" />
                 </button>
               </div>
+              */}
               <div className="inline-flex items-center rounded-md border border-border bg-card shadow-sm">
                 <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground">
                   전체 상태
@@ -238,16 +282,10 @@ export default function AdminDashboard() {
                           <th className="px-4 py-3 text-center">점검 종료 예상 시간</th>
                           <th className="px-4 py-3 text-center">작업 상태</th>
                           <th className="px-4 py-3 text-center">담당자</th>
-                          <th className="px-4 py-3 text-center">작업</th>
                         </tr>
                       </thead>
                       <tbody>
                         {inspections.map((inspection) => {
-                          const formatDateTime = (dt: string) => {
-                            if (!dt) return "-";
-                            const [date, time] = dt.split('T');
-                            return date + ' ' + (time ? time.substring(0,5) : '');
-                          };
                           return (
                             <tr key={inspection.inspectionId} className="border-b border-border hover:bg-secondary/30 transition-colors">
                               <td className="px-4 py-3 text-left font-medium">{inspection.inspectionId}</td>
@@ -264,10 +302,6 @@ export default function AdminDashboard() {
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-center">{inspection.userName}</td>
-                              <td className="px-4 py-3 text-center flex gap-2 justify-center">
-                                <button className="hover:text-blue-500"><FileEdit size={16} /></button>
-                                <button className="hover:text-red-500"><Trash2 size={16} /></button>
-                              </td>
                             </tr>
                           );
                         })}
@@ -277,32 +311,42 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="text-center py-10 text-muted-foreground">등록된 점검 내역이 없습니다.</div>
                 )
-              ) : (
+              ) : activeTab === "issues" ? (
                 isLoadingIssues ? (
-                  <p className="text-center text-muted-foreground">이슈 목록을 불러오는 중입니다...</p>
+                  <div className="text-center py-10 text-muted-foreground">이슈 목록을 불러오는 중입니다...</div>
+                ) : issuesError ? (
+                  <div className="text-center py-10 text-red-500">{issuesError}</div>
                 ) : issues.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
                     {issues.map((issue) => (
                       <div key={issue.id} className="bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-2">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-xs font-medium">
                             {issue.typeName}
                           </span>
-                          <span className="text-xs text-muted-foreground">(inspection ID: {issue.inspectionId})</span>
+                          <span className="text-xs text-muted-foreground">이슈 ID: {issue.id}</span>
                         </div>
-                        <h3 className="font-bold text-foreground mb-1">{issue.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{issue.description}</p>
+                        <h3 className="font-bold text-foreground mb-1">
+                          점검 제목: <Link href={`/udash/inspections/${issue.inspectionId}`} className="text-pink-500 hover:underline">{issue.title || '제목 없음'}</Link>
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">{issue.description}</p>
                         <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>작성자: {issue.userName}</span>
-                          <span>생성: {issue.createdAt}</span>
+                          <span>작성자: {issue.userName || '알 수 없음'}</span>
+                          <span>생성: {formatDateTime(issue.createdAt)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {issue.modifiedAt !== issue.createdAt && issue.modifiedAt !== null && (
+                            <span className="mr-4">수정: {formatDateTime(issue.modifiedAt)}</span>
+                          )}
+                          <span>점검 ID: {issue.inspectionId}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground">등록된 이슈 내역이 없습니다.</p>
+                  <div className="text-center text-muted-foreground py-10">발견된 이슈가 없습니다.</div>
                 )
-              )}
+              ) : null /* activeTab이 inspections 또는 issues가 아닐 경우 */}
             </div>
 
             {/* Pagination */}

@@ -15,6 +15,10 @@ import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -100,6 +104,20 @@ public class InspectionV1Controller {
     )
     public ResponseEntity<List<InspectionResponseDetailDto>> showAllInspections() {
         User user = SecurityUtil.getCurrentUser();
+        return ResponseEntity.ok(inspectionService.showAllInspections());
+    }
+
+    //전체 불러오기
+    //그냥 여기서 제목만 불러와도 되는게 아닌가
+    @GetMapping("/all")
+    @Operation(
+            summary = "점검 일정을 가져옵니다",
+            description = "점검 일정 목록을 가져옵니다"
+    )
+    public ResponseEntity<Page<InspectionResponseDetailDto>> showAllInspection(int page) {
+        if (page < 1)
+            page = 1;
+        Pageable pageable = PageRequest.of(page - 1, 6, Sort.by(Sort.Direction.DESC, "creationTime"));
         return ResponseEntity.ok(inspectionService.showAllInspections());
     }
 

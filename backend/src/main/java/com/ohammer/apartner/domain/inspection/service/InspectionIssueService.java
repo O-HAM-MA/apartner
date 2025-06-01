@@ -7,6 +7,7 @@ import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
 import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionIssueRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
+import com.ohammer.apartner.global.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,18 +72,18 @@ public class InspectionIssueService {
 
     //조회
     public List<IssueResponseDetailDto> showInspectionIssue() {
-        return issueRepository.findAll().stream().map( i ->
-                new IssueResponseDetailDto(
-                      i.getInspection().getId(),
-                      i.getId(),
-                      i.getInspection().getUser().getId(),
-                      i.getInspection().getUser().getUserName(),
-                      i.getInspection().getTitle(),
-                      i.getInspection().getType().getTypeName(),
-                      i.getDescription(),
-                      i.getCreatedAt(),
-                      i.getModifiedAt()
-                ))
+        return issueRepository.findAllByInspectionStatus(Status.ACTIVE).stream().map(i ->
+                        new IssueResponseDetailDto(
+                                i.getInspection().getId(),
+                                i.getId(),
+                                i.getInspection().getUser().getId(),
+                                i.getInspection().getUser().getUserName(),
+                                i.getInspection().getTitle(),
+                                i.getInspection().getType().getTypeName(),
+                                i.getDescription(),
+                                i.getCreatedAt(),
+                                i.getModifiedAt()
+                            ))
                 .toList();
     }
 
