@@ -13,8 +13,8 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "공지사항 게시글 등록 요청 DTO")
-public class NoticeCreateRequestDto {
+@Schema(description = "공지사항 게시글 등록/수정 요청 DTO")
+public class NoticeRequestDto {
 
     @Schema(description = "게시글 제목", example = "엘레베이터 정기점검 안내")
     private String title;

@@ -14,8 +14,8 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     @Query("""
                 SELECT new com.ohammer.apartner.domain.notice.dto.response.NoticeSummaryResponseDto(
-                    n.id, n.title, u.userName, b.id, n.createdAt, n.viewCount
-                )
+                    n.id, n.title, u.userName, b.id, n.createdAt, n.viewCount,
+                     (SIZE(n.images) > 0), (SIZE(n.files) > 0))
                 FROM Notice n
                 LEFT JOIN n.user u
                 LEFT JOIN n.building b
@@ -35,20 +35,22 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     @Query("""
                 SELECT new com.ohammer.apartner.domain.notice.dto.response.UserNoticeSummaryResponseDto(
-                    n.id, n.title, u.userName, n.createdAt, n.viewCount
+                    n.id, n.title, u.userName, n.createdAt, n.viewCount,
+                    CASE WHEN SIZE(n.images) > 0 THEN true ELSE false END,
+                    CASE WHEN SIZE(n.files) > 0 THEN true ELSE false END
                 )
                 FROM Notice n
                 LEFT JOIN n.user u
                 LEFT JOIN n.building b
                 WHERE n.status = 'ACTIVE'
-                AND (
+                  AND (
                     (:buildingId IS NULL AND (b.id = :userBuildingId OR b.id IS NULL)) OR
                     (:buildingId IS NOT NULL AND b.id = :buildingId)
-                )
-                AND (
+                  )
+                  AND (
                     (:startDate IS NULL OR :endDate IS NULL)
                     OR (n.createdAt BETWEEN :startDate AND :endDate)
-                )
+                  )
             """)
     Page<UserNoticeSummaryResponseDto> findAllActiveNoticesForUser(
             @Param("buildingId") Long buildingId,

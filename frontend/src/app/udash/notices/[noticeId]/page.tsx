@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import client from '@/lib/backend/client';
 import { use } from 'react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface NoticeFileDto {
   id: number;
@@ -32,6 +35,51 @@ interface NoticeDetail {
   fileUrls: NoticeFileDto[];
 }
 
+const processContent = async (content: string) => {
+  if (typeof window === 'undefined') return content;
+
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = content;
+
+  // 이미지 URL 수정 - ID 기반 매칭
+  const imgElements = tempDiv.getElementsByTagName('img');
+
+  for (let i = 0; i < imgElements.length; i++) {
+    const img = imgElements[i];
+    const dataId = img.getAttribute('data-id');
+
+    if (!dataId) continue;
+
+    // data-id를 숫자로 변환
+    const imageId = Number(dataId);
+    if (isNaN(imageId)) continue;
+
+    try {
+      // 이미지 정보를 API로 직접 조회
+      const response = await fetch(`/api/v1/notices/media/images/${imageId}`);
+
+      if (!response.ok) {
+        img.src = '/placeholder.jpg';
+        img.alt = '이미지를 불러올 수 없습니다';
+        continue;
+      }
+
+      const data = await response.json();
+      if (data?.url) {
+        img.src = data.url;
+      } else {
+        img.src = '/placeholder.jpg';
+        img.alt = '이미지를 불러올 수 없습니다';
+      }
+    } catch (error) {
+      img.src = '/placeholder.jpg';
+      img.alt = '이미지를 불러올 수 없습니다';
+    }
+  }
+
+  return tempDiv.innerHTML;
+};
+
 export default function NoticeDetailPage({
   params,
 }: {
@@ -42,6 +90,7 @@ export default function NoticeDetailPage({
   const [notice, setNotice] = useState<NoticeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [processedContent, setProcessedContent] = useState<string>('');
 
   useEffect(() => {
     async function fetchNoticeDetail() {
@@ -79,7 +128,7 @@ export default function NoticeDetailPage({
             })
           );
 
-          setNotice({
+          const noticeData = {
             noticeId: data.noticeId || 0,
             title: data.title || '',
             content: data.content || '',
@@ -88,7 +137,15 @@ export default function NoticeDetailPage({
             viewCount: data.viewCount || 0,
             imageUrls: formattedImageUrls,
             fileUrls: formattedFileUrls,
-          });
+          };
+
+          setNotice(noticeData);
+
+          // 컨텐츠 처리
+          if (noticeData.content) {
+            const processed = await processContent(noticeData.content);
+            setProcessedContent(processed);
+          }
         }
       } catch (e: any) {
         setError(e.message || '알 수 없는 에러가 발생했습니다.');
@@ -103,17 +160,7 @@ export default function NoticeDetailPage({
   const formatDateTime = (dateTimeStr: string) => {
     try {
       const date = new Date(dateTimeStr);
-      return date
-        .toLocaleString('ko-KR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })
-        .replace(/\./g, '-')
-        .replace(',', '');
+      return format(date, 'yyyy-MM-dd HH:mm', { locale: ko });
     } catch {
       return dateTimeStr;
     }
@@ -154,111 +201,80 @@ export default function NoticeDetailPage({
   if (!notice) return null;
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="mx-auto max-w-4xl">
-        {/* 헤더 */}
-        <div className="mb-6 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className="h-10 w-10"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold text-foreground">공지사항</h1>
-        </div>
-
-        {/* 게시글 내용 */}
-        <div className="rounded-lg border border-border bg-card shadow-sm">
-          {/* 게시글 헤더 */}
-          <div className="border-b border-border p-6">
-            <h2 className="mb-4 text-xl font-semibold text-foreground">
-              {notice.title}
-            </h2>
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <div>작성자: {notice.authorName}</div>
-              <div>작성일: {formatDateTime(notice.createdAt)}</div>
-              <div>조회수: {notice.viewCount}</div>
+    <div className="container mx-auto py-6">
+      <Card>
+        <CardHeader className="space-y-6">
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => router.push('/udash/notices')}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              ← 목록으로
+            </button>
+          </div>
+          <div className="space-y-3">
+            <CardTitle className="text-2xl">{notice.title}</CardTitle>
+            <div className="flex items-center text-gray-600 text-sm border-b pb-4">
+              <span className="mr-4">작성자: {notice.authorName}</span>
+              <span className="mr-4">
+                작성일:{' '}
+                {notice.createdAt
+                  ? format(new Date(notice.createdAt), 'yyyy-MM-dd HH:mm', {
+                      locale: ko,
+                    })
+                  : ''}
+              </span>
+              <span>조회수: {notice.viewCount}</span>
             </div>
           </div>
-
-          {/* 게시글 본문 */}
-          <div className="p-6">
+        </CardHeader>
+        <CardContent>
+          {/* 본문 내용 */}
+          <div className="prose max-w-none pb-8">
             <div
-              className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: notice.content }}
+              dangerouslySetInnerHTML={{
+                __html: processedContent,
+              }}
             />
           </div>
 
-          {/* 첨부 파일 및 이미지 */}
-          {(notice.fileUrls.length > 0 || notice.imageUrls.length > 0) && (
-            <div className="border-t border-border p-6">
-              {/* 첨부 파일 */}
-              {notice.fileUrls.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="mb-2 font-semibold text-foreground">
-                    첨부 파일
-                  </h3>
-                  <ul className="space-y-2">
-                    {notice.fileUrls.map((file) => (
-                      <li key={file.id}>
-                        <a
-                          href={file.downloadUrl}
-                          className="flex items-center gap-2 rounded-md border border-border p-2 hover:bg-secondary/50"
-                          download
-                        >
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="flex-1 text-sm">
-                            {file.originalName}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {formatFileSize(file.size)}
-                          </span>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* 첨부 이미지 */}
-              {notice.imageUrls.length > 0 && (
-                <div>
-                  <h3 className="mb-2 font-semibold text-foreground">
-                    첨부 이미지
-                  </h3>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {notice.imageUrls.map((image) => (
-                      <div
-                        key={image.id}
-                        className="overflow-hidden rounded-lg border border-border"
-                      >
-                        <img
-                          src={image.downloadUrl}
-                          alt={image.originalName}
-                          className="w-full object-cover"
-                        />
-                        <div className="flex items-center justify-between border-t border-border bg-card/50 p-2">
-                          <div className="flex items-center gap-2">
-                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {image.originalName}
-                            </span>
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {formatFileSize(image.size)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {/* 첨부파일 섹션 */}
+          {notice.fileUrls.length > 0 && (
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-lg font-medium mb-4">첨부파일</h3>
+              <ul className="space-y-2 bg-gray-50 p-4 rounded-lg">
+                {notice.fileUrls.map((file) => (
+                  <li key={file.downloadUrl} className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                      />
+                    </svg>
+                    <a
+                      href={file.downloadUrl}
+                      download={file.originalName}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {file.originalName}
+                      <span className="text-gray-500 text-sm ml-2">
+                        ({Math.round(file.size / 1024)}KB)
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

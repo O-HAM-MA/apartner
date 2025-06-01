@@ -5,8 +5,7 @@ import com.ohammer.apartner.domain.apartment.entity.Building;
 import com.ohammer.apartner.domain.apartment.repository.BuildingRepository;
 import com.ohammer.apartner.domain.image.entity.Image;
 import com.ohammer.apartner.domain.image.repository.ImageRepository;
-import com.ohammer.apartner.domain.notice.dto.request.NoticeCreateRequestDto;
-import com.ohammer.apartner.domain.notice.dto.request.NoticeUpdateRequestDto;
+import com.ohammer.apartner.domain.notice.dto.request.NoticeRequestDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto.NoticeFileDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto.NoticeImageDto;
@@ -55,13 +54,13 @@ public class NoticeServiceImpl implements NoticeService {
 
     @Override
     @Transactional
-    public Long createNotice(NoticeCreateRequestDto noticeCreateRequestDto, Long userId) {
+    public Long createNotice(NoticeRequestDto noticeRequestDto, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         Building building = null;
-        if (noticeCreateRequestDto.getBuildingId() != null) {
-            building = buildingRepository.findById(noticeCreateRequestDto.getBuildingId())
+        if (noticeRequestDto.getBuildingId() != null) {
+            building = buildingRepository.findById(noticeRequestDto.getBuildingId())
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 동입니다."));
         }
 
@@ -69,8 +68,8 @@ public class NoticeServiceImpl implements NoticeService {
         Notice notice = Notice.builder()
                 .user(user)
                 .building(building)
-                .title(noticeCreateRequestDto.getTitle())
-                .content(noticeCreateRequestDto.getContent())
+                .title(noticeRequestDto.getTitle())
+                .content(noticeRequestDto.getContent())
                 .viewCount(0L)
                 .status(Status.ACTIVE)
                 .build();
@@ -78,8 +77,14 @@ public class NoticeServiceImpl implements NoticeService {
         noticeRepository.save(notice);
 
         // 이미지 연결
-        if (noticeCreateRequestDto.getImageIds() != null) {
-            List<Image> images = imageRepository.findAllById(noticeCreateRequestDto.getImageIds());
+        if (noticeRequestDto.getImageIds() != null) {
+//            List<Image> images = imageRepository.findAllById(noticeRequestDto.getImageIds());
+            List<Long> imageIds = noticeRequestDto.getImageIds();
+            List<Image> images = imageRepository.findAllById(imageIds);
+
+            if (images.size() != imageIds.size()) {
+                throw new IllegalArgumentException("일부 이미지가 존재하지 않습니다.");
+            }
 
             for (Image image : images) {
                 // ✅ S3 경로 이동
@@ -101,8 +106,8 @@ public class NoticeServiceImpl implements NoticeService {
         }
 
         // 파일 연결
-        if (noticeCreateRequestDto.getFileIds() != null) {
-            List<NoticeFile> files = noticeFileRepository.findAllById(noticeCreateRequestDto.getFileIds());
+        if (noticeRequestDto.getFileIds() != null) {
+            List<NoticeFile> files = noticeFileRepository.findAllById(noticeRequestDto.getFileIds());
 
             for (NoticeFile file : files) {
                 // ✅ S3 경로 이동
@@ -112,6 +117,7 @@ public class NoticeServiceImpl implements NoticeService {
                 file.setS3Key(newPath);
                 file.setPath(newPath);
                 file.setNotice(notice);
+                noticeFileRepository.save(file);
             }
         }
 
@@ -173,7 +179,7 @@ public class NoticeServiceImpl implements NoticeService {
 
     @Override
     @Transactional
-    public void updateNotice(Long noticeId, NoticeUpdateRequestDto noticeUpdateRequestDto, Long userId) {
+    public void updateNotice(Long noticeId, NoticeRequestDto noticeUpdateRequestDto, Long userId) {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 공지사항이 존재하지 않습니다."));
 
@@ -193,6 +199,17 @@ public class NoticeServiceImpl implements NoticeService {
         if (noticeUpdateRequestDto.getContent() != null) {
             notice.setContent(noticeUpdateRequestDto.getContent());
             notice.setModifiedAt(LocalDateTime.now());
+        }
+
+        // buildingId가 있으면 수정
+        if (noticeUpdateRequestDto.getBuildingId() != null) {
+            if (noticeUpdateRequestDto.getBuildingId() == 0) {
+                notice.setBuilding(null); // 전체 공지
+            } else {
+                Building building = buildingRepository.findById(noticeUpdateRequestDto.getBuildingId())
+                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 동입니다."));
+                notice.setBuilding(building);
+            }
         }
 
         // 이미지

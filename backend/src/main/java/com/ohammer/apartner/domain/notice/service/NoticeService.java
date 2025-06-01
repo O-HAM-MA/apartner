@@ -1,7 +1,6 @@
 package com.ohammer.apartner.domain.notice.service;
 
-import com.ohammer.apartner.domain.notice.dto.request.NoticeCreateRequestDto;
-import com.ohammer.apartner.domain.notice.dto.request.NoticeUpdateRequestDto;
+import com.ohammer.apartner.domain.notice.dto.request.NoticeRequestDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeSummaryResponseDto;
 import com.ohammer.apartner.domain.notice.dto.response.UserNoticeSummaryResponseDto;
@@ -10,11 +9,11 @@ import org.springframework.data.domain.Page;
 
 public interface NoticeService {
 
-    Long createNotice(NoticeCreateRequestDto noticeCreateRequestDto, Long userId);
+    Long createNotice(NoticeRequestDto noticeRequestDto, Long userId);
 
     NoticeReadResponseDto readNotice(Long noticeId);
 
-    void updateNotice(Long noticeId, NoticeUpdateRequestDto noticeUpdateRequestDto, Long userId);
+    void updateNotice(Long noticeId, NoticeRequestDto noticeUpdateRequestDto, Long userId);
 
     void deleteNotice(Long noticeId, Long userId);
 

@@ -1,16 +1,15 @@
 package com.ohammer.apartner.domain.notice.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ohammer.apartner.domain.notice.entity.Notice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-@AllArgsConstructor
-@Schema(description = "매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO")
+@Schema(description = "사용자 권한 - 공지사항 게시글 목록 조회 응답 DTO")
 public class UserNoticeSummaryResponseDto {
 
     @Schema(description = "게시글 번호", example = "1")
@@ -28,4 +27,36 @@ public class UserNoticeSummaryResponseDto {
 
     @Schema(description = "게시글 조회수", example = "0")
     private Long viewCount;
+
+    @Schema(description = "이미지 첨부 여부", example = "false")
+    private Boolean hasImage;
+
+    @Schema(description = "파일 첨부 여부", example = "false")
+    private Boolean hasFile;
+
+    public static UserNoticeSummaryResponseDto from(Notice notice) {
+        return UserNoticeSummaryResponseDto.builder()
+                .noticeId(notice.getId())
+                .title(notice.getTitle())
+                .authorName(notice.getUser().getUserName())
+                .createdAt(notice.getCreatedAt())
+                .viewCount(notice.getViewCount())
+                .hasImage(notice.getImages() != null && !notice.getImages().isEmpty())
+                .hasFile(notice.getFiles() != null && !notice.getFiles().isEmpty())
+                .build();
+    }
+
+    public UserNoticeSummaryResponseDto(
+            Long noticeId, String title, String authorName,
+            LocalDateTime createdAt, Long viewCount,
+            Boolean hasImage, Boolean hasFile
+    ) {
+        this.noticeId = noticeId;
+        this.title = title;
+        this.authorName = authorName;
+        this.createdAt = createdAt;
+        this.viewCount = viewCount;
+        this.hasImage = hasImage;
+        this.hasFile = hasFile;
+    }
 }

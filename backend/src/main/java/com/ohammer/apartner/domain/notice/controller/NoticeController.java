@@ -1,7 +1,6 @@
 package com.ohammer.apartner.domain.notice.controller;
 
-import com.ohammer.apartner.domain.notice.dto.request.NoticeCreateRequestDto;
-import com.ohammer.apartner.domain.notice.dto.request.NoticeUpdateRequestDto;
+import com.ohammer.apartner.domain.notice.dto.request.NoticeRequestDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeReadResponseDto;
 import com.ohammer.apartner.domain.notice.dto.response.NoticeSummaryResponseDto;
 import com.ohammer.apartner.domain.notice.dto.response.UserNoticeSummaryResponseDto;
@@ -41,9 +40,9 @@ public class NoticeController {
             summary = "공지사항 게시글 등록",
             description = "게시글 작성사항: 제목, 내용, 파일"
     )
-    public ResponseEntity<?> createNotice(@RequestBody @Valid NoticeCreateRequestDto noticeCreateRequestDto) {
+    public ResponseEntity<?> createNotice(@RequestBody @Valid NoticeRequestDto noticeRequestDto) {
         User user = SecurityUtil.getCurrentUser();
-        Long noticeId = noticeService.createNotice(noticeCreateRequestDto, user.getId());
+        Long noticeId = noticeService.createNotice(noticeRequestDto, user.getId());
 
         Map<String, Object> response = new HashMap<>();
         response.put("noticeId", noticeId);
@@ -70,7 +69,7 @@ public class NoticeController {
     )
     public ResponseEntity<Map<String, Object>> updateNotice(
             @PathVariable(name = "noticeId") Long noticeId,
-            @Valid @RequestBody NoticeUpdateRequestDto noticeUpdateRequestDto
+            @Valid @RequestBody NoticeRequestDto noticeUpdateRequestDto
     ) {
         User user = SecurityUtil.getCurrentUser();
         noticeService.updateNotice(noticeId, noticeUpdateRequestDto, user.getId());
