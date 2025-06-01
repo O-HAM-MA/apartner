@@ -743,27 +743,8 @@ export default function VehicleManagement() {
       style={{ margin: 0, padding: 0 }}
     >
       {/* 헤더 */}
-      <Header />
 
       {/* 사용자 정보 배너 */}
-      <div className="bg-[#FFE6EE] py-4 w-full m-0">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-              <span className="text-gray-500 text-xl"></span>
-            </div>
-            <div>
-              <h2 className="font-bold text-lg text-[#FF4081]"></h2>
-              <p className="text-sm text-gray-600"></p>
-            </div>
-          </div>
-          <Link href="/dashboard">
-            <Button className="bg-black text-white hover:bg-gray-800">
-              대시보드 가기
-            </Button>
-          </Link>
-        </div>
-      </div>
 
       {/* 메인 콘텐츠 */}
       <main className="container mx-auto px-4 py-8">
@@ -1201,7 +1182,6 @@ export default function VehicleManagement() {
       </main>
 
       {/* 푸터 */}
-      <Footer />
     </div>
   );
 }

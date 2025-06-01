@@ -453,6 +453,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notices/media/images/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 이미지 등록
+         * @description 공지사항 에디터에 사용될 이미지를 업로드합니다.
+         */
+        post: operations["uploadImages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/media/files/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 파일 등록
+         * @description 공지사항에 첨부할 파일을 업로드합니다.
+         */
+        post: operations["uploadFiles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/myInfos/update-profile-image": {
         parameters: {
             query?: never;
@@ -971,6 +1011,166 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alarm/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 전체 알림 전송
+         * @description 모든 연결된 클라이언트에게 알림을 전송합니다.
+         */
+        post: operations["sendAlarm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/send/{eventName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 커스텀 이벤트 전송
+         * @description 커스텀 이벤트 이름으로 알림을 전송합니다.
+         */
+        post: operations["sendCustomEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/send/user/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 사용자 알림 전송
+         * @description 특정 사용자에게 알림을 전송합니다.
+         */
+        post: operations["sendToUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/send/user/{userId}/category/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 카테고리별 알림 전송
+         * @description 특정 사용자에게 카테고리가 지정된 알림을 전송합니다.
+         */
+        post: operations["sendCategorizedAlarm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/send/apartment/{apartmentId}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 아파트 사용자 알림 전송
+         * @description 특정 아파트의 모든 사용자에게 알림을 전송합니다.
+         */
+        post: operations["sendToApartmentUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/send/apartment/{apartmentId}/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 아파트 관리자 알림 전송
+         * @description 특정 아파트의 관리자에게 알림을 전송합니다.
+         */
+        post: operations["sendToApartmentAdmins"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/{userId}/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 모든 알림 읽음 처리
+         * @description 특정 사용자의 모든 알림을 읽음 상태로 변경합니다.
+         */
+        post: operations["markAllAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 알림 읽음 처리
+         * @description 특정 알림을 읽음 상태로 변경합니다.
+         */
+        post: operations["markAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/register": {
         parameters: {
             query?: never;
@@ -985,46 +1185,6 @@ export interface paths {
          * @description 새로운 관리자 계정을 등록합니다. (이메일, 사용자 이름, 비밀번호 필요)
          */
         post: operations["adminRegister"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notices/media/images/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 이미지 등록
-         * @description 공지사항 에디터에 사용될 이미지를 업로드합니다.
-         */
-        post: operations["uploadImages"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notices/media/files/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 파일 등록
-         * @description 공지사항에 첨부할 파일을 업로드합니다.
-         */
-        post: operations["uploadFiles"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1675,6 +1835,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notices/media/images/{noticeImageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 이미지 정보 조회
+         * @description 게시글에 첨부된 이미지를 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getImageInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 이미지 삭제
+         * @description 사용자가 업로드한 임시 이미지를 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/media/files/{noticeFileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 파일 정보 조회
+         * @description 게시글에 첨부된 파일을 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getFileInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 파일 삭제
+         * @description 사용자가 업로드한 임시 파일을 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteFile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/myInfos": {
         parameters: {
             query?: never;
@@ -2272,6 +2480,166 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alarm/notifications/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 사용자 알림 목록 조회
+         * @description 특정 사용자의 모든 알림 목록을 조회합니다(읽은 알림 포함).
+         */
+        get: operations["getUserNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/{userId}/unread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 사용자 읽지 않은 알림 목록 조회
+         * @description 특정 사용자의 읽지 않은 알림 목록을 조회합니다.
+         */
+        get: operations["getUnreadUserNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/{userId}/type/{type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 타입별 알림 목록 조회
+         * @description 특정 사용자의 알림을 타입별로 조회합니다.
+         */
+        get: operations["getUserNotificationsByType"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/{userId}/paged": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 페이징된 알림 목록 조회
+         * @description 특정 사용자의 알림 목록을 페이징하여 조회합니다.
+         */
+        get: operations["getPagedUserNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/{userId}/category/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 카테고리별 알림 목록 조회
+         * @description 특정 사용자의 알림을 카테고리별로 조회합니다.
+         */
+        get: operations["getUserNotificationsByCategory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/detail/{notificationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 알림 상세 조회
+         * @description 특정 알림의 상세 정보를 조회합니다.
+         */
+        get: operations["getNotificationDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/apartment/{apartmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 아파트별 알림 목록 조회
+         * @description 특정 아파트의 모든 알림을 조회합니다.
+         */
+        get: operations["getApartmentNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/connected-clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 연결된 클라이언트 수 조회
+         * @description 현재 연결된 클라이언트 수를 조회합니다.
+         */
+        get: operations["getConnectedClients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users": {
         parameters: {
             query?: never;
@@ -2375,54 +2743,6 @@ export interface paths {
          * @description 게시글 삭제(INACTIVE 상태)
          */
         delete: operations["deleteNotice"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notices/media/images/{noticeImageId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 이미지 정보 조회
-         * @description 게시글에 첨부된 이미지를 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
-         */
-        get: operations["getImageInfo"];
-        put?: never;
-        post?: never;
-        /**
-         * 임시 이미지 삭제
-         * @description 사용자가 업로드한 임시 이미지를 삭제합니다. S3와 DB 모두에서 제거
-         */
-        delete: operations["deleteImage"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notices/media/files/{noticeFileId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 파일 정보 조회
-         * @description 게시글에 첨부된 파일을 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
-         */
-        get: operations["getFileInfo"];
-        put?: never;
-        post?: never;
-        /**
-         * 임시 파일 삭제
-         * @description 사용자가 업로드한 임시 파일을 삭제합니다. S3와 DB 모두에서 제거
-         */
-        delete: operations["deleteFile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2981,6 +3301,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alarm/notifications/{userId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 읽은 알림 삭제
+         * @description 특정 사용자의 읽은 알림을 삭제합니다.
+         */
+        delete: operations["deleteReadNotifications"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/logout": {
         parameters: {
             query?: never;
@@ -3074,8 +3414,8 @@ export interface components {
             id?: number;
             username?: string;
         };
-        /** @description 공지사항 게시글 수정 요청 DTO */
-        NoticeUpdateRequestDto: {
+        /** @description 공지사항 게시글 등록/수정 요청 DTO */
+        NoticeRequestDto: {
             /**
              * @description 게시글 제목
              * @example 엘레베이터 정기점검 안내
@@ -3086,6 +3426,12 @@ export interface components {
              * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
              */
             content?: string;
+            /**
+             * Format: int64
+             * @description 게시글 대상: 전체/동별 선택 - buildingId
+             * @example 101동 / null일 경우 전체 공지
+             */
+            buildingId?: number;
             /**
              * @description tiptap에 삽입된 이미지 ID들
              * @example []
@@ -3403,6 +3749,25 @@ export interface components {
         CreateManagerOpinionRequestDto: {
             title?: string;
             content?: string;
+        };
+        /** @description 공지사항 게시글 첨부파일 업로드 응답 DTO */
+        MediaUploadResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
         };
         /** @description 비밀번호 재설정 요청 DTO */
         ResetPasswordRequest: {
@@ -3842,6 +4207,23 @@ export interface components {
              */
             available?: boolean;
         };
+        AlarmRequest: {
+            type?: string;
+            title?: string;
+            message?: string;
+            linkUrl?: string;
+            /** Format: int64 */
+            entityId?: number;
+            /** Format: int64 */
+            senderId?: number;
+            category?: string;
+            extraData?: {
+                [key: string]: Record<string, never>;
+            };
+            data?: {
+                [key: string]: Record<string, never>;
+            };
+        };
         /** @description 관리자 등록 요청 DTO */
         AdminRegistrationRequest: {
             /**
@@ -3859,54 +4241,6 @@ export interface components {
              * @example admin@example.com
              */
             email?: string;
-        };
-        /** @description 공지사항 게시글 첨부파일 업로드 응답 DTO */
-        MediaUploadResponseDto: {
-            /**
-             * Format: int64
-             * @description 첨부파일/이미지 ID
-             * @example 23
-             */
-            id?: number;
-            /**
-             * @description S3 업로드 URL 또는 접근 URL
-             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
-             */
-            url?: string;
-            /**
-             * @description 원본 파일명
-             * @example 사진1.png
-             */
-            originalName?: string;
-        };
-        /** @description 공지사항 게시글 등록 요청 DTO */
-        NoticeCreateRequestDto: {
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * Format: int64
-             * @description 게시글 대상: 전체/동별 선택 - buildingId
-             * @example 101동 / null일 경우 전체 공지
-             */
-            buildingId?: number;
-            /**
-             * @description tiptap에 삽입된 이미지 ID들
-             * @example []
-             */
-            imageIds?: number[];
-            /**
-             * @description tiptap에 삽입된 첨부파일 ID들
-             * @example []
-             */
-            fileIds?: number[];
         };
         /** @description 관리자 로그인 요청 DTO */
         AdminLoginRequest: {
@@ -4184,19 +4518,19 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
             unsorted?: boolean;
             sorted?: boolean;
         };
-        /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
+        /** @description 사용자 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
             /**
              * Format: int64
@@ -4226,6 +4560,46 @@ export interface components {
              * @example 0
              */
             viewCount?: number;
+            /**
+             * @description 이미지 첨부 여부
+             * @example false
+             */
+            hasImage?: boolean;
+            /**
+             * @description 파일 첨부 여부
+             * @example false
+             */
+            hasFile?: boolean;
+        };
+        /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
+        MediaInfoResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
+            /**
+             * @description 임시 파일 여부
+             * @example false
+             */
+            isTemp?: boolean;
+            /**
+             * Format: date-time
+             * @description 임시 파일 만료일시
+             * @example 2025-05-23T09:00:00
+             */
+            expiresAt?: string;
         };
         /** @description 사용자 정보 응답 DTO */
         MyInfoResponseDto: {
@@ -4554,6 +4928,82 @@ export interface components {
             size?: number;
             sort?: string[];
         };
+        ApiResponsePageNotification: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageNotification"];
+        };
+        Notification: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            modifiedAt?: string;
+            /** Format: int64 */
+            userId?: number;
+            /** Format: int64 */
+            apartmentId?: number;
+            /** Format: int64 */
+            buildingId?: number;
+            title?: string;
+            message?: string;
+            type?: string;
+            /**
+             * @description 상태
+             * @enum {string}
+             */
+            status?: "active" | "inactive" | "pending" | "withdrawn";
+            isRead?: boolean;
+            /** Format: date-time */
+            readAt?: string;
+            linkUrl?: string;
+            /** Format: int64 */
+            entityId?: number;
+            extra?: string;
+            pushSent?: boolean;
+            /** Format: date-time */
+            pushSentAt?: string;
+            category?: string;
+            /** Format: int64 */
+            senderId?: number;
+            /** Format: date-time */
+            expiredAt?: string;
+        };
+        PageNotification: {
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["Notification"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            empty?: boolean;
+        };
+        ApiResponseListNotification: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["Notification"][];
+        };
+        ApiResponseNotification: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["Notification"];
+        };
+        ApiResponseInteger: {
+            success?: boolean;
+            message?: string;
+            /** Format: int32 */
+            data?: number;
+        };
         AdminUserListResponse: {
             /** Format: int64 */
             id?: number;
@@ -4704,6 +5154,16 @@ export interface components {
              * @example 0
              */
             viewCount?: number;
+            /**
+             * @description 이미지 첨부 여부
+             * @example false
+             */
+            hasImage?: boolean;
+            /**
+             * @description 파일 첨부 여부
+             * @example false
+             */
+            hasFile?: boolean;
         };
         PageNoticeSummaryResponseDto: {
             /** Format: int32 */
@@ -4722,36 +5182,6 @@ export interface components {
             /** Format: int32 */
             numberOfElements?: number;
             empty?: boolean;
-        };
-        /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
-        MediaInfoResponseDto: {
-            /**
-             * Format: int64
-             * @description 첨부파일/이미지 ID
-             * @example 23
-             */
-            id?: number;
-            /**
-             * @description S3 업로드 URL 또는 접근 URL
-             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
-             */
-            url?: string;
-            /**
-             * @description 원본 파일명
-             * @example 사진1.png
-             */
-            originalName?: string;
-            /**
-             * @description 임시 파일 여부
-             * @example false
-             */
-            isTemp?: boolean;
-            /**
-             * Format: date-time
-             * @description 임시 파일 만료일시
-             * @example 2025-05-23T09:00:00
-             */
-            expiresAt?: string;
         };
         ApiResponsePageMenuDTO: {
             success?: boolean;
@@ -5368,7 +5798,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NoticeUpdateRequestDto"];
+                "application/json": components["schemas"]["NoticeRequestDto"];
             };
         };
         responses: {
@@ -6237,6 +6667,58 @@ export interface operations {
             };
         };
     };
+    uploadImages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
+                };
+            };
+        };
+    };
+    uploadFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
+                };
+            };
+        };
+    };
     updateProfileImage: {
         parameters: {
             query?: never;
@@ -7099,6 +7581,205 @@ export interface operations {
             };
         };
     };
+    sendAlarm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlarmRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    sendCustomEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlarmRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    sendToUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlarmRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    sendCategorizedAlarm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+                category: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlarmRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    sendToApartmentUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                apartmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlarmRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    sendToApartmentAdmins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                apartmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlarmRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    markAllAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    markAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
     adminRegister: {
         parameters: {
             query?: never;
@@ -7123,58 +7804,6 @@ export interface operations {
             };
         };
     };
-    uploadImages: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    files: string[];
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
-                };
-            };
-        };
-    };
-    uploadFiles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    files: string[];
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
-                };
-            };
-        };
-    };
     createNotice: {
         parameters: {
             query?: never;
@@ -7184,7 +7813,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NoticeCreateRequestDto"];
+                "application/json": components["schemas"]["NoticeRequestDto"];
             };
         };
         responses: {
@@ -8212,6 +8841,90 @@ export interface operations {
             };
         };
     };
+    getImageInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getFileInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getMyInfo: {
         parameters: {
             query?: never;
@@ -8926,6 +9639,190 @@ export interface operations {
             };
         };
     };
+    getUserNotifications: {
+        parameters: {
+            query: {
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageNotification"];
+                };
+            };
+        };
+    };
+    getUnreadUserNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListNotification"];
+                };
+            };
+        };
+    };
+    getUserNotificationsByType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+                type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListNotification"];
+                };
+            };
+        };
+    };
+    getPagedUserNotifications: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageNotification"];
+                };
+            };
+        };
+    };
+    getUserNotificationsByCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+                category: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListNotification"];
+                };
+            };
+        };
+    };
+    getNotificationDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseNotification"];
+                };
+            };
+        };
+    };
+    getApartmentNotifications: {
+        parameters: {
+            query: {
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                apartmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponsePageNotification"];
+                };
+            };
+        };
+    };
+    getConnectedClients: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseInteger"];
+                };
+            };
+        };
+    };
     getUserList: {
         parameters: {
             query: {
@@ -9092,90 +9989,6 @@ export interface operations {
                         [key: string]: Record<string, never>;
                     };
                 };
-            };
-        };
-    };
-    getImageInfo: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeImageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaInfoResponseDto"];
-                };
-            };
-        };
-    };
-    deleteImage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeImageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getFileInfo: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeFileId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaInfoResponseDto"];
-                };
-            };
-        };
-    };
-    deleteFile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeFileId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
@@ -9847,6 +10660,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    deleteReadNotifications: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseInteger"];
                 };
             };
         };

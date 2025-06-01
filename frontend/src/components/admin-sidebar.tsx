@@ -22,6 +22,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGlobalAdminMember } from "@/auth/adminMember";
 import { get } from "@/utils/api";
 import { toast } from "@/components/ui/use-toast";
+import NotificationBell from "@/components/notification-bell";
+import NotificationStatus from "@/components/notification-status";
 
 // API 응답 타입 정의
 interface ApiResponse<T> {
@@ -244,12 +246,21 @@ export default function AdminSidebar() {
         )}
       >
         <div className="h-full w-64 border-r bg-background flex flex-col">
-          <div className="p-4 border-b">
-            <div className="font-bold text-lg">Apartner Admin</div>
-            <div className="text-sm text-muted-foreground">관리자 대시보드</div>
-            {adminMember.isAdmin && (
-              <div className="text-xs mt-1 text-green-600">ADMIN 권한</div>
-            )}
+          <div className="p-4 border-b flex flex-col">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-lg">Apartner Admin</div>
+                <div className="text-sm text-muted-foreground">
+                  관리자 대시보드
+                </div>
+                {adminMember.isAdmin && (
+                  <div className="text-xs mt-1 text-green-600">ADMIN 권한</div>
+                )}
+              </div>
+              <NotificationBell />
+            </div>
+
+            <NotificationStatus className="ml-auto mt-2" />
           </div>
           <div className="flex-1 overflow-auto py-2">
             {loading ? (

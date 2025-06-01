@@ -4,10 +4,12 @@ import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.domain.vehicle.dto.*;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
+import com.ohammer.apartner.domain.vehicle.entity.ParkingProperties;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 //import jakarta.transaction.Transactional;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 import com.ohammer.apartner.domain.vehicle.repository.VehicleRepository;
+import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 
 import com.ohammer.apartner.security.utils.checkRoleUtils;
@@ -28,17 +30,17 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final EntryRecordRepository entryRecordRepository;
+    private final AlarmService alarmService;
     private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
+
+    private final ParkingProperties parkingProperties;
+    // 최근에 입력한 maxCapacity를 저장할 필드
+    private Integer currentMaxCapacity = null;
+
 
     // 입주민 차량 등록
     @Transactional
     public VehicleResponseDto registerResidentVehicle(ResidentVehicleRequestDto dto) {
-
-
-//        User user = userRepository.findById(dto.getUserId())
-//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        // 1) SecurityUtil로 현재 로그인한 User 엔티티를 바로 꺼낸다.
 
 
         User currentUser = SecurityUtil.getCurrentUser();
@@ -66,11 +68,22 @@ public class VehicleService {
                 .status(EntryRecord.Status.AGREE)
                 .build();
 
-
-
         entryRecordRepository.save(entryRecord);
 
-
+        // 실시간 알림 추가
+        Long apartmentId = user.getApartment() != null ? user.getApartment().getId() : null;
+        
+        // 등록한 사용자에게 알림
+        String message = String.format("차량 [%s]이(가) 성공적으로 등록되었습니다.", dto.getVehicleNum());
+        alarmService.notifyUser(user.getId(), apartmentId, "차량 등록 완료", "success", "vehicle", message, null, null, null, null);
+        
+        // 관리자에게도 알림
+        if (apartmentId != null) {
+            String adminMessage = String.format("입주민 %s님이 차량 [%s]을(를) 등록했습니다.", 
+                    user.getUserName(), dto.getVehicleNum());
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "입주민 차량 등록", "info", "vehicle", adminMessage, null, user.getId(), null, null);
+        }
 
         return VehicleResponseDto.from(vehicle);
     }
@@ -78,13 +91,6 @@ public class VehicleService {
     // 외부 차량 등록
     @Transactional
     public VehicleResponseDto registerForeignVehicle(ForeignVehicleRequestDto dto) {
-
-//        long activeCount = vehicleRepository.countByStatus(Vehicle.Status.ACTIVE);
-//
-//        if (activeCount >= 17) {
-//            throw new IllegalStateException("주차장이 꽉 찼습니다.");
-//        }
-
 
         // ✅ 1. 동/호수로 입주민(User) 조회
         User inviter = userRepository.findByAptAndBuildingAndUnit(
@@ -109,10 +115,22 @@ public class VehicleService {
                 .status(EntryRecord.Status.PENDING)
                 .build();
 
-
-
         entryRecordRepository.save(entryRecord);
 
+        // 실시간 알림 추가
+        Long apartmentId = inviter.getApartment() != null ? inviter.getApartment().getId() : null;
+        
+        // 초대한 입주민에게 알림
+        String message = String.format("외부 차량 [%s] 등록이 완료되었습니다. 승인이 필요합니다.", dto.getVehicleNum());
+        alarmService.notifyUser(inviter.getId(), apartmentId, "외부 차량 등록", "info", "vehicle", message, null, null, null, null);
+        
+        // 관리자에게도 알림
+        if (apartmentId != null) {
+            String adminMessage = String.format("%s동 %s호 주민이 외부 차량 [%s]을(를) 등록했습니다. (사유: %s)", 
+                    dto.getBuildingNum(), dto.getUnitNum(), dto.getVehicleNum(), dto.getReason());
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "외부 차량 등록", "info", "vehicle", adminMessage, null, inviter.getId(), null, null);
+        }
 
         return VehicleResponseDto.fromForeign(vehicle, dto.getPhone());
     }
@@ -170,6 +188,20 @@ public class VehicleService {
 
         vehicle.setVehicleNum(dto.getVehicleNum());
         vehicle.setType(dto.getType());
+
+
+        User user = vehicle.getUser();
+        Long apartmentId = user.getApartment() != null ? user.getApartment().getId() : null;
+
+        // 알림 추가: 차량 소유자에게
+        String message = String.format("차량 [%s] 정보가 수정되었습니다.", dto.getVehicleNum());
+        alarmService.notifyUser(currentUserId, apartmentId ,"차량 정보 수정", "info", "vehicle", message, null, null, null,  null);
+
+        // 알림 추가: 관리자에게
+        if (apartmentId != null) {
+            String adminMessage = String.format("%s님이 차량 [%s] 정보를 수정했습니다.", user.getUserName(), dto.getVehicleNum());
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 정보 수정", "info", "vehicle", adminMessage, null, currentUserId, null, null);
+        }
     }
 
     @Transactional
@@ -183,10 +215,29 @@ public class VehicleService {
         if (!vehicle.getUser().getId().equals(currentUserId)) {
             throw new IllegalArgumentException("본인의 차량만 삭제할 수 있습니다.");
         }
-
+        
+        User user = vehicle.getUser();
+        Long apartmentId = user.getApartment() != null ? user.getApartment().getId() : null;
+        String vehicleNum = vehicle.getVehicleNum();
+        boolean isForeign = vehicle.getIsForeign();
+        
         // 차량 삭제
         entryRecordRepository.deleteAllByVehicle(vehicle);
         vehicleRepository.delete(vehicle);
+        
+        // 실시간 알림 추가 - 삭제는 vehicle 엔티티가 제거된 후 처리
+        
+        // 차량 소유자/등록자에게 알림
+        String message = String.format("차량 [%s] 등록이 삭제되었습니다.", vehicleNum);
+        alarmService.notifyUser(currentUserId, apartmentId, "차량 등록 삭제", "info", "vehicle", message, null, null, null, null);
+        
+        // 관리자에게도 알림
+        if (apartmentId != null) {
+            String adminMessage = String.format("%s님이 %s 차량 [%s] 등록을 삭제했습니다.", 
+                    user.getUserName(), isForeign ? "외부" : "입주민", vehicleNum);
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 등록 삭제", "info", "vehicle", adminMessage, null, currentUserId, null, null);
+        }
     }
 
 
@@ -212,8 +263,6 @@ public class VehicleService {
     public Vehicle findByCurrentUser() {
         Long userId = SecurityUtil.getCurrentUserId();
         if (userId == null) throw new IllegalStateException("로그인 정보가 없습니다.");
-//        return vehicleRepository.findByUser_Id(userId)
-//                .orElseThrow(() -> new IllegalArgumentException("등록된 차량이 없습니다."));
 
         List<Vehicle> vehicles = vehicleRepository.findAllByUser_Id(userId);
         if (vehicles.isEmpty()) {
@@ -225,7 +274,7 @@ public class VehicleService {
             return vehicles.get(0);
         }
 
-        // 2대 이상 등록된 경우: “기본” 차량을 골라주는 전략
+        // 2대 이상 등록된 경우: "기본" 차량을 골라주는 전략
         // (예: 가장 최근에 등록된 차량을 기본으로)
         return vehicles.stream()
                 .max(Comparator.comparing(Vehicle::getCreatedAt))
@@ -234,7 +283,7 @@ public class VehicleService {
 
     }
 
-    /** 입주민용: 본인에게 온 외부인 요청 조회 */
+    // 입주민용: 본인에게 온 외부인 요청 조회
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getMyVisitorRequests(Long inviterId) {
         // 엔티티: Vehicle.user.id = inviterId && isForeign=true && status=PENDING
@@ -287,22 +336,6 @@ public class VehicleService {
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getActiveVehicles() {
 
-//        // 현재 로그인한 사용자 가져오기
-//        User currentUser = SecurityUtil.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new IllegalArgumentException("로그인이 필요합니다.");
-//        }
-//
-//        Set<Role> roles = currentUser.getRoles();
-//
-//        // Role 검사: MANAGER 또는 MODERATOR만 허용
-//        boolean isManagerOrModerator = roles.stream().anyMatch(role ->
-//                role == Role.MANAGER || role == Role.MODERATOR);
-//
-//        if (!isManagerOrModerator) {
-//            throw new RuntimeException("관리자만 조회할 수 있습니다.");
-//        }
-
         checkRoleUtils.validateManagerAccess();
 
 
@@ -326,7 +359,7 @@ public class VehicleService {
     // 남은 주차 공간 수
     public int getRemainingSpace() {
         long activeCount = countActiveVehicles();
-        return MAX_CAPACITY - (int) activeCount;
+        return parkingProperties.getMaxCapacity() - (int) activeCount;
     }
 
     // 전체 주차장 현황 반환 DTO
@@ -335,9 +368,9 @@ public class VehicleService {
         checkRoleUtils.validateAdminAccess();
         long activeCount = countActiveVehicles();
         return ParkingStatusDto.builder()
-                .totalCapacity(MAX_CAPACITY)
+                .totalCapacity(parkingProperties.getMaxCapacity())
                 .activeCount(activeCount)
-                .remainingSpace(MAX_CAPACITY - (int) activeCount)
+                .remainingSpace(parkingProperties.getMaxCapacity() - (int) activeCount)
                 .build();
     }
 
@@ -345,7 +378,7 @@ public class VehicleService {
         return vehicleRepository.findByUserId(userId);
     }
 
-    /** 현재 로그인 유저의 차량 목록을 VehicleRegistrationInfoDto로 반환 */
+    // 현재 로그인 유저의 차량 목록을 VehicleRegistrationInfoDto로 반환
     @Transactional(readOnly = true)
     public List<VehicleRegistrationInfoDto> getMyVehicleRegistrations() {
         Long userId = SecurityUtil.getCurrentUserId();
@@ -376,9 +409,6 @@ public class VehicleService {
         LocalDateTime yesterday = now.minusHours(24);
 
 
-
-
-
         List<EntryRecord> entryRecords = entryRecordRepository.findByVehicleIsForeignWithVehicleAndUser(true);
 
 
@@ -390,30 +420,12 @@ public class VehicleService {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    //  런타임에 maxCapacity를 변경하고 싶을 때 호출할 메서드
+    public void updateMaxCapacity(int newCapacity) {
+        checkRoleUtils.validateAdminAccess();
+        // yml에서 주입된 기본값을 덮어쓴다
+        parkingProperties.setMaxCapacity(newCapacity);
+    }
 
 
 }

@@ -1,53 +1,47 @@
 package com.ohammer.apartner.security.controller;
 
-import com.ohammer.apartner.domain.apartment.service.ApartmentService;
-import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.apartment.entity.Apartment;
 import com.ohammer.apartner.domain.apartment.entity.Building;
 import com.ohammer.apartner.domain.apartment.entity.Unit;
+import com.ohammer.apartner.domain.apartment.service.ApartmentService;
+import com.ohammer.apartner.domain.image.entity.Image;
+import com.ohammer.apartner.domain.user.dto.PasswordResetRequestDTO;
+import com.ohammer.apartner.domain.user.entity.User;
+import com.ohammer.apartner.domain.user.service.UserFindService;
+import com.ohammer.apartner.domain.user.service.UserRegistService;
 import com.ohammer.apartner.security.OAuth.CustomRequest;
+import com.ohammer.apartner.security.dto.FindEmailRequest;
+import com.ohammer.apartner.security.dto.FindEmailResponse;
 import com.ohammer.apartner.security.dto.LoginRequestDto;
 import com.ohammer.apartner.security.dto.LoginResponseDto;
 import com.ohammer.apartner.security.dto.MeDto;
 import com.ohammer.apartner.security.jwt.JwtTokenizer;
 import com.ohammer.apartner.security.service.AuthService;
-import com.ohammer.apartner.domain.user.service.UserRegistService;
-import com.ohammer.apartner.domain.image.entity.Image;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import com.ohammer.apartner.domain.user.entity.UserLog;
-import com.ohammer.apartner.domain.user.repository.UserLogRepository;
-import com.ohammer.apartner.security.dto.FindEmailRequest;
-import com.ohammer.apartner.security.dto.FindEmailResponse;
+import jakarta.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.ohammer.apartner.security.CustomUserDetails;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.validation.BindingResult;
-import jakarta.validation.Valid;
-import com.ohammer.apartner.domain.user.dto.PasswordResetRequestDTO;
-import com.ohammer.apartner.domain.user.service.UserFindService;
 
 @RestController
 @RequiredArgsConstructor
@@ -116,7 +110,7 @@ public class ApiV1AuthController {
                     .map(Apartment::getId)
                     .orElse(null);
             String buildingName = Optional.ofNullable(user.getBuilding())
-                    .map(Building::getBuildingNumber) 
+                    .map(Building::getBuildingNumber)
                     .orElse(null);
             String unitNumber = Optional.ofNullable(user.getUnit())
                     .map(Unit::getUnitNumber)
@@ -148,8 +142,6 @@ public class ApiV1AuthController {
             log.info("[/me] Successfully retrieved user info for userId: {}", userIdLong);
             log.info("[/me] Successfully retrieved 너의 핸드폰번호 : {}", meDto.getPhoneNum());
 
-
-
             // 8. MeDto를 담아서 200 OK 응답 보내기
             return ResponseEntity.ok(meDto);
 
@@ -161,7 +153,8 @@ public class ApiV1AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request: " + ise.getMessage());
         } catch (Exception e) {
             log.error("[/me] Error processing request: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing request: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing request: " + e.getMessage());
         }
     }
 
@@ -177,30 +170,33 @@ public class ApiV1AuthController {
             if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
                 // 로그인 실패 로그 추가
                 authService.logLoginFailure(user, getClientIp());
-                
+
                 return ResponseEntity.status(401).body("비밀번호가 틀렸습니다.");
             }
-            
+
             // 사용자 상태 확인 - ACTIVE 상태가 아니면 로그인 불가, 상태별 메시지 처리
             switch (user.getStatus()) {
                 case ACTIVE:
                     // 활성 상태이면 정상 진행
                     break;
                 case INACTIVE:
-                    log.warn("[/login] INACTIVE user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
-                    
+                    log.warn("[/login] INACTIVE user tried to login: {}, status: {}", user.getEmail(),
+                            user.getStatus());
+
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비활성화된 계정입니다. 관리자에게 문의하세요.");
                 case PENDING:
                     log.warn("[/login] PENDING user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
-                    
+
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정이 정지되었습니다. 관리자에게 문의하세요.");
                 case WITHDRAWN:
-                    log.warn("[/login] WITHDRAWN user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
-                    
+                    log.warn("[/login] WITHDRAWN user tried to login: {}, status: {}", user.getEmail(),
+                            user.getStatus());
+
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("이미 탈퇴한 계정입니다.");
                 default:
-                    log.warn("[/login] Unknown status user tried to login: {}, status: {}", user.getEmail(), user.getStatus());
-                    
+                    log.warn("[/login] Unknown status user tried to login: {}, status: {}", user.getEmail(),
+                            user.getStatus());
+
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("계정 상태를 확인할 수 없습니다. 관리자에게 문의하세요.");
             }
 
@@ -213,29 +209,30 @@ public class ApiV1AuthController {
 
             authService.logLoginSuccess(user, getClientIp());
 
-            LoginResponseDto loginResponseDto = new LoginResponseDto(accessToken, refreshToken, user.getId(), user.getUserName());
+            LoginResponseDto loginResponseDto = new LoginResponseDto(accessToken, refreshToken, user.getId(),
+                    user.getUserName());
 
             ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", accessToken)
-                .httpOnly(true)
-                .secure(false) 
-                .path("/")
-                .maxAge(JwtTokenizer.ACCESS_TOKEN_EXPIRE_COUNT / 1000)
-                .sameSite("Lax") 
-                .build();
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(JwtTokenizer.ACCESS_TOKEN_EXPIRE_COUNT / 1000)
+                    .sameSite("Lax")
+                    .build();
 
             ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(false) 
-                .path("/") 
-                .maxAge(JwtTokenizer.REFRESH_TOKEN_EXPIRE_COUNT / 1000)
-                .sameSite("Lax")
-                .build();
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(JwtTokenizer.REFRESH_TOKEN_EXPIRE_COUNT / 1000)
+                    .sameSite("Lax")
+                    .build();
 
             log.info("[/login] User logged in successfully: {}", user.getEmail());
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                .body(loginResponseDto);
+                    .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                    .body(loginResponseDto);
 
         } catch (Exception e) {
             log.error("[/login] Unexpected error during login for email {}: {}", req.getEmail(), e.getMessage(), e);
@@ -285,23 +282,24 @@ public class ApiV1AuthController {
     @PostMapping("/find-email")
     public ResponseEntity<?> findEmail(@RequestBody FindEmailRequest request) {
         FindEmailResponse response = userFindService.findEmail(request);
-        
+
         if (response == null) {
             return ResponseEntity.notFound().build(); // 404 응답
         }
-        
+
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequestDTO request, BindingResult bindingResult) {
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequestDTO request,
+                                           BindingResult bindingResult) {
         log.info("[/reset-password] Received password reset request for email: {}", request.getEmail());
 
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getFieldErrors().stream()
-                .findFirst()
-                .map(error -> error.getDefaultMessage())
-                .orElse("입력값이 올바르지 않습니다.");
+                    .findFirst()
+                    .map(error -> error.getDefaultMessage())
+                    .orElse("입력값이 올바르지 않습니다.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
         }
 
@@ -323,12 +321,12 @@ public class ApiV1AuthController {
         try {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
             HttpServletRequest request = attributes.getRequest();
-            
+
             String forwardedHeader = request.getHeader("X-Forwarded-For");
             if (forwardedHeader != null && !forwardedHeader.isEmpty()) {
                 return forwardedHeader.split(",")[0].trim();
             }
-            
+
             return request.getRemoteAddr();
         } catch (Exception e) {
             log.warn("Failed to get client IP: {}", e.getMessage());

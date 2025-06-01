@@ -85,9 +85,16 @@ public class AdminApartmentService {
     public void deleteApartment(Long apartmentId) {
         Apartment apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("삭제할 아파트를 찾을 수 없습니다. ID: " + apartmentId));
-        if (!buildingRepository.findByApartmentId(apartmentId, Pageable.unpaged()).isEmpty()) {
-            throw new InvalidRequestException("아파트에 속한 동이 있어 삭제할 수 없습니다.");
+        // 모든 동 조회
+        List<Building> buildings = buildingRepository.findByApartmentId(apartmentId);
+        for (Building building : buildings) {
+            // 각 동의 모든 호수 삭제
+            List<Unit> units = unitRepository.findByBuildingId(building.getId());
+            unitRepository.deleteAll(units);
         }
+        // 모든 동 삭제
+        buildingRepository.deleteAll(buildings);
+        // 아파트 삭제
         apartmentRepository.delete(apartment);
     }
 
@@ -170,9 +177,10 @@ public class AdminApartmentService {
     public void deleteBuilding(Long buildingId) {
         Building building = buildingRepository.findById(buildingId)
                 .orElseThrow(() -> new ResourceNotFoundException("삭제할 동을 찾을 수 없습니다. ID: " + buildingId));
-        if (!unitRepository.findByBuildingId(buildingId, Pageable.unpaged()).isEmpty()) {
-            throw new InvalidRequestException("동에 속한 호수가 있어 삭제할 수 없습니다.");
-        }
+        // 동의 모든 호수 삭제
+        List<Unit> units = unitRepository.findByBuildingId(buildingId);
+        unitRepository.deleteAll(units);
+        // 동 삭제
         buildingRepository.delete(building);
     }
 

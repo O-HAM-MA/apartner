@@ -320,6 +320,8 @@ export default function SignUpPage() {
         { email: fullEmail }
       );
 
+      // 이메일 사용 가능 - 인증 UI 표시를 위해 CHECKED 상태로 설정
+      console.log("이메일 사용 가능: 인증 UI 표시");
       setEmailCheckMessage({
         text: responseData.message || "사용 가능한 이메일입니다.",
         color: "text-green-500",
@@ -328,6 +330,9 @@ export default function SignUpPage() {
     } catch (error: any) {
       console.error("Email check error:", error);
       const backendErrorMessage = error?.response?.data?.message;
+
+      // 이메일 중복 - 인증 UI 숨김을 위해 NONE 상태로 설정
+      console.log("이메일 중복: 인증 UI 숨김");
       setEmailCheckMessage({
         text:
           backendErrorMessage ||
@@ -501,7 +506,9 @@ export default function SignUpPage() {
     } catch (error: any) {
       console.error("회원가입 오류:", error);
       const errorMessage =
-        error?.response?.data?.message || "회원가입 처리 중 오류가 발생했습니다.";
+        error?.response?.data?.message ||
+        "회원가입 처리 중 오류가 발생했습니다.";
+
       alert(errorMessage);
     } finally {
       setIsLoading(false);
@@ -517,7 +524,6 @@ export default function SignUpPage() {
     clearVerificationTimer();
     setIsSendCodeDisabled(true);
     setIsLoading(true);
-    setEmailCheckMessage({ text: "", color: "" });
     setVerificationMessage({
       text: "인증번호를 전송 중입니다...",
       color: "text-gray-500",
@@ -595,7 +601,6 @@ export default function SignUpPage() {
     }
 
     setIsLoading(true);
-    setEmailCheckMessage({ text: "", color: "" });
     setVerificationMessage({
       text: "인증번호를 확인 중입니다...",
       color: "text-gray-500",
@@ -616,7 +621,6 @@ export default function SignUpPage() {
 
       clearVerificationTimer();
       setEmailVerificationStep("VERIFIED");
-      setEmailCheckMessage({ text: "", color: "" });
       setVerificationMessage({
         text: responseData.message || "✅ 인증번호가 일치합니다.",
         color: "text-green-500",
@@ -648,13 +652,18 @@ export default function SignUpPage() {
         }}
       />
       <div className="min-h-screen bg-pink-50 p-4 sm:p-8 flex flex-col items-center  dark:bg-gray-900">
-        <div className="w-full max-w-2xl p-8 space-y-8 bg-white  dark:bg-gray-800  shadow-xl rounded-xl">
+        <div className="w-full max-w-2xl space-y-2 bg-white dark:bg-gray-800 rounded-2xl py-16 px-8 shadow-xl">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-              {signupType === "KAKAO" ? "카카오 계정으로 회원가입" : "회원가입"}
+            <h2 className="text-center text-5xl font-bold tracking-tight text-pink-500 dark:text-pink-400 mb-2 max-w-xl mx-auto">
+              SIGN UP
             </h2>
+            {signupType === "KAKAO" && (
+              <p className="text-center text-3xl font-semibold text-yellow-400 mb-10">
+                - KAKAO -
+              </p>
+            )}
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-4 max-w-xl mx-auto" onSubmit={handleSubmit}>
             <div className="rounded-md -space-y-px">
               <div className="mb-5">
                 <label
@@ -670,7 +679,7 @@ export default function SignUpPage() {
                     type="text"
                     autoComplete="email-id"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                    className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                     placeholder="이메일 아이디"
                     value={emailId}
                     onChange={(e) => {
@@ -687,7 +696,7 @@ export default function SignUpPage() {
                     <input
                       type="text"
                       required
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       placeholder="도메인 입력"
                       value={customEmailDomain}
                       onChange={(e) => {
@@ -713,7 +722,7 @@ export default function SignUpPage() {
                         setVerificationMessage({ text: "", color: "" });
                         setVerificationCode("");
                       }}
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       disabled={isLoading}
                     >
                       {emailDomains.map((domain) => (
@@ -726,11 +735,11 @@ export default function SignUpPage() {
                   <button
                     type="button"
                     onClick={handleEmailCheck}
-                    className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                    className={`ml-2 px-4 h-12 border border-transparent text-sm font-semibold leading-6 text-white rounded-lg ${
                       isLoading || emailVerificationStep === "VERIFIED"
                         ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-indigo-600 hover:bg-indigo-700"
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                        : "bg-pink-500 hover:bg-pink-600"
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 whitespace-nowrap`}
                     disabled={isLoading || emailVerificationStep === "VERIFIED"}
                   >
                     {isLoading && emailVerificationStep === "NONE"
@@ -751,85 +760,92 @@ export default function SignUpPage() {
                     {emailCheckMessage.text}
                   </p>
                 )}
-                {/* 이메일 인증 UI - CHECKED, CODE_SENT, FAILED, VERIFIED 상태일 때 표시 */}
+
+                {/* 이메일 인증 UI - CHECKED, CODE_SENT, FAILED, VERIFIED 상태일 때만 표시 */}
                 {(emailVerificationStep === "CHECKED" ||
                   emailVerificationStep === "CODE_SENT" ||
                   emailVerificationStep === "FAILED" ||
-                  emailVerificationStep === "VERIFIED") && (
-                  <div className="flex flex-col space-y-2 mt-2">
-                    {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
-                    {emailVerificationStep !== "VERIFIED" && (
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          placeholder="인증번호를 입력해주세요"
-                          className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value)}
-                          disabled={isLoading}
-                        />
-                        {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
-                        {(emailVerificationStep === "CHECKED" ||
-                          emailVerificationStep === "FAILED") && (
-                          <button
-                            type="button"
-                            onClick={handleSendVerificationCode}
-                            className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                              isSendCodeDisabled || isLoading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-indigo-600 hover:bg-indigo-700"
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
-                            disabled={isSendCodeDisabled || isLoading}
-                          >
-                            {isLoading && isSendCodeDisabled
-                              ? "전송중..."
-                              : isSendCodeDisabled
-                              ? "재전송 대기"
-                              : emailVerificationStep === "FAILED"
-                              ? "인증번호 재전송"
-                              : "인증번호 보내기"}
-                          </button>
-                        )}
-                        {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
-                        {(emailVerificationStep === "CODE_SENT" ||
-                          emailVerificationStep === "FAILED") && (
-                          <button
-                            type="button"
-                            onClick={handleVerifyCode}
-                            className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                              verificationCode.length === 0 || isLoading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700"
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap`}
-                            disabled={
-                              verificationCode.length === 0 || isLoading
+                  emailVerificationStep === "VERIFIED") &&
+                  emailCheckMessage.color === "text-green-500" &&
+                  !emailCheckMessage.text.includes("이미 사용중") && (
+                    <div className="flex flex-col space-y-2 mt-2">
+                      {/* VERIFIED 상태가 아닐 때만 입력 필드 및 버튼 표시 */}
+                      {emailVerificationStep !== "VERIFIED" && (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            placeholder="인증번호를 입력해주세요"
+                            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            value={verificationCode}
+                            onChange={(e) =>
+                              setVerificationCode(e.target.value)
                             }
-                          >
-                            {isLoading && emailVerificationStep === "CODE_SENT"
-                              ? "확인중..."
-                              : "확인"}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
-                    {verificationMessage.text && (
-                      <p
-                        className={`text-xs ${verificationMessage.color} ${
-                          verificationMessage.color === "text-green-500"
-                            ? "dark:text-green-400"
-                            : verificationMessage.color === "text-red-500"
-                            ? "dark:text-red-400"
-                            : verificationMessage.color === "text-blue-500"
-                            ? "dark:text-blue-400"
-                            : "dark:text-gray-400"
-                        }`}
-                      >
-                        {verificationMessage.text}
-                      </p>
-                    )}
-                  </div>
-                )}
+                            disabled={isLoading}
+                          />
+                          {/* 인증번호 전송 또는 재전송 버튼 - CHECKED 또는 FAILED 상태일 때 표시 */}
+                          {(emailVerificationStep === "CHECKED" ||
+                            emailVerificationStep === "FAILED") && (
+                            <button
+                              type="button"
+                              onClick={handleSendVerificationCode}
+                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                isSendCodeDisabled || isLoading
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-indigo-600 hover:bg-indigo-700"
+                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
+                              disabled={isSendCodeDisabled || isLoading}
+                            >
+                              {isLoading && isSendCodeDisabled
+                                ? "전송중..."
+                                : isSendCodeDisabled
+                                ? "재전송 대기"
+                                : emailVerificationStep === "FAILED"
+                                ? "인증번호 재전송"
+                                : "인증번호 보내기"}
+                            </button>
+                          )}
+                          {/* 인증번호 확인 버튼 - CODE_SENT 또는 FAILED 상태일 때도 표시 */}
+                          {(emailVerificationStep === "CODE_SENT" ||
+                            emailVerificationStep === "FAILED") && (
+                            <button
+                              type="button"
+                              onClick={handleVerifyCode}
+                              className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                verificationCode.length === 0 || isLoading
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-blue-600 hover:bg-blue-700"
+                              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap`}
+                              disabled={
+                                verificationCode.length === 0 || isLoading
+                              }
+                            >
+                              {isLoading &&
+                              emailVerificationStep === "CODE_SENT"
+                                ? "확인중..."
+                                : "확인"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {/* 인증번호 관련 메시지 (성공, 실패, 안내 등) */}
+                      {verificationMessage.text && (
+                        <p
+                          className={`text-xs ${verificationMessage.color} ${
+                            verificationMessage.color === "text-green-500"
+                              ? "dark:text-green-400"
+                              : verificationMessage.color === "text-red-500"
+                              ? "dark:text-red-400"
+                              : verificationMessage.color === "text-blue-500"
+                              ? "dark:text-blue-400"
+                              : "dark:text-gray-400"
+                          }`}
+                        >
+                          {verificationMessage.text}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                 {isLoading &&
                   emailVerificationStep !== "CHECKED" &&
                   emailVerificationStep !== "CODE_SENT" &&
@@ -858,7 +874,7 @@ export default function SignUpPage() {
                       type="password"
                       autoComplete="new-password"
                       required
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       placeholder="비밀번호를 입력하세요"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -878,7 +894,7 @@ export default function SignUpPage() {
                       type="password"
                       autoComplete="new-password"
                       required
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       placeholder="비밀번호를 다시 입력하세요"
                       value={passwordConfirm}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
@@ -959,7 +975,7 @@ export default function SignUpPage() {
                   type="text"
                   autoComplete="name"
                   required
-                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                   placeholder="이름을 입력하세요"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -968,8 +984,8 @@ export default function SignUpPage() {
                   }
                 />
                 {signupType === "KAKAO" && kakaoInfo.nickname && (
-                  <p className="mt-2 text-xs text-green-500 dark:text-green-400">
-                    카카오에서 가져온 이름입니다.
+                  <p className="mt-2 text-xs text-pink-500 dark:text-pink-400">
+                    kakao에서 가져온 이름입니다.
                   </p>
                 )}
               </div>
@@ -993,13 +1009,12 @@ export default function SignUpPage() {
                     }
                     readOnly
                     placeholder="주소찾기 버튼을 클릭하여 주소를 검색하세요"
-                    className="flex-1 appearance-none rounded-l-md block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm h-11"
+                    className="flex-1 block w-full h-12 rounded-l-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                   />
                   <button
                     type="button"
                     onClick={() => setIsAddressModalOpen(true)}
-                    className="h-11 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-md"
-                    style={{ minWidth: "100px" }}
+                    className="h-12 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-r-lg"
                   >
                     주소찾기
                   </button>
@@ -1029,7 +1044,7 @@ export default function SignUpPage() {
                           setDongError("");
                         }}
                         required
-                        className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                        className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       >
                         <option value="" disabled>
                           동 선택
@@ -1062,7 +1077,7 @@ export default function SignUpPage() {
                           setHoError("");
                         }}
                         required
-                        className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:text-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                        className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       >
                         <option value="" disabled>
                           호 선택
@@ -1098,7 +1113,7 @@ export default function SignUpPage() {
                       type="tel"
                       autoComplete="tel"
                       required
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      className="block w-full h-12 rounded-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
                       placeholder="휴대폰 번호를 입력하세요 (예: 01012345678)"
                       value={phoneNumber}
                       onChange={(e) => {
@@ -1110,14 +1125,22 @@ export default function SignUpPage() {
                     <button
                       type="button"
                       onClick={handlePhoneCheck}
-                      className={`ml-2 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                        isLoading
+                      className={`ml-2 px-4 h-12 border border-transparent text-sm font-semibold leading-6 text-white rounded-lg ${
+                        isLoading ||
+                        phoneCheckMessage.color === "text-green-500"
                           ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-indigo-600 hover:bg-indigo-700"
-                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap`}
-                      disabled={isLoading}
+                          : "bg-pink-500 hover:bg-pink-600"
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 whitespace-nowrap`}
+                      disabled={
+                        isLoading ||
+                        phoneCheckMessage.color === "text-green-500"
+                      }
                     >
-                      {isLoading ? "확인중..." : "중복체크"}
+                      {isLoading
+                        ? "확인중..."
+                        : phoneCheckMessage.color === "text-green-500"
+                        ? "확인완료"
+                        : "중복체크"}
                     </button>
                   </div>
                   {phoneCheckMessage.text && (
@@ -1140,16 +1163,16 @@ export default function SignUpPage() {
             <div>
               <button
                 type="submit"
-                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
+                className={`flex w-full items-center justify-center rounded-lg px-3 h-12 border border-transparent text-sm font-semibold leading-6 text-white ${
                   !isLoading &&
                   (signupType === "KAKAO"
                     ? emailId
                       ? emailVerificationStep === "VERIFIED"
                       : true
                     : emailVerificationStep === "VERIFIED")
-                    ? "bg-pink-500 hover:bg-pink-600 dark:bg-pink-700 dark:hover:bg-pink-800"
+                    ? "bg-pink-500 hover:bg-pink-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
                     : "bg-gray-400 cursor-not-allowed"
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400`}
+                }`}
                 disabled={
                   isLoading ||
                   (emailId !== "" && emailVerificationStep !== "VERIFIED")
@@ -1162,16 +1185,12 @@ export default function SignUpPage() {
             {signupType !== "KAKAO" && (
               <>
                 <div className="relative my-6">
-                  <div
-                    className="absolute inset-0 flex items-center"
-                    aria-hidden="true"
-                  >
-                    <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400">
-                      간편 회원가입
+                  <div className="flex items-center">
+                    <div className="flex-grow h-px bg-gray-300 dark:bg-gray-600"></div>
+                    <span className="px-2 text-gray-500 dark:text-gray-400 text-s">
+                      또는
                     </span>
+                    <div className="flex-grow h-px bg-gray-300 dark:bg-gray-600"></div>
                   </div>
                 </div>
 
@@ -1181,10 +1200,10 @@ export default function SignUpPage() {
                   >
                     <button
                       type="button"
-                      className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300 dark:text-black dark:bg-yellow-400 dark:hover:bg-yellow-500"
+                      className="flex w-full items-center justify-center rounded-lg bg-yellow-400 px-3 h-12 text-sm font-semibold leading-6 text-black shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400"
                       disabled={isLoading}
                     >
-                      카카오톡으로 회원가입
+                      카카오톡으로 1초만에 시작하기
                     </button>
                   </a>
                 </div>

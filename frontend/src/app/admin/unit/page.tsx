@@ -176,41 +176,37 @@ export default function UnitPage() {
     // 초기 아파트 목록 로드 (첫 페이지)
     fetchApartments(apartmentPage, searchTerm);
 
-    // 목업 데이터 설정 부분 (실제 API 연동 시에는 fetchApartments 내부에서 처리)
-    // const mockApartments = [
-    //   { id: "1", address: "경기도..", name: "반포자이..", zipCode: "10111" },
-    //   { id: "2", address: "서울..", name: "현대..", zipCode: "10112" },
-    //   { id: "3", address: "충북..", name: "삼성..", zipCode: "10113" },
-    //   // 페이지네이션 테스트를 위한 더미 데이터
-    //   { id: "4", address: "강원도..", name: "한라..", zipCode: "10114" },
-    //   { id: "5", address: "전라..", name: "엘지..", zipCode: "10115" },
-    //   { id: "6", address: "경상..", name: "대우..", zipCode: "10116" },
-    //   { id: "7", address: "제주..", name: "푸르지오..", zipCode: "10117" },
-    //   { id: "8", address: "인천..", name: "더샵..", zipCode: "10118" },
-    //   { id: "9", address: "대전..", name: "아이파크..", zipCode: "10119" },
-    //   { id: "10", address: "부산..", name: "롯데캐슬..", zipCode: "10120" },
-    //   { id: "11", address: "울산..", name: "힐스테이트..", zipCode: "10121" },
-    //   { id: "12", address: "세종..", name: "자이..", zipCode: "10122" },
-    // ];
-    // setApartments(mockApartments.slice(0, ITEMS_PER_PAGE)); // 초기 렌더링 시 첫페이지만
-    // setTotalApartments(mockApartments.length);
-
     // selectedApartment 또는 selectedDong 변경 시 하위 목록 초기화 및 로드
-    if (selectedApartment) {
-      fetchDongs(selectedApartment.id, dongPage);
-    } else {
-      setDongs([]);
-      setTotalDongs(0);
-    }
+    const fetchData = async () => {
+      try {
+        // selectedApartment와 selectedDong 모두 있을 경우 병렬로 데이터 로드
+        if (selectedApartment && selectedDong) {
+          await Promise.all([
+            fetchDongs(selectedApartment.id, dongPage),
+            fetchHos(selectedDong.id, hoPage),
+          ]);
+        }
+        // selectedApartment만 있는 경우
+        else if (selectedApartment) {
+          await fetchDongs(selectedApartment.id, dongPage);
+          setHos([]);
+          setTotalHos(0);
+        }
+        // 선택된 아파트가 없는 경우 모두 초기화
+        else {
+          setDongs([]);
+          setTotalDongs(0);
+          setHos([]);
+          setTotalHos(0);
+        }
+      } catch (error) {
+        console.error("데이터 로드 중 오류 발생:", error);
+      }
+    };
 
-    if (selectedDong) {
-      fetchHos(selectedDong.id, hoPage);
-    } else {
-      setHos([]);
-      setTotalHos(0);
-    }
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedApartment, selectedDong]); // searchTerm 제거, apartmentPage는 fetchApartments 호출 시 관리
+  }, [selectedApartment, selectedDong]);
 
   // 페이지 변경 시 데이터 로드
   useEffect(() => {
@@ -260,32 +256,6 @@ export default function UnitPage() {
       );
       setTotalApartments(response.totalElements);
       setApartmentPage(response.number + 1); // API는 0-indexed, UI는 1-indexed
-      //   console.log(
-      //     `Fetching apartments: page=${page}, search=${search}, limit=${ITEMS_PER_PAGE}`
-      //   );
-      //   const mockApartmentsAll = [
-      //     { id: "1", address: "경기도..", name: "반포자이..", zipCode: "10111" },
-      //     { id: "2", address: "서울..", name: "현대..", zipCode: "10112" },
-      //     { id: "3", address: "충북..", name: "삼성..", zipCode: "10113" },
-      //     { id: "4", address: "강원도..", name: "한라..", zipCode: "10114" },
-      //     { id: "5", address: "전라..", name: "엘지..", zipCode: "10115" },
-      //     { id: "6", address: "경상..", name: "대우..", zipCode: "10116" },
-      //     { id: "7", address: "제주..", name: "푸르지오..", zipCode: "10117" },
-      //     { id: "8", address: "인천..", name: "더샵..", zipCode: "10118" },
-      //     { id: "9", address: "대전..", name: "아이파크..", zipCode: "10119" },
-      //     { id: "10", address: "부산..", name: "롯데캐슬..", zipCode: "10120" },
-      //     { id: "11", address: "울산..", name: "힐스테이트..", zipCode: "10121" },
-      //     { id: "12", address: "세종..", name: "자이..", zipCode: "10122" },
-      //   ];
-      //   const filtered = mockApartmentsAll.filter(
-      //     (apt) =>
-      //       apt.address.toLowerCase().includes(search.toLowerCase()) ||
-      //       apt.name.toLowerCase().includes(search.toLowerCase())
-      //   );
-      //   setApartments(
-      //     filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
-      //   );
-      //   setTotalApartments(filtered.length);
     } catch (error) {
       console.error("아파트 목록을 불러오는데 실패했습니다:", error);
       toast({

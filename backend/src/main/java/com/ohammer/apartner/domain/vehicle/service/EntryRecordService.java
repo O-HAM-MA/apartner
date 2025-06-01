@@ -8,9 +8,11 @@ import com.ohammer.apartner.domain.vehicle.dto.EntryRecordResponseDto;
 import com.ohammer.apartner.domain.vehicle.dto.EntryRecordStatusDto;
 import com.ohammer.apartner.domain.vehicle.dto.VehicleRegistrationInfoDto;
 import com.ohammer.apartner.domain.vehicle.entity.EntryRecord;
+import com.ohammer.apartner.domain.vehicle.entity.ParkingProperties;
 import com.ohammer.apartner.domain.vehicle.entity.Vehicle;
 import com.ohammer.apartner.domain.vehicle.repository.EntryRecordRepository;
 //import jakarta.transaction.Transactional;
+import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import com.ohammer.apartner.security.utils.checkRoleUtils;
 import lombok.RequiredArgsConstructor;
@@ -30,23 +32,10 @@ public class EntryRecordService {
 
     private final EntryRecordRepository entryRecordRepository;
     private final VehicleService vehicleService;
+    private final AlarmService alarmService;
     private static final int MAX_CAPACITY = 30; // 총 주차 가능 수
+    private final ParkingProperties parkingProperties;
 
-//    @Transactional
-//    public EntryRecord updateStatus(Long entryRecordId, EntryRecord.Status newStatus) {
-//        EntryRecord record = entryRecordRepository.findById(entryRecordId)
-//                .orElseThrow(() -> new IllegalArgumentException("출입 기록이 없습니다."));
-//
-//        if (record.getStatus() != EntryRecord.Status.PENDING) {
-//            throw new IllegalStateException("이미 처리된 상태입니다.");
-//        }
-//
-//
-//
-//        record.setStatus(newStatus);  // 상태만 변경
-//
-//        return record;  // 변경된 상태가 자동으로 DB에 반영됨
-//    }
 
     @Transactional
     public EntryRecordStatusDto updateStatus(Long entryRecordId, EntryRecord.Status newStatus) {
@@ -63,15 +52,9 @@ public class EntryRecordService {
         boolean isMG = roles.contains(Role.MANAGER) || roles.contains(Role.MODERATOR);
         boolean isAD = roles.contains(Role.ADMIN);
 
-
-
-
         if (!isMG && !isAD && !record.getVehicle().getUser().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("본인의 차량에 대한 요청만 처리할 수 있습니다.");
         }
-
-
-        Set<Role> adminRoles = Set.of(Role.MANAGER, Role.MODERATOR);
 
         // 역할에 따라 허용된 상태 모음 구성
         Set<EntryRecord.Status> allowedStatuses = new HashSet<>();
@@ -95,13 +78,37 @@ public class EntryRecordService {
             throw new IllegalArgumentException("요청한 상태로 변경할 권한이 없습니다.");
         }
 
-
-
-
-
-
-
         record.setStatus(newStatus);
+        
+        // 실시간 알림 추가
+        Vehicle vehicle = record.getVehicle();
+        User vehicleOwner = vehicle.getUser();
+        Long apartmentId = vehicleOwner.getApartment() != null ? vehicleOwner.getApartment().getId() : null;
+        
+        // 차량 주인에게 알림
+        String statusText = newStatus.name();
+        String notificationType;
+switch (newStatus) {
+    case AGREE: notificationType = "success"; break;
+    case INVITER_AGREE: notificationType = "info"; break;
+    case INAGREE: notificationType = "warning"; break;
+    case PENDING: notificationType = "info"; break;
+    default: notificationType = "info";
+}
+        
+        String message = String.format("차량 [%s] 출입 요청이 %s 상태로 변경되었습니다.", 
+                vehicle.getVehicleNum(), getStatusKoreanName(newStatus));
+        
+        alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "차량 출입 상태 변경", notificationType, "vehicle", message, null, null, null, null);
+        
+        // 관리자에게도 알림 (관리자가 아닌 사람이 상태 변경했을 경우)
+        if (!isMG && !isAD && apartmentId != null) {
+            String adminMessage = String.format("사용자가 차량 [%s] 출입 요청 상태를 %s(으)로 변경했습니다.", 
+                    vehicle.getVehicleNum(), getStatusKoreanName(newStatus));
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 출입 상태 변경", "info", "vehicle", adminMessage, null, currentUser.getId(), null, null);
+        }
+        
         return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
     }
 
@@ -110,27 +117,13 @@ public class EntryRecordService {
 
     // 🚗 입차
     public EntryRecordResponseDto enterVehicle(EntryRecordRequestDto dto) {
-//        //Vehicle vehicle = vehicleService.findById(dto.getVehicleId());
-//        Vehicle vehicle = vehicleService.findByCurrentUser();
-//
-//        // 1) 외부인이라면 제출된 전화번호 검증
-//        if (Boolean.TRUE.equals(vehicle.getIsForeign())) {
-//            String registeredPhone = vehicle.getPhone();
-//            if (dto.getPhone() == null || !registeredPhone.equals(dto.getPhone())) {
-//                throw new IllegalArgumentException("등록된 전화번호와 일치하지 않습니다.");
-//            }
-//        }
+
 
         long activeCount = vehicleService.countActiveVehicles();
 
-        if (activeCount >= MAX_CAPACITY) {
+        if (activeCount >= parkingProperties.getMaxCapacity()) {
             throw new IllegalStateException("주차장이 꽉 찼습니다.");
         }
-
-
-
-
-
 
         Vehicle vehicle;
 
@@ -171,6 +164,28 @@ public class EntryRecordService {
 
         entryRecordRepository.save(latestApprovedRecord);
         vehicleService.save(vehicle);
+        
+        // 실시간 알림 추가
+        User vehicleOwner = vehicle.getUser();
+        Long apartmentId = vehicleOwner.getApartment() != null ? vehicleOwner.getApartment().getId() : null;
+        
+        // 차량 주인에게 알림
+        String message = String.format("차량 [%s]이(가) 주차장에 입차했습니다.", vehicle.getVehicleNum());
+        alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "차량 입차", "info", "vehicle", message, null, null, null, null);
+        
+        // 외부 차량인 경우 초대한 입주민에게 알림
+        if (vehicle.getIsForeign() && !vehicleOwner.getId().equals(SecurityUtil.getCurrentUserId())) {
+            String inviterMessage = String.format("초대한 방문차량 [%s]이(가) 주차장에 입차했습니다.", vehicle.getVehicleNum());
+            alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "방문차량 입차", "info", "vehicle", inviterMessage, null, null, null, null);
+        }
+        
+        // 관리자에게도 알림
+        if (apartmentId != null) {
+            String adminMessage = String.format("%s 차량 [%s]이(가) 주차장에 입차했습니다.", 
+                    vehicle.getIsForeign() ? "외부" : "입주민", vehicle.getVehicleNum());
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 입차", "info", "vehicle", adminMessage, null, null, null, null);
+        }
 
         return EntryRecordResponseDto.from(latestApprovedRecord);
     }
@@ -193,8 +208,7 @@ public class EntryRecordService {
             vehicle = vehicleService.findByCurrentUser();
         }
 
-        //Vehicle vehicle = vehicleService.findByCurrentUser();
-        // 승인된 출입기록 중 출차 안 한 기록 조회
+
         EntryRecord activeRecord = entryRecordRepository
                 .findFirstByVehicleIdAndStatusAndExitTimeIsNullOrderByEntryTimeDesc(
                         vehicle.getId(), EntryRecord.Status.AGREE)
@@ -202,12 +216,33 @@ public class EntryRecordService {
 
         activeRecord.setExitTime(LocalDateTime.now());
 
-        // 차량 상태 갱신
-        //Vehicle vehicle = activeRecord.getVehicle();
+
         vehicle.setStatus(Vehicle.Status.INACTIVE);
 
         entryRecordRepository.save(activeRecord);
         vehicleService.save(vehicle);
+        
+        // 실시간 알림 추가
+        User vehicleOwner = vehicle.getUser();
+        Long apartmentId = vehicleOwner.getApartment() != null ? vehicleOwner.getApartment().getId() : null;
+        
+        // 차량 주인에게 알림
+        String message = String.format("차량 [%s]이(가) 주차장에서 출차했습니다.", vehicle.getVehicleNum());
+        alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "차량 출차", "info", "vehicle", message, null, null, null, null);
+        
+        // 외부 차량인 경우 초대한 입주민에게 알림
+        if (vehicle.getIsForeign() && !vehicleOwner.getId().equals(SecurityUtil.getCurrentUserId())) {
+            String inviterMessage = String.format("초대한 방문차량 [%s]이(가) 주차장에서 출차했습니다.", vehicle.getVehicleNum());
+            alarmService.notifyUser(vehicleOwner.getId(), apartmentId, "방문차량 출차", "info", "vehicle", inviterMessage, null, null, null, null);
+        }
+        
+        // 관리자에게도 알림
+        if (apartmentId != null) {
+            String adminMessage = String.format("%s 차량 [%s]이(가) 주차장에서 출차했습니다.", 
+                    vehicle.getIsForeign() ? "외부" : "입주민", vehicle.getVehicleNum());
+            
+            alarmService.notifyApartmentAdmins(apartmentId, "차량 출차", "info", "vehicle", adminMessage, null, null, null, null);
+        }
 
         return EntryRecordResponseDto.from(activeRecord);
     }
@@ -215,12 +250,6 @@ public class EntryRecordService {
 
     // 📜 출입 기록 조회
     public List<EntryRecordResponseDto> getEntryRecords(Long vehicleId) {
-
-//        User currentUser = SecurityUtil.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new IllegalArgumentException("로그인이 필요합니다.");
-//        }
-//
 
 
         return entryRecordRepository.findByVehicleIdOrderByEntryTimeDesc(vehicleId)
@@ -251,31 +280,17 @@ public class EntryRecordService {
     }
 
 
-    @Transactional
-    public EntryRecordStatusDto updateLatestPendingStatus(Long vehicleId, EntryRecord.Status newStatus) {
-        EntryRecord record = entryRecordRepository
-                .findTopByVehicleIdAndStatusOrderByCreatedAtDesc(vehicleId, EntryRecord.Status.PENDING)
-                .orElseThrow(() -> new IllegalArgumentException("승인 대기 중인 기록이 없습니다."));
 
-        record.setStatus(newStatus);
-        return new EntryRecordStatusDto(record.getId(), record.getStatus().name());
+
+    // 출입 상태 한글명 반환 헬퍼 메서드
+    private String getStatusKoreanName(EntryRecord.Status status) {
+        switch (status) {
+            case AGREE: return "최종 승인";
+            case INAGREE: return "미승인";
+            case INVITER_AGREE: return "입주민 승인";
+            case PENDING: return "승인 대기";
+            default: return status.name();
+        }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

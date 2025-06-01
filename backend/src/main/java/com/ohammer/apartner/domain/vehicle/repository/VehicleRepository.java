@@ -15,17 +15,12 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     List<Vehicle> findByIsForeignFalse();
 
-    public List<Vehicle> findByIsForeign(Boolean isForeign);
+
 
     // 전체 조회 (isForeign == null일 때)
     List<Vehicle> findAll();
 
-    // isForeign 값에 따라 필터링된 조회
 
-    Optional<Vehicle> findByUser_Id(Long userId);
-
-    // 수정된 메소드
-    List<Vehicle> findByIsForeignTrueAndStatusAndUser_Id(Vehicle.Status status, Long userId);
 
     @Query("SELECT v FROM Vehicle v JOIN EntryRecord e ON e.vehicle = v " +
             "WHERE v.isForeign = true AND v.user.id = :inviterId AND e.status = :status")
@@ -43,8 +38,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     Optional<Vehicle> findByPhoneAndIsForeign(String phone, Boolean isForeign);
 
-    // 외부인 차량 조회
-    Optional<Vehicle> findByPhoneAndIsForeign(String phone, boolean isForeign);
+
 
     Optional<Vehicle> findTopByPhoneAndIsForeignOrderByCreatedAtDesc(String phone, boolean isForeign);
 

@@ -6,6 +6,7 @@ import React, {
   useEffect,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -100,6 +101,8 @@ interface ApartnerTalkContextType {
   markMessagesAsRead: () => void;
   // 메시지 로딩 상태
   messagesLoaded: boolean;
+  // WebSocket 연결 관리
+  disconnectWebSocket: () => void;
 }
 
 const ApartnerTalkContext = createContext<ApartnerTalkContextType>({
@@ -143,6 +146,8 @@ const ApartnerTalkContext = createContext<ApartnerTalkContextType>({
   markMessagesAsRead: () => {},
   // 메시지 로딩 상태
   messagesLoaded: false,
+  // WebSocket 연결 관리
+  disconnectWebSocket: () => {},
 });
 
 export const useApartnerTalkContext = () => useContext(ApartnerTalkContext);
@@ -190,6 +195,16 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
   const [lastCheckAt, setLastCheckAt] = useState<Date | null>(null);
   // 메시지 로딩 상태 관리 (채팅방 진입 시 메시지 로딩 완료 이벤트)
   const [messagesLoaded, setMessagesLoaded] = useState<boolean>(false);
+
+  // race condition 방지를 위한 refs
+  const latestRoomIdRef = useRef<number | null>(null);
+  const isStartingChatRef = useRef<boolean>(false);
+  const isEnteringRoomRef = useRef<boolean>(false);
+  const isClosingChatRef = useRef<boolean>(false);
+
+  // 이미 연결 중이거나 연결된 경우 중복 연결 방지
+  const isConnectingRef = useRef<boolean>(false);
+  const connectedRoomIdRef = useRef<number | null>(null);
 
   // 현재 선택된 카테고리의 표시 이름 가져오기
   const getCategoryDisplayName = useCallback((): CategoryType => {
@@ -270,10 +285,18 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
 
   // 카드 화면 관리 유틸리티 함수
   const showCategorySelection = useCallback(() => {
+    // 채팅 인터페이스에서 카테고리 선택 화면으로 이동 시 웹소켓 연결 해제
+    if (currentView === "CHAT" && stompClient && stompClient.connected) {
+      stompClient.deactivate();
+      setConnected(false);
+      connectedRoomIdRef.current = null;
+      isConnectingRef.current = false;
+    }
     setCurrentView("CATEGORY");
-  }, []);
+  }, [currentView, stompClient]);
 
   const showChatInterface = useCallback(() => {
+    // 단순 화면 전환만 수행, 웹소켓 연결은 useEffect에서 처리
     setCurrentView("CHAT");
   }, []);
 
@@ -304,9 +327,6 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       if (!isCurrentChatroom && !isFromMe) {
         setHasUnreadMessages(true);
         setUnreadCount((prev) => prev + 1);
-        console.log(
-          "[알림] 새 메시지 도착! hasUnreadMessages=true, unreadCount 증가"
-        );
       }
 
       receivedMsg.isMyMessage = isFromMe;
@@ -357,9 +377,6 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         if (updatedChatroom.hasNewMessage) {
           setHasUnreadMessages(true);
           setUnreadCount((prev) => prev + 1);
-          console.log(
-            "[알림] 채팅방 업데이트로 새 메시지 감지! hasUnreadMessages=true, unreadCount 증가"
-          );
         }
       }
 
@@ -387,24 +404,32 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       return false;
     }
 
-    try {
-      try {
-        await joinChatroom(chatId);
-      } catch (joinError) {}
+    // 중복 실행 방지
+    if (isClosingChatRef.current) {
+      return false;
+    }
 
+    isClosingChatRef.current = true;
+
+    try {
+      // 안전하게 채팅방 종료 API 직접 호출
       await closeChatroom(chatId);
 
       if (chatId === chatroomId) {
-        setRoomStatus("INACTIVE");
+        // 최신 roomId 체크 추가
+        if (latestRoomIdRef.current !== chatId) {
+        } else {
+          setRoomStatus("INACTIVE");
 
-        const systemMessage: ApartnerTalkMessageType = {
-          userId: 0,
-          message:
-            "이 대화는 종료되었습니다. 새 문의는 카테고리를 선택해 시작해주세요.",
-          timestamp: new Date().toISOString(),
-          isSystem: true,
-        };
-        setMessages((prev) => [...prev, systemMessage]);
+          const systemMessage: ApartnerTalkMessageType = {
+            userId: 0,
+            message:
+              "이 대화는 종료되었습니다. 새 문의는 카테고리를 선택해 시작해주세요.",
+            timestamp: new Date().toISOString(),
+            isSystem: true,
+          };
+          setMessages((prev) => [...prev, systemMessage]);
+        }
       }
 
       if (activeChat?.id === chatId) {
@@ -425,6 +450,8 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       setMessages((prev) => [...prev, errorMessage]);
 
       return false;
+    } finally {
+      isClosingChatRef.current = false;
     }
   }, [chatroomId, activeChat, checkActiveChats]);
 
@@ -450,13 +477,29 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
 
   // 웹소켓 연결
   const connectWebSocket = useCallback(
-    (roomId: number) => {
-      console.log("[디버그] connectWebSocket 호출", roomId);
-      if (roomStatus === "INACTIVE") {
-        setConnecting(false);
-        setConnected(false);
+    (roomId: number, currentStatus: ChatroomStatusType) => {
+      // 이미 같은 방에 연결 중이거나 연결된 경우 중복 연결 방지
+      if (isConnectingRef.current) {
         return;
       }
+
+      if (connected && connectedRoomIdRef.current === roomId) {
+        return;
+      }
+
+      // 최신 roomId가 아니면 연결 무시
+      if (latestRoomIdRef.current !== roomId) {
+        return;
+      }
+
+      // 파라미터로 전달된 상태 사용 (클로저 문제 해결)
+      if (currentStatus === "INACTIVE") {
+        return;
+      }
+
+      // 연결 시작 플래그 설정
+      isConnectingRef.current = true;
+      setConnecting(true);
 
       if (stompClient && stompClient.connected) {
         stompClient.deactivate();
@@ -470,7 +513,6 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         heartbeatOutgoing: 4000,
       });
       client.onConnect = () => {
-        console.log("[디버그] WebSocket 연결 성공", roomId);
         client.subscribe(`/sub/chats/${roomId}`, (message) => {
           try {
             const receivedMsg = JSON.parse(message.body);
@@ -487,15 +529,20 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
 
         setConnecting(false);
         setConnected(true);
+        // 연결된 방 ID 기록
+        connectedRoomIdRef.current = roomId;
+        // 연결 완료 플래그 해제
+        isConnectingRef.current = false;
         markMessagesAsRead();
       };
       client.onDisconnect = () => {
-        console.log("[디버그] WebSocket 연결 해제", roomId);
         setConnected(false);
+        connectedRoomIdRef.current = null;
+        isConnectingRef.current = false;
       };
       client.onStompError = (frame) => {
-        console.error("[디버그] WebSocket STOMP 에러", frame);
         setConnecting(false);
+        isConnectingRef.current = false;
       };
       client.activate();
       setStompClient(client);
@@ -506,7 +553,7 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       handleChatroomUpdate,
       markMessagesAsRead,
       stompClient,
-      roomStatus,
+      connected,
     ]
   );
 
@@ -538,11 +585,17 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       return false;
     }
 
+    // 중복 실행 방지
+    if (isStartingChatRef.current) {
+      return false;
+    }
+
+    isStartingChatRef.current = true;
+
     try {
       setConnecting(true);
 
       const categoryName = getCategoryDisplayName();
-
       const title = `${categoryName || categoryCode} 문의`;
 
       let apiUrl = `/api/v1/chats?title=${encodeURIComponent(title)}`;
@@ -552,7 +605,8 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       const response = await post<any>(apiUrl, {});
       const chatroom = response.data;
 
-      if (chatroom.status === "INACTIVE") {
+      if (chatroom.status && chatroom.status.toUpperCase() === "INACTIVE") {
+        // 기존 채팅방이 INACTIVE면 새 채팅방 생성
         const roomId = chatroom.id;
         let newApiUrl = `/api/v1/chats?title=${encodeURIComponent(title)}`;
         newApiUrl += `&prevRoomId=${roomId}`;
@@ -562,7 +616,26 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         const newResponse = await post<any>(newApiUrl, {});
         const newChatroom = newResponse.data;
 
+        if (
+          newChatroom.status &&
+          newChatroom.status.toUpperCase() === "INACTIVE"
+        ) {
+          setConnecting(false);
+          setRoomStatus("INACTIVE");
+          setMessages([
+            {
+              userId: 0,
+              message: "채팅방 생성에 실패했습니다. 관리자에게 문의하세요.",
+              timestamp: new Date().toISOString(),
+              isSystem: true,
+            },
+          ]);
+          return false;
+        }
+
         setChatroomId(newChatroom.id);
+        // 최신 roomId 업데이트
+        latestRoomIdRef.current = newChatroom.id;
         setRoomStatus(newChatroom.status);
         setHasActiveChat(true);
 
@@ -582,11 +655,27 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         }));
         setMessages(formattedMessages);
 
-        connectWebSocket(newChatroom.id);
+        if (newChatroom.id !== roomId) {
+        } else {
+        }
       } else {
+        if (chatroom.status && chatroom.status.toUpperCase() === "INACTIVE") {
+          setConnecting(false);
+          setRoomStatus("INACTIVE");
+          setMessages([
+            {
+              userId: 0,
+              message: "채팅방 생성에 실패했습니다. 관리자에게 문의하세요.",
+              timestamp: new Date().toISOString(),
+              isSystem: true,
+            },
+          ]);
+          return false;
+        }
         setChatroomId(chatroom.id);
+        // 최신 roomId 업데이트
+        latestRoomIdRef.current = chatroom.id;
         setRoomStatus(chatroom.status);
-
         setHasActiveChat(true);
 
         const enhancedChatroom = {
@@ -604,7 +693,9 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
           isMyMessage: msg.userId === userId,
         }));
         setMessages(formattedMessages);
-        connectWebSocket(chatroom.id);
+        if (response && response.data && response.data.id === chatroom.id) {
+        } else {
+        }
       }
 
       showChatInterface();
@@ -612,6 +703,8 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
     } catch (error) {
       setConnecting(false);
       return false;
+    } finally {
+      isStartingChatRef.current = false;
     }
   };
 
@@ -689,6 +782,10 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
     setStompClient(null);
     setChatroomId(null);
     setRoomStatus(null);
+    // 웹소켓 관련 상태 초기화
+    connectedRoomIdRef.current = null;
+    isConnectingRef.current = false;
+    latestRoomIdRef.current = null;
     showCategorySelection();
   }, [stompClient, showCategorySelection]);
 
@@ -715,6 +812,13 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
   // 특정 채팅방으로 진입 (메시지 불러오기 및 상태 세팅)
   const enterChatroomById = useCallback(
     async (roomId: number) => {
+      // 중복 실행 방지
+      if (isEnteringRoomRef.current) {
+        return false;
+      }
+
+      isEnteringRoomRef.current = true;
+
       try {
         setConnecting(true);
         setMessagesLoaded(false);
@@ -729,6 +833,9 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         }
 
         setChatroomId(roomId);
+        // 최신 roomId 업데이트
+        latestRoomIdRef.current = roomId;
+
         setRoomStatus(chatroom.status as ChatroomStatusType);
 
         if (chatroom.categoryCode) {
@@ -769,7 +876,6 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         setMessagesLoaded(true);
 
         if (chatroom.status === "ACTIVE") {
-          connectWebSocket(roomId);
           setHasActiveChat(true);
           setActiveChat(chatroom);
         } else {
@@ -795,18 +901,81 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         }
 
         return false;
+      } finally {
+        isEnteringRoomRef.current = false;
       }
     },
-    [userId, connectWebSocket, showChatInterface]
+    [userId, showChatInterface]
   );
+
+  // 대신 자동 연결을 위한 useEffect 추가
+  useEffect(() => {
+    // 채팅 화면이 아니면 연결하지 않음
+    if (currentView !== "CHAT") {
+      return;
+    }
+
+    // 이미 연결 중이거나 연결된 경우 무시
+    if (isConnectingRef.current) {
+      return;
+    }
+
+    if (connected && connectedRoomIdRef.current === chatroomId) {
+      return;
+    }
+
+    // roomStatus와 chatroomId가 모두 유효할 때만 연결
+    if (
+      roomStatus === "ACTIVE" &&
+      chatroomId &&
+      latestRoomIdRef.current === chatroomId
+    ) {
+      // 현재 roomStatus를 파라미터로 직접 전달
+      connectWebSocket(chatroomId, roomStatus);
+    }
+
+    // roomStatus가 INACTIVE면 연결 해제
+    if (roomStatus === "INACTIVE" && stompClient) {
+      stompClient.deactivate();
+      setConnected(false);
+      connectedRoomIdRef.current = null;
+      isConnectingRef.current = false;
+    }
+  }, [
+    roomStatus,
+    chatroomId,
+    connectWebSocket,
+    stompClient,
+    connected,
+    currentView,
+  ]);
+
+  // 화면 전환 시 웹소켓 연결 제어
+  useEffect(() => {
+    // CHAT 화면이 아닌데 연결되어 있다면 해제
+    if (currentView !== "CHAT" && stompClient && stompClient.connected) {
+      stompClient.deactivate();
+      setConnected(false);
+      connectedRoomIdRef.current = null;
+      isConnectingRef.current = false;
+    }
+  }, [currentView, stompClient]);
+
+  // 웹소켓 연결 끊기 함수
+  const disconnectWebSocket = useCallback(() => {
+    if (stompClient && stompClient.connected) {
+      stompClient.deactivate();
+      setConnected(false);
+      connectedRoomIdRef.current = null;
+      isConnectingRef.current = false;
+    }
+  }, [stompClient]);
 
   // 채팅방 상태와 무관하게 실시간 메시지 업데이트를 위한 전역 WebSocket 연결
   useEffect(() => {
     if (!isLogin || !userId) {
       return;
     }
-
-    console.log("[ApartnerTalkContext] 전역 WebSocket 연결 시도");
 
     const socket = new SockJS(`/stomp/chats`);
     const client = new Client({
@@ -817,44 +986,26 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
     });
 
     client.onConnect = () => {
-      console.log("[ApartnerTalkContext] 전역 WebSocket 연결 성공");
-
       // 채팅방 업데이트만 구독 (모든 채팅방의 업데이트를 받기 위함)
       client.subscribe(`/sub/chats/updates`, (message) => {
         try {
           const chatroomUpdate = JSON.parse(message.body);
-          console.log(
-            "[ApartnerTalkContext] 전역 구독으로 채팅방 업데이트 수신:",
-            chatroomUpdate
-          );
 
           // 새 메시지가 있는 경우 알림 상태 업데이트
           if (chatroomUpdate.hasNewMessage) {
             setHasUnreadMessages(true);
             setUnreadCount((prev) => prev + 1);
-            console.log(
-              "[ApartnerTalkContext] 전역 구독으로 새 메시지 감지: hasUnreadMessages=true, unreadCount 증가"
-            );
 
             // 활성화된 채팅방 목록 갱신
             checkActiveChats();
           }
-        } catch (error) {
-          console.error(
-            "[ApartnerTalkContext] 전역 WebSocket 메시지 처리 오류:",
-            error
-          );
-        }
+        } catch (error) {}
       });
     };
 
-    client.onDisconnect = () => {
-      console.log("[ApartnerTalkContext] 전역 WebSocket 연결 해제");
-    };
+    client.onDisconnect = () => {};
 
-    client.onStompError = (frame) => {
-      console.error("[ApartnerTalkContext] 전역 WebSocket STOMP 에러:", frame);
-    };
+    client.onStompError = (frame) => {};
 
     client.activate();
     setGlobalStompClient(client);
@@ -862,11 +1013,10 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
     // 컴포넌트 언마운트 시 연결 해제
     return () => {
       if (client.connected) {
-        console.log("[ApartnerTalkContext] 전역 WebSocket 연결 정리");
         client.deactivate();
       }
     };
-  }, [isLogin, userId]); // 로그인 상태나 사용자 ID가 변경될 때만 재연결
+  }, [isLogin, userId, checkActiveChats]); // 로그인 상태나 사용자 ID가 변경될 때만 재연결
 
   return (
     <ApartnerTalkContext.Provider
@@ -911,6 +1061,8 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         markMessagesAsRead,
         // 메시지 로딩 상태
         messagesLoaded,
+        // WebSocket 연결 관리
+        disconnectWebSocket,
       }}
     >
       {children}
