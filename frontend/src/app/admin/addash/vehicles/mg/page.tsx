@@ -22,7 +22,7 @@ export default function AdminVehicleManagement() {
   const [slidingVehicleId, setSlidingVehicleId] = useState<number | null>(null);
   // 페이징 상태 추가
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   // 페이지네이션 데이터 처리 함수
   const getPaginatedData = (data: VehicleRegistrationInfoDto[] = []) => {
