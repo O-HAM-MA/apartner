@@ -79,8 +79,8 @@ public class CommunityController {
     public List<CommunityResponseDto> listBranch(@PathVariable(value = "id") Long id) {
         //User user = SecurityUtil.getCurrentUser();
         //boolean isAdmin = user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
-        boolean isAdmin = false;
+        //boolean isAdmin = false;
 
-        return communityService.listBranchPosts(false, id);
+        return communityService.listBranchPosts(id);
     }
 }
