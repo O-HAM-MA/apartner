@@ -995,146 +995,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/alarm/send": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 전체 알림 전송
-         * @description 모든 연결된 클라이언트에게 알림을 전송합니다.
-         */
-        post: operations["sendAlarm"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/{eventName}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 커스텀 이벤트 전송
-         * @description 커스텀 이벤트 이름으로 알림을 전송합니다.
-         */
-        post: operations["sendCustomEvent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/user/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 사용자 알림 전송
-         * @description 특정 사용자에게 알림을 전송합니다.
-         */
-        post: operations["sendToUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/user/{userId}/category/{category}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 카테고리별 알림 전송
-         * @description 특정 사용자에게 카테고리가 지정된 알림을 전송합니다.
-         */
-        post: operations["sendCategorizedAlarm"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/apartment/{apartmentId}/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 아파트 사용자 알림 전송
-         * @description 특정 아파트의 모든 사용자에게 알림을 전송합니다.
-         */
-        post: operations["sendToApartmentUsers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/send/apartment/{apartmentId}/admins": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 아파트 관리자 알림 전송
-         * @description 특정 아파트의 관리자에게 알림을 전송합니다.
-         */
-        post: operations["sendToApartmentAdmins"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/notifications/{userId}/read-all": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 모든 알림 읽음 처리
-         * @description 특정 사용자의 모든 알림을 읽음 상태로 변경합니다.
-         */
-        post: operations["markAllAsRead"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/alarm/notifications/{notificationId}/read": {
         parameters: {
             query?: never;
@@ -1149,6 +1009,26 @@ export interface paths {
          * @description 특정 알림을 읽음 상태로 변경합니다.
          */
         post: operations["markAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alarm/notifications/read_all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 모든 알림 읽음 처리
+         * @description 로그인 사용자의 모든 알림을 읽음 상태로 변경합니다.
+         */
+        post: operations["markAllAsRead"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2458,7 +2338,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/alarm/notifications/{userId}": {
+    "/api/v1/alarm/notifications": {
         parameters: {
             query?: never;
             header?: never;
@@ -2466,30 +2346,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * 사용자 알림 목록 조회
-         * @description 특정 사용자의 모든 알림 목록을 조회합니다(읽은 알림 포함).
+         * 내 알림 목록 조회
+         * @description 로그인 사용자의 모든 알림 목록을 조회합니다(읽은 알림 포함).
          */
         get: operations["getUserNotifications"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/notifications/{userId}/unread": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 사용자 읽지 않은 알림 목록 조회
-         * @description 특정 사용자의 읽지 않은 알림 목록을 조회합니다.
-         */
-        get: operations["getUnreadUserNotifications"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2558,6 +2418,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alarm/notifications/unread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 읽지 않은 알림 목록 조회
+         * @description 로그인 사용자의 읽지 않은 알림 목록을 조회합니다.
+         */
+        get: operations["getUnreadUserNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alarm/notifications/detail/{notificationId}": {
         parameters: {
             query?: never;
@@ -2590,26 +2470,6 @@ export interface paths {
          * @description 특정 아파트의 모든 알림을 조회합니다.
          */
         get: operations["getApartmentNotifications"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alarm/connected-clients": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 연결된 클라이언트 수 조회
-         * @description 현재 연결된 클라이언트 수를 조회합니다.
-         */
-        get: operations["getConnectedClients"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3279,7 +3139,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/alarm/notifications/{userId}/read": {
+    "/api/v1/alarm/notifications/read": {
         parameters: {
             query?: never;
             header?: never;
@@ -3291,7 +3151,7 @@ export interface paths {
         post?: never;
         /**
          * 읽은 알림 삭제
-         * @description 특정 사용자의 읽은 알림을 삭제합니다.
+         * @description 로그인 사용자의 읽은 알림을 삭제합니다.
          */
         delete: operations["deleteReadNotifications"];
         options?: never;
@@ -4185,23 +4045,6 @@ export interface components {
              */
             available?: boolean;
         };
-        AlarmRequest: {
-            type?: string;
-            title?: string;
-            message?: string;
-            linkUrl?: string;
-            /** Format: int64 */
-            entityId?: number;
-            /** Format: int64 */
-            senderId?: number;
-            category?: string;
-            extraData?: {
-                [key: string]: Record<string, never>;
-            };
-            data?: {
-                [key: string]: Record<string, never>;
-            };
-        };
         /** @description 관리자 등록 요청 DTO */
         AdminRegistrationRequest: {
             /**
@@ -4881,17 +4724,10 @@ export interface components {
             messageId?: number;
             clientId?: string;
         };
-        Pageable: {
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
-            sort?: string[];
-        };
-        ApiResponsePageNotification: {
+        ApiResponseListNotification: {
             success?: boolean;
             message?: string;
-            data?: components["schemas"]["PageNotification"];
+            data?: components["schemas"]["Notification"][];
         };
         Notification: {
             /** Format: int64 */
@@ -4909,6 +4745,7 @@ export interface components {
             title?: string;
             message?: string;
             type?: string;
+            businessType?: string;
             /**
              * @description 상태
              * @enum {string}
@@ -4930,11 +4767,23 @@ export interface components {
             /** Format: date-time */
             expiredAt?: string;
         };
-        PageNotification: {
+        Pageable: {
             /** Format: int32 */
-            totalPages?: number;
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            sort?: string[];
+        };
+        ApiResponsePageNotification: {
+            success?: boolean;
+            message?: string;
+            data?: components["schemas"]["PageNotification"];
+        };
+        PageNotification: {
             /** Format: int64 */
             totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4943,26 +4792,15 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
-        };
-        ApiResponseListNotification: {
-            success?: boolean;
-            message?: string;
-            data?: components["schemas"]["Notification"][];
         };
         ApiResponseNotification: {
             success?: boolean;
             message?: string;
             data?: components["schemas"]["Notification"];
-        };
-        ApiResponseInteger: {
-            success?: boolean;
-            message?: string;
-            /** Format: int32 */
-            data?: number;
         };
         AdminUserListResponse: {
             /** Format: int64 */
@@ -5567,6 +5405,12 @@ export interface components {
              * @example '기타'선택시 입력
              */
             cancelReason?: string;
+        };
+        ApiResponseInteger: {
+            success?: boolean;
+            message?: string;
+            /** Format: int32 */
+            data?: number;
         };
     };
     responses: never;
@@ -7565,167 +7409,12 @@ export interface operations {
             };
         };
     };
-    sendAlarm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendCustomEvent: {
+    markAsRead: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                eventName: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendToUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendCategorizedAlarm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: number;
-                category: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendToApartmentUsers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                apartmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    sendToApartmentAdmins: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                apartmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AlarmRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-        };
-    };
-    markAllAsRead: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: number;
+                notificationId: number;
             };
             cookie?: never;
         };
@@ -7742,13 +7431,11 @@ export interface operations {
             };
         };
     };
-    markAsRead: {
+    markAllAsRead: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                notificationId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9641,36 +9328,9 @@ export interface operations {
     };
     getUserNotifications: {
         parameters: {
-            query: {
-                status?: "active" | "inactive" | "pending" | "withdrawn";
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                userId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePageNotification"];
-                };
-            };
-        };
-    };
-    getUnreadUserNotifications: {
-        parameters: {
             query?: never;
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -9756,6 +9416,26 @@ export interface operations {
             };
         };
     };
+    getUnreadUserNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListNotification"];
+                };
+            };
+        };
+    };
     getNotificationDetail: {
         parameters: {
             query?: never;
@@ -9780,9 +9460,8 @@ export interface operations {
     };
     getApartmentNotifications: {
         parameters: {
-            query: {
+            query?: {
                 status?: "active" | "inactive" | "pending" | "withdrawn";
-                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path: {
@@ -9798,27 +9477,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponsePageNotification"];
-                };
-            };
-        };
-    };
-    getConnectedClients: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseInteger"];
+                    "*/*": components["schemas"]["ApiResponseListNotification"];
                 };
             };
         };
@@ -10680,9 +10339,7 @@ export interface operations {
                 days?: number;
             };
             header?: never;
-            path: {
-                userId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

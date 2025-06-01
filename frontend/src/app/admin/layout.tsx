@@ -1,17 +1,18 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
-import AdminSidebar from "@/components/admin-sidebar";
-import { usePathname, useRouter } from "next/navigation";
-import { AdminMemberContext, useAdminMember } from "@/auth/adminMember";
-import { checkAdminAuth } from "@/utils/api";
-import { NotificationProvider } from "@/contexts/notification-context";
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import AdminSidebar from '@/components/admin-sidebar';
+import { usePathname, useRouter } from 'next/navigation';
+import { AdminMemberContext, useAdminMember } from '@/auth/adminMember';
+import { checkAdminAuth } from '@/utils/api';
+import { NotificationProvider } from '@/contexts/notification-context';
+import Footer from '@/components/footer';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isLoginPage = pathname === "/admin";
+  const isLoginPage = pathname === '/admin';
   const [serverError, setServerError] = useState(false);
   const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
   const [checkInProgress, setCheckInProgress] = useState(false);
@@ -39,14 +40,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
       try {
         console.log(
-          "[AdminLayout] 관리자 인증 확인 시작:",
+          '[AdminLayout] 관리자 인증 확인 시작:',
           new Date().toISOString(),
-          "현재 로그인 상태:",
+          '현재 로그인 상태:',
           isAdminLogin
         );
         const data = await checkAdminAuth();
         console.log(
-          "[AdminLayout] 관리자 인증 확인 성공:",
+          '[AdminLayout] 관리자 인증 확인 성공:',
           new Date().toISOString()
         );
 
@@ -56,21 +57,21 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         // 로그인 페이지에 있고 인증이 성공했으면 대시보드로 리디렉션
         if (isLoginPage && data.id !== 0) {
           console.log(
-            "[AdminLayout] 로그인 페이지에서 인증 성공, 대시보드로 이동"
+            '[AdminLayout] 로그인 페이지에서 인증 성공, 대시보드로 이동'
           );
-          window.location.href = "/admin/addash";
+          window.location.href = '/admin/addash';
         }
 
         // 인증 확인 완료 상태로 설정
         setInitialAuthCheckDone(true);
       } catch (error) {
-        console.error("[AdminLayout] 관리자 인증 확인 실패:", error);
+        console.error('[AdminLayout] 관리자 인증 확인 실패:', error);
 
         // 로그인 페이지가 아닌 경우에만 리다이렉트
         if (!isLoginPage) {
           setNoAdminMember();
-          console.log("[AdminLayout] 인증 실패, 로그인 페이지로 이동");
-          window.location.href = "/admin";
+          console.log('[AdminLayout] 인증 실패, 로그인 페이지로 이동');
+          window.location.href = '/admin';
         }
 
         // 인증 확인 완료 상태로 설정 (실패했더라도 확인은 수행됨)
@@ -110,11 +111,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       }}
     >
       <NotificationProvider>
-        <div className="min-h-screen flex">
+        <div className="flex min-h-screen">
           <AdminSidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <main className="flex-1 overflow-y-auto p-4 pb-6">{children}</main>
+          <div className="flex-1">
+            <main className="p-8 pb-32">{children}</main>
           </div>
+          <Footer />
         </div>
       </NotificationProvider>
     </AdminMemberContext.Provider>

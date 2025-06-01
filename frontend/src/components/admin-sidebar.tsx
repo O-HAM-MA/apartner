@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -15,15 +15,15 @@ import {
   Menu,
   X,
   FileText,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useGlobalAdminMember } from "@/auth/adminMember";
-import { get } from "@/utils/api";
-import { toast } from "@/components/ui/use-toast";
-import NotificationBell from "@/components/notification-bell";
-import NotificationStatus from "@/components/notification-status";
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useGlobalAdminMember } from '@/auth/adminMember';
+import { get } from '@/utils/api';
+import { toast } from '@/components/ui/use-toast';
+import NotificationBell from '@/components/notification-bell';
+import NotificationStatus from '@/components/notification-status';
 
 // API 응답 타입 정의
 interface ApiResponse<T> {
@@ -67,8 +67,8 @@ export default function AdminSidebar() {
   // 기본 메뉴 (API 호출 실패 시 사용)
   const defaultMenuItems = [
     {
-      title: "Dashboard",
-      href: "/admin/addash",
+      title: 'Dashboard',
+      href: '/admin/addash',
       icon: LayoutDashboard,
     },
   ];
@@ -76,13 +76,13 @@ export default function AdminSidebar() {
   // ADMIN 권한 사용자를 위한 기본 메뉴 (시스템에 메뉴가 없을 경우)
   const adminFallbackMenuItems = [
     {
-      title: "Dashboard",
-      href: "/admin/addash",
+      title: 'Dashboard',
+      href: '/admin/addash',
       icon: LayoutDashboard,
     },
     {
-      title: "메뉴 관리",
-      href: "/admin/grades",
+      title: '메뉴 관리',
+      href: '/admin/grades',
       icon: Settings,
     },
   ];
@@ -95,15 +95,15 @@ export default function AdminSidebar() {
         setApiError(null);
         setNoMenusRegistered(false);
 
-        console.log("[메뉴 로드] 메뉴 API 호출 시작 - 사용자:", adminMember);
-        console.log("[메뉴 로드] ADMIN 여부:", adminMember.isAdmin);
+        console.log('[메뉴 로드] 메뉴 API 호출 시작 - 사용자:', adminMember);
+        console.log('[메뉴 로드] ADMIN 여부:', adminMember.isAdmin);
 
         // 사용자 등급에 따른 메뉴 API 호출
         const response = await get<ApiResponse<AdminMenu[]>>(
-          "/api/v1/admin/menu/me/menus"
+          '/api/v1/admin/menu/me/menus'
         );
 
-        console.log("[메뉴 로드] API 응답:", JSON.stringify(response));
+        console.log('[메뉴 로드] API 응답:', JSON.stringify(response));
 
         if (response.success) {
           // 메뉴가 있는 경우 (ADMIN이든 MANAGER든)
@@ -118,7 +118,7 @@ export default function AdminSidebar() {
           // ADMIN인데 반환된 메뉴가 없는 경우 (아직 메뉴가 등록되지 않음)
           else if (adminMember && adminMember.isAdmin) {
             console.log(
-              "[메뉴 로드] ADMIN 권한이지만 등록된 메뉴가 없습니다. 기본 ADMIN 메뉴 사용"
+              '[메뉴 로드] ADMIN 권한이지만 등록된 메뉴가 없습니다. 기본 ADMIN 메뉴 사용'
             );
             setNoMenusRegistered(true);
             setUseDefaultMenus(true);
@@ -126,34 +126,34 @@ export default function AdminSidebar() {
           // MANAGER인데 권한 있는 메뉴가 없는 경우
           else {
             console.log(
-              "[메뉴 로드] MANAGER 권한이며 접근 가능한 메뉴가 없습니다."
+              '[메뉴 로드] MANAGER 권한이며 접근 가능한 메뉴가 없습니다.'
             );
             setAuthorizedMenus([]);
             setUseDefaultMenus(false);
           }
         } else {
           console.error(
-            "[메뉴 로드 오류] 메뉴 정보를 불러오는데 실패했습니다:",
+            '[메뉴 로드 오류] 메뉴 정보를 불러오는데 실패했습니다:',
             response.message
           );
-          setApiError(response.message || "API 응답이 유효하지 않습니다");
+          setApiError(response.message || 'API 응답이 유효하지 않습니다');
           setUseDefaultMenus(true);
         }
       } catch (error) {
-        console.error("[메뉴 로드 오류] 메뉴 권한 로드 중 오류 발생:", error);
+        console.error('[메뉴 로드 오류] 메뉴 권한 로드 중 오류 발생:', error);
         setApiError(
-          error instanceof Error ? error.message : "알 수 없는 오류 발생"
+          error instanceof Error ? error.message : '알 수 없는 오류 발생'
         );
         setUseDefaultMenus(true);
         // 개발 환경에서는 오류 토스트 표시
-        if (process.env.NODE_ENV === "development") {
+        if (process.env.NODE_ENV === 'development') {
           toast({
-            title: "메뉴 로드 오류",
+            title: '메뉴 로드 오류',
             description:
               error instanceof Error
                 ? error.message
-                : "메뉴 권한을 불러오는데 실패했습니다.",
-            variant: "destructive",
+                : '메뉴 권한을 불러오는데 실패했습니다.',
+            variant: 'destructive',
           });
         }
       } finally {
@@ -164,12 +164,12 @@ export default function AdminSidebar() {
     // 로그인 된 상태인 경우에만 메뉴 가져오기
     if (adminMember?.id) {
       console.log(
-        "[메뉴 로드] 로그인 상태 확인됨, 메뉴 가져오기 시도",
+        '[메뉴 로드] 로그인 상태 확인됨, 메뉴 가져오기 시도',
         adminMember
       );
       fetchUserMenus();
     } else {
-      console.log("[메뉴 로드] 로그인되지 않음, 기본 메뉴 사용");
+      console.log('[메뉴 로드] 로그인되지 않음, 기본 메뉴 사용');
       setLoading(false);
       setUseDefaultMenus(true);
     }
@@ -210,11 +210,11 @@ export default function AdminSidebar() {
   })();
 
   console.log(
-    "[메뉴 렌더링] 메뉴 항목:",
+    '[메뉴 렌더링] 메뉴 항목:',
     navItems,
-    "기본메뉴사용:",
+    '기본메뉴사용:',
     useDefaultMenus,
-    "ADMIN여부:",
+    'ADMIN여부:',
     adminMember.isAdmin
   );
 
@@ -241,8 +241,8 @@ export default function AdminSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed lg:static inset-0 z-30 lg:z-0 lg:backdrop-blur-none lg:bg-transparent transform transition-transform duration-200 lg:translate-x-0",
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          'fixed lg:static inset-0 z-30 lg:z-0 lg:backdrop-blur-none lg:bg-transparent transform transition-transform duration-200 lg:translate-x-0',
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="h-full w-64 border-r bg-background flex flex-col">
@@ -310,10 +310,10 @@ export default function AdminSidebar() {
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted",
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted',
                         isActive
-                          ? "bg-muted font-medium text-foreground"
-                          : "text-muted-foreground"
+                          ? 'bg-muted font-medium text-foreground'
+                          : 'text-muted-foreground'
                       )}
                     >
                       <item.icon className="h-4 w-4" />
@@ -324,15 +324,15 @@ export default function AdminSidebar() {
 
                 {/* ADMIN이라면 메뉴 관리 추가 (어떤 경우든) */}
                 {adminMember.isAdmin &&
-                  !navItems.some((item) => item.href === "/admin/grades") && (
+                  !navItems.some((item) => item.href === '/admin/grades') && (
                     <Link
                       href="/admin/grades"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted",
-                        pathname === "/admin/grades"
-                          ? "bg-muted font-medium text-foreground"
-                          : "text-muted-foreground"
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-muted',
+                        pathname === '/admin/grades'
+                          ? 'bg-muted font-medium text-foreground'
+                          : 'text-muted-foreground'
                       )}
                     >
                       <Settings className="h-4 w-4" />
@@ -342,7 +342,7 @@ export default function AdminSidebar() {
               </nav>
             )}
           </div>
-          <div className="mt-auto p-4 border-t">
+          <div className="p-4 border-t mb-20">
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="h-9 w-9">
                 <AvatarImage
@@ -350,15 +350,15 @@ export default function AdminSidebar() {
                   alt="Admin"
                 />
                 <AvatarFallback>
-                  {adminMember.userName?.charAt(0) || "A"}
+                  {adminMember.userName?.charAt(0) || 'A'}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <div className="font-medium">
-                  {adminMember.userName || "관리자"}
+                  {adminMember.userName || '관리자'}
                 </div>
                 <div className="text-xs text-muted-foreground truncate max-w-28">
-                  {adminMember.email || "admin@apartner.site"}
+                  {adminMember.email || 'admin@apartner.site'}
                 </div>
                 {adminMember.isAdmin && (
                   <div className="text-xs text-green-600">ADMIN 권한</div>
