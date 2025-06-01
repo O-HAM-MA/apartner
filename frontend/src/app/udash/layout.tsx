@@ -1,11 +1,12 @@
-"use client";
-import Sidebar from "@/components/sidebar";
-import type React from "react";
-import ChatFloatingButton from "@/components/ChatFloatingButton";
-import { ApartnerTalkProvider } from "@/contexts/ApartnerTalkContext";
-import { NotificationProvider } from "@/contexts/notification-context";
-import { useGlobalLoginMember } from "@/auth/loginMember";
-import { useGlobalAdminMember } from "@/auth/adminMember";
+'use client';
+import Sidebar from '@/components/sidebar';
+import type React from 'react';
+import ChatFloatingButton from '@/components/ChatFloatingButton';
+import { ApartnerTalkProvider } from '@/contexts/ApartnerTalkContext';
+import { NotificationProvider } from '@/contexts/notification-context';
+import { useGlobalLoginMember } from '@/auth/loginMember';
+import { useGlobalAdminMember } from '@/auth/adminMember';
+import Footer from '@/components/footer';
 
 export default function UdashLayout({
   children,
@@ -30,11 +31,16 @@ export default function UdashLayout({
   return (
     <ApartnerTalkProvider>
       <NotificationProvider>
-        <div className="flex h-screen bg-gray-100">
-          <Sidebar />
-          <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-          <ChatFloatingButton />
+        <div className="flex min-h-screen flex-col">
+          <div className="flex flex-1">
+            <Sidebar />
+            <div className="flex-1">
+              <main className="p-8">{children}</main>
+            </div>
+          </div>
+          <Footer />
         </div>
+        <ChatFloatingButton />
       </NotificationProvider>
     </ApartnerTalkProvider>
   );

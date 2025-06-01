@@ -1,5 +1,5 @@
 "use client"; // 클라이언트 컴포넌트
-
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useGlobalLoginMember } from "@/auth/loginMember"; // Import hook
@@ -10,7 +10,7 @@ const Header: React.FC = () => {
   const { isLogin, logoutAndHome, loginMember } = useGlobalLoginMember(); // 로그인 상태 및 로그아웃 함수 사용
   const [mounted, setMounted] = useState(false); // mounted 상태 추가
   const { theme, setTheme } = useTheme(); // useTheme 사용
-
+  const router = useRouter();
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -99,6 +99,12 @@ const Header: React.FC = () => {
             </>
           ) : (
             <>
+              <button
+                onClick={() => router.push("/foreignsVehicles")}
+                className="px-2 py-0.5 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded"
+              >
+                외부 차량 등록
+              </button>
               <Link
                 href="/login"
                 className="text-gray-600 hover:text-pink-500 dark:text-gray-300 dark:hover:text-pink-400"

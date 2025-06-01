@@ -1860,7 +1860,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/issue/show/{id}": {
+    "/api/v1/inspection/issue/show/{Id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -4395,12 +4395,12 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
             unpaged?: boolean;
-            /** Format: int32 */
-            pageNumber?: number;
-            paged?: boolean;
         };
         SortObject: {
             empty?: boolean;
@@ -6172,9 +6172,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                buildingId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -7465,7 +7463,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                notificationId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8764,7 +8764,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                Id: number;
             };
             cookie?: never;
         };
@@ -9426,7 +9426,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+                type: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9445,10 +9448,12 @@ export interface operations {
     getPagedUserNotifications: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9468,7 +9473,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+                category: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9508,7 +9516,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                notificationId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9527,10 +9537,12 @@ export interface operations {
     getApartmentNotifications: {
         parameters: {
             query?: {
-                arg1?: "active" | "inactive" | "pending" | "withdrawn";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
             };
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -10139,9 +10151,7 @@ export interface operations {
                 arg1: components["schemas"]["Pageable"];
             };
             header?: never;
-            path: {
-                apartmentId: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10392,7 +10402,7 @@ export interface operations {
     deleteReadNotifications: {
         parameters: {
             query?: {
-                arg0?: number;
+                days?: number;
             };
             header?: never;
             path?: never;

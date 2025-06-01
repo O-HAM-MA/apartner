@@ -1,22 +1,23 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MobileMenuProps {
-  onClose: () => void
+  onClose: () => void;
 }
 
 export default function MobileMenu({ onClose }: MobileMenuProps) {
   const menuItems = [
     { name: "홈", href: "/" },
-    { name: "서비스", href: "#services" },
-    { name: "공지사항", href: "#notices" },
-    { name: "민원접수", href: "#complaints" },
-    { name: "커뮤니티", href: "#community" },
-  ]
+    { name: "공지사항", href: "/udash/notices" },
+    { name: "민원접수", href: "/udash/complaints" },
+    { name: "공용시설", href: "/udash/facilities" },
+    { name: "차량관리", href: "/udash/vehicles" },
+    { name: "시설점검", href: "/udash/inspections" },
+  ];
 
   return (
     <motion.div
@@ -29,7 +30,9 @@ export default function MobileMenu({ onClose }: MobileMenuProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-full bg-pink-200 dark:bg-pink-800"></div>
-            <span className="text-xl font-bold dark:text-white">아파트 관리</span>
+            <span className="text-xl font-bold dark:text-white">
+              아파트 관리
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -62,12 +65,16 @@ export default function MobileMenu({ onClose }: MobileMenuProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: menuItems.length * 0.1 }}
           >
-            <Button size="lg" onClick={onClose} className="bg-black text-white dark:bg-white dark:text-black">
+            <Button
+              size="lg"
+              onClick={onClose}
+              className="bg-black text-white dark:bg-white dark:text-black"
+            >
               대시보드 가기
             </Button>
           </motion.div>
         </motion.nav>
       </div>
     </motion.div>
-  )
+  );
 }
