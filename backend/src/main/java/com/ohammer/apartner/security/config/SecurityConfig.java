@@ -68,7 +68,11 @@ public class SecurityConfig {
                                 "/stomp/**",
                                 "/stomp/chats/**",
                                 "/sub/**",
-                                "/pub/**"
+                                "/pub/**",
+
+
+                                // SSE 엔드포인트 추가
+                                "/sse/connect"
 
                         ).permitAll()
                         // 채팅 API는 제거 (adminSecurityFilterChain에서 처리)
@@ -153,7 +157,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         //해당 사이트와 매핑? 매치? 한다
-        config.setAllowedOrigins(List.of("http://localhost:3000", "https://www.apartner.site"));
+        config.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://www.apartner.site"));
         config.addAllowedHeader("*");
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 

@@ -10,6 +10,7 @@ import com.ohammer.apartner.domain.complaint.repository.ComplaintRepository;
 import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.Status;
+import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
+    private final AlarmService alarmService;
 
 
     // Read
@@ -158,6 +160,21 @@ public class ComplaintService {
         log.info("user Id : {}", user.getId());
 
         complaintRepository.save(complaint);
+        
+        // 관리자에게 새 민원 알림 전송
+        if (user.getApartment() != null) {
+            alarmService.notifyApartmentAdmins(
+                user.getApartment().getId(),
+                "새 민원 등록",
+                "info",
+                "COMPLAINT",
+                user.getUserName() + "님이 새 민원을 등록했습니다: " + complaint.getTitle(),
+                "/admin/complaints",
+                user.getId(),
+                complaint.getId(),
+                null
+            );
+        }
 
         return CreateComplaintResponseDto.builder()
                 .id(complaint.getId())
@@ -189,6 +206,21 @@ public class ComplaintService {
         complaint.setCategory(requestDto.getCategory());
 
         complaintRepository.save(complaint);
+        
+        // 관리자에게 민원 수정 알림 전송
+        if (user.getApartment() != null) {
+            alarmService.notifyApartmentAdmins(
+                user.getApartment().getId(),
+                "민원 수정",
+                "info",
+                "COMPLAINT",
+                user.getUserName() + "님이 민원을 수정했습니다: " + complaint.getTitle(),
+                "/admin/complaints",
+                user.getId(),
+                complaint.getId(),
+                null
+            );
+        }
 
         return CreateComplaintResponseDto.builder()
                 .id(complaint.getId())
@@ -221,9 +253,27 @@ public class ComplaintService {
             throw new AccessDeniedException("민원 상태를 변경할 권한이 없습니다.");
         }
 
-        complaint.setComplaintStatus(mapStatus(status));
+        Complaint.ComplaintStatus newStatus = mapStatus(status);
+        complaint.setComplaintStatus(newStatus);
 
         complaintRepository.save(complaint);
+        
+        // 민원 작성자에게 상태 변경 알림 전송
+        String statusMessage = getStatusMessage(newStatus);
+        String type = switch (newStatus) {
+            case COMPLETED -> "success";
+            case REJECTED -> "warning";
+            default -> "info";
+        };
+        alarmService.notifyUser(
+            complaint.getUser().getId(),
+            "민원 상태 변경",
+            type,
+            "COMPLAINT",
+            "민원 '" + complaint.getTitle() + "'의 상태가 " + statusMessage + "로 변경되었습니다.",
+            "/udash/complaints",
+            complaint.getId()
+        );
 
         return UpdateComplaintStatusResponseDto.builder()
                 .id(complaint.getId())
@@ -253,6 +303,17 @@ public class ComplaintService {
 
         complaint.setStatus(Status.INACTIVE);
         complaintRepository.save(complaint);
+        
+        // 민원 작성자에게 비활성화 알림 전송
+        alarmService.notifyUser(
+            complaint.getUser().getId(),
+            "민원 비활성화",
+            "error",
+            "COMPLAINT",
+            "민원 '" + complaint.getTitle() + "'이 비활성화 되었습니다.",
+            "/udash/complaints",
+            complaint.getId()
+        );
 
         return UpdateStateResponseDto.builder()
                 .id(complaint.getId())
@@ -276,10 +337,28 @@ public class ComplaintService {
         if(complaint.isEmpty()) {
             throw new RuntimeException("Complaint not found with id: " + complaintId);
         }
+        
+        Complaint complaint2 = complaint.get();
 
         // 작성자와 id 비교 예외 처리 or 관리자라면 삭제 가능하게
-        if(!complaint.get().getUser().getId().equals(user.getId())) {
+        if(!complaint2.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("User is not authorized to delete this complaint");
+        }
+        
+        // 민원 삭제 전 알림 발송 (작성자와 관리자에게)
+        if (user.getApartment() != null) {
+            // 관리자에게 알림
+            alarmService.notifyApartmentAdmins(
+                user.getApartment().getId(),
+                "민원 삭제",
+                "info",
+                "COMPLAINT",
+                user.getUserName() + "님이 민원을 삭제했습니다: " + complaint2.getTitle(),
+                "/admin/complaints",
+                user.getId(),
+                complaint2.getId(),
+                null
+            );
         }
 
         complaintRepository.deleteById(complaintId);
@@ -294,6 +373,16 @@ public class ComplaintService {
             case 3 -> Complaint.ComplaintStatus.COMPLETED;
             case 4 -> Complaint.ComplaintStatus.REJECTED;
             default -> null;
+        };
+    }
+    
+    // 상태 메시지 반환 메서드
+    private String getStatusMessage(Complaint.ComplaintStatus status) {
+        return switch (status) {
+            case PENDING -> "대기중";
+            case IN_PROGRESS -> "처리중";
+            case COMPLETED -> "완료";
+            case REJECTED -> "반려";
         };
     }
 }
