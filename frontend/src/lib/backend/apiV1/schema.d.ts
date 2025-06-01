@@ -453,6 +453,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notices/media/images/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 이미지 등록
+         * @description 공지사항 에디터에 사용될 이미지를 업로드합니다.
+         */
+        post: operations["uploadImages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/media/files/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 공지사항 게시글 파일 등록
+         * @description 공지사항에 첨부할 파일을 업로드합니다.
+         */
+        post: operations["uploadFiles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/myInfos/update-profile-image": {
         parameters: {
             query?: never;
@@ -811,6 +851,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/chats/{chatroomId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markMessagesAsReadUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/verify-code": {
         parameters: {
             query?: never;
@@ -953,46 +1009,6 @@ export interface paths {
          * @description 새로운 관리자 계정을 등록합니다. (이메일, 사용자 이름, 비밀번호 필요)
          */
         post: operations["adminRegister"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notices/media/images/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 이미지 등록
-         * @description 공지사항 에디터에 사용될 이미지를 업로드합니다.
-         */
-        post: operations["uploadImages"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notices/media/files/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 공지사항 게시글 파일 등록
-         * @description 공지사항에 첨부할 파일을 업로드합니다.
-         */
-        post: operations["uploadFiles"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1638,6 +1654,54 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/media/images/{noticeImageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 이미지 정보 조회
+         * @description 게시글에 첨부된 이미지를 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getImageInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 이미지 삭제
+         * @description 사용자가 업로드한 임시 이미지를 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notices/media/files/{noticeFileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 공지사항 게시글 파일 정보 조회
+         * @description 게시글에 첨부된 파일을 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
+         */
+        get: operations["getFileInfo"];
+        put?: never;
+        post?: never;
+        /**
+         * 임시 파일 삭제
+         * @description 사용자가 업로드한 임시 파일을 삭제합니다. S3와 DB 모두에서 제거
+         */
+        delete: operations["deleteFile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2308,54 +2372,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/notices/media/images/{noticeImageId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 이미지 정보 조회
-         * @description 게시글에 첨부된 이미지를 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
-         */
-        get: operations["getImageInfo"];
-        put?: never;
-        post?: never;
-        /**
-         * 임시 이미지 삭제
-         * @description 사용자가 업로드한 임시 이미지를 삭제합니다. S3와 DB 모두에서 제거
-         */
-        delete: operations["deleteImage"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/notices/media/files/{noticeFileId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 공지사항 게시글 파일 정보 조회
-         * @description 게시글에 첨부된 파일을 ID로 조회합니다. S3 접근 URL, 원본 파일명, 임시 여부 등을 반환합니다.
-         */
-        get: operations["getFileInfo"];
-        put?: never;
-        post?: never;
-        /**
-         * 임시 파일 삭제
-         * @description 사용자가 업로드한 임시 파일을 삭제합니다. S3와 DB 모두에서 제거
-         */
-        delete: operations["deleteFile"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/menu/menus/list": {
         parameters: {
             query?: never;
@@ -3002,8 +3018,8 @@ export interface components {
             id?: number;
             username?: string;
         };
-        /** @description 공지사항 게시글 수정 요청 DTO */
-        NoticeUpdateRequestDto: {
+        /** @description 공지사항 게시글 등록/수정 요청 DTO */
+        NoticeRequestDto: {
             /**
              * @description 게시글 제목
              * @example 엘레베이터 정기점검 안내
@@ -3014,6 +3030,12 @@ export interface components {
              * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
              */
             content?: string;
+            /**
+             * Format: int64
+             * @description 게시글 대상: 전체/동별 선택 - buildingId
+             * @example 101동 / null일 경우 전체 공지
+             */
+            buildingId?: number;
             /**
              * @description tiptap에 삽입된 이미지 ID들
              * @example []
@@ -3331,6 +3353,25 @@ export interface components {
         CreateManagerOpinionRequestDto: {
             title?: string;
             content?: string;
+        };
+        /** @description 공지사항 게시글 첨부파일 업로드 응답 DTO */
+        MediaUploadResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
         };
         /** @description 비밀번호 재설정 요청 DTO */
         ResetPasswordRequest: {
@@ -3788,54 +3829,6 @@ export interface components {
              */
             email?: string;
         };
-        /** @description 공지사항 게시글 첨부파일 업로드 응답 DTO */
-        MediaUploadResponseDto: {
-            /**
-             * Format: int64
-             * @description 첨부파일/이미지 ID
-             * @example 23
-             */
-            id?: number;
-            /**
-             * @description S3 업로드 URL 또는 접근 URL
-             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
-             */
-            url?: string;
-            /**
-             * @description 원본 파일명
-             * @example 사진1.png
-             */
-            originalName?: string;
-        };
-        /** @description 공지사항 게시글 등록 요청 DTO */
-        NoticeCreateRequestDto: {
-            /**
-             * @description 게시글 제목
-             * @example 엘레베이터 정기점검 안내
-             */
-            title?: string;
-            /**
-             * @description 게시글 내용
-             * @example 점검일시: 2025년 5월 15일 14시 ~ 16시
-             */
-            content?: string;
-            /**
-             * Format: int64
-             * @description 게시글 대상: 전체/동별 선택 - buildingId
-             * @example 101동 / null일 경우 전체 공지
-             */
-            buildingId?: number;
-            /**
-             * @description tiptap에 삽입된 이미지 ID들
-             * @example []
-             */
-            imageIds?: number[];
-            /**
-             * @description tiptap에 삽입된 첨부파일 ID들
-             * @example []
-             */
-            fileIds?: number[];
-        };
         /** @description 관리자 로그인 요청 DTO */
         AdminLoginRequest: {
             /**
@@ -4095,36 +4088,36 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["UserNoticeSummaryResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
             sorted?: boolean;
             unsorted?: boolean;
         };
-        /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
+        /** @description 사용자 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
             /**
              * Format: int64
@@ -4154,6 +4147,46 @@ export interface components {
              * @example 0
              */
             viewCount?: number;
+            /**
+             * @description 이미지 첨부 여부
+             * @example false
+             */
+            hasImage?: boolean;
+            /**
+             * @description 파일 첨부 여부
+             * @example false
+             */
+            hasFile?: boolean;
+        };
+        /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
+        MediaInfoResponseDto: {
+            /**
+             * Format: int64
+             * @description 첨부파일/이미지 ID
+             * @example 23
+             */
+            id?: number;
+            /**
+             * @description S3 업로드 URL 또는 접근 URL
+             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
+             */
+            url?: string;
+            /**
+             * @description 원본 파일명
+             * @example 사진1.png
+             */
+            originalName?: string;
+            /**
+             * @description 임시 파일 여부
+             * @example false
+             */
+            isTemp?: boolean;
+            /**
+             * Format: date-time
+             * @description 임시 파일 만료일시
+             * @example 2025-05-23T09:00:00
+             */
+            expiresAt?: string;
         };
         /** @description 사용자 정보 응답 DTO */
         MyInfoResponseDto: {
@@ -4499,17 +4532,17 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminUserListResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminUserDetailResponse: {
@@ -4565,17 +4598,17 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: Record<string, never>[];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -4614,54 +4647,34 @@ export interface components {
              * @example 0
              */
             viewCount?: number;
+            /**
+             * @description 이미지 첨부 여부
+             * @example false
+             */
+            hasImage?: boolean;
+            /**
+             * @description 파일 첨부 여부
+             * @example false
+             */
+            hasFile?: boolean;
         };
         PageNoticeSummaryResponseDto: {
             /** Format: int32 */
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["NoticeSummaryResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
-        };
-        /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
-        MediaInfoResponseDto: {
-            /**
-             * Format: int64
-             * @description 첨부파일/이미지 ID
-             * @example 23
-             */
-            id?: number;
-            /**
-             * @description S3 업로드 URL 또는 접근 URL
-             * @example https://bucket.s3.ap-northeast-2.amazonaws.com/notice/1/images/abcd.png
-             */
-            url?: string;
-            /**
-             * @description 원본 파일명
-             * @example 사진1.png
-             */
-            originalName?: string;
-            /**
-             * @description 임시 파일 여부
-             * @example false
-             */
-            isTemp?: boolean;
-            /**
-             * Format: date-time
-             * @description 임시 파일 만료일시
-             * @example 2025-05-23T09:00:00
-             */
-            expiresAt?: string;
         };
         ApiResponsePageMenuDTO: {
             success?: boolean;
@@ -4673,17 +4686,17 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["MenuDTO"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ApiResponseListMenuDTO: {
@@ -4982,17 +4995,17 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: Record<string, never>[];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageBuildingResponseDto: {
@@ -5000,17 +5013,17 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["BuildingResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageUnitResponseDto: {
@@ -5018,17 +5031,17 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["UnitResponseDto"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageAdminAccountResponse: {
@@ -5036,17 +5049,17 @@ export interface components {
             totalPages?: number;
             /** Format: int64 */
             totalElements?: number;
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["AdminAccountResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            first?: boolean;
-            last?: boolean;
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminGrade: {
@@ -5278,7 +5291,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NoticeUpdateRequestDto"];
+                "application/json": components["schemas"]["NoticeRequestDto"];
             };
         };
         responses: {
@@ -5650,7 +5663,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5670,7 +5685,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5694,7 +5711,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5712,7 +5731,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5732,7 +5753,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5756,7 +5779,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5774,7 +5799,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5794,7 +5821,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5818,7 +5847,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5836,7 +5867,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5856,7 +5889,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -5880,7 +5915,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -5898,7 +5935,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6143,6 +6182,58 @@ export interface operations {
                 };
                 content: {
                     "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    uploadImages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
+                };
+            };
+        };
+    };
+    uploadFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
                 };
             };
         };
@@ -6817,6 +6908,28 @@ export interface operations {
             };
         };
     };
+    markMessagesAsReadUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chatroomId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseBoolean"];
+                };
+            };
+        };
+    };
     verifyCode: {
         parameters: {
             query?: never;
@@ -7009,58 +7122,6 @@ export interface operations {
             };
         };
     };
-    uploadImages: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    files: string[];
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
-                };
-            };
-        };
-    };
-    uploadFiles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    files: string[];
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaUploadResponseDto"][];
-                };
-            };
-        };
-    };
     createNotice: {
         parameters: {
             query?: never;
@@ -7070,7 +7131,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NoticeCreateRequestDto"];
+                "application/json": components["schemas"]["NoticeRequestDto"];
             };
         };
         responses: {
@@ -7088,7 +7149,7 @@ export interface operations {
     getAllMenus: {
         parameters: {
             query: {
-                arg0: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -7423,12 +7484,12 @@ export interface operations {
         parameters: {
             query: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
-                arg3: components["schemas"]["Pageable"];
+                zipcode?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -7731,7 +7792,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -7755,7 +7818,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -7803,7 +7868,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -8095,6 +8162,90 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["PageUserNoticeSummaryResponseDto"];
                 };
+            };
+        };
+    };
+    getImageInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeImageId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getFileInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MediaInfoResponseDto"];
+                };
+            };
+        };
+    };
+    deleteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                noticeFileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -8647,11 +8798,11 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
+                zipcode?: string;
             };
             header?: never;
             path?: never;
@@ -8674,7 +8825,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8694,7 +8847,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8714,7 +8869,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8734,7 +8891,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8754,7 +8913,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8773,13 +8934,13 @@ export interface operations {
     getUserList: {
         parameters: {
             query: {
-                arg0?: string;
-                arg1?: string;
-                arg2?: string;
-                arg3?: string;
-                arg4?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg5?: "active" | "inactive" | "pending" | "withdrawn";
-                arg6: components["schemas"]["Pageable"];
+                searchTerm?: string;
+                userName?: string;
+                email?: string;
+                apartmentName?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -8802,7 +8963,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8821,11 +8984,13 @@ export interface operations {
     getUserLogs: {
         parameters: {
             query: {
-                arg1?: string;
-                arg2: components["schemas"]["Pageable"];
+                logType?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -8844,10 +9009,10 @@ export interface operations {
     exportUsers: {
         parameters: {
             query?: {
-                arg0?: string;
-                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg2?: "active" | "inactive" | "pending" | "withdrawn";
-                arg3?: string;
+                searchTerm?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                format?: string;
             };
             header?: never;
             path?: never;
@@ -8936,90 +9101,6 @@ export interface operations {
                         [key: string]: Record<string, never>;
                     };
                 };
-            };
-        };
-    };
-    getImageInfo: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeImageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaInfoResponseDto"];
-                };
-            };
-        };
-    };
-    deleteImage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeImageId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getFileInfo: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeFileId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["MediaInfoResponseDto"];
-                };
-            };
-        };
-    };
-    deleteFile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                noticeFileId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
@@ -9444,10 +9525,12 @@ export interface operations {
     getBuildingsByApartment_1: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9466,10 +9549,12 @@ export interface operations {
     getUnitsByBuilding_1: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9488,10 +9573,10 @@ export interface operations {
     getAdminAccountsByPage: {
         parameters: {
             query?: {
-                arg0?: number;
-                arg1?: number;
-                arg2?: string;
-                arg3?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+                direction?: string;
             };
             header?: never;
             path?: never;
@@ -9554,7 +9639,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 interface AddressSearchProps {
   isOpen: boolean;
@@ -18,7 +18,7 @@ export default function AddressSearch({
   onClose,
   onSelectAddress,
 }: AddressSearchProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<
     { id: number; name: string; address: string; zipcode: string }[]
   >([]);
@@ -46,7 +46,7 @@ export default function AddressSearch({
       const results = await response.json();
       setSearchResults(results);
     } catch (error) {
-      console.error("주소 검색 실패:", error);
+      console.error('주소 검색 실패:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -54,7 +54,7 @@ export default function AddressSearch({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleSearch();
     }
   };
@@ -74,22 +74,22 @@ export default function AddressSearch({
           <div className="flex mb-4">
             <input
               type="text"
-              className="flex-grow rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-grow h-12 rounded-l-lg border-0 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-pink-500 focus:border-pink-500 focus:outline-none dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-400 dark:focus:ring-pink-400 sm:text-sm sm:leading-6"
               placeholder="도로명 또는 아파트 이름을 입력하세요"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={handleKeyPress}
             />
             <button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-r-md"
+              className="h-12 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-r-lg"
               onClick={handleSearch}
               disabled={isSearching}
             >
-              {isSearching ? "검색중..." : "검색"}
+              {isSearching ? '검색중...' : '검색'}
             </button>
           </div>
 
-          <div className="h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded">
+          <div className="h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
             {!hasSearched ? (
               <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 도로명 또는 아파트 이름을 검색해주세요
@@ -107,7 +107,7 @@ export default function AddressSearch({
                 {searchResults.map((result) => (
                   <li
                     key={result.id}
-                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                    className="p-3 hover:bg-pink-50 dark:hover:bg-pink-900/10 cursor-pointer"
                     onClick={() => {
                       onSelectAddress(result);
                       onClose();
@@ -129,7 +129,7 @@ export default function AddressSearch({
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-md"
+            className="h-12 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-lg"
           >
             닫기
           </button>
