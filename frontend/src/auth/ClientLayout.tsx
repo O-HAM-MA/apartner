@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LoginMemberContext, useLoginMember } from "@/auth/loginMember";
 import Layout from "@/components/layout";
 import { checkUserAuth, checkAdminAuth } from "@/utils/api";
@@ -21,6 +21,7 @@ interface DebugInfo {
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [serverError, setServerError] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -58,11 +59,18 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
     // 비로그인 허용 페이지 확인
     const isNoAuthPath =
+      pathname === "/" ||
       pathname === "/signup" ||
       pathname === "/login" ||
       pathname === "/find-id" ||
       pathname === "/find-password" ||
       pathname.startsWith("/auth/");
+
+    // 인증이 필요한 페이지인데 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+    if (!isNoAuthPath && !isAdminPath && initialCheckDone && !isLogin) {
+      router.push("/login");
+      return;
+    }
 
     // 관리자 페이지인 경우 처리하지 않음 (AdminLayout에서 처리)
     // 비로그인 허용 페이지인 경우에도 처리하지 않음
@@ -156,7 +164,31 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     setNoLoginMember,
     initialCheckDone,
     serverError,
+    router,
+    isLogin,
   ]);
+
+  // 로그인 상태가 변경될 때 로그인이 필요한 페이지에서 로그인 상태를 확인
+  useEffect(() => {
+    if (!initialCheckDone) return;
+
+    // 비로그인 허용 페이지 확인
+    const isNoAuthPath =
+      pathname === "/" ||
+      pathname === "/signup" ||
+      pathname === "/login" ||
+      pathname === "/find-id" ||
+      pathname === "/find-password" ||
+      pathname.startsWith("/auth/");
+
+    // 관리자 페이지인지 확인
+    const isAdminPath = pathname.startsWith("/admin");
+
+    // 인증이 필요한 페이지인데 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+    if (!isNoAuthPath && !isAdminPath && !isLogin) {
+      router.push("/login");
+    }
+  }, [isLogin, initialCheckDone, pathname, router]);
 
   // 서버 오류 발생 시 오류 화면 표시
   if (serverError) {

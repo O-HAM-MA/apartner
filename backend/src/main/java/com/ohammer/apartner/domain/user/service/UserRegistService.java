@@ -134,8 +134,22 @@ public class UserRegistService {
             throw new UserException(UserErrorCode.ALREADY_WITHDRAWN_USER);
         }
 
-        if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
-            throw new UserException(UserErrorCode.PASSWORD_NOT_MATCH);
+        // 소셜 로그인 사용자(카카오)인 경우 비밀번호 검증 건너뛰기
+        boolean isSocialUser = requestDto.getIsSocialUser() != null && requestDto.getIsSocialUser() 
+                && "kakao".equals(requestDto.getSocialProvider());
+        boolean isSocialUserFromDB = "kakao".equals(user.getSocialProvider()) && user.getSocialId() != null;
+        
+        // 소셜 로그인 사용자가 아닌 경우에만 비밀번호 검증
+        if (!isSocialUser && !isSocialUserFromDB) {
+            // 비밀번호가 제공되지 않은 경우
+            if (requestDto.getPassword() == null || requestDto.getPassword().isEmpty()) {
+                throw new UserException(UserErrorCode.PASSWORD_REQUIRED);
+            }
+            
+            // 비밀번호 검증
+            if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
+                throw new UserException(UserErrorCode.PASSWORD_NOT_MATCH);
+            }
         }
 
         Status oldStatus = user.getStatus();
