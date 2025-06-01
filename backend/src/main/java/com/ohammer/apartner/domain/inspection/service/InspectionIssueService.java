@@ -66,22 +66,47 @@ public class InspectionIssueService {
         return saved;
     }
 
+    //전체 조회
     //조회
-    public IssueResponseDetailDto showInspectionIssue(Long id) {
-        InspectionIssue issue = issueRepository.findById(id).orElseThrow();
-        Inspection inspection = issue.getInspection();
-
-        return new IssueResponseDetailDto(issue.getId(),
-                inspection.getId(),
-                issue.getUser().getId(),
-                issue.getUser().getUserName(),
-                inspection.getTitle(),
-                inspection.getType().getTypeName(),
-                issue.getDescription(),
-                issue.getCreatedAt(),
-                issue.getModifiedAt()
-                );
+    public List<IssueResponseDetailDto> showInspectionIssue() {
+        return issueRepository.findAll().stream().map( i ->
+                        new IssueResponseDetailDto(
+                                i.getInspection().getId(),
+                                i.getId(),
+                                i.getInspection().getUser().getId(),
+                                i.getInspection().getUser().getUserName(),
+                                i.getInspection().getTitle(),
+                                i.getInspection().getType().getTypeName(),
+                                i.getDescription(),
+                                i.getCreatedAt(),
+                                i.getModifiedAt()
+                        ))
+                .toList();
     }
+
+    //한 점검에서 여러 이슈들을 조회
+    public List<IssueResponseDetailDto> showIssueFromInspection(Long id) {
+        Inspection inspection = inspectionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("id를 못찾겠는데여"));
+        if (!issueRepository.existsByInspectionId(inspection.getId()))
+            return Collections.emptyList();
+
+        return issueRepository.findByInspection(inspection).stream()
+                .map( r ->
+                        new IssueResponseDetailDto(
+                                inspection.getId(),
+                                r.getId(),
+                                inspection.getUser().getId(),
+                                inspection.getUser().getUserName(),
+                                inspection.getTitle(),
+                                inspection.getType().getTypeName(),
+                                r.getDescription(),
+                                r.getCreatedAt(),
+                                r.getModifiedAt()
+                        ))
+                .toList();
+    }
+
 
     //수정
     @Transactional

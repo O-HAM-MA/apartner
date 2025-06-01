@@ -402,20 +402,10 @@ export default function InspectionDetail() {
       <div className="flex flex-1 flex-col bg-background">
         {/* Main Content */}
         <main className="flex-1 p-8 overflow-y-auto bg-background">
-          {/* Header with Title, Theme Toggle and Bell Icon */}
+          {/* Header with Title and Back Button */}
           <header className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-foreground">시설점검</h2>
-            <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
-                <BellRing size={22} className="text-muted-foreground" />
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
-              </button>
-            </div>
-          </header>
-
-          {/* Back Button */}
-          <div className="mb-6">
+            {/* Back Button */}
             <Link href="/udash/inspections">
               <Button
                 variant="outline"
@@ -425,7 +415,7 @@ export default function InspectionDetail() {
                 <span>점검 목록으로 돌아가기</span>
               </Button>
             </Link>
-          </div>
+          </header>
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
