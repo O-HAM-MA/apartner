@@ -7,6 +7,7 @@ import com.ohammer.apartner.domain.inspection.entity.InspectionIssue;
 import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionIssueRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
+import com.ohammer.apartner.global.Status;
 import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
