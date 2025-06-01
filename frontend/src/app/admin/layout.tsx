@@ -111,10 +111,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       }}
     >
       <NotificationProvider>
-        <div className="flex min-h-screen">
-          <AdminSidebar />
-          <div className="flex-1">
-            <main className="p-8 pb-32">{children}</main>
+        <div className="flex min-h-screen flex-col">
+          <div className="flex flex-1">
+            <AdminSidebar />
+            <div className="flex-1">
+              <main className="p-8">{children}</main>
+            </div>
           </div>
           <Footer />
         </div>

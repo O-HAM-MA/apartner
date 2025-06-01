@@ -31,14 +31,16 @@ export default function UdashLayout({
   return (
     <ApartnerTalkProvider>
       <NotificationProvider>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1">
-            <main className="p-8 pb-32">{children}</main>
+        <div className="flex min-h-screen flex-col">
+          <div className="flex flex-1">
+            <Sidebar />
+            <div className="flex-1">
+              <main className="p-8">{children}</main>
+            </div>
           </div>
+          <Footer />
         </div>
         <ChatFloatingButton />
-        <Footer />
       </NotificationProvider>
     </ApartnerTalkProvider>
   );

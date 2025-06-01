@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   FileText,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -262,7 +263,7 @@ export default function AdminSidebar() {
 
             <NotificationStatus className="ml-auto mt-2" />
           </div>
-          <div className="flex-1 overflow-auto py-2">
+          <div className="flex-1 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center items-center h-20">
                 <div className="text-sm text-muted-foreground">
@@ -301,7 +302,7 @@ export default function AdminSidebar() {
                 )}
               </div>
             ) : (
-              <nav className="grid gap-1 px-2">
+              <nav className="grid gap-1 px-2 py-2">
                 {navItems.map((item, index) => {
                   const isActive = pathname === item.href;
                   return (
@@ -342,7 +343,7 @@ export default function AdminSidebar() {
               </nav>
             )}
           </div>
-          <div className="p-4 border-t mb-20">
+          <div className="border-t p-4">
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="h-9 w-9">
                 <AvatarImage
