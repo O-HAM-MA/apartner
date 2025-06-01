@@ -9,6 +9,8 @@ import com.ohammer.apartner.domain.inspection.entity.InspectionType;
 import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionTypeRepository;
+import com.ohammer.apartner.domain.notice.dto.request.NoticeRequestDto;
+import com.ohammer.apartner.domain.notice.service.NoticeServiceImpl;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.global.Status;
@@ -31,8 +33,8 @@ import java.util.List;
 public class InspectionService {
     private final InspectionRepository inspectionRepository;
     private final InspectionTypeRepository inspectionTypeRepository;
-    private final UserRepository userRepository;
     private final AlarmService alarmService;
+    private final NoticeServiceImpl noticeService;
     //대충 유저 리포지토리가 있다고 가정
     public boolean itIsYou(Inspection inspection) {
         User user = SecurityUtil.getCurrentUser();
@@ -75,8 +77,12 @@ public class InspectionService {
                 .createdAt(LocalDateTime.now())
                 .status(Status.ACTIVE)
                 .build();
-        //TODO 나중에 공지 추가되면 공지에 넣는것도 추가하기
         Inspection saved = inspectionRepository.save(inspection);
+
+        NoticeRequestDto noticeRequestDto = new NoticeRequestDto(dto.getTitle(), dto.getDetail(), null, null, null);
+
+        noticeService.createNotice(noticeRequestDto, user.getId());
+
         
         if (user.getApartment() != null) {
             String message = user.getUserName() + "님이 새로운 점검 일정을 등록했습니다: " + dto.getTitle();

@@ -114,6 +114,7 @@ export default function AdminDashboard() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [showStatusImage, setShowStatusImage] = useState(false);
 
   useEffect(() => {
     async function fetchInspections() {
@@ -241,10 +242,10 @@ export default function AdminDashboard() {
               >
                 분류 관리
               </Button>
-              <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
+              {/* <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
                 <BellRing size={22} className="text-muted-foreground" />
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
-              </button>
+              </button> */}
             </div>
           </header>
 
@@ -264,7 +265,7 @@ export default function AdminDashboard() {
                 이슈 내역 보기
               </button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 -translate-y-1">
               <Link href="/udash/inspections/new">
                 <Button className="bg-pink-500 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 dark:text-white">
                   <Plus className="mr-1 h-4 w-4" />
@@ -287,7 +288,10 @@ export default function AdminDashboard() {
               </div>
               */}
                 <div className="inline-flex items-center rounded-md border border-border bg-card shadow-sm">
-                  <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground">
+                  <button
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-foreground"
+                    onClick={() => setShowStatusImage(!showStatusImage)}
+                  >
                     전체 상태
                     <ChevronDown className="h-4 w-4" />
                   </button>
@@ -408,6 +412,15 @@ export default function AdminDashboard() {
                 )
               ) : null /* activeTab이 inspections 또는 issues가 아닐 경우 */}
             </div>
+
+            {/* Status Image Display */}
+            {showStatusImage && (
+              <div className="flex justify-center items-center gap-4 py-10">
+                {/* TODO: Replace with actual image paths */}
+                <img src="/image.png" alt="상태 이미지 1" className="max-w-full h-auto" />
+                <img src="/image2.jpeg" alt="상태 이미지 2" className="max-w-full h-auto" />
+              </div>
+            )}
 
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">

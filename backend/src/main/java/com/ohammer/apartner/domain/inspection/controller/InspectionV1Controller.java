@@ -94,19 +94,6 @@ public class InspectionV1Controller {
         }
     }
 
-
-//    //전체 불러오기
-//    //그냥 여기서 제목만 불러와도 되는게 아닌가
-//    @GetMapping("")
-//    @Operation(
-//            summary = "점검 일정을 가져옵니다",
-//            description = "점검 일정 목록을 가져옵니다"
-//    )
-//    public ResponseEntity<List<InspectionResponseDetailDto>> showAllInspections() {
-//        User user = SecurityUtil.getCurrentUser();
-//        return ResponseEntity.ok(inspectionService.showAllInspections());
-//    }
-
     //전체 불러오기
     //그냥 여기서 제목만 불러와도 되는게 아닌가
     @GetMapping()
