@@ -25,36 +25,123 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
-import { useGlobalLoginMember } from "@/auth/loginMember";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 
-interface InspectionFormProps {
-  onSubmit?: (data: any) => void;
-  onCancel?: () => void;
+interface InspectionEditPageProps {
+  params: {
+    id: string;
+  };
 }
 
-export default function InspectionForm({
-  onSubmit,
-  onCancel,
-}: InspectionFormProps) {
-  const { loginMember } = useGlobalLoginMember();
+export default function InspectionEditPage({
+  params,
+}: InspectionEditPageProps) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [types, setTypes] = useState<{ type_id: number; typeName: string }[]>([]);
+  const [typeLoading, setTypeLoading] = useState(true);
+  const [typeError, setTypeError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     title: "",
-    type: "소방",
+    type: "",
     startDate: "",
     startTime: "",
     endDate: "",
     endTime: "",
     assignee: "",
     detail: "",
+    result: "",
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [types, setTypes] = useState<{ type_id: number; typeName: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Load existing inspection data
+  useEffect(() => {
+    const loadInspectionData = async () => {
+      setIsLoading(true);
+      try {
+        const id = params.id;
+        // 실제 API 호출로 변경
+        const res = await fetch(`/api/v1/inspection/manager/${id}`, {
+          credentials: "include", // 쿠키 포함 설정 추가
+        });
+
+        if (!res.ok) {
+          let errorMessage = "점검 데이터를 불러오지 못했습니다.";
+          try {
+            const text = await res.text();
+            if (text) {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorMessage;
+            }
+          } catch (e) {
+            // 파싱 에러 무시
+          }
+          throw new Error(errorMessage);
+        }
+
+        const data = await res.json();
+
+        // API 응답 데이터를 formData 상태에 맞게 파싱 및 설정
+        const startDateTime = new Date(data.startAt);
+        const endDateTime = new Date(data.finishAt);
+
+        setFormData({
+          title: data.title || "",
+          type: data.typeName || "",
+          startDate: data.startAt ? startDateTime.toISOString().split("T")[0] : "",
+          startTime: data.startAt ? startDateTime.toTimeString().slice(0, 5) : "",
+          endDate: data.finishAt ? endDateTime.toISOString().split("T")[0] : "",
+          endTime: data.finishAt ? endDateTime.toTimeString().slice(0, 5) : "",
+          assignee: data.userName || "",
+          detail: data.detail || "",
+          result: data.result || "",
+        });
+      } catch (error: any) {
+        console.error("Error loading inspection data:", error);
+        alert(error.message || "점검 데이터를 불러오는 중 오류가 발생했습니다.");
+        // 에러 발생 시 폼 초기화 또는 다른 처리 필요
+        setFormData({
+          title: "",
+          type: "",
+          startDate: "",
+          startTime: "",
+          endDate: "",
+          endTime: "",
+          assignee: "",
+          detail: "",
+          result: "",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (params.id) loadInspectionData();
+  }, [params.id]);
+
+  // 점검 분류 목록 불러오기 (등록 페이지에서 복사)
+  useEffect(() => {
+    async function fetchTypes() {
+      setTypeLoading(true);
+      setTypeError(null);
+      try {
+        const res = await fetch("/api/v1/inspection/type", {
+          credentials: "include", // 쿠키 포함 설정 추가
+        });
+        if (!res.ok) throw new Error("분류 데이터를 불러오지 못했습니다.");
+        const data = await res.json();
+        setTypes(data);
+      } catch (e: any) {
+        setTypeError(e.message || "알 수 없는 에러가 발생했습니다.");
+      } finally {
+        setTypeLoading(false);
+      }
+    }
+    fetchTypes();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,36 +161,21 @@ export default function InspectionForm({
     setIsSubmitting(true);
 
     try {
-      // 날짜와 시간 합치기 (ISO 8601 형식)
+      // Combine date and time fields (ISO 8601 형식)
       const startAt = `${formData.startDate}T${formData.startTime}`;
       const finishAt = `${formData.endDate}T${formData.endTime}`;
-
-      // 시작 시간과 종료 시간 비교 유효성 검사
-      const startDateObj = new Date(startAt);
-      const finishDateObj = new Date(finishAt);
-
-      if (finishDateObj <= startDateObj) {
-        alert("점검 종료 시간은 점검 시작 시간보다 늦어야 합니다.");
-        setIsSubmitting(false);
-        return; // 제출 중단
-      }
-
-      // HTML에서 텍스트 추출
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(formData.detail, 'text/html');
-      const plainTextDetail = doc.body.textContent || "";
 
       const requestBody = {
         startAt,
         finishAt,
         title: formData.title,
-        detail: plainTextDetail,
+        detail: formData.detail,
         type: formData.type,
-        userName: formData.assignee,
+        result: formData.result,
       };
 
-      // API 호출
-      const res = await fetch("/api/v1/inspection/manager/create", {
+      // API 호출 (PUT 또는 PATCH 사용)
+      const res = await fetch(`/api/v1/inspection/manager/${params.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -113,7 +185,7 @@ export default function InspectionForm({
       });
 
       if (!res.ok) {
-        let errorMessage = "점검 등록에 실패했습니다.";
+        let errorMessage = "점검 기록 수정에 실패했습니다.";
         try {
           const text = await res.text();
           if (text) {
@@ -126,99 +198,87 @@ export default function InspectionForm({
         throw new Error(errorMessage);
       }
 
-      // 성공 처리
-      if (onSubmit) {
-        onSubmit(requestBody);
-      }
-      router.push("/udash/inspections?success=1");
+      alert("점검 기록이 성공적으로 수정되었습니다.");
+
+      // 수정 완료 후 상세 페이지로 이동
+      router.push(`/admin/inspections/${params.id}`);
     } catch (error: any) {
-      console.error("Error submitting inspection:", error);
-      alert(error.message || "점검 등록 중 오류가 발생했습니다.");
+      console.error("Error updating inspection:", error);
+      alert(error.message || "점검 수정 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "CHECKED":
-        return {
-          bgColor: "bg-green-100 dark:bg-green-900/30",
-          textColor: "text-green-800 dark:text-green-300",
-          icon: <CheckCircle size={16} className="mr-1" />,
-          text: "정상 완료",
-        };
-      case "PENDING":
-        return {
-          bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
-          textColor: "text-yellow-800 dark:text-yellow-300",
-          icon: <Play size={16} className="mr-1" />,
-          text: "진행 중",
-        };
-      case "NOTYET":
-        return {
-          bgColor: "bg-gray-100 dark:bg-gray-800",
-          textColor: "text-gray-800 dark:text-gray-300",
-          icon: <Square size={16} className="mr-1" />,
-          text: "예정됨",
-        };
-      default:
-        return {
-          bgColor: "bg-gray-100 dark:bg-gray-800",
-          textColor: "text-gray-800 dark:text-gray-300",
-          icon: <Square size={16} className="mr-1" />,
-          text: "상태 미정",
-        };
-    }
+  const handleCancel = () => {
+    router.push(`/admin/inspections/${params.id}`);
   };
 
-  useEffect(() => {
-    async function fetchTypes() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/v1/inspection/type", {
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error("분류 데이터를 불러오지 못했습니다.");
-        const data = await res.json();
-        setTypes(data);
-      } catch (e: any) {
-        setError(e.message || "알 수 없는 에러가 발생했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchTypes();
-  }, []);
+  if (isLoading || typeLoading) {
+    return (
+      <div className="flex min-h-screen bg-background overflow-hidden">
+        <div className="flex flex-1 flex-col bg-background">
+          <main className="flex-1 p-8 overflow-y-auto bg-background">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto mb-4"></div>
+                <p className="text-muted-foreground">
+                  {isLoading ? "점검 데이터를 불러오는 중..." : "분류 데이터를 불러오는 중..."}
+                </p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (loginMember && loginMember.userName) {
-      setFormData((prev) => ({ ...prev, assignee: loginMember.userName }));
-    }
-  }, [loginMember]);
+  if (typeError) {
+    return (
+      <div className="flex min-h-screen bg-background overflow-hidden">
+        <div className="flex flex-1 flex-col bg-background">
+          <main className="flex-1 p-8 overflow-y-auto bg-background">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center text-red-500">
+                <p>{typeError}</p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="flex flex-1 flex-col">
+    <div className="flex min-h-screen bg-background overflow-hidden">
+      <div className="flex flex-1 flex-col bg-background">
         {/* Main Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          {/* Header with Title and Bell Icon */}
+        <main className="flex-1 p-8 overflow-y-auto bg-background">
+          {/* Header with Title, Theme Toggle and Bell Icon */}
           <header className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-foreground">
-              시설점검 등록
+              시설점검 수정
             </h2>
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
+                <BellRing size={22} className="text-muted-foreground" />
+                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
+              </button>
+            </div>
           </header>
 
           {/* Back Button */}
           <div className="mb-6">
-            <Link href="/udash/inspections">
+            <Link
+              href={`/admin/inspections/${params.id}`}
+            >
               <Button
                 variant="outline"
                 className="flex items-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:text-pink-400 dark:border-pink-900/30 dark:hover:bg-pink-950/30 dark:hover:text-pink-300"
               >
                 <ArrowLeft size={16} />
-                <span>점검 목록으로 돌아가기</span>
+                <span>점검 상세로 돌아가기</span>
               </Button>
             </Link>
           </div>
@@ -264,10 +324,10 @@ export default function InspectionForm({
                         >
                           점검 분류
                         </Label>
-                        {loading ? (
-                          <div className="text-muted-foreground mb-4">로딩 중...</div>
-                        ) : error ? (
-                          <div className="text-red-500 mb-4">{error}</div>
+                        {typeLoading ? (
+                          <div className="text-muted-foreground">로딩 중...</div>
+                        ) : typeError ? (
+                          <div className="text-red-500">{typeError}</div>
                         ) : (
                           <Select
                             value={formData.type}
@@ -361,6 +421,32 @@ export default function InspectionForm({
                         </div>
                       </div>
                     </div>
+
+                    {/* 점검 결과 (Select) */}
+                    <div>
+                      <Label
+                        htmlFor="result"
+                        className="text-sm font-medium text-muted-foreground"
+                      >
+                        점검 결과
+                      </Label>
+                      <Select
+                        value={formData.result}
+                        onValueChange={(value) =>
+                          handleSelectChange("result", value)
+                        }
+                      >
+                        <SelectTrigger className="mt-1 w-full">
+                          <SelectValue placeholder="점검 결과 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CHECKED">정상 완료</SelectItem>
+                          <SelectItem value="PENDING">진행 중</SelectItem>
+                          <SelectItem value="NOTYET">예정됨</SelectItem>
+                          <SelectItem value="ISSUE">이슈 있음</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
@@ -394,13 +480,13 @@ export default function InspectionForm({
                       disabled={isSubmitting}
                     >
                       <Save size={16} />
-                      {isSubmitting ? "저장 중..." : "점검 등록하기"}
+                      {isSubmitting ? "저장 중..." : "점검 수정하기"}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full border-border text-foreground hover:bg-secondary flex items-center justify-center gap-2"
-                      onClick={onCancel}
+                      onClick={handleCancel}
                     >
                       <X size={16} />
                       취소
@@ -441,6 +527,15 @@ export default function InspectionForm({
                       <span>
                         <strong className="text-foreground">담당자</strong>:
                         점검을 담당하는 사람의 이름을 입력하세요.
+                      </span>
+                    </p>
+                    {/* 점검 결과 도움말 추가 */}
+                    <p className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <span>
+                        <strong className="text-foreground">점검 결과</strong>:
+                        점검 결과를 선택하세요. 정상 완료, 진행 중, 예정됨,
+                        이슈 있음 중에서 선택할 수 있습니다.
                       </span>
                     </p>
                   </div>

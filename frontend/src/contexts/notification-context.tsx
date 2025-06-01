@@ -272,9 +272,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      // SSE 연결 설정
+      // SSE 연결 설정 - credentials 옵션 추가
+      const eventSourceInit = { withCredentials: true };
       const newEventSource = new EventSource(
-        `${SSE_URL}?userId=${currentUser.id}`
+        `${SSE_URL}?userId=${currentUser.id}`,
+        eventSourceInit
       );
       setEventSource(newEventSource);
 

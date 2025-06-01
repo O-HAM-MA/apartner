@@ -505,9 +505,18 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         stompClient.deactivate();
       }
 
-      const socket = new SockJS(`/stomp/chats`);
+      // 백엔드 서버 URL 추출
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
+
+      const socket = new SockJS(`${apiBaseUrl}/stomp/chats`);
+      // @ts-ignore - SockJS 타입 정의에는 없지만 실제로는 존재하는 속성
+      socket.withCredentials = true; // 인증 쿠키 전송을 위한 설정 추가
       const client = new Client({
         webSocketFactory: () => socket,
+        debug: function (str) {
+          console.log(str);
+        },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
@@ -977,9 +986,20 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    const socket = new SockJS(`/stomp/chats`);
+    // 백엔드 서버 URL 추출
+    const apiBaseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
+
     const client = new Client({
-      webSocketFactory: () => socket,
+      webSocketFactory: () => {
+        const socket = new SockJS(`${apiBaseUrl}/stomp/chats`);
+        // @ts-ignore - SockJS 타입 정의에는 없지만 실제로는 존재하는 속성
+        socket.withCredentials = true; // 인증 쿠키 전송을 위한 설정 추가
+        return socket;
+      },
+      debug: function (str) {
+        console.log(str);
+      },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
