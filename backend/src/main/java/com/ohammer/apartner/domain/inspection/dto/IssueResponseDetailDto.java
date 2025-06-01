@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class IssueResponseDetailDto {
-    private Long id;
     private Long inspectionId;
+    private Long id;
     private Long userId;
     private String userName;
     private String title;
-    private String description;
     private String typeName;
+    private String description;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
 }

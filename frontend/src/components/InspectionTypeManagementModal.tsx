@@ -39,10 +39,36 @@ const InspectionTypeManagementModal: React.FC<InspectionTypeManagementModalProps
 
   // 점검 분류 추가 mutation
   const addTypeMutation = useMutation({
-    mutationFn: (typeName: string) => {
-      return client.POST("/api/v1/inspection/type/create", {
+    mutationFn: async (typeName: string) => {
+      const response = await client.POST("/api/v1/inspection/type/create", {
         body: { name: typeName },
       });
+      
+      console.log('API Response:', response); // 응답 로깅
+      
+      // HTTP 상태 코드를 기반으로 성공/실패를 판단합니다.
+      if (response.response && response.response.status) {
+        const status = response.response.status;
+        
+        if (status >= 200 && status < 300) {
+          // 2xx 상태 코드는 성공으로 간주합니다.
+          // 백엔드가 본문 없이 200 OK를 보내므로, data가 없을 수 있습니다.
+          return response.data; // 데이터가 있다면 반환, 없으면 undefined 반환
+        } else if (status === 400) {
+          // 400 Bad Request 에러 처리
+          throw new Error("이미 존재하는 분류명입니다.");
+        } else if (status >= 400) {
+          // 그 외 4xx, 5xx 에러 처리
+          throw new Error(`분류 추가 중 오류가 발생했습니다. (상태 코드: ${status})`);
+        }
+      } else if (response.error) {
+         // openapi-fetch 자체에서 발생한 에러 (네트워크 오류 등)
+         console.error('API Error:', response.error); // 에러 로깅
+         throw new Error(`분류 추가 중 예상치 못한 오류가 발생했습니다: ${response.error.message}`);
+      }
+      
+      // 상태 코드나 error 필드 모두 없는 예상치 못한 상황
+      throw new Error("분류 추가 중 예상치 못한 응답 형식입니다.");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inspectionTypes"] });
@@ -54,11 +80,11 @@ const InspectionTypeManagementModal: React.FC<InspectionTypeManagementModalProps
         className: "bg-green-50 border-green-200",
       });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.error("분류 추가 실패:", err);
       toast({
         title: "분류 추가 실패",
-        description: "분류 추가 중 오류가 발생했습니다.",
+        description: err.message,
         variant: "destructive",
         duration: 2000,
       });

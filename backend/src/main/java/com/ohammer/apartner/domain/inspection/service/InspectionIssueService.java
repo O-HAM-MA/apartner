@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -42,21 +45,45 @@ public class InspectionIssueService {
         return issueRepository.save(inspectionIssue);
     }
 
-    //조회
-    public IssueResponseDetailDto showInspectionIssue(Long id) {
-        InspectionIssue issue = issueRepository.findById(id).orElseThrow();
-        Inspection inspection = issue.getInspection();
+    //한 점검에서 여러 이슈들을 조회
+    public List<IssueResponseDetailDto> showIssueFormInspection(Long id) {
+        Inspection inspection = inspectionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("id를 못찾겠는데여"));
+        if (!issueRepository.existsByInspectionId(inspection.getId()))
+            return Collections.emptyList();
 
-        return new IssueResponseDetailDto(issue.getId(),
-                inspection.getId(),
-                issue.getUser().getId(),
-                issue.getUser().getUserName(),
-                inspection.getTitle(),
-                inspection.getType().getTypeName(),
-                issue.getDescription(),
-                issue.getCreatedAt(),
-                issue.getModifiedAt()
-                );
+        return issueRepository.findByInspection(inspection).stream()
+                .map( r ->
+                        new IssueResponseDetailDto(
+                        inspection.getId(),
+                        r.getId(),
+                        inspection.getUser().getId(),
+                        inspection.getUser().getUserName(),
+                        inspection.getTitle(),
+                        inspection.getType().getTypeName(),
+                        r.getDescription(),
+                        r.getCreatedAt(),
+                        r.getModifiedAt()
+
+                ))
+                .toList();
+    }
+
+    //조회
+    public List<IssueResponseDetailDto> showInspectionIssue() {
+        return issueRepository.findAll().stream().map( i ->
+                new IssueResponseDetailDto(
+                      i.getInspection().getId(),
+                      i.getId(),
+                      i.getInspection().getUser().getId(),
+                      i.getInspection().getUser().getUserName(),
+                      i.getInspection().getTitle(),
+                      i.getInspection().getType().getTypeName(),
+                      i.getDescription(),
+                      i.getCreatedAt(),
+                      i.getModifiedAt()
+                ))
+                .toList();
     }
 
     //수정
@@ -64,6 +91,7 @@ public class InspectionIssueService {
     public void updateInspectionIssue(Long id, String description) {
         InspectionIssue issue = issueRepository.findById(id).orElseThrow();
         issue.setDescription(description);
+        issue.setModifiedAt(LocalDateTime.now());
 
         issueRepository.save(issue);
     }

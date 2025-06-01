@@ -148,16 +148,25 @@ public class InspectionService {
     }
 
 
-    //검사 완료
+    //결과 수정
     @Transactional
-    public void completeInspection(Long id) {
+    public void changeInspectionResult(Long id, String result) {
         if (!inspectionRepository.existsById(id))
             throw new RuntimeException("그거 없는댑쇼");
         Inspection inspection = inspectionRepository.findById(id).get();
         if (!itIsYou(inspection))
             throw new RuntimeException("본인만 완료 가능합니다");
 
-        inspection.setResult(Result.CHECKED);
+        inspection.setResult(findResult(result));
+
+        if (result.equals("CHECKED"))
+            inspection.setFinishAt(LocalDateTime.now());
+        else if (result.equals("PENDING"))
+            inspection.setStartAt(LocalDateTime.now());
+
+
+        inspection.setModifiedAt(LocalDateTime.now());
+
 
         inspectionRepository.save(inspection);
     }

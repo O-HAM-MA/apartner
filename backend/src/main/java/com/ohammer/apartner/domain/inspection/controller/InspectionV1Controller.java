@@ -68,7 +68,22 @@ public class InspectionV1Controller {
     )
     public ResponseEntity<?> compeleteInspection(@PathVariable(name = "id") Long id) {
         try {
-            inspectionService.completeInspection(id);
+            inspectionService.changeInspectionResult(id, "CHECKED");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    //시작
+    @PostMapping("/start/{id}")
+    @Operation(
+            summary = "점검 일정을 바로 시작을 하면",
+            description = "해당 점검의 상태가 PENDING으로 변합니다"
+    )
+    public ResponseEntity<?> startInspection(@PathVariable(name = "id") Long id) {
+        try {
+            inspectionService.changeInspectionResult(id, "PENDING");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();

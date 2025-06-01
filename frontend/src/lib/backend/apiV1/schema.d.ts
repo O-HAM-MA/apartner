@@ -541,6 +541,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inspection/manager/start/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 점검 일정을 바로 시작을 하면
+         * @description 해당 점검의 상태가 PENDING으로 변합니다
+         */
+        post: operations["startInspection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inspection/manager/create": {
         parameters: {
             query?: never;
@@ -581,7 +601,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/issue/{id}/update": {
+    "/api/v1/inspection/issue/{issueId}/update": {
         parameters: {
             query?: never;
             header?: never;
@@ -1715,7 +1735,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/inspection/issue/show/{issueId}": {
+    "/api/v1/inspection/issue/show_all/{issueId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1727,6 +1747,26 @@ export interface paths {
          * @description 해당 이슈에 대한 내용
          */
         get: operations["getInspectionIssue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspection/issue/show/{Id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 해당 점검에 대한 이슈 내용을 볼 수 있음
+         * @description 해당 점검에 대한 이슈 내용
+         */
+        get: operations["getIssueFromInspection"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4123,10 +4163,10 @@ export interface components {
             fileUrls?: components["schemas"]["NoticeFileDto"][];
         };
         PageUserNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4135,26 +4175,26 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -4271,15 +4311,15 @@ export interface components {
         };
         IssueResponseDetailDto: {
             /** Format: int64 */
-            id?: number;
-            /** Format: int64 */
             inspectionId?: number;
+            /** Format: int64 */
+            id?: number;
             /** Format: int64 */
             userId?: number;
             userName?: string;
             title?: string;
-            description?: string;
             typeName?: string;
+            description?: string;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -4527,10 +4567,10 @@ export interface components {
             data?: components["schemas"]["PageAdminUserListResponse"];
         };
         PageAdminUserListResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4539,9 +4579,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminUserDetailResponse: {
@@ -4593,10 +4633,10 @@ export interface components {
             data?: components["schemas"]["PageObject"];
         };
         PageObject: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4605,9 +4645,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 매니저 권한 - 공지사항 게시글 목록 조회 응답 DTO */
@@ -4648,10 +4688,10 @@ export interface components {
             viewCount?: number;
         };
         PageNoticeSummaryResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4660,9 +4700,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         /** @description 공지사항 게시글 첨부파일 상세 정보 응답 DTO */
@@ -4701,10 +4741,10 @@ export interface components {
             data?: components["schemas"]["PageMenuDTO"];
         };
         PageMenuDTO: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -4713,9 +4753,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         ApiResponseListMenuDTO: {
@@ -5010,10 +5050,10 @@ export interface components {
             }[];
         };
         Page: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5022,16 +5062,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageBuildingResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5040,16 +5080,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageUnitResponseDto: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5058,16 +5098,16 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageAdminAccountResponse: {
-            /** Format: int64 */
-            totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+            /** Format: int64 */
+            totalElements?: number;
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
@@ -5076,9 +5116,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         AdminGrade: {
@@ -6394,6 +6434,28 @@ export interface operations {
             };
         };
     };
+    startInspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     createInspectionSchedule: {
         parameters: {
             query?: never;
@@ -6445,7 +6507,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                issueId: number;
             };
             cookie?: never;
         };
@@ -8219,6 +8281,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["IssueResponseDetailDto"];
+                };
+            };
+        };
+    };
+    getIssueFromInspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                Id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IssueResponseDetailDto"][];
                 };
             };
         };
