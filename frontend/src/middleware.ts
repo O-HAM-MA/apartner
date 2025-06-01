@@ -11,6 +11,13 @@ const STATIC_PATHS = [
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  const url = request.nextUrl.toString();
+
+  // RSC(React Server Components) 요청인 경우 (_rsc 파라미터가 있는 경우) 통과
+  if (url.includes("_rsc=")) {
+    console.log(`[Middleware] RSC 요청 감지, 인증 체크 스킵: ${url}`);
+    return NextResponse.next();
+  }
 
   // 정적 파일이나 무시할 경로인 경우 통과
   if (STATIC_PATHS.some((pattern) => pattern.test(path))) {
