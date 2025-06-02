@@ -40,11 +40,13 @@ interface Complaint {
   createdAt: string;
   complaintStatus: "pending" | "in_progress" | "completed" | "rejected";
   user: string;
+  userRole?: string;
   feedbacks?: {
     feedbackId: number;
     userName: string;
     content: string;
     createAt: string;
+    userRole?: string;
   }[];
 }
 
@@ -69,6 +71,20 @@ const getStatusLabel = (
 ): string => {
   const option = statusOptions.find((opt) => opt.value === status);
   return option ? option.label : status; // 매핑되는 라벨이 있으면 라벨 반환, 없으면 원래 값 반환
+};
+
+// Add role label mapping
+const roleLabels: Record<string, string> = {
+  ADMIN: "관리자",
+  MANAGER: "매니저",
+  USER: "일반회원",
+};
+
+// Add role color mapping
+const roleColors: Record<string, string> = {
+  ADMIN: "bg-red-100 text-red-800",
+  MANAGER: "bg-orange-100 text-orange-800",
+  USER: "bg-blue-100 text-blue-800",
 };
 
 export default function ComplaintsPage() {
@@ -124,6 +140,7 @@ export default function ComplaintsPage() {
           complaintStatus: item.complaintStatus.toLowerCase(),
           status: item.status.toLowerCase(),
           user: item.userName,
+          userRole: item.userRole,
         }));
 
         console.log("data : ", normalized);
@@ -363,6 +380,7 @@ export default function ComplaintsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
+                <TableHead>민원ID</TableHead>
                 <TableHead>제목</TableHead>
                 <TableHead>작성자</TableHead>
                 <TableHead>작성일</TableHead>
@@ -381,8 +399,24 @@ export default function ComplaintsPage() {
                       }
                     />
                   </TableCell>
+                  <TableCell>
+                    COM-{complaint.id.toString().padStart(3, "0")}
+                  </TableCell>
                   <TableCell>{complaint.title}</TableCell>
-                  <TableCell>{complaint.user}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{complaint.user}</span>
+                      {complaint.userRole && (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            roleColors[complaint.userRole]
+                          }`}
+                        >
+                          {roleLabels[complaint.userRole] || complaint.userRole}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {format(
                       new Date(complaint.createdAt),
@@ -516,9 +550,21 @@ export default function ComplaintsPage() {
                         className="border p-4 rounded-lg"
                       >
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-medium">
-                            {feedback.userName}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {feedback.userName}
+                            </span>
+                            {feedback.userRole && (
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  roleColors[feedback.userRole]
+                                }`}
+                              >
+                                {roleLabels[feedback.userRole] ||
+                                  feedback.userRole}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-sm text-gray-500">
                             {format(
                               new Date(feedback.createAt),

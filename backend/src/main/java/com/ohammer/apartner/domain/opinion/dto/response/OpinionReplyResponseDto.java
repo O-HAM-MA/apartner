@@ -13,5 +13,6 @@ public class OpinionReplyResponseDto {
     private String userName;
     private String reply;
     private LocalDateTime createdAt;
+    private String userRole;
 
 }
