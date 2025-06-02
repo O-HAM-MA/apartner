@@ -82,7 +82,6 @@ public class SseController {
                 .header("Cache-Control", "no-cache, no-transform")
                 .header("Connection", "keep-alive")
                 .header("Content-Type", "text/event-stream;charset=UTF-8")
-                .header("Transfer-Encoding", "chunked")
                 .header("Pragma", "no-cache")
                 .body(emitter);
         } catch (ResourceNotFoundException e) {

@@ -51,6 +51,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             requestURI.contains("/login") ||  // 로그인 페이지 제외
             requestURI.startsWith("/oauth2/") ||  // OAuth2 인증 시작점 제외
             requestURI.startsWith("/login/oauth2/") ||  // 로그인 페이지 제외
+            requestURI.startsWith("/sse/") ||  // SSE API 제외
+            requestURI.startsWith("/stomp/") ||  // STOMP API 제외
             requestURI.startsWith("/api/v1/entry-records/enter") ||  //
             requestURI.startsWith("/api/v1/vehicles/foreigns") ||
             requestURI.startsWith("/api/v1/entry-records/exit")) {  //
