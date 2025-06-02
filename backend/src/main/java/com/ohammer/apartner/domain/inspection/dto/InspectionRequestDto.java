@@ -10,8 +10,8 @@ import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Schema(description = "점검 일정에 대한 정보가 들어있는 DTO")
 public class InspectionRequestDto {
     @NotBlank(message = "시작 시간은 필수요소 입니다")

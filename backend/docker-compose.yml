@@ -1,4 +1,4 @@
-version: '3' # Docker Compose 버전 명시
+version: "3" # Docker Compose 버전 명시
 
 services:
   mysql:
@@ -6,15 +6,15 @@ services:
     container_name: apartner-mysql-container
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpw   # MySQL 루트 비밀번호
-      MYSQL_DATABASE: apartnerdb   # 생성할 기본 데이터베이스 이름
-      MYSQL_USER: testuser         # 사용자 이름
-      MYSQL_PASSWORD: testpw       # 사용자 비밀번호
+      MYSQL_ROOT_PASSWORD: rootpw # MySQL 루트 비밀번호
+      MYSQL_DATABASE: apartnerdb # 생성할 기본 데이터베이스 이름
+      MYSQL_USER: testuser # 사용자 이름
+      MYSQL_PASSWORD: testpw # 사용자 비밀번호
     ports:
-      - "3309:3306"                # 호스트 포트 3309 -> 컨테이너 포트 3306 매핑
+      - "3309:3306" # 호스트 포트 3309 -> 컨테이너 포트 3306 매핑
     volumes:
       - mysql-data:/var/lib/mysql # 데이터 지속성을 위한 볼륨 설정
-    healthcheck:                  # 헬스체크 추가 (MySQL 상태 확인)
+    healthcheck: # 헬스체크 추가 (MySQL 상태 확인)
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
