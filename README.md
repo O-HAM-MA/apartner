@@ -268,7 +268,7 @@ npm run dev
 
 ---
 
-## :open_file_folder: Project Structure
+## :open_file_folder: Project Structure (준비중...)
 
 ```markdown
 **backend**
@@ -276,16 +276,7 @@ npm run dev
     └── main
         └── java
             └── com
-                └── golden_dobakhe
-                    └── HakPle
-                        ├── config           # AWS S3 설정 등
-                        ├── domain           # 핵심 도메인 로직
-                        │   ├── notification # 알림
-                        │   ├── post         # 게시글 (board, comment, like, report)
-                        │   ├── resource     # 리소스 (image)
-                        │   └── user         # 사용자 (admin, exception, myInfo, user)
-                        ├── global           # 전역 설정 (entity, exception, Status enum 등)
-                        └── security         # Spring Security 관련 (config, controller, dto, exception, jwt, OAuth, service, utils
+                └── 
 ```
 
 ---
