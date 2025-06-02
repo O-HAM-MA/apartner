@@ -120,6 +120,7 @@ export default function EditNoticePage({
             headers: {
               'Content-Type': 'application/json',
             },
+            credentials: 'include',
           }
         );
 
