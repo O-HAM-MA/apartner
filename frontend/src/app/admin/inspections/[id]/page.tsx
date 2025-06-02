@@ -66,7 +66,7 @@ export default function InspectionDetail() {
       setError(null);
       try {
         const id = params.id;
-        const res = await fetch(`/api/v1/inspection/manager/${id}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/manager/${id}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("점검 데이터를 불러오지 못했습니다.");
@@ -87,7 +87,7 @@ export default function InspectionDetail() {
       setIssuesError(null);
       try {
         const id = params.id;
-        const res = await fetch(`/api/v1/inspection/issue/show/${id}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/issue/show/${id}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("이슈 데이터를 불러오지 못했습니다.");
@@ -169,7 +169,7 @@ export default function InspectionDetail() {
     setIsDeleting(true);
     try {
       const id = params.id;
-      const res = await fetch(`/api/v1/inspection/manager/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/manager/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -204,7 +204,7 @@ export default function InspectionDetail() {
     setIsStarting(true);
     try {
       const id = params.id;
-      const res = await fetch(`/api/v1/inspection/manager/start/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/manager/start/${id}`, {
         method: "POST",
         credentials: "include",
       });
@@ -238,7 +238,7 @@ export default function InspectionDetail() {
     setIsCompleting(true);
     try {
       const id = params.id;
-      const res = await fetch(`/api/v1/inspection/manager/complete/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/manager/complete/${id}`, {
         method: "POST",
         credentials: "include",
       });
@@ -280,13 +280,12 @@ export default function InspectionDetail() {
     setIsAddingIssue(true);
     try {
       const id = params.id;
-      // 이슈 추가 API 호출
       const res = await fetch(`/api/v1/inspection/issue/${id}/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
+        credentials: "include", // JWT 토큰을 위한 credentials 포함
         body: JSON.stringify({
           description: newIssueComment.trim()
         }),
@@ -306,36 +305,12 @@ export default function InspectionDetail() {
         throw new Error(errorMessage);
       }
 
-      // 점검 상태를 ISSUE로 업데이트
-      const updateRes = await fetch(`/api/v1/inspection/manager/${id}/update_status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          result: "ISSUE"
-        }),
-      });
-
-      if (!updateRes.ok) {
-        console.error("점검 상태 업데이트에 실패했습니다.");
-      }
-
-      // 성공 시 입력란 초기화하고 데이터 새로고침
+      // 성공 시 입력란 초기화하고 이슈 목록 새로고침
       setNewIssueComment("");
-      
-      // 점검 데이터와 이슈 목록 새로고침
-      const [inspectionRes, issuesRes] = await Promise.all([
-        fetch(`/api/v1/inspection/manager/${id}`, { credentials: "include" }),
-        fetch(`/api/v1/inspection/issue/show/${id}`, { credentials: "include" })
-      ]);
-
-      if (inspectionRes.ok) {
-        const inspectionData = await inspectionRes.json();
-        setInspectionData(inspectionData);
-      }
-      
+      // 이슈 목록 새로고침
+      const issuesRes = await fetch(`/api/v1/inspection/issue/show/${id}`, {
+        credentials: "include",
+      });
       if (issuesRes.ok) {
         const issuesData = await issuesRes.json();
         setIssues(issuesData);
@@ -617,10 +592,19 @@ export default function InspectionDetail() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-sm text-muted-foreground">
-                      발견된 이슈가 없습니다
+                    <div className="flex items-start gap-2">
+                      <Square className="h-5 w-5 text-gray-600 dark:text-gray-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          점검 예정
+                        </p>
+                        <p className="text-foreground">
+                          아직 점검이 시작되지 않았습니다. 점검을 시작하고 진행해주세요.
+                        </p>
+                      </div>
                     </div>
                   )}
+
                   <div className="border-t border-border pt-4 mt-4">
                     <h3 className="font-medium text-foreground mb-3">
                       발견된 이슈
@@ -667,7 +651,7 @@ export default function InspectionDetail() {
                         발견된 이슈가 없습니다
                       </div>
                     )}
-                    {(inspectionData?.result === "PENDING" || inspectionData?.result === "ISSUE") && (
+                    {inspectionData?.result !== "CHECKED" && (
                       <div className="mt-4 space-y-2">
                         <Textarea
                           placeholder="이슈 내역을 등록해주세요"
