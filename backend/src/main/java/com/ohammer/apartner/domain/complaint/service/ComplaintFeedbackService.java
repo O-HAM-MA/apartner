@@ -45,7 +45,7 @@ public class ComplaintFeedbackService {
                 .map(feedback->AllComplaintFeedbackResponseDto.builder()
                         .feedbackId(feedback.getId())
                         .content(feedback.getContent())
-                        .userName(user.getUserName())
+                        .userName(feedback.getUser().getUserName())
                         .createAt(feedback.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
