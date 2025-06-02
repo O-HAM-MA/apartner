@@ -4411,17 +4411,17 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
             paged?: boolean;
             /** Format: int32 */
             pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
-            unpaged?: boolean;
         };
         SortObject: {
             empty?: boolean;
-            unsorted?: boolean;
             sorted?: boolean;
+            unsorted?: boolean;
         };
         /** @description 사용자 권한 - 공지사항 게시글 목록 조회 응답 DTO */
         UserNoticeSummaryResponseDto: {
@@ -6074,7 +6074,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6094,7 +6096,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6118,7 +6122,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6136,7 +6142,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6156,7 +6164,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6180,7 +6190,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6220,7 +6232,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6244,7 +6258,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6262,7 +6278,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6282,7 +6300,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -6306,7 +6326,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -6324,7 +6346,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -7491,7 +7515,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                notificationId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -7578,7 +7604,7 @@ export interface operations {
     getAllMenus: {
         parameters: {
             query: {
-                arg0: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -7913,12 +7939,12 @@ export interface operations {
         parameters: {
             query: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
-                arg3: components["schemas"]["Pageable"];
+                zipcode?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -8243,7 +8269,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -8267,7 +8295,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -8315,7 +8345,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -9329,11 +9361,11 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description 아파트 이름 검색어 */
-                arg0?: string;
+                name?: string;
                 /** @description 아파트 주소 검색어 */
-                arg1?: string;
+                address?: string;
                 /** @description 우편번호 검색어 */
-                arg2?: string;
+                zipcode?: string;
             };
             header?: never;
             path?: never;
@@ -9356,7 +9388,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9376,7 +9410,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9396,7 +9432,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                unitId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9416,7 +9454,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9436,7 +9476,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9476,7 +9518,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+                type: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9495,10 +9540,12 @@ export interface operations {
     getPagedUserNotifications: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9518,7 +9565,10 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+                category: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9558,7 +9608,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                notificationId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9577,10 +9629,12 @@ export interface operations {
     getApartmentNotifications: {
         parameters: {
             query?: {
-                arg1?: "active" | "inactive" | "pending" | "withdrawn";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
             };
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9599,13 +9653,13 @@ export interface operations {
     getUserList: {
         parameters: {
             query: {
-                arg0?: string;
-                arg1?: string;
-                arg2?: string;
-                arg3?: string;
-                arg4?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg5?: "active" | "inactive" | "pending" | "withdrawn";
-                arg6: components["schemas"]["Pageable"];
+                searchTerm?: string;
+                userName?: string;
+                email?: string;
+                apartmentName?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path?: never;
@@ -9628,7 +9682,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9647,11 +9703,13 @@ export interface operations {
     getUserLogs: {
         parameters: {
             query: {
-                arg1?: string;
-                arg2: components["schemas"]["Pageable"];
+                logType?: string;
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                userId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -9670,10 +9728,10 @@ export interface operations {
     exportUsers: {
         parameters: {
             query?: {
-                arg0?: string;
-                arg1?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
-                arg2?: "active" | "inactive" | "pending" | "withdrawn";
-                arg3?: string;
+                searchTerm?: string;
+                role?: "ADMIN" | "USER" | "MODERATOR" | "MANAGER";
+                status?: "active" | "inactive" | "pending" | "withdrawn";
+                format?: string;
             };
             header?: never;
             path?: never;
@@ -10186,7 +10244,7 @@ export interface operations {
     getBuildingsByApartment_1: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
             path: {
@@ -10210,10 +10268,12 @@ export interface operations {
     getUnitsByBuilding_1: {
         parameters: {
             query: {
-                arg1: components["schemas"]["Pageable"];
+                pageable: components["schemas"]["Pageable"];
             };
             header?: never;
-            path?: never;
+            path: {
+                buildingId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -10232,10 +10292,10 @@ export interface operations {
     getAdminAccountsByPage: {
         parameters: {
             query?: {
-                arg0?: number;
-                arg1?: number;
-                arg2?: string;
-                arg3?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+                direction?: string;
             };
             header?: never;
             path?: never;
@@ -10298,7 +10358,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                apartmentId: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -10442,7 +10504,7 @@ export interface operations {
     deleteReadNotifications: {
         parameters: {
             query?: {
-                arg0?: number;
+                days?: number;
             };
             header?: never;
             path?: never;
