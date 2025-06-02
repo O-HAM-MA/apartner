@@ -98,7 +98,7 @@ export default function CreateNoticePage() {
 
         // URL을 직접 구성하여 API 호출
         const response = await fetch(
-          `/api/v1/admin/apartments/${apartmentId}/buildings?page=0&size=100&sort=buildingNumber,asc`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/apartments/${apartmentId}/buildings?page=0&size=100&sort=buildingNumber,asc`,
           {
             method: 'GET',
             headers: {
@@ -155,14 +155,17 @@ export default function CreateNoticePage() {
           fileIds,
         };
 
-        const response = await fetch('/api/v1/admin/notices/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(noticeCreateData),
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/notices/create`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(noticeCreateData),
+          }
+        );
 
         if (!response.ok) {
           throw new Error('공지사항 작성에 실패했습니다.');
