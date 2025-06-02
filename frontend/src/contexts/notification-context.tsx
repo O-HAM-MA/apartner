@@ -272,15 +272,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      // SSE 연결 설정
-      const newEventSource = new EventSource(
-        `${SSE_URL}?userId=${currentUser.id}`
-      );
+      // 캐시 방지를 위한 타임스탬프 추가
+      const url = new URL(`${SSE_URL}?userId=${currentUser.id}`);
+      url.searchParams.append("_", Date.now().toString());
+
+      // EventSource 객체 생성 (withCredentials 옵션 추가)
+      const eventSourceInit = { withCredentials: true };
+      const newEventSource = new EventSource(url.toString(), eventSourceInit);
       setEventSource(newEventSource);
 
       // 연결 성공 이벤트
       newEventSource.addEventListener("connect", (event) => {
         setIsConnected(true);
+        console.log("SSE 연결 성공:", event);
       });
 
       // 알림 이벤트
@@ -288,7 +292,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const data = JSON.parse(event.data);
 
-          // 알림이 내 아파트 관련인지 확인 (apartmentName 사용)
+          // 알림이 내 아파트 관련인지 확인
           const isRelevant =
             !data.apartmentName ||
             data.apartmentName === currentUser.apartmentName ||
@@ -304,22 +308,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
               extra: data.extra,
             });
           }
-        } catch (error) {}
+        } catch (error) {
+          console.error("SSE 이벤트 처리 오류:", error);
+        }
       });
 
-      // 에러 이벤트
+      // 에러 처리
       newEventSource.onerror = (error) => {
+        console.error("SSE 연결 오류:", error);
         setIsConnected(false);
-
-        // 연결 재시도 로직 (1초 후)
-        setTimeout(() => {
-          if (newEventSource.readyState === EventSource.CLOSED) {
-            newEventSource.close();
-            setEventSource(null);
-          }
-        }, 1000);
       };
     } catch (error) {
+      console.error("SSE 설정 오류:", error);
       setIsConnected(false);
     }
 

@@ -47,6 +47,7 @@ export interface ApartnerTalkMessageType {
   isMyMessage?: boolean;
   isNew?: boolean;
   isSystem?: boolean;
+  isOptimistic?: boolean;
   chatroomId?: number;
 }
 
@@ -334,36 +335,83 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
 
       if (isCurrentChatroom) {
         setMessages((prevMessages) => {
-          const messageExists = prevMessages.some((msg) => {
-            if (
-              receivedMsg.messageId &&
-              msg.messageId === receivedMsg.messageId
-            ) {
-              return true;
-            }
+          // 더 강화된 중복 메시지 체크 로직
+          let isDuplicate = false;
 
+          // 낙관적 업데이트 메시지를 서버 응답으로 대체
+          const updatedMessages = prevMessages.map((msg) => {
+            // 내가 보낸 낙관적 업데이트 메시지이고 내용과 시간이 유사하면 서버 응답으로 대체
             if (
               isFromMe &&
+              msg.isOptimistic === true &&
               msg.message === receivedMsg.message &&
               msg.userId === Number(receivedMsg.userId) &&
               msg.timestamp &&
               receivedMsg.timestamp &&
               Math.abs(
-                new Date(msg.timestamp).getTime() -
-                  new Date(receivedMsg.timestamp).getTime()
+                new Date(msg.timestamp || new Date()).getTime() -
+                  new Date(receivedMsg.timestamp || new Date()).getTime()
               ) < 10000
             ) {
-              return true;
+              isDuplicate = true;
+              // 서버 응답으로 낙관적 업데이트 메시지 대체
+              return {
+                ...receivedMsg,
+                isMyMessage: true,
+                isNew: false,
+              };
             }
-
-            return false;
+            return msg;
           });
 
-          if (messageExists) {
-            return prevMessages;
+          // 중복 메시지 체크
+          if (!isDuplicate) {
+            const messageExists = prevMessages.some((msg) => {
+              // 1. messageId가 같으면 중복
+              if (
+                receivedMsg.messageId &&
+                msg.messageId === receivedMsg.messageId
+              ) {
+                return true;
+              }
+
+              // 2. 사용자ID, 메시지 내용, 타임스탬프가 모두 같으면 중복
+              if (
+                msg.userId === Number(receivedMsg.userId) &&
+                msg.message === receivedMsg.message &&
+                msg.timestamp === receivedMsg.timestamp
+              ) {
+                return true;
+              }
+
+              // 3. 내가 보낸 메시지이고, 내용과 시간이 유사하면 중복 (타임스탬프 10초 이내)
+              if (
+                isFromMe &&
+                msg.message === receivedMsg.message &&
+                msg.userId === Number(receivedMsg.userId) &&
+                msg.timestamp &&
+                receivedMsg.timestamp &&
+                Math.abs(
+                  new Date(msg.timestamp || new Date()).getTime() -
+                    new Date(receivedMsg.timestamp || new Date()).getTime()
+                ) < 10000
+              ) {
+                return true;
+              }
+
+              return false;
+            });
+
+            if (messageExists) {
+              isDuplicate = true;
+            }
           }
 
-          return [...prevMessages, receivedMsg];
+          if (isDuplicate) {
+            return updatedMessages;
+          }
+
+          return [...updatedMessages, receivedMsg];
         });
       }
     },
@@ -505,9 +553,18 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
         stompClient.deactivate();
       }
 
-      const socket = new SockJS(`/stomp/chats`);
+      // 백엔드 서버 URL 추출
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
+
+      const socket = new SockJS(`${apiBaseUrl}/stomp/chats`);
+      // @ts-ignore - SockJS 타입 정의에는 없지만 실제로는 존재하는 속성
+      socket.withCredentials = true; // 인증 쿠키 전송을 위한 설정 추가
       const client = new Client({
         webSocketFactory: () => socket,
+        debug: function (str) {
+          console.log(str);
+        },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
@@ -743,6 +800,7 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       message,
       chatroomId: chatroomId,
       timestamp: timestamp,
+      clientTimestamp: timestamp,
     };
 
     stompClient.publish({
@@ -762,6 +820,7 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       timestamp: timestamp,
       isMyMessage: true,
       isNew: true,
+      isOptimistic: true,
       userName: userInfo?.userName,
       profileImageUrl: userInfo?.profileImageUrl,
       apartmentName: userInfo?.apartmentName,
@@ -977,9 +1036,20 @@ export const ApartnerTalkProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    const socket = new SockJS(`/stomp/chats`);
+    // 백엔드 서버 URL 추출
+    const apiBaseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
+
     const client = new Client({
-      webSocketFactory: () => socket,
+      webSocketFactory: () => {
+        const socket = new SockJS(`${apiBaseUrl}/stomp/chats`);
+        // @ts-ignore - SockJS 타입 정의에는 없지만 실제로는 존재하는 속성
+        socket.withCredentials = true; // 인증 쿠키 전송을 위한 설정 추가
+        return socket;
+      },
+      debug: function (str) {
+        console.log(str);
+      },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

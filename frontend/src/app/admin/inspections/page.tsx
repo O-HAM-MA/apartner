@@ -1,7 +1,11 @@
 "use client";
 import {
+  BellRing,
   ChevronDown,
+  FileEdit,
+  Plus,
   Search,
+  Trash2,
   Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +14,8 @@ import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import InspectionTypeManagementModal from "@/components/InspectionTypeManagementModal";
+
 
 // 날짜 포맷 함수
 const formatDateTime = (dateTimeString: string) => {
@@ -102,6 +108,7 @@ export default function AdminDashboard() {
   const searchParams = useSearchParams();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+  const [isTypeManagementModalOpen, setIsTypeManagementModalOpen] = useState(false);
   const [issuesError, setIssuesError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -227,9 +234,22 @@ export default function AdminDashboard() {
           {/* Header with Title and Bell Icon */}
           <header className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-foreground">시설점검</h2>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTypeManagementModalOpen(true)}
+              >
+                분류 관리
+              </Button>
+              {/* <button className="relative p-2 rounded-full hover:bg-secondary focus:outline-none">
+                <BellRing size={22} className="text-muted-foreground" />
+                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-pink-500 ring-2 ring-background"></span>
+              </button> */}
+            </div>
           </header>
 
-          {/* Tab Navigation */}
+          {/* Tab Navigation and Add Button */}
           <div className="flex justify-between items-center border-b border-border mb-6">
             <div className="flex">
               <button
@@ -244,6 +264,14 @@ export default function AdminDashboard() {
               >
                 이슈 내역 보기
               </button>
+            </div>
+            <div className="flex items-center gap-2 -translate-y-1">
+              <Link href="/admin/inspections/new">
+                <Button className="bg-pink-500 text-white hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 dark:text-white">
+                  <Plus className="mr-1 h-4 w-4" />
+                  점검 추가
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -326,7 +354,7 @@ export default function AdminDashboard() {
                             <tr key={inspection.inspectionId} className="border-b border-border hover:bg-secondary/30 transition-colors">
                               <td className="px-4 py-3 text-left font-medium">{inspection.inspectionId}</td>
                               <td className="px-4 py-3 text-left">
-                                <Link href={`/udash/inspections/${inspection.inspectionId}`} className="text-pink-500 hover:underline">
+                                <Link href={`/admin/inspections/${inspection.inspectionId}`} className="text-pink-500 hover:underline">
                                   {inspection.title}
                                 </Link>
                               </td>
@@ -363,7 +391,7 @@ export default function AdminDashboard() {
                           <span className="text-xs text-muted-foreground">이슈 ID: {issue.id}</span>
                         </div>
                         <h3 className="font-bold text-foreground mb-1">
-                          점검 제목: <Link href={`/udash/inspections/${issue.inspectionId}`} className="text-pink-500 hover:underline">{issue.title || '제목 없음'}</Link>
+                          점검 제목: <Link href={`/admin/inspections/${issue.inspectionId}`} className="text-pink-500 hover:underline">{issue.title || '제목 없음'}</Link>
                         </h3>
                         <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">{issue.description}</p>
                         <div className="flex justify-between text-xs text-muted-foreground">
@@ -455,6 +483,11 @@ export default function AdminDashboard() {
               점검 기록이 성공적으로 삭제되었습니다.
             </div>
           )}
+          {/* Type Management Modal */}
+          <InspectionTypeManagementModal
+            isOpen={isTypeManagementModalOpen}
+            onClose={() => setIsTypeManagementModalOpen(false)}
+          />
         </main>
 
         {/* Footer */}

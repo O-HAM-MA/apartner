@@ -75,7 +75,10 @@ public enum UserErrorCode {
     ALREADY_WITHDRAWN_USER("이미 탈퇴한 회원입니다.", HttpStatus.BAD_REQUEST),
 
     @Schema(description = "비밀번호가 일치하지 않습니다.")
-    PASSWORD_NOT_MATCH("비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
+    PASSWORD_NOT_MATCH("비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+    
+    @Schema(description = "비밀번호는 필수입니다.")
+    PASSWORD_REQUIRED("비밀번호는 필수입니다.", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus status;

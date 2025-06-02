@@ -319,9 +319,7 @@ const ChatInterface: React.FC = () => {
             [
               ...new Map(
                 messages.map((msg) => [
-                  msg.messageId ||
-                    msg.id ||
-                    `${msg.userId}-${msg.message}-${msg.timestamp}`,
+                  `${msg.userId}-${msg.message}-${msg.timestamp}`,
                   msg,
                 ])
               ).values(),

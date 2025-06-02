@@ -94,19 +94,6 @@ public class InspectionV1Controller {
         }
     }
 
-
-//    //전체 불러오기
-//    //그냥 여기서 제목만 불러와도 되는게 아닌가
-//    @GetMapping("")
-//    @Operation(
-//            summary = "점검 일정을 가져옵니다",
-//            description = "점검 일정 목록을 가져옵니다"
-//    )
-//    public ResponseEntity<List<InspectionResponseDetailDto>> showAllInspections() {
-//        User user = SecurityUtil.getCurrentUser();
-//        return ResponseEntity.ok(inspectionService.showAllInspections());
-//    }
-
     //전체 불러오기
     //그냥 여기서 제목만 불러와도 되는게 아닌가
     @GetMapping()
@@ -135,6 +122,15 @@ public class InspectionV1Controller {
             return ResponseEntity.badRequest().build();
         }
 
+    }
+
+    //검색
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<Page<InspectionResponseDetailDto>> searchInsepction(@PathVariable("keyword") String keyword, @RequestParam(name = "page") int page) {
+        if (page < 1)
+            page = 1;
+        Pageable pageable = PageRequest.of(page - 1, 6, Sort.by(Sort.Direction.DESC, "id"));
+        return ResponseEntity.ok().body(inspectionService.searchInspection(keyword, pageable));
     }
 
     //제거

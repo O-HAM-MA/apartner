@@ -130,7 +130,7 @@ export default function InspectionForm({
       if (onSubmit) {
         onSubmit(requestBody);
       }
-      router.push("/udash/inspections?success=1");
+      router.push("/admin/inspections?success=1");
     } catch (error: any) {
       console.error("Error submitting inspection:", error);
       alert(error.message || "점검 등록 중 오류가 발생했습니다.");
@@ -212,7 +212,7 @@ export default function InspectionForm({
 
           {/* Back Button */}
           <div className="mb-6">
-            <Link href="/udash/inspections">
+            <Link href="/admin/inspections">
               <Button
                 variant="outline"
                 className="flex items-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:text-pink-400 dark:border-pink-900/30 dark:hover:bg-pink-950/30 dark:hover:text-pink-300"
@@ -396,15 +396,18 @@ export default function InspectionForm({
                       <Save size={16} />
                       {isSubmitting ? "저장 중..." : "점검 등록하기"}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full border-border text-foreground hover:bg-secondary flex items-center justify-center gap-2"
-                      onClick={onCancel}
-                    >
-                      <X size={16} />
-                      취소
-                    </Button>
+                    <div>
+                      <Link href="/admin/inspections">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full flex items-center gap-2 text-muted-foreground hover:bg-secondary"
+                        >
+                          <X size={16} />
+                          취소
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
 

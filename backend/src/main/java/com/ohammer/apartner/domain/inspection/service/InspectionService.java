@@ -9,6 +9,8 @@ import com.ohammer.apartner.domain.inspection.entity.InspectionType;
 import com.ohammer.apartner.domain.inspection.entity.Result;
 import com.ohammer.apartner.domain.inspection.repository.InspectionRepository;
 import com.ohammer.apartner.domain.inspection.repository.InspectionTypeRepository;
+import com.ohammer.apartner.domain.notice.dto.request.NoticeRequestDto;
+import com.ohammer.apartner.domain.notice.service.NoticeServiceImpl;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.domain.user.repository.UserRepository;
 import com.ohammer.apartner.global.Status;
@@ -31,8 +33,8 @@ import java.util.List;
 public class InspectionService {
     private final InspectionRepository inspectionRepository;
     private final InspectionTypeRepository inspectionTypeRepository;
-    private final UserRepository userRepository;
     private final AlarmService alarmService;
+    private final NoticeServiceImpl noticeService;
     //대충 유저 리포지토리가 있다고 가정
     public boolean itIsYou(Inspection inspection) {
         User user = SecurityUtil.getCurrentUser();
@@ -57,14 +59,16 @@ public class InspectionService {
 
     @Transactional
     public Inspection newInspectionSchedule (InspectionRequestDto dto) {
-        //대충 유저 찾기
-        //원래 통으로 객체를 찾을까 싶었는데, 도용?의 문제가 있을 것 같아서 효율성 깎고 id뽑아서 찾아오는걸루
-        //하지만 우리는 보안상으로 jwt는 필터에서만 처리시키기 때문에 여기서는 처리하지 않는다
         User user = SecurityUtil.getCurrentUser();
         if (user == null)
             throw new RuntimeException("인증 과정에 오류가 생겼음");
 
         InspectionType type = inspectionTypeRepository.findByTypeName(dto.getType());
+        Result result;
+        if (dto.getStartAt().isAfter(LocalDateTime.now()))
+            result = Result.NOTYET;
+        else
+            result = Result.PENDING;
 
         Inspection inspection = Inspection.builder()
                 .user(user)
@@ -73,13 +77,17 @@ public class InspectionService {
                 .detail(dto.getDetail())
                 .title(dto.getTitle())
                 .type(type)
-                .result(Result.PENDING)
+                .result(result)
                 .modifiedAt(null)
                 .createdAt(LocalDateTime.now())
                 .status(Status.ACTIVE)
                 .build();
-        //TODO 나중에 공지 추가되면 공지에 넣는것도 추가하기
         Inspection saved = inspectionRepository.save(inspection);
+
+        NoticeRequestDto noticeRequestDto = new NoticeRequestDto(dto.getTitle(), dto.getDetail(), null, null, null);
+
+        noticeService.createNotice(noticeRequestDto, user.getId());
+
         
         if (user.getApartment() != null) {
             String message = user.getUserName() + "님이 새로운 점검 일정을 등록했습니다: " + dto.getTitle();
@@ -123,6 +131,11 @@ public class InspectionService {
         inspection.setType(inspectionTypeRepository.findByTypeName(dto.getType()));
 
         inspection.setResult(findResult(dto.getResult()));
+
+        if (dto.getResult().equals("CHECKED"))
+            inspection.setFinishAt(LocalDateTime.now());
+        else if (dto.getResult().equals("PENDING"))
+            inspection.setStartAt(LocalDateTime.now());
 
         inspectionRepository.save(inspection);
         User user = inspection.getUser();
@@ -231,18 +244,12 @@ public class InspectionService {
         }
     }
 
-    //이슈 변경
-//    @Transactional
-//    public void IssueInspection(Long id, InspectionIssueDto dto) {
-//        if (!inspectionRepository.existsById(id))
-//            throw new RuntimeException("그거 없는댑쇼");
-//        Inspection inspection = inspectionRepository.findById(id).get();
-//        if (!itIsYou(dto.getUserName(), inspection))
-//            throw new RuntimeException("본인만 이슈 추가가 가능합니다");
-//        inspection.setResult(Result.ISSUE);
-//
-//        inspectionRepository.save(inspection);
-//    }
+    //검색
+    public Page<InspectionResponseDetailDto> searchInspection(String keyword, Pageable pageable) {
+        return inspectionRepository
+                .findActiveByTitleOrDetailContainingIgnoreCase(keyword, pageable)
+                .map(InspectionResponseDetailDto::fromEntity);
+    }
 
 
     // =========== 여기서 부턴 타입쪽 ===========
@@ -263,19 +270,5 @@ public class InspectionService {
 
         return inspectionTypeRepository.save(inspectionType);
     }
-
-//    //삭제
-//    @Transactional
-//    public void removeType(Long id) {
-//        InspectionType type = inspectionTypeRepository.findById(id).orElseThrow();
-//        inspectionTypeRepository.delete(type);
-//    }
-//
-//
-//    //수정
-//    @Transactional
-//    public void updateInspectionType(Long id, )
-//
-
 
 }
