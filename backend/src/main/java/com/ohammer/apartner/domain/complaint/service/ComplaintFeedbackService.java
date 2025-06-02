@@ -80,7 +80,7 @@ public class ComplaintFeedbackService {
                 "info",
                 "COMPLAINT",
                 complaint.getTitle() + "에 새 답변이 등록되었습니다.",
-                "/udash/complaints",
+                null,
                 complaint.getId(),
                 null,
                 null
@@ -129,7 +129,7 @@ public class ComplaintFeedbackService {
                 "success",
                 "COMPLAINT",
                 complaint.getTitle() + "의 답변이 수정되었습니다.",
-                "/udash/complaints",
+                null,
                 complaint.getId(),
                 null,
                 null
@@ -179,7 +179,7 @@ public class ComplaintFeedbackService {
                 "warning",
                 "COMPLAINT",
                 complaint.getTitle() + "의 답변이 삭제되었습니다.",
-                "/udash/complaints",
+                null,
                 complaint.getId(),
                 null,
                 null

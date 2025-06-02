@@ -169,7 +169,7 @@ public class ComplaintService {
                 "info",
                 "COMPLAINT",
                 user.getUserName() + "님이 새 민원을 등록했습니다: " + complaint.getTitle(),
-                "/admin/complaints",
+                 null,
                 user.getId(),
                 complaint.getId(),
                 null
@@ -215,7 +215,7 @@ public class ComplaintService {
                 "info",
                 "COMPLAINT",
                 user.getUserName() + "님이 민원을 수정했습니다: " + complaint.getTitle(),
-                "/admin/complaints",
+                null,
                 user.getId(),
                 complaint.getId(),
                 null
@@ -271,7 +271,7 @@ public class ComplaintService {
             type,
             "COMPLAINT",
             "민원 '" + complaint.getTitle() + "'의 상태가 " + statusMessage + "로 변경되었습니다.",
-            "/udash/complaints",
+            null,
             complaint.getId()
         );
 
@@ -311,7 +311,7 @@ public class ComplaintService {
             "error",
             "COMPLAINT",
             "민원 '" + complaint.getTitle() + "'이 비활성화 되었습니다.",
-            "/udash/complaints",
+            null,
             complaint.getId()
         );
 
@@ -354,7 +354,7 @@ public class ComplaintService {
                 "info",
                 "COMPLAINT",
                 user.getUserName() + "님이 민원을 삭제했습니다: " + complaint2.getTitle(),
-                "/admin/complaints",
+                null,
                 user.getId(),
                 complaint2.getId(),
                 null
