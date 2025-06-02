@@ -72,7 +72,7 @@ public class SecurityConfig {
 
 
                                 // SSE 엔드포인트 추가
-                                "/sse/connect"
+                                "/sse/**"
 
                         ).permitAll()
                         // 채팅 API는 제거 (adminSecurityFilterChain에서 처리)
