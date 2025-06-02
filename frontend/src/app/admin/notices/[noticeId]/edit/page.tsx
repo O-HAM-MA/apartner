@@ -114,7 +114,7 @@ export default function EditNoticePage({
       try {
         // URL을 직접 구성하여 API 호출
         const response = await fetch(
-          `/api/v1/admin/apartments/${apartmentId}/buildings?page=0&size=100&sort=buildingNumber,asc`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/apartments/${apartmentId}/buildings?page=0&size=100&sort=buildingNumber,asc`,
           {
             method: 'GET',
             headers: {
