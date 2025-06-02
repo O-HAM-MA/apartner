@@ -682,10 +682,14 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
           formData.append('files', file);
 
           try {
-            const res = await fetch('/api/v1/notices/media/files/upload', {
-              method: 'POST',
-              body: formData,
-            });
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/notices/media/files/upload`,
+              {
+                method: 'POST',
+                body: formData,
+                credentials: 'include',
+              }
+            );
 
             if (!res.ok) {
               throw new Error('파일 업로드에 실패했습니다.');
@@ -759,10 +763,14 @@ const TiptapEditor: FC<TiptapEditorProps> = ({
             const formData = new FormData();
             formData.append('files', file);
 
-            const res = await fetch('/api/v1/notices/media/images/upload', {
-              method: 'POST',
-              body: formData,
-            });
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/notices/media/images/upload`,
+              {
+                method: 'POST',
+                body: formData,
+                credentials: 'include',
+              }
+            );
 
             if (!res.ok) {
               throw new Error('이미지 업로드에 실패했습니다.');
