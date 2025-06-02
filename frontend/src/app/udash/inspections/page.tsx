@@ -114,7 +114,7 @@ export default function AdminDashboard() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/v1/inspection/manager?page=${currentPage}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/manager?page=${currentPage}`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("서버에서 데이터를 불러오지 못했습니다.");
@@ -158,7 +158,7 @@ export default function AdminDashboard() {
       setIsLoadingIssues(true);
       setIssuesError(null);
       try {
-        const res = await fetch('/api/v1/inspection/issue/show_all', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/issue/show_all`, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/inspection/manager/search/${encodeURIComponent(keyword)}?page=${page}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/manager/search/${encodeURIComponent(keyword)}?page=${page}`, {
         credentials: "include",
       });
 
