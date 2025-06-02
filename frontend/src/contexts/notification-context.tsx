@@ -277,8 +277,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       url.searchParams.append("_", Date.now().toString());
 
       // EventSource 객체 생성 (withCredentials 옵션 추가)
-      const eventSourceInit = { withCredentials: true };
-      const newEventSource = new EventSource(url.toString(), eventSourceInit);
+      // const eventSourceInit = { withCredentials: true };
+      // const newEventSource = new EventSource(url.toString(), eventSourceInit);
+
+      const newEventSource = new EventSource(url.toString());
       setEventSource(newEventSource);
 
       // 연결 성공 이벤트
