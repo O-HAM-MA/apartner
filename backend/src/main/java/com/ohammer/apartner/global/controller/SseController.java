@@ -39,9 +39,7 @@ public class SseController {
      */
     @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE 연결", description = "클라이언트의 SSE 연결 요청을 처리합니다.")
-    public ResponseEntity<SseEmitter> connect(
-            @RequestParam("userId") Long userId) {
-
+    public ResponseEntity<SseEmitter> connect(@RequestParam("userId") Long userId) {
         log.info("SSE 연결 요청 - userId: {}", userId);
 
         if (userId == null) {
@@ -70,8 +68,23 @@ public class SseController {
             }
             
             // 유저 ID, 아파트 ID, 아파트 이름, 권한 정보와 함께 SSE 연결 생성
-            SseEmitter emitter = sseEmitters.add(userId, apartmentId, apartmentName, role);
-            return ResponseEntity.ok(emitter);
+            SseEmitter emitter = sseEmitters.add(
+                userId, 
+                apartmentId,
+                apartmentName,
+                role
+            );
+            
+            // HTTP/1.1 강제 및 적절한 헤더 설정으로 반환
+            return ResponseEntity
+                .ok()
+                .header("X-Accel-Buffering", "no") // NGINX 사용 시 필요
+                .header("Cache-Control", "no-cache, no-transform")
+                .header("Connection", "keep-alive")
+                .header("Content-Type", "text/event-stream;charset=UTF-8")
+                .header("Transfer-Encoding", "chunked")
+                .header("Pragma", "no-cache")
+                .body(emitter);
         } catch (ResourceNotFoundException e) {
             log.error("SSE 연결 중 오류 발생: 사용자를 찾을 수 없습니다 - {}", e.getMessage());
             throw new SseException("사용자 정보를 찾을 수 없습니다: " + e.getMessage());

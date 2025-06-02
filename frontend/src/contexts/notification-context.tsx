@@ -272,55 +272,99 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      // SSE 연결 설정 - credentials 옵션 추가
-      const eventSourceInit = { withCredentials: true };
-      const newEventSource = new EventSource(
-        `${SSE_URL}?userId=${currentUser.id}`,
-        eventSourceInit
-      );
-      setEventSource(newEventSource);
+      const url = new URL(`${SSE_URL}?userId=${currentUser.id}`);
+      url.searchParams.append("_", Date.now().toString()); // 캐싱 방지
 
-      // 연결 성공 이벤트
-      newEventSource.addEventListener("connect", (event) => {
-        setIsConnected(true);
-      });
-
-      // 알림 이벤트
-      newEventSource.addEventListener("alarm", (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          // 알림이 내 아파트 관련인지 확인 (apartmentName 사용)
-          const isRelevant =
-            !data.apartmentName ||
-            data.apartmentName === currentUser.apartmentName ||
-            data.userId === currentUser.id;
-
-          if (isRelevant) {
-            addNotification({
-              title: data.title || data.type,
-              message: data.message,
-              type: data.type || "info",
-              linkUrl: data.linkUrl,
-              entityId: data.entityId,
-              extra: data.extra,
-            });
-          }
-        } catch (error) {}
-      });
-
-      // 에러 이벤트
-      newEventSource.onerror = (error) => {
-        setIsConnected(false);
-
-        // 연결 재시도 로직 (1초 후)
-        setTimeout(() => {
-          if (newEventSource.readyState === EventSource.CLOSED) {
-            newEventSource.close();
-            setEventSource(null);
-          }
-        }, 1000);
+      // HTTP/1.1 강제 사용을 위한 fetch 활용
+      const fetchOptions = {
+        method: "GET",
+        headers: {
+          Accept: "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+        credentials: "include",
+        cache: "no-store",
       };
+
+      fetch(url.toString(), fetchOptions)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("SSE 연결 실패");
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          setIsConnected(true);
+
+          function processEvents() {
+            reader
+              .read()
+              .then(({ done, value }) => {
+                if (done) {
+                  setIsConnected(false);
+                  return;
+                }
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n\n");
+                buffer = lines.pop() || "";
+
+                lines.forEach((line) => {
+                  if (!line.trim()) return;
+
+                  // 이벤트 이름과 데이터 파싱
+                  const eventMatch = line.match(/event: ([^\n]+)/);
+                  const dataMatch = line.match(/data: (.+)/);
+
+                  if (eventMatch && dataMatch) {
+                    const eventName = eventMatch[1];
+                    try {
+                      const data = JSON.parse(dataMatch[1]);
+
+                      // 이벤트 처리
+                      if (eventName === "connect") {
+                        setIsConnected(true);
+                      } else if (eventName === "alarm") {
+                        // 알림이 내 아파트 관련인지 확인
+                        const isRelevant =
+                          !data.apartmentName ||
+                          data.apartmentName === currentUser.apartmentName ||
+                          data.userId === currentUser.id;
+
+                        if (isRelevant) {
+                          addNotification({
+                            title: data.title || data.type,
+                            message: data.message,
+                            type: data.type || "info",
+                            linkUrl: data.linkUrl,
+                            entityId: data.entityId,
+                            extra: data.extra,
+                          });
+                        }
+                      }
+                    } catch (error) {
+                      console.error("SSE 이벤트 처리 오류:", error);
+                    }
+                  }
+                });
+
+                processEvents();
+              })
+              .catch((error) => {
+                console.error("SSE 읽기 오류:", error);
+                setIsConnected(false);
+              });
+          }
+
+          processEvents();
+        })
+        .catch((error) => {
+          console.error("SSE 연결 오류:", error);
+          setIsConnected(false);
+        });
     } catch (error) {
       setIsConnected(false);
     }
