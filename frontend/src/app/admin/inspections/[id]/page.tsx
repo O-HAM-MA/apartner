@@ -280,12 +280,12 @@ export default function InspectionDetail() {
     setIsAddingIssue(true);
     try {
       const id = params.id;
-      const res = await fetch(`/api/v1/inspection/issue/${id}/create`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/issue/${id}/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // JWT 토큰을 위한 credentials 포함
+        credentials: "include",
         body: JSON.stringify({
           description: newIssueComment.trim()
         }),
@@ -308,7 +308,7 @@ export default function InspectionDetail() {
       // 성공 시 입력란 초기화하고 이슈 목록 새로고침
       setNewIssueComment("");
       // 이슈 목록 새로고침
-      const issuesRes = await fetch(`/api/v1/inspection/issue/show/${id}`, {
+      const issuesRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/issue/show/${id}`, {
         credentials: "include",
       });
       if (issuesRes.ok) {
@@ -337,7 +337,7 @@ export default function InspectionDetail() {
 
     setIsUpdatingIssue(true);
     try {
-      const res = await fetch(`/api/v1/inspection/issue/${editingIssue.id}/update`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/issue/${editingIssue.id}/update`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -363,8 +363,8 @@ export default function InspectionDetail() {
       }
 
       // 성공 시 이슈 목록 새로고침
-      const inspectionId = params.id; // 현재 점검의 ID
-      const issuesRes = await fetch(`/api/v1/inspection/issue/show/${inspectionId}`, {
+      const inspectionId = params.id;
+      const issuesRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/issue/show/${inspectionId}`, {
         credentials: "include",
       });
       if (issuesRes.ok) {
