@@ -38,15 +38,15 @@
 <details>
   <summary>📅 공용시설 예약 및 관리</summary>
   
-- **사용자**  
+  ### 🏠 사용자
   <img width="700" alt="2-사용자공용시설목록" src="https://github.com/user-attachments/assets/c96ff718-775b-4a1d-9756-f258736d77bf" />
   <img width="700" alt="2-사용자-공용시설스케줄예약" src="https://github.com/user-attachments/assets/5804d2e7-db3f-4302-80ad-7addf4f960b6" />
   <img width="700" alt="2-사용자-공용시설예약등록" src="https://github.com/user-attachments/assets/073c362e-8d81-4254-8664-04d856fe172e" />
   <img width="700" alt="2-사용자-공용시설예약목록" src="https://github.com/user-attachments/assets/7c736c17-c285-48f3-9848-412472d28dc0" />
 
-- **관리자**
-  <img width="700" alt="2-관리자-예약확인" src="https://github.com/user-attachments/assets/37d897d4-c7a5-471e-b18a-afc7ebc8e75a" />
-  <img width="700" alt="2-관리자-공용시설등록" src="https://github.com/user-attachments/assets/252f080d-1d04-4bf8-983a-3764f490271c" />
+  ### 🛡️ 관리자
+  <img width="700" alt="2-관리자-예약확인" src="https://github.com/user-attachments/assets/37d897d4-c7a5-471e-b18a-afc7ebc8e75a" />
+  <img width="700" alt="2-관리자-공용시설등록" src="https://github.com/user-attachments/assets/252f080d-1d04-4bf8-983a-3764f490271c" />
 
 </details>
 
@@ -144,48 +144,8 @@
 - **📝 민원 관리**: 민원 접수 및 해결
 - **🦺 시설 점검 관리**: 소방/가스/전기 등 안전 점검 관리
 - **📢 공지사항 관리**: 새로운 공지사항 실시간 알림
-- **🗣️ 소통**: 동대표, 입주민, 관리자 사이의 소통 강화 
-
----
-
-## 🏗️ 기술 스택
-
-| 분야 | 기술 |
-|:---|:---|
-| Backend | Java 21, Spring Boot |
-| Frontend | JavaScript, React, Next.js |
-| Database | MySQL, Redis, S3 |
-| DevOps | Docker, Terraform, AWS (EC2, RDS) |
-| CI/CD | GitHub Actions |
-
----
-
-## 🚀 Getting Started
-
-### Backend (Spring Boot)
-```bash
-# 1. 프로젝트 클론
-git clone https://github.com/O-HAM-MA/apartner.git
-cd apartner/backend
-
-# 2. 환경변수 설정
-cp src/main/resources/application.yml.example src/main/resources/application.yml
-# (application.yml을 자신의 DB/환경에 맞게 수정하세요)
-
-# 3. 서버 실행
-./gradlew bootRun
-```
-### Frontend (Next.js)
-```bash
-cd apartner/frontend
-
-# 의존성 설치
-npm install
-
-# 개발 서버 실행
-npm run dev
-
-```
+- **🗣️ 소통**: 동대표, 입주민, 관리자 사이의 소통 강화
+  
 ---
 
 ## 🛠️ 주요 기능 상세
@@ -260,6 +220,47 @@ npm run dev
   - 실시간 채팅: WebSocket(STOMP/SockJS) 기반 유저 간 실시간 메시지
   - 실시간 알림: SSE(Server-Sent Events)로 댓글, 좋아요, 공지 등 즉시 알림 push
  
+---
+
+## 🏗️ 기술 스택
+
+| 분야 | 기술 |
+|:---|:---|
+| Backend | Java 21, Spring Boot |
+| Frontend | JavaScript, React, Next.js |
+| Database | MySQL, Redis, S3 |
+| DevOps | Docker, Terraform, AWS (EC2, RDS) |
+| CI/CD | GitHub Actions |
+
+---
+
+## 🚀 Getting Started
+
+### Backend (Spring Boot)
+```bash
+# 1. 프로젝트 클론
+git clone https://github.com/O-HAM-MA/apartner.git
+cd apartner/backend
+
+# 2. 환경변수 설정
+cp src/main/resources/application.yml.example src/main/resources/application.yml
+# (application.yml을 자신의 DB/환경에 맞게 수정하세요)
+
+# 3. 서버 실행
+./gradlew bootRun
+```
+### Frontend (Next.js)
+```bash
+cd apartner/frontend
+
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
+npm run dev
+
+```
+
 ---
 
 ## :open_file_folder: Project Structure
