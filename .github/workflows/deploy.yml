@@ -131,8 +131,17 @@ jobs:
               NEXT="app1_1"
             else
               echo "⚠️ 실행 중인 컨테이너가 없습니다. 초기 배포 상황이거나 예외입니다."
-              CURRENT="app1_1"
-              NEXT="app1_2"
+              CURRENT=""
+              NEXT="app1_1"
+            fi
+
+            // 초기 배포일경우 삭제 방지
+            if [ -n "$CURRENT" ]; then
+            echo "Stopping old container: $CURRENT"
+            docker stop "$CURRENT" 2>/dev/null
+            docker rm "$CURRENT" 2>/dev/null
+            else
+              echo "⚠️ No current container to stop."
             fi
 
             # 다음 컨테이너 실행
