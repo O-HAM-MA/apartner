@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/api/v1/vehicles/**",
                                 "/api/v1/entry-records/**",
 
+
                                 
                                 // WebSocket 엔드포인트 추가
                                 "/stomp/**",
@@ -67,11 +68,12 @@ public class SecurityConfig {
                                 "/pub/**",
 
 
-                                // SSE 엔드포인트 추가
-                                "/sse/connect",
+
 
                                 //healthcheck
-                                "actuator/health"
+                                "actuator/health",
+                                // SSE 엔드포인트 추가
+                                "/sse/**"
 
                         ).permitAll()
                         // 채팅 API는 제거 (adminSecurityFilterChain에서 처리)

@@ -32,13 +32,20 @@ public class OpinionReplyService {
 
         List<OpinionReply> opinionReplies = opinionReplyRepository.findByOpinionId(opinionId);
 
-        return opinionReplies.stream().map(reply -> OpinionReplyResponseDto.builder()
-                        .id(reply.getId())
-                        .reply(reply.getReply())
-                        .userName(reply.getUser().getUserName())
-                        .createdAt(reply.getCreatedAt())
-                        .build()
-                ).collect(Collectors.toList());
+        return opinionReplies.stream().map(reply -> {
+            String userRole = reply.getUser().getRoles().stream()
+                    .findFirst()
+                    .map(Enum::name)
+                    .orElse("UNKNOWN");
+
+            return OpinionReplyResponseDto.builder()
+                    .id(reply.getId())
+                    .reply(reply.getReply())
+                    .userName(reply.getUser().getUserName())
+                    .userRole(userRole) // ✅ 작성자의 역할 추가
+                    .createdAt(reply.getCreatedAt())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     public CreateOpinionReplyResponseDto saveOpinionReply(Long opinionId, CreateOpinionReplyRequestDto createOpinionReplyRequestDto) throws AccessDeniedException {

@@ -103,7 +103,7 @@ export default function InspectionForm({
       };
 
       // API 호출
-      const res = await fetch("/api/v1/inspection/manager/create", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/manager/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -177,8 +177,13 @@ export default function InspectionForm({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/v1/inspection/type", {
-          credentials: "include",
+        // JWT 토큰을 포함하여 점검 분류 데이터 요청
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/inspection/type`, {
+          method: "GET",
+          credentials: "include", // JWT 토큰을 위한 credentials 포함
+          headers: {
+            "Accept": "application/json",
+          },
         });
         if (!res.ok) throw new Error("분류 데이터를 불러오지 못했습니다.");
         const data = await res.json();

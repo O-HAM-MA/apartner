@@ -16,5 +16,7 @@ public class AllComplaintFeedbackResponseDto {
 
     private String content;
 
+    private String userRole;
+
     private LocalDateTime createAt;
 }

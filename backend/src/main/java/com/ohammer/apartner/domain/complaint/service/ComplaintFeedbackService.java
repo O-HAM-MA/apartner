@@ -9,11 +9,14 @@ import com.ohammer.apartner.domain.complaint.dto.response.UpdateComplaintFeedbac
 import com.ohammer.apartner.domain.complaint.entity.Complaint;
 import com.ohammer.apartner.domain.complaint.entity.ComplaintFeedback;
 import com.ohammer.apartner.domain.complaint.repository.ComplaintFeedbackRepository;
+import com.ohammer.apartner.domain.user.entity.Role;
 import com.ohammer.apartner.domain.user.entity.User;
 import com.ohammer.apartner.global.service.AlarmService;
 import com.ohammer.apartner.security.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;  
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
@@ -28,6 +31,7 @@ public class ComplaintFeedbackService {
     private final AlarmService alarmService;
 
     // Read
+    @Transactional
     public List<AllComplaintFeedbackResponseDto> findComplaintFeedbackByComplaintId(Long complaintId) throws AccessDeniedException {
         List<ComplaintFeedback> complaintFeedbackList = complaintFeedbackRepository.findByComplaintId(complaintId);
 
@@ -41,7 +45,7 @@ public class ComplaintFeedbackService {
                 .map(feedback->AllComplaintFeedbackResponseDto.builder()
                         .feedbackId(feedback.getId())
                         .content(feedback.getContent())
-                        .userName(user.getUserName())
+                        .userName(feedback.getUser().getUserName())
                         .createAt(feedback.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
@@ -69,7 +73,7 @@ public class ComplaintFeedbackService {
                 .build();
 
         complaintFeedbackRepository.save(complaintFeedback);
-        
+
         // 민원 작성자에게 피드백 등록 알림 전송
         Long apartmentId = complaint.getUser().getApartment().getId();
         if (apartmentId != null) {
@@ -115,9 +119,9 @@ public class ComplaintFeedbackService {
         }
 
         complaintFeedback.setContent(complaintFeedbackRequestDto.getContent());
-        
+
         complaintFeedbackRepository.save(complaintFeedback);
-        
+
         // 민원 작성자에게 피드백 수정 알림 전송
         Complaint complaint = complaintFeedback.getComplaint();
         Long apartmentId = complaint.getUser().getApartment().getId();
@@ -159,7 +163,7 @@ public class ComplaintFeedbackService {
         }
 
         ComplaintFeedback cf = findByFeedbackId(feedbackId);
-        
+
         if (cf == null) {
             throw new Exception("해당하는 민원 피드백이 없습니다.");
         }
@@ -167,7 +171,7 @@ public class ComplaintFeedbackService {
         if(!user.getId().equals(cf.getUser().getId())){
             throw new Exception("유저의 ID가 다릅니다");
         }
-        
+
         // 민원 작성자에게 피드백 삭제 알림 전송
         Complaint complaint = cf.getComplaint();
         Long apartmentId = complaint.getUser().getApartment().getId();
@@ -185,7 +189,7 @@ public class ComplaintFeedbackService {
                 null
             );
         }
-        
+
         complaintFeedbackRepository.deleteById(feedbackId);
     }
 }

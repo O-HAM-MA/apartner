@@ -1,8 +1,10 @@
 package com.ohammer.apartner.domain.complaint.dto.response;
 
+import com.ohammer.apartner.domain.user.entity.Role;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,5 +17,6 @@ public class AllComplaintResponseDto {
     private String status;
     private String userName;
     private String content;
+    private String userRole;
     private LocalDateTime createdAt;
 }

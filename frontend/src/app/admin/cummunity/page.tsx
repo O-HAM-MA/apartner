@@ -37,13 +37,30 @@ interface CommunityOpinion {
   userName: string;
   content: string;
   status: "ACTIVE" | "INACTIVE";
+  createdAt: string;
+  userRole?: string;
   replies?: {
     id: number;
     userName: string;
     reply: string;
     createdAt: string;
+    userRole?: string;
   }[];
 }
+
+// Add role label mapping
+const roleLabels: Record<string, string> = {
+  ADMIN: "관리자",
+  MANAGER: "매니저",
+  USER: "일반회원",
+};
+
+// Add role color mapping
+const roleColors: Record<string, string> = {
+  ADMIN: "bg-red-100 text-red-800",
+  MANAGER: "bg-orange-100 text-orange-800",
+  USER: "bg-blue-100 text-blue-800",
+};
 
 const formatOpinionId = (id: number) => {
   return `OPM-${String(id).padStart(3, "0")}`;
@@ -91,16 +108,17 @@ export default function CommunityPage() {
 
   const handleCreate = async () => {
     try {
-      const { data } = await client.POST("/api/v1/opinions/manager", {
+      await client.POST("/api/v1/opinions/manager", {
         body: {
           title: newOpinion.title,
           content: newOpinion.content,
         },
       });
 
-      if (data) {
-        setOpinions([...opinions, data]);
-      }
+      // Refresh the opinions list to get complete data including username
+      const { data } = await client.GET("/api/v1/opinions/manager", {});
+      setOpinions(data || []);
+
       setIsCreateModalOpen(false);
       setNewOpinion({ title: "", content: "" });
     } catch (error) {
@@ -257,6 +275,7 @@ export default function CommunityPage() {
                 <TableHead>제목</TableHead>
                 <TableHead>내용</TableHead>
                 <TableHead>작성자</TableHead>
+                <TableHead>작성일</TableHead>
                 <TableHead>관리</TableHead>
               </TableRow>
             </TableHeader>
@@ -274,7 +293,29 @@ export default function CommunityPage() {
                   <TableCell>{formatOpinionId(opinion.id)}</TableCell>
                   <TableCell>{opinion.title}</TableCell>
                   <TableCell>{opinion.content}</TableCell>
-                  <TableCell>{opinion.userName}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{opinion.userName}</span>
+                      {opinion.userRole && (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            roleColors[opinion.userRole]
+                          }`}
+                        >
+                          {roleLabels[opinion.userRole] || opinion.userRole}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {format(
+                      new Date(opinion.createdAt),
+                      "yyyy년 MM월 dd일 HH:mm",
+                      {
+                        locale: ko,
+                      }
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
@@ -412,7 +453,20 @@ export default function CommunityPage() {
                     {selectedOpinion.replies.map((reply) => (
                       <div key={reply.id} className="border p-4 rounded-lg">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="font-medium">{reply.userName}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {reply.userName}
+                            </span>
+                            {reply.userRole && (
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  roleColors[reply.userRole]
+                                }`}
+                              >
+                                {roleLabels[reply.userRole] || reply.userRole}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-sm text-gray-500">
                             {format(
                               new Date(reply.createdAt),
