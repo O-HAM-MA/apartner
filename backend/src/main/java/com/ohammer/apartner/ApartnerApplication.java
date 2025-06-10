@@ -10,7 +10,6 @@ import java.util.TimeZone;
 @EnableJpaAuditing
 public class ApartnerApplication {
     public static void main(String[] args) {
-        //sad
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
         SpringApplication.run(ApartnerApplication.class, args);
     }
