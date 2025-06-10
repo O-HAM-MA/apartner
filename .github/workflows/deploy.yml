@@ -128,16 +128,22 @@ jobs:
             if [ -n "$RUNNING_APP1" ]; then
               CURRENT="app1_1"
               NEXT="app1_2"
+              CURRENT_PORT=8080
+              NEXT_PORT=8081
             elif [ -n "$RUNNING_APP2" ]; then
               CURRENT="app1_2"
               NEXT="app1_1"
+              CURRENT_PORT=8081
+              NEXT_PORT=8080
             else
               echo "⚠️ 실행 중인 컨테이너가 없습니다. 초기 배포 상황이거나 예외입니다."
               CURRENT=""
               NEXT="app1_1"
+              CURRENT_PORT=""
+              NEXT_PORT=8080
             fi
 
-            // 초기 배포일경우 삭제 방지
+            # 초기 배포일경우 삭제 방지
             if [ -n "$CURRENT" ]; then
             echo "Stopping old container: $CURRENT"
             docker stop "$CURRENT" 2>/dev/null
