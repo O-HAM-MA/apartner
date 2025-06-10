@@ -108,17 +108,31 @@ jobs:
             HEALTH_ENDPOINT="/actuator/health"
             TIMEOUT=60
 
-            # 현재 실행 중인 컨테이너 확인
-            if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
+            # # 현재 실행 중인 컨테이너 확인
+            # if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
+            #   CURRENT="app1_1"
+            #   NEXT="app1_2"
+            #   CURRENT_PORT=8080
+            #   NEXT_PORT=8081
+            # else
+            #   CURRENT="app1_2"
+            #   NEXT="app1_1"
+            #   CURRENT_PORT=8081
+            #   NEXT_PORT=8080
+            # fi
+            RUNNING_APP1=$(docker ps --filter "name=app1_1" --filter "status=running" -q)
+            RUNNING_APP2=$(docker ps --filter "name=app1_2" --filter "status=running" -q)
+
+            if [ -n "$RUNNING_APP1" ]; then
               CURRENT="app1_1"
               NEXT="app1_2"
-              CURRENT_PORT=8080
-              NEXT_PORT=8081
-            else
+            elif [ -n "$RUNNING_APP2" ]; then
               CURRENT="app1_2"
               NEXT="app1_1"
-              CURRENT_PORT=8081
-              NEXT_PORT=8080
+            else
+              echo "⚠️ 실행 중인 컨테이너가 없습니다. 초기 배포 상황이거나 예외입니다."
+              CURRENT="app1_1"
+              NEXT="app1_2"
             fi
 
             # 다음 컨테이너 실행
