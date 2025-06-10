@@ -109,40 +109,44 @@ jobs:
             TIMEOUT=60
 
             # 현재 실행 중인 컨테이너 확인
-            if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
-              CURRENT="app1_1"
-              NEXT="app1_2"
-              CURRENT_PORT=8080
-              NEXT_PORT=8081
-            else
-              CURRENT="app1_2"
-              NEXT="app1_1"
-              CURRENT_PORT=8081
-              NEXT_PORT=8080
-            fi
-            # RUNNING_APP1=$(docker ps --filter "name=app1_1" --filter "status=running" -q)
-            # RUNNING_APP2=$(docker ps --filter "name=app1_2" --filter "status=running" -q)
-
-            # if [ -n "$RUNNING_APP1" ]; then
+            # if docker ps --format '{{.Names}}' | grep -q "app1_1"; then
             #   CURRENT="app1_1"
             #   NEXT="app1_2"
-            # elif [ -n "$RUNNING_APP2" ]; then
+            #   CURRENT_PORT=8080
+            #   NEXT_PORT=8081
+            # else
             #   CURRENT="app1_2"
             #   NEXT="app1_1"
-            # else
-            #   echo "⚠️ 실행 중인 컨테이너가 없습니다. 초기 배포 상황이거나 예외입니다."
-            #   CURRENT=""
-            #   NEXT="app1_1"
+            #   CURRENT_PORT=8081
+            #   NEXT_PORT=8080
             # fi
 
-            # // 초기 배포일경우 삭제 방지
-            # if [ -n "$CURRENT" ]; then
-            # echo "Stopping old container: $CURRENT"
-            # docker stop "$CURRENT" 2>/dev/null
-            # docker rm "$CURRENT" 2>/dev/null
-            # else
-            #   echo "⚠️ No current container to stop."
-            # fi
+
+            RUNNING_APP1=$(docker ps --filter "name=app1_1" --filter "status=running" -q)
+            RUNNING_APP2=$(docker ps --filter "name=app1_2" --filter "status=running" -q)
+
+            if [ -n "$RUNNING_APP1" ]; then
+              CURRENT="app1_1"
+              NEXT="app1_2"
+            elif [ -n "$RUNNING_APP2" ]; then
+              CURRENT="app1_2"
+              NEXT="app1_1"
+            else
+              echo "⚠️ 실행 중인 컨테이너가 없습니다. 초기 배포 상황이거나 예외입니다."
+              CURRENT=""
+              NEXT="app1_1"
+            fi
+
+            // 초기 배포일경우 삭제 방지
+            if [ -n "$CURRENT" ]; then
+            echo "Stopping old container: $CURRENT"
+            docker stop "$CURRENT" 2>/dev/null
+            docker rm "$CURRENT" 2>/dev/null
+            else
+              echo "⚠️ No current container to stop."
+            fi
+            echo "🚀 CURRENT: $CURRENT"
+            echo "🚀 NEXT   : $NEXT"
 
             # 다음 컨테이너 실행
             echo "Starting new container: $NEXT on port $NEXT_PORT..."
@@ -181,10 +185,17 @@ jobs:
 
             sleep 10 # ha proxy 가 사용하는 dns 캐시 때문에 서비스가 띄워지고도 10초 후에 발견될 수 도 있다. 그래서 기존 서버를 바로 내리지 않는다.
 
-            # 기존 컨테이너 중지 및 제거
+            if [ -n "$CURRENT" ]; then
             echo "Stopping old container: $CURRENT"
             docker stop "$CURRENT" 2>/dev/null
             docker rm "$CURRENT" 2>/dev/null
+            else
+              echo "⚠️ No current container to stop."
+            fi
+            # 기존 컨테이너 중지 및 제거
+            # echo "Stopping old container: $CURRENT"
+            # docker stop "$CURRENT" 2>/dev/null
+            # docker rm "$CURRENT" 2>/dev/null
 
             # dangling image 제거
             docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null
