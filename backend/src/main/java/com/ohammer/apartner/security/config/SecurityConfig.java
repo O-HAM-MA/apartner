@@ -158,11 +158,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         //해당 사이트와 매핑? 매치? 한다
-        config.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://www.apartner.site"));
+        config.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://www.apartner.site", "https://api.apartner.site"));
         config.addAllowedHeader("*");
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-        //그리고 외부에서 가져온 credentials를 허용시킨다
+        //그리고 외부에서 가져온 credentials를 허용시킨 다
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
