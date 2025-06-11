@@ -71,7 +71,7 @@ public class SecurityConfig {
 
 
                                 //healthcheck
-                                "actuator/health",
+                                "/actuator/health",
                                 // SSE 엔드포인트 추가
                                 "/sse/**"
 
