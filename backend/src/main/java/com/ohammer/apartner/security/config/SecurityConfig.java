@@ -158,7 +158,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         //해당 사이트와 매핑? 매치? 한다
-        config.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://www.apartner.site", "https://api.apartner.site/*"));
+        config.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://www.apartner.site", "https://api.apartner.site",  "http://app1_1:8080",
+                "http://app1_2:8080"));
         config.addAllowedHeader("*");
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
