@@ -175,7 +175,8 @@ public class SecurityConfig {
     public class GlobalCorsSettings {
         public static final List<String> ALLOWED_ORIGINS = List.of(
                 "http://localhost:3000",
-                "https://www.apartner.site"
+                "https://www.apartner.site",
+                "https://api.apartner.site"
         );
     }
 
