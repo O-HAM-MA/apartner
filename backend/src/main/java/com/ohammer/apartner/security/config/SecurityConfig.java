@@ -60,9 +60,6 @@ public class SecurityConfig {
                                 "/api/v1/entry-records/**",
 
 
-                                //암시로 넣어야징
-
-                                //"/api/v1/inspection/**",
                                 
                                 // WebSocket 엔드포인트 추가
                                 "/stomp/**",
@@ -71,6 +68,10 @@ public class SecurityConfig {
                                 "/pub/**",
 
 
+
+
+                                //healthcheck
+                                "/actuator/health",
                                 // SSE 엔드포인트 추가
                                 "/sse/**"
 
@@ -105,6 +106,7 @@ public class SecurityConfig {
                                 .authorizationRequestResolver(customOAuth2RequestResolver)
                         )
                 );
+
 
         return security.build();
 
@@ -157,16 +159,25 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         //해당 사이트와 매핑? 매치? 한다
-        config.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://www.apartner.site"));
+        //ㅋconfig.setAllowedOriginPatterns(List.of("http://localhost:3000", "https://www.apartner.site"));
         config.addAllowedHeader("*");
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-        //그리고 외부에서 가져온 credentials를 허용시킨다
+        //그리고 외부에서 가져온 credentials를 허용시킨 다
         config.setAllowCredentials(true);
+        config.setAllowedOrigins(GlobalCorsSettings.ALLOWED_ORIGINS);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    public class GlobalCorsSettings {
+        public static final List<String> ALLOWED_ORIGINS = List.of(
+                "http://localhost:3000",
+                "https://www.apartner.site",
+                "https://api.apartner.site"
+        );
     }
 
     @Bean

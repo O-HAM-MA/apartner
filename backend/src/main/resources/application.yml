@@ -155,3 +155,19 @@ app:
 
 parking:
   max-capacity: 50
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: "ping"
+        liveness:
+          include: "ping"
