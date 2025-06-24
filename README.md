@@ -47,95 +47,85 @@
   ### 🛡️ 관리자
   <img width="700" alt="2-관리자-예약확인" src="https://github.com/user-attachments/assets/37d897d4-c7a5-471e-b18a-afc7ebc8e75a" />
   <img width="700" alt="2-관리자-공용시설등록" src="https://github.com/user-attachments/assets/252f080d-1d04-4bf8-983a-3764f490271c" />
-
 </details>
 
 <details>
   <summary>🚗 차량 관리</summary>
 
-- **사용자**  
+  ### 🏠 사용자
   <img width="700" alt="3-사용자-차량관리" src="https://github.com/user-attachments/assets/e4a4c597-d9cf-4aa2-8266-598d230e61c1" />
 
-
-- **외부인**
+  ### 🙎 외부인
   <img width="700" alt="3-외부인-차량등록" src="https://github.com/user-attachments/assets/17381627-f1fd-4cd0-a07d-1ab354cefcab" />
 
-- **관리자**
+  ### 🛡️ 관리자
   <img width="700" alt="3-관리자-차량관리" src="https://github.com/user-attachments/assets/e5a966ef-2bc5-4cda-8d1a-fc25e985f068" />
   <img width="700" alt="3-관리자-차량상세정보" src="https://github.com/user-attachments/assets/320e164d-f6b1-4258-803c-5d78d7d10aa5" />
-
-</details>
-
 </details>
 
 <details>
   <summary>📝 민원 관리</summary>
 
-- **사용자**
+  ### 🏠 사용자
   <img width="700" alt="4-사용자-민원목록" src="https://github.com/user-attachments/assets/226f2c65-b0a4-45d3-b7b1-be695794f576" />
   <img width="700" alt="4-사용자-민원작성" src="https://github.com/user-attachments/assets/c4e0636c-261d-44d4-b09c-f9d1d687302c" />
   <img width="700" alt="4-사용자-민원피드백" src="https://github.com/user-attachments/assets/3247a4a5-636a-4eb8-bc3a-cf29c9040a31" />
 
-- **관리자**
+  ### 🛡️ 관리자
   <img width="700" alt="4-관리자-민원조회" src="https://github.com/user-attachments/assets/5ba519f2-91b5-4253-a937-0db54621804b" />
-
 </details>
 
 <details>
   <summary>🦺 시설 점검 관리</summary>
 
-- **사용자**  
-
-
-- **관리자**
+  ### 🏠 사용자
+  <img width="1695" alt="5-사용자-점검내역" src="https://github.com/user-attachments/assets/53c775bf-c2a9-491a-a280-f392ea42889c" />
+  <img width="1696" alt="5-사용자-이슈확인" src="https://github.com/user-attachments/assets/7f41f483-03a6-4736-bb87-88e756ad7cf0" />
   
-
+  ### 🛡️ 관리자
+  <img width="1698" alt="5-관리자-점검등록" src="https://github.com/user-attachments/assets/dd5824a4-b359-4606-a88b-f88985c8a653" />
+  <img width="1698" alt="5-관리자-점검시작" src="https://github.com/user-attachments/assets/a916ccc8-29d4-4de6-a6fd-121fe437fefc" />
+  <img width="1696" alt="5-관리자-점검완료" src="https://github.com/user-attachments/assets/92383ceb-9619-479b-9519-912b2ad7c68b" />
 </details>
 
 <details>
   <summary>📢 공지사항 관리</summary>
 
-- **사용자**  
-  <img width="1693" alt="6-사용자-공지사항목록" src="https://github.com/user-attachments/assets/0f3541e0-9a03-45f5-af70-ef60a42503f4" />
+  ### 🏠 사용자
+  <img width="700" alt="6-사용자-공지사항목록" src="https://github.com/user-attachments/assets/0f3541e0-9a03-45f5-af70-ef60a42503f4" />
 
-- **관리자**
-  <img width="1707" alt="6-관리자-공지사항목록" src="https://github.com/user-attachments/assets/4f479734-476b-48fb-ac11-4f4d443460f3" />
-  <img width="1693" alt="6-관리자-공지사항작성" src="https://github.com/user-attachments/assets/9582b9e7-4357-432e-8ccd-db487b0bd7b5" />
-  <img width="1710" alt="6-관리자-공지사항조회" src="https://github.com/user-attachments/assets/b3027c0e-9086-4653-9ee8-0e9376bb6d9b" />
+  ### 🛡️ 관리자
+  <img width="700" alt="6-관리자-공지사항목록" src="https://github.com/user-attachments/assets/4f479734-476b-48fb-ac11-4f4d443460f3" />
+  <img width="700" alt="6-관리자-공지사항작성" src="https://github.com/user-attachments/assets/9582b9e7-4357-432e-8ccd-db487b0bd7b5" />
+  <img width="700" alt="6-관리자-공지사항조회" src="https://github.com/user-attachments/assets/b3027c0e-9086-4653-9ee8-0e9376bb6d9b" />
 
 </details>
 
 <details>
   <summary>👑 대표 소통</summary>
 
-- **사용자**  
-
-
-- **관리자**
-  
-
+  ### 🛡️ 관리자
+  <img width="700" alt="7-관리자-목록" src="https://github.com/user-attachments/assets/81c7dd31-e881-4eb1-b251-41bf97098c93" />
+  <img width="700" alt="7-관리자-댓글" src="https://github.com/user-attachments/assets/c4f9ba33-ec22-4b16-80fd-a37b40077163" />
 </details>
 
 <details>
   <summary>🗣️ 커뮤니티 소통</summary>
 
-- **사용자**  
-
-
-- **관리자**
-  
-
+  ### 🏠 사용자
+  <img width="1522" alt="8-사용자-소통" src="https://github.com/user-attachments/assets/eca21eef-5c02-44db-992a-b7654c4e66ab" />
+  <img width="1532" alt="8-사용자-소통작성" src="https://github.com/user-attachments/assets/f579398d-aad3-429e-8744-4f35a4a478d8" />
 </details>
 
 <details>
   <summary>💬 실시간 채팅 기능</summary>
-
-- **사용자**  
-
-
-- **관리자**
   
+  ### 🏠 사용자
+  <img width="700" alt="9-사용자-채팅목록" src="https://github.com/user-attachments/assets/31409822-272b-4d7d-a756-0ca50cf7ec3f" />
+  <img width="700" alt="9-사용자-채팅" src="https://github.com/user-attachments/assets/752a95ae-2d27-4b46-af7f-1f0b64e6f48d" />
 
+  ### 🛡️ 관리자
+  <img width="700" alt="9-관리자-채팅목록" src="https://github.com/user-attachments/assets/69addfaf-2554-449f-8f3d-5c6b6f4d5d4a" />
 </details>
 
 
@@ -267,19 +257,6 @@ npm run dev
 ```
 
 ---
-
-## :open_file_folder: Project Structure (준비중...)
-
-```markdown
-**backend**
-└── src
-    └── main
-        └── java
-            └── com
-                └── 
-```
-
----
 ## 🧱 Git 컨벤션
 
 ### 📍 브랜치 전략
@@ -346,4 +323,4 @@ feat/{issue-number}-{feature-name}
 
 
 
-멋쟁이사자처럼 부트캠프 백엔드JAVA 프로젝트입니다
+멋쟁이사자처럼 부트캠프 백엔드 JAVA 프로젝트입니다
